@@ -441,7 +441,10 @@ void vtkSlicerViewerWidget::UpdateAxis()
       vtkCamera *camera =
         this->MainViewer->GetRenderer()->IsActiveCameraCreated() ? 
         this->MainViewer->GetRenderer()->GetActiveCamera() : NULL;
-      this->AxisLabelActors[i]->SetCamera(camera);
+      // Removing this from inside the bbox changed logic
+      // if camera is changed, the axis label actors have to
+      // pay attention to new camera regardless of bbox chnages.
+//      this->AxisLabelActors[i]->SetCamera(camera);
       }
 
     // Position the axis labels
@@ -481,7 +484,18 @@ void vtkSlicerViewerWidget::UpdateAxis()
   this->BoxAxisActor->SetVisibility(this->ViewNode->GetBoxVisible());
   for (unsigned int i=0; i<AxisLabelActors.size(); i++)
     {
+    // Updating camera here.
+    if (this->MainViewer != NULL && this->MainViewer->GetRenderer() != NULL )
+      {
+      this->AxisLabelActors[i]->SetCamera(this->MainViewer->GetRenderer()->GetActiveCamera());
+      }
+    else
+      {
+      this->AxisLabelActors[i]->SetCamera(NULL );
+      }
+    // Updating visibility
     this->AxisLabelActors[i]->SetVisibility(this->ViewNode->GetAxisLabelsVisible());
+
     }
   // Until we come up with a solution for all use cases, the resetting
   // of the camera is disabled
