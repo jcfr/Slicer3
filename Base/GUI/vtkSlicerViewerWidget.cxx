@@ -438,13 +438,13 @@ void vtkSlicerViewerWidget::UpdateAxis()
         this->BoxAxisBoundingBox->GetMaxLength() * letterSize,
         this->BoxAxisBoundingBox->GetMaxLength() * letterSize);
       this->AxisLabelActors[i]->SetOrigin(.5, .5,.5);
-      // Removing this from inside the bbox changed logic
-      // if camera is changed, the axis label actors have to
-      // pay attention to new camera regardless of bbox chnages.
-      //     vtkCamera *camera =
-      //        this->MainViewer->GetRenderer()->IsActiveCameraCreated() ? 
-      //        this->MainViewer->GetRenderer()->GetActiveCamera() : NULL;
-      // this->AxisLabelActors[i]->SetCamera(camera);
+// Removing this from inside bbox-changed logic.
+// if camera is changed, the axis label actors have to
+// pay attention to new camera regardless of bbox changes...
+//      vtkCamera *camera =
+//        this->MainViewer->GetRenderer()->IsActiveCameraCreated() ? 
+//        this->MainViewer->GetRenderer()->GetActiveCamera() : NULL;
+//      this->AxisLabelActors[i]->SetCamera(camera);
       }
 
     // Position the axis labels
@@ -495,7 +495,6 @@ void vtkSlicerViewerWidget::UpdateAxis()
       }
     // Updating visibility
     this->AxisLabelActors[i]->SetVisibility(this->ViewNode->GetAxisLabelsVisible());
-
     }
   // Until we come up with a solution for all use cases, the resetting
   // of the camera is disabled
@@ -719,7 +718,6 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
     this->UpdateFromMRMLRequested = 1;
     this->RequestRender();
     this->UpdateFromMRML();
-    //this->MainViewer->RemoveAllViewProps();
 
     this->RequestRender();
     }
@@ -732,6 +730,12 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
     {
     this->SetEnableRender(1);
     this->MainViewer->SetRenderModeToInteractive();
+    ///Debug...
+    ///Scene has loaded, nodes have been added.
+    ///Since node added events occurred before the observers
+    ///were put on camera nodes, so camera setup may not have
+    //been completed when it got added.
+    //this->UpdateCameraNode();
     this->RequestRender();
     } 
   else 
@@ -792,7 +796,6 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
       this->UpdateModelHierarchies();
       this->UpdateFromMRMLRequested = 1;
       this->RequestRender();
-      //this->UpdateFromMRML();
       }
     else if (node != NULL && node->IsA("vtkMRMLClipModelsNode") )
       {
@@ -806,7 +809,6 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
         }
       this->UpdateFromMRMLRequested = 1;
       this->RequestRender();
-      //this->UpdateFromMRML();
       }
     else if (node != NULL && node->IsA("vtkMRMLCameraNode") )
       {
@@ -874,7 +876,6 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
         {
         this->UpdateClipSlicesFromMRML();
         this->UpdateModifiedModel(modelNode);
-        //this->UpdateAxis();
         this->RequestRender( );
         }
       if (updateMRML)
@@ -894,14 +895,12 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
     {
     this->UpdateFromMRMLRequested = 1;
     this->RequestRender();
-    //this->UpdateFromMRML();
     }
   else if (vtkMRMLSliceNode::SafeDownCast(caller) != NULL &&
            event == vtkCommand::ModifiedEvent && (this->UpdateClipSlicesFromMRML() || this->ClippingOn))
     {
     this->UpdateFromMRMLRequested = 1;
     this->RequestRender();
-    //this->UpdateFromMRML();
     }
   else if (vtkMRMLModelHierarchyNode::SafeDownCast(caller) &&
            event == vtkCommand::ModifiedEvent)
@@ -909,7 +908,6 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
     this->UpdateModelHierarchies();
     this->UpdateFromMRMLRequested = 1;
     this->RequestRender();
-    //this->UpdateFromMRML();
     }
   else
     {
@@ -928,8 +926,29 @@ void vtkSlicerViewerWidget::UpdateCameraNode()
     {
     return;
     }
+  if (this->MRMLScene == NULL)
+    {
+    vtkErrorMacro("UpdateCameraNode: viewer widget does not have a scene set, can't find camera nodes");
+    return;
+    }
+
+  if (this->ViewNode == NULL)
+    {
+    vtkErrorMacro("UpdateCameraNode: viewer widget does not have a view node!");
+    return;
+    }
+
+  const char *defaultCameraName = "Default Scene Camera";
+  
+  // how many cameras are in the scene?
+  int numCameraNodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLCameraNode");
+  // how many view nodes are in the scene?
+  int numViewNodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLViewNode");
+  vtkDebugMacro("UpdateCamera: num camera nodes = :" << numCameraNodes << ", num view nodes = " << numViewNodes);
   
   vtkMRMLCameraNode *camera_node = NULL;
+  vtkMRMLCameraNode *unassignedCamera = NULL;
+  vtkMRMLCameraNode  *pruneDefaultCamera = NULL;
   if (this->ViewNode && this->ViewNode->GetName())
     {
     std::vector<vtkMRMLNode *> cnodes;
@@ -938,16 +957,126 @@ void vtkSlicerViewerWidget::UpdateCameraNode()
     for (int n=0; n<nnodes; n++)
       {
       node = vtkMRMLCameraNode::SafeDownCast (cnodes[n]);
-      if (node &&
-          node->GetActiveTag() && 
-          !strcmp(node->GetActiveTag(), this->ViewNode->GetID()))
+      if (node)
         {
-        camera_node = node;
-        break;
+        // does the node point to my view node?
+        if (node->GetActiveTag())
+          {
+          if (node->GetName() &&
+              !strcmp(node->GetName(), defaultCameraName))
+            {
+            vtkDebugMacro("UpdateCamera: found a default camera node pointing to my view node");
+            pruneDefaultCamera = node;
+            }
+          if (!strcmp(node->GetActiveTag(), this->ViewNode->GetID()))
+            {
+            // is this a default camera node that we created when the view
+            // node was created?
+            vtkDebugMacro("UpdateCamera: found a camera pointing to me with id = " << (node->GetID() ? node->GetID() : "NULL"));
+            camera_node = node;
+            // take out the break, find the last one pointing to me
+            //break;
+            }
+          else
+            {
+            // it points to another view node
+            }
+          }
+        else
+          {
+          // steal it!
+          unassignedCamera = node;
+          }
         }
       }
     }
 
+  if (pruneDefaultCamera != NULL)
+    {
+    // is there a camera node that's not the default that wants to point to my
+    // view node
+    if (camera_node != NULL &&
+        camera_node != pruneDefaultCamera)
+      {
+      // unhook the default node
+      vtkDebugMacro("UpdateCamera: pruning default camera node, set it's active tag to null");
+      pruneDefaultCamera->SetActiveTag(NULL);
+      }
+    }
+  // if a camera node already points to me
+  // do I already have it?
+  if (camera_node != NULL &&
+      this->CameraNode != NULL &&
+      this->CameraNode == camera_node)
+    {
+    // I'm already pointing to it
+    vtkDebugMacro("UpdateCamera: camera node " << camera_node->GetID() << " is already pointing to my view node and I'm observing it, CameraNode = " << this->CameraNode->GetID());
+    return;
+    }
+
+  // do I have a camera node?
+  if (this->CameraNode == NULL)
+    {
+    if (camera_node != NULL)
+      {
+      // I'm not observing the camera node that is using my view node's id as
+      // it's active tag
+      vtkDebugMacro("UpdateCamera: am not observing any camera nodes, now observe the camera node that's pointing at my view node");
+      this->SetAndObserveCameraNode(camera_node);
+      }
+    else
+      {
+      // is there an unasigned camera node?
+      if (unassignedCamera != NULL)
+        {
+        // use it!
+        vtkDebugMacro("UpdateCamera: setting active tag on unassinged camera");
+        unassignedCamera->SetActiveTag(this->ViewNode->GetID());
+        vtkDebugMacro("UpdateCamera: setting and observing unassigned camera");
+        this->SetAndObserveCameraNode(unassignedCamera);
+        }
+      else
+        {
+        // create one
+        unassignedCamera =  vtkMRMLCameraNode::New();
+        vtkDebugMacro("Viewer widget: Created new unassigned camera");
+        unassignedCamera->SetName(defaultCameraName);
+        //this->MRMLScene->GetUniqueNameByString(camera_node->GetNodeTagName()));
+        unassignedCamera->SetActiveTag(
+                                       this->ViewNode ? this->ViewNode->GetID() : NULL);
+        this->MRMLScene->AddNode(unassignedCamera);
+        this->SetAndObserveCameraNode(unassignedCamera);
+        unassignedCamera->Delete();
+        }
+      }
+    }
+  else
+    {
+    if (camera_node != NULL)
+      {
+      // I'm not observing the camera node that is using my view node's id as
+      // it's active tag
+      vtkDebugMacro("Resetting to observe the camera node that's pointing at my view node");
+      this->SetAndObserveCameraNode(camera_node);
+      }
+    else
+      {
+      // can get here if a view node steals my camera node
+      vtkDebugMacro("I don't have a camera node, nothing is pointing to my view node");
+      // can I swap for an unassigned one?
+      if (unassignedCamera != NULL)
+        {
+        // swap!
+        vtkWarningMacro("Stealing an unasigned camera node " << unassignedCamera->GetID());
+        unassignedCamera->SetActiveTag(this->ViewNode->GetID());
+        this->SetAndObserveCameraNode(unassignedCamera);
+        }
+      else
+        {
+        vtkDebugMacro("No unassigned camera in the scene to steal!");
+        }
+      }
+    }
   //  if (this->CameraNode != NULL && 
   //      this->MRMLScene->GetNodeByID(this->CameraNode->GetID()) == NULL)
   //    {
@@ -955,26 +1084,59 @@ void vtkSlicerViewerWidget::UpdateCameraNode()
   //    this->SetAndObserveCameraNode (NULL);
 
   // No change? Bail.
-
+/*
   if (this->CameraNode == camera_node)
     {
     if (this->CameraNode || this->CameraNodeWasCreated)
       {
+      // is there a new valid camera?
+      if (!this->MRMLScene)
+        {
+        return;
+        }
+      int numCameras = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLCameraNode");
+      if (numCameras > 1)
+        {
+        // yes: delete our camera node
+        vtkWarningMacro("We created an unnecessary new camera node, deleting it");
+        vtkCollection *col = this->MRMLScene->GetNodesByName(defaultCameraName);
+        if (col)
+          {
+          int numNodes = col->GetNumberOfItems();
+          if (numNodes > 0)
+            {
+            for (int n = 0; n < numNodes; n++)
+              {
+              vtkMRMLCameraNode *camNode = vtkMRMLCameraNode::SafeDownCast(col->GetItemAsObject(n));
+              if (camNode)
+                {
+                vtkWarningMacro("Removing camera node " << camNode->GetID());
+                this->MRMLScene->RemoveNode(camNode);
+                }
+              }
+            this->CameraNodeWasCreated = 0;
+            }
+          col->RemoveAllItems();
+          col->Delete();
+          }
+        }
       return;
       }
-    // no camera in the scene, create an active camera
+    vtkWarningMacro("Viewer widget camera node is equal to input camera node. my camera node is " << (this->CameraNode == NULL ? "NULL" : "not null") << ", camera_node = " << (camera_node == NULL ? "NULL" : "not null"));
+    // no camera in the scene after it's done loading, create an active camera
     this->CameraNodeWasCreated = 1;
     camera_node = vtkMRMLCameraNode::New();
-    camera_node->SetName(
-      this->MRMLScene->GetUniqueNameByString(camera_node->GetNodeTagName()));
+    vtkWarningMacro("Viewer widget: Created new camera");
+    camera_node->SetName(defaultCameraName);
+    //this->MRMLScene->GetUniqueNameByString(camera_node->GetNodeTagName()));
     camera_node->SetActiveTag(
-      this->ViewNode ? this->ViewNode->GetID() : NULL);
+                              this->ViewNode ? this->ViewNode->GetID() : NULL);
     this->MRMLScene->AddNode(camera_node);
     camera_node->Delete();
     }
  
   this->SetAndObserveCameraNode(camera_node);
-
+*/
   vtkCamera *cam = this->CameraNode ? this->CameraNode->GetCamera() : NULL;
   this->MainViewer->GetRenderer()->SetActiveCamera(cam);
   if (cam) 
