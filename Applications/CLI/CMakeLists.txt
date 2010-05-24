@@ -547,14 +547,22 @@ set (CLP MergeModels)
 
 set ( ${CLP}_SOURCE ${CLP}.cxx )
 generateclp(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
+
 link_directories(${vtkITK_LIB_DIR})
+include_directories(${vtkITK_SOURCE_DIR} ${vtkITK_BINARY_DIR})
+
+add_library(${CLP}Lib SHARED ${${CLP}_SOURCE})
+slicer3_set_plugins_output_path(${CLP}Lib)
+set_target_properties (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
+target_link_libraries (${CLP}Lib vtkIO vtkGraphics)
+
 add_executable(${CLP} ${${CLP}_SOURCE})
 slicer3_set_plugins_output_path(${CLP})
-target_link_libraries (${CLP}
+target_link_libraries (${CLP} ${CLP}Lib
   vtkIO
   vtkGraphics
   )
-include_directories(${vtkITK_SOURCE_DIR} ${vtkITK_BINARY_DIR})
+
 
 #####################
 set (CLP GrayscaleFillHoleImageFilter)
@@ -768,6 +776,8 @@ if (Slicer3_SOURCE_DIR)
     VotingBinaryHoleFillingImageFilterLib
     ModelMaker
     GrayscaleModelMaker
+    MergeModels
+    MergeModelsLib
     GrayscaleFillHoleImageFilter
     GrayscaleFillHoleImageFilterLib
     GrayscaleGrindPeakImageFilter
