@@ -1120,19 +1120,16 @@ itcl::body SliceSWidget::updateStatusAnnotation {r a s} {
 
   if {[info command $_layers(label,node)] != ""
       && $_layers(label,node) != ""} {
-      #set labelname "Lb: [$_layers(label,node) GetName]"
       set labelname "[$_layers(label,node) GetName]"
   }
 
   if {[info command $_layers(foreground,node)] != ""
       && $_layers(foreground,node) != ""} {
-      #set foregroundname "Fg: [$_layers(foreground,node) GetName]"
       set foregroundname "[$_layers(foreground,node) GetName]"
   }
 
   if {[info command $_layers(background,node)] != ""
       && $_layers(background,node) != ""} {
-      #set backgroundname "Bg: [$_layers(background,node) GetName]"
       set backgroundname "[$_layers(background,node) GetName]"
   } 
 
@@ -1142,22 +1139,24 @@ itcl::body SliceSWidget::updateStatusAnnotation {r a s} {
       set labelText " Lb: $_layers(label,pixel) $colorName,"
   }
 
-  if { [string is double $_layers(foreground,pixel)] } {
-      set fgvoxelText [format " Fg: %.1f" $_layers(foreground,pixel)]
+  set pixelValue $_layers(foreground,pixel)
+  if { $pixelValue != "" && [string is double $pixelValue] } {
+      set fgvoxelText [format " Fg: %.1f" $pixelValue]
   } else {
-      if { $_layers(foreground,pixel) == "None"} {
+      if { $pixelValue == "None"} {
           set fgvoxelText ""
       } else {
-          set fgvoxelText " Fg: $_layers(foreground,pixel),"
+          set fgvoxelText " Fg: $pixelValue,"
       }
   }
-  if { [string is double $_layers(background,pixel)] } {
-      set bgvoxelText [format " Bg: %.1f" $_layers(background,pixel)]
+  set pixelValue $_layers(background,pixel)
+  if { $pixelValue != "" && [string is double $pixelValue] } {
+      set bgvoxelText [format " Bg: %.1f" $pixelValue]
   } else {
-      if { $_layers(background,pixel) == "None"} {
+      if { $pixelValue == "None"} {
           set bgvoxelText ""
       } else {
-          set bgvoxelText " Bg: $_layers(background,pixel),"
+          set bgvoxelText " Bg: $pixelValue,"
       }
   }
   
