@@ -336,24 +336,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
   }
 
 
-  #
-  # if another widget has the grab, let this go unless
-  # it is a focus event, in which case we want to update
-  # our display icon
-  #
-  set grabID [$sliceGUI GetGrabID]
-  if { ($grabID != "" && $grabID != $this) } {
-    if { ![string match "Focus*Event" $event] } {
-      if { [info command $grabID] != $grabID } {
-        # the widget with the grab doesn't exist any more (probably deleted while grabbing)
-        # reset the grabID and continue
-        $sliceGUI SetGrabID ""
-      } else {
-        return ;# some other widget wants these events
-      }
-    }
-  }
-
   # To support the LightBox, the event locations sometimes need to be
   # relative to a renderer (or viewport or pane of the lightbox).
   # Currently, these are relative to the viewport of the "start" action. 
@@ -400,24 +382,49 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     $this resizeSliceNode
   }
 
+
+  #
+  # update the annotations even if they aren't currently visible
+  # - this way the values will be correct when the corner annotation
+  #   are eventually made visible
+  #
   set annotationsUpdated false
+  set link [$_sliceCompositeNode GetLinkedControl]
+  if { $link == 1 && [$this isCompareViewMode] == 1 && ([$this isCompareViewer] == 1 || [$_sliceNode GetSingletonTag] == "Red") } {
+    $this updateAnnotations $r $a $s
+    set annotationsUpdated true
+  } else {
+    $this updateAnnotation $r $a $s
+    set annotationsUpdated true
+  }
+
+
+  #
+  # if another widget has the grab, let this go unless
+  # it is a focus event, in which case we want to update
+  # our display icon
+  #
+  set grabID [$sliceGUI GetGrabID]
+  if { ($grabID != "" && $grabID != $this) } {
+    if { ![string match "Focus*Event" $event] } {
+      if { [info command $grabID] != $grabID } {
+        # the widget with the grab doesn't exist any more (probably deleted while grabbing)
+        # reset the grabID and continue
+        $sliceGUI SetGrabID ""
+      } else {
+        return ;# some other widget wants these events
+      }
+    }
+  }
+
+
   switch $event {
 
     "MouseMoveEvent" {
       #
       # Mouse move behavior governed by _actionState mode
-      # - first update the annotation
-      # - then handle modifying the view
+      # - handle modifying the view
       #
-      set link [$_sliceCompositeNode GetLinkedControl]
-      if { $link == 1 && [$this isCompareViewMode] == 1 && ([$this isCompareViewer] == 1 || [$_sliceNode GetSingletonTag] == "Red") } {
-        $this updateAnnotations $r $a $s
-        set annotationsUpdated true
-      } else {
-        $this updateAnnotation $r $a $s
-        set annotationsUpdated true
-      }
-
       if { [$_interactor GetShiftKey] } {
         $this jumpOtherSlices $r $a $s
         # need to render to show the annotation
