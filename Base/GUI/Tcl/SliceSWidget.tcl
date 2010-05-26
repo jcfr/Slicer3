@@ -1010,16 +1010,27 @@ itcl::body SliceSWidget::updateAnnotation {r a s} {
 
   set labelText "Lb: $_layers(label,pixel) $colorName"
 
-  if { [string is double $_layers(foreground,pixel)] } {
-      set fgvoxelText [format "Fg: %.1f" $_layers(foreground,pixel)]
+  set pixelValue $_layers(foreground,pixel)
+  if { $pixelValue != "" && [string is double $pixelValue] } {
+      set fgvoxelText [format " Fg: %.1f" $pixelValue]
   } else {
-      set fgvoxelText "Fg: $_layers(foreground,pixel)"
+      if { $pixelValue == "None"} {
+          set fgvoxelText ""
+      } else {
+          set fgvoxelText " Fg: $pixelValue,"
+      }
   }
-  if { [string is double $_layers(background,pixel)] } {
-      set bgvoxelText [format "Bg: %.1f" $_layers(background,pixel)]
+  set pixelValue $_layers(background,pixel)
+  if { $pixelValue != "" && [string is double $pixelValue] } {
+      set bgvoxelText [format " Bg: %.1f" $pixelValue]
   } else {
-      set bgvoxelText "Bg: $_layers(background,pixel)"
+      if { $pixelValue == "None"} {
+          set bgvoxelText ""
+      } else {
+          set bgvoxelText " Bg: $pixelValue,"
+      }
   }
+
   set voxelText "$fgvoxelText\n$bgvoxelText"
 
 
