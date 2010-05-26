@@ -76,3 +76,7 @@ endif (Slicer3_SOURCE_DIR)
 
 ##HACK NEED BETTER TESTS add_directory( TestLargestForegroundFilledMaskImageFilter )
 ##HACK NEED BETTER TESTSadd_directory( Test_FindCenterOfBrainFilter )
+if(BUILD_TESTING)
+  add_subdirectory(TestSuite)
+endif(BUILD_TESTING)
+
