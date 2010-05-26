@@ -112,8 +112,6 @@ void vtkMRMLStorageNode::WriteXML(ostream& of, int nIndent)
       {
       name = itksys::SystemTools::RelativePath(this->GetScene()->GetRootDirectory(), this->GetNthFileName(i));
       }
-
-
     of << indent << " fileListMember" << i << "=\"" << vtkMRMLNode::URLEncodeString(name.c_str()) << "\"";
     }
 
@@ -190,7 +188,9 @@ void vtkMRMLStorageNode::ReadXMLAttributes(const char** atts)
       
       name += filename;
       
-      this->AddFileName(filename.c_str());
+      std::string collapsedFullPath = vtksys::SystemTools::CollapseFullPath(name.c_str());
+      vtkDebugMacro("ReadXMLAttributes: collapsed path for " << attName << " = " << collapsedFullPath.c_str());
+      this->AddFileName(collapsedFullPath.c_str());
       }
     else if (!strcmp(attName, "uri"))
       {
@@ -559,7 +559,7 @@ std::string vtkMRMLStorageNode::GetFullNameFromNthFileName(int n)
       }
     else
       {
-      vtkDebugMacro("GetFullNameFromNthFileName: scene root dir = " << (this->Scene->GetRootDirectory() != NULL ? this->Scene->GetRootDirectory() : "null") << ", relative = " << (this->IsFilePathRelative(fileName) ? "yes" : "no"));
+      vtkDebugMacro("GetFullNameFromNthFileName: scene root dir = " << (this->Scene->GetRootDirectory() != NULL ? this->Scene->GetRootDirectory() : "null") << ", fileName = " << fileName << ", relative = " << (this->IsFilePathRelative(fileName) ? "yes" : "no"));
       }
     fullName = std::string(fileName);
     }
