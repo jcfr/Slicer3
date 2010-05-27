@@ -31,6 +31,8 @@
 #include "vtkKWLabel.h"
 #include "vtkKWMessageDialog.h"
 
+#include "vtkSlicerFiducialsGUI.h"
+
 //#define LIGHTBOXGUI_DEBUG
 
 //---------------------------------------------------------------------------
@@ -569,6 +571,8 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           interactionNode->NormalizeAllMouseModes();
           interactionNode->SetLastInteractionMode ( interactionNode->GetCurrentInteractionMode() );
+          // unlock the 3d widgets
+          //this->ModifyAll3DWidgetsLock(0);
           interactionNode->SetCurrentInteractionMode ( vtkMRMLInteractionNode::PickManipulate );
           this->MousePickOptionsButton->SetImageToIcon ( this->SlicerToolbarIcons->GetSlicerOptionsOnIcon ( ) );
           this->MousePlaceOptionsButton->SetImageToIcon ( this->SlicerToolbarIcons->GetSlicerOptionsOffIcon ( ) );
@@ -582,6 +586,8 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           interactionNode->NormalizeAllMouseModes();
           interactionNode->SetLastInteractionMode ( interactionNode->GetCurrentInteractionMode() );
+          // unlock the 3d widgets
+          //this->ModifyAll3DWidgetsLock(0);
           interactionNode->SetCurrentInteractionMode ( vtkMRMLInteractionNode::ViewTransform );
           this->MousePickOptionsButton->SetImageToIcon ( this->SlicerToolbarIcons->GetSlicerOptionsOffIcon ( ) );
           this->MousePlaceOptionsButton->SetImageToIcon ( this->SlicerToolbarIcons->GetSlicerOptionsOffIcon ( ) );
@@ -595,6 +601,8 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           interactionNode->NormalizeAllMouseModes();
           interactionNode->SetLastInteractionMode ( interactionNode->GetCurrentInteractionMode() );
+          // turn off processing events on the vtk 3d widgets
+          //this->ModifyAll3DWidgetsLock(1);
           interactionNode->SetCurrentInteractionMode ( vtkMRMLInteractionNode::Place );
           this->MousePickOptionsButton->SetImageToIcon ( this->SlicerToolbarIcons->GetSlicerOptionsOffIcon ( ) );
           this->MousePlaceOptionsButton->SetImageToIcon ( this->SlicerToolbarIcons->GetSlicerOptionsOnIcon ( ) );          
@@ -911,12 +919,16 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             this->MousePickButton->SelectedStateOn();
             //--- ...and modify persistence
             interactionNode->SetPickModePersistence (0);
+            // turn on processing events on the vtk 3d widgets
+            //this->ModifyAll3DWidgetsLock(0);
             }
           else if ( this->MousePickOptionsButton->GetMenu()->GetItemSelectedState ( "Use mouse to Pick-and-Manipulate persistently." ))
             {
             this->MousePickButton->SelectedStateOn();
             //--- ...and modify persistence
             interactionNode->SetPickModePersistence (1);
+            // turn on processing events on the vtk 3d widgets
+            //this->ModifyAll3DWidgetsLock(0);
             }
           }
         }
@@ -928,12 +940,16 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( this->MousePlaceOptionsButton->GetMenu()->GetItemSelectedState ( "Use mouse to Create-and-Place one time."))
             {
+            // turn off processing events on the vtk 3d widgets
+            //this->ModifyAll3DWidgetsLock(0);
             this->MousePlaceButton->SelectedStateOn();
             //--- ...and modify persistence
             interactionNode->SetPlaceModePersistence (0);
             }
           else if ( this->MousePlaceOptionsButton->GetMenu()->GetItemSelectedState ("Use mouse to Create-and-Place persistently." ))
             {
+            // turn off processing events on the vtk 3d widgets
+            //this->ModifyAll3DWidgetsLock(0);
             this->MousePlaceButton->SelectedStateOn();
             //--- ...and modify persistence
             interactionNode->SetPlaceModePersistence (1);
@@ -1135,6 +1151,8 @@ void vtkSlicerToolbarGUI::ProcessMRMLEvents ( vtkObject *caller,
     switch (mode)
       {
       case vtkMRMLInteractionNode::PickManipulate:
+        // turn on processing events on the vtk 3d widgets
+        this->ModifyAll3DWidgetsLock(0);
         selected = this->MousePickButton->GetSelectedState();
         if ( !selected )
           {
@@ -1144,6 +1162,8 @@ void vtkSlicerToolbarGUI::ProcessMRMLEvents ( vtkObject *caller,
           }
         break;
       case vtkMRMLInteractionNode::Place:
+        // turn off processing events on the vtk 3d widgets
+        this->ModifyAll3DWidgetsLock(1);
         selected = this->MousePlaceButton->GetSelectedState();
         if ( !selected)
           {
@@ -1153,6 +1173,10 @@ void vtkSlicerToolbarGUI::ProcessMRMLEvents ( vtkObject *caller,
           }
         break;
       case vtkMRMLInteractionNode::ViewTransform:
+        // turn on processing events on the vtk 3d widgets
+        // TODO: should they be locked when transforming the view? only if we
+        // can't get the hover zone to be coincident with the manipulate zone
+        this->ModifyAll3DWidgetsLock(0);
         selected = this->MouseTransformViewButton->GetSelectedState();
         if ( !selected)
           {
@@ -1833,4 +1857,20 @@ void vtkSlicerToolbarGUI::HideCompareViewCustomLayoutFrame()
       return;
 
     this->CompareViewBoxTopLevel->Withdraw();
+}
+
+
+
+//--------------------------------------------------------------------------
+void vtkSlicerToolbarGUI::ModifyAll3DWidgetsLock(int lockFlag)
+{
+  //vtkWarningMacro("ModifyAll3DWidgetsLock: lockFlag = " << lockFlag);
+
+  vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI ( );
+  if ( appGUI )
+    {
+    appGUI->ModifyAllWidgetLock(lockFlag);
+    }
+
+  vtkDebugMacro("ModifyAll3DWidgetsLock: done changing locks on widgets (lock = " << lockFlag << ")");
 }

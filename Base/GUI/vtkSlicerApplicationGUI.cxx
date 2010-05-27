@@ -4852,3 +4852,88 @@ int vtkSlicerApplicationGUI::GetNumberOfVisibleViewNodes()
 }
 
 
+//-------------------------------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ModifyAllWidgetLock(int lockFlag)
+{
+  //---
+  //--- This method is called with the appropriate lockFlag
+  //--- by the ToolbarGUI, when the vtkMRMLInteractionNode
+  //--- invokes an InteractionModeChangedEvent.
+  //---
+
+
+  ///
+  /// FIDUCIALS
+  ///
+  // iterate through the fiducial list widgets
+  int nb_fid_viewer_widgets = this->GetNumberOfFiducialListWidgets();
+  for (int i = 0; i < nb_fid_viewer_widgets; ++i)
+    {
+    vtkSlicerFiducialListWidget *fidlist_widget = this->GetNthFiducialListWidget(i);
+    if (fidlist_widget)
+      {
+      fidlist_widget->ModifyAllWidgetLock(lockFlag);
+      }
+    }
+
+
+  ///
+  /// MEASUREMENTS
+  ///
+  if ( this->GetApplication() == NULL )
+    {
+    vtkWarningMacro ( "ApplicationGUI::ModifyAllWidgetLock: Got NULL Application. Not modifying lock on some widgets." );
+    return;
+    }
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast( this->GetApplication() );
+  if ( app == NULL )
+    {
+    vtkWarningMacro ( "ApplicationGUI::ModifyAllWidgetLock: Got NULL Slicer Application. Not modifying lock on some widgets." );
+    return;
+    }
+  vtkSlicerModuleGUI *m = app->GetModuleGUIByName("Measurements");
+
+  if (m == NULL)
+    {
+    vtkWarningMacro ( "ApplicationGUI::ModifyAllWidgetLock: Got NULL Measurements Modules. Not modifying lock on measurements widgets." );
+    return;
+    }
+  app->Script("$::slicer3::MeasurementsGUI ModifyAllLock %d", lockFlag);
+
+
+
+  ///
+  /// Developers: INCLUDE OTHER PICKABLE WIDGETS HERE
+  ///
+
+
+  //--- now reset the cursor to default if we are not picking.
+  if ( lockFlag )
+    {
+
+    vtkSlicerViewerWidget *active_viewer = this->GetActiveViewerWidget();
+    if ( active_viewer == NULL )
+      {
+      vtkWarningMacro ( "ApplicationGUI::ModifyAllWidgetLock: no active viewer widget. Not able to reset cursor." );
+      return;
+      }
+    if ( active_viewer->GetMainViewer() == NULL )
+      {
+      vtkWarningMacro ( "ApplicationGUI::ModifyAllWidgetLock: no main viewer. Not able to reset cursor." );
+      return;
+      }
+    vtkRenderWindow *ren_win = active_viewer->GetMainViewer()->GetRenderWindow();
+    if ( ren_win == NULL )
+      {
+      vtkWarningMacro ( "ApplicationGUI::ModifyAllWidgetLock: no render window. Not able to reset cursor.");
+      return;
+      }
+    //--- if lockFlag == 1, then processEvents should be set to 0.
+    //--- Trying this as a mechanism to give back
+    //--- the default cursor, in case it is the picking cursor.
+    //--- trick will be to get it to stick -- and not be reset to the picking cursor
+    //--- by subsequent events.
+    ren_win->SetCurrentCursor ( VTK_CURSOR_DEFAULT );
+    }
+
+}
