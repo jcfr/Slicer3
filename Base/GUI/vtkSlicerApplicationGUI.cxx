@@ -820,6 +820,48 @@ void vtkSlicerApplicationGUI::ProcessCloseSceneCommand()
 }
 
 //---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessMouseModeToggleCommand()
+{
+  vtkSlicerToolbarGUI *tgui = this->GetApplicationToolbar();
+  if ( tgui == NULL )
+    {
+    vtkErrorMacro("ProcessMouseModeToggleCommand: no ToolbarGUI. can't toggle mouse mode with keypress.");
+    return;
+    }
+
+  //TODO
+  if ( this->GetApplicationLogic() == NULL )
+    {
+    vtkErrorMacro("ProcessMouseModeToggleCommand: no ApplicationLogic. can't toggle mouse mode with keypress.");
+    return;
+    }
+  if ( this->GetApplicationLogic()->GetInteractionNode() == NULL )
+    {
+    vtkErrorMacro("ProcessMouseModeToggleCommand: can't find ApplicationLogic's Interaction Node. unable to toggle mouse mode with keypress.");
+    return;
+    }
+  
+  //--- Toggle Place mode from keyboard command.
+  vtkMRMLInteractionNode *inode = this->GetApplicationLogic()->GetInteractionNode();
+  int mode = inode->GetCurrentInteractionMode();
+  if ( mode == vtkMRMLInteractionNode::Place )
+    {
+    inode->NormalizeAllMouseModes();
+    inode->SetLastInteractionMode ( inode->GetCurrentInteractionMode() );
+    inode->SetCurrentInteractionMode ( vtkMRMLInteractionNode::ViewTransform );
+    }
+  else
+    {
+    inode->NormalizeAllMouseModes();
+    inode->SetLastInteractionMode ( inode->GetCurrentInteractionMode() );
+    inode->SetCurrentInteractionMode ( vtkMRMLInteractionNode::Place );
+    inode->SetPlaceModePersistence ( 1 );
+    }
+  
+}
+
+
+//---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessAddRulerCommand()
 {
   vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
@@ -1997,6 +2039,11 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
   this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+M");
   this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
   
+  // Toggle among mouse modes.
+  i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "Toggle 'Persistent Place' Interaction Mode...", this, "ProcessMouseModeToggleCommand");
+  this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+I");
+  this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+
   //
   // View Menu
   //
