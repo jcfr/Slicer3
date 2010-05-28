@@ -460,7 +460,8 @@ void vtkMRMLScene::Clear(int removeSingletons)
 {
   this->SetUndoOff();
   this->InvokeEvent(this->SceneClosingEvent, NULL);
-  
+  this->SetIsClosed(true);
+
   if (!removeSingletons)
     {
     this->RemoveAllNodesExceptSingletons();
@@ -499,6 +500,7 @@ void vtkMRMLScene::Clear(int removeSingletons)
   // Therefore, it should be put at the end, certainly after UniqueIDByClass
   // has been cleared
   this->InvokeEvent(this->SceneCloseEvent, NULL);
+  this->SetIsClosed(false);
 }
 
 //------------------------------------------------------------------------------
@@ -1148,13 +1150,15 @@ void vtkMRMLScene::RemoveNode(vtkMRMLNode *n)
   this->InvokeEvent(this->NodeRemovedEvent, n);
   n->UnRegister(this);
 
-  vtkMRMLNode *node = NULL;
-  for (int i=0; i < this->CurrentScene->GetNumberOfItems(); i++) 
+  if (!this->GetIsClosed())
     {
-    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(i);
-    node->UpdateReferences();
+    vtkMRMLNode *node = NULL;
+    for (int i=0; i < this->CurrentScene->GetNumberOfItems(); i++) 
+      {
+      node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(i);
+      node->UpdateReferences();
+      }
     }
-
   this->RemoveUnusedNodeReferences();
 
   //this->Modified();
@@ -1177,11 +1181,14 @@ void vtkMRMLScene::RemoveNodeNoNotify(vtkMRMLNode *n)
   
   n->UnRegister(this);
 
-  vtkMRMLNode *node = NULL;
-  for (int i=0; i < this->CurrentScene->GetNumberOfItems(); i++) 
+  if (!this->GetIsClosed())
     {
-    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(i);
-    node->UpdateReferences();
+    vtkMRMLNode *node = NULL;
+    for (int i=0; i < this->CurrentScene->GetNumberOfItems(); i++) 
+      {
+      node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(i);
+      node->UpdateReferences();
+      }
     }
   this->RemoveUnusedNodeReferences();
 
