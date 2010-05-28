@@ -1980,7 +1980,7 @@ void vtkSlicerFiducialListWidget::Update3DWidget(vtkMRMLFiducialListNode *fiduci
     }
   if (this->Updating3DWidget)
     {
-    vtkWarningMacro("Update3DWidget: Already updating 3d widget");
+    vtkDebugMacro("Update3DWidget: Already updating 3d widget");
     return;
     }
   vtkSlicerSeedWidgetClass *seedWidget = this->GetSeedWidget(fiducialListNode->GetID());
