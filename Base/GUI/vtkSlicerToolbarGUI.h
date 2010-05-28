@@ -151,7 +151,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     /// events or not.
     void ModifyAll3DWidgetsLock(int lockFlag);
 
-protected:
+ protected:
     vtkSlicerToolbarGUI ( );
     virtual ~vtkSlicerToolbarGUI ( );
 

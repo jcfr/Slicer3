@@ -501,6 +501,20 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
       }
 
     }
+
+  //--- The scene may have a new interaction node which
+  //--- specifies a Mouse Mode -- but no InteractionModeChangedEvent
+  //--- will have been invoked for the GUI to capture.
+  //--- So we invoke the event here after the scene is finished loading.
+  if ( this->GetApplicationLogic() )
+    {
+    if ( this->GetApplicationLogic()->GetInteractionNode() )
+      {
+      this->GetApplicationLogic()->GetInteractionNode()->InvokeEvent (
+                                                                      vtkMRMLInteractionNode::InteractionModeChangedEvent );
+      }
+    }
+  
   progressDialog->SetParent(NULL);
   progressDialog->Delete();
   return;

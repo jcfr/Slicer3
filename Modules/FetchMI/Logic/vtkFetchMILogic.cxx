@@ -3370,7 +3370,7 @@ void vtkFetchMILogic::RequestResourceDownload ( const char *uri, const char *sli
   //--- handle scene with separate set of methods.
   if ( !(strcmp(slicerDataType, "MRML")))
     {
-      this->RequestSceneDownload ( uri );
+    this->RequestSceneDownload ( uri );
     }
   else 
     {
