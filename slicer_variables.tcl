@@ -585,9 +585,16 @@ switch $::tcl_platform(os) {
         set ::COMPILER "cl"
         set ::SERIAL_MAKE $::MAKE
 
-        if { ![string match "Visual Studio 9*" $::GENERATOR] || [string match "*Express*" $::MAKE] } {
+        set windowsNotXP 0
+        if { $::tcl_platform(os) == "Windows NT" } {
+          if { [string index $::tcl_platform(osVersion) 0] != "5" } {
+            set windowsNotXP 1
+          }
+        }
+        if { ![string match "Visual Studio 9*" $::GENERATOR] || 
+                [string match "*Express*" $::MAKE] || $windowsNotXP } {
           if { $::USE_PYTHON == "ON" }  {
-            puts "\n\n\nWarning: Python can only be built on Visual Studio 9 (2008) Professional for windows.\n\nSlicer will be built with Python turned off\n\n"
+            puts "\n\n\nWarning: Python can only be built on windows XP with Visual Studio 9 (2008) Professional for windows.\n\nSlicer will be built with Python turned off\n\n"
             set ::USE_PYTHON "OFF"
           }
         }
