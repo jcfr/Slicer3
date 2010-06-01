@@ -4956,11 +4956,12 @@ void vtkSlicerApplicationGUI::ModifyAllWidgetLock(int lockFlag)
 
   if (m == NULL)
     {
-    vtkWarningMacro ( "ApplicationGUI::ModifyAllWidgetLock: Got NULL Measurements Modules. Not modifying lock on measurements widgets." );
-    return;
+    vtkDebugMacro ( "ApplicationGUI::ModifyAllWidgetLock: Got NULL Measurements Modules. Not modifying lock on measurements widgets." );
     }
-  app->Script("$::slicer3::MeasurementsGUI ModifyAllLock %d", lockFlag);
-
+  else
+    {
+    app->Script("$::slicer3::MeasurementsGUI ModifyAllLock %d", lockFlag);
+    }
 
 
   ///
