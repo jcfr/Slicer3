@@ -81,7 +81,7 @@ set ::Slicer3_TAG "http://svn.slicer.org/Slicer3/branches/Slicer-3-6"
 set ::CMAKE_TAG "CMake-2-8-0"
 set ::Teem_TAG http://teem.svn.sourceforge.net/svnroot/teem/teem/branches/Teem-1.11
 set ::KWWidgets_TAG "Slicer-3-6"
-set ::VTK_TAG "VTK-5-6"
+set ::VTK_TAG "http://svn.github.com/pieper/SlicerVTK.git" ;# slicer's patched vtk 5.6
 set ::ITK_TAG ITK-3-18
 set ::PYTHON_TAG "http://svn.python.org/projects/python/branches/release26-maint"
 set ::PYTHON_REVISION 76651 ;# avoid windows manifest "fix"
@@ -165,7 +165,7 @@ set ::SLICERLIBCURL_BUILD_DIR $::Slicer3_LIB/cmcurl-build
 set ::USE_SYSTEM_PYTHON "false"
 # CMake option for Python, must be "OFF" on "ON", default is "ON"
 # - note: as of python 2.6 this can only be used on windows with VS 2008 professional
-#   (this variable is forced to off later in this file if non-VS 2008 compiler is selected)
+#   (this variable is forced to off later in this file if non-VS 2008 compiler is selected or non-XP version of windows is detected)
 set ::USE_PYTHON "ON"
 
 # CMake option for numerical Python, only matters if Python is on
