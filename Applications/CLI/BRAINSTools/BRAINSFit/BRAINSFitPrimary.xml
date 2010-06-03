@@ -45,12 +45,19 @@
 
   <parameters advanced="false">
     <label>Output Settings</label>
+    <transform fileExtensions=".mat" type="bspline" reference="movingVolume">
+      <name>bsplineTransform</name>
+      <longflag>bsplineTransform</longflag>
+      <label>Slicer BSpline Transform</label>
+      <description>Filename to which save the (optional) estimated transform. NOTE: You must set at least one output object (either a deformed image or a transform.  NOTE: USE THIS ONLY IF THE FINAL TRANSFORM IS BSpline</description>
+      <channel>output</channel>
+    </transform>
 
-    <transform fileExtensions=".mat">
-      <name>outputTransform</name>
-      <longflag>outputTransform</longflag>
-      <label>Output Transform</label>
-      <description>Filename to which save the (optional) estimated transform. NOTE: You must select either the outputTransform or the outputVolume option.</description>
+    <transform fileExtensions=".mat" type="linear" reference="movingVolume">
+      <name>linearTransform</name>
+      <longflag>linearTransform</longflag>
+      <label>Slicer Linear Transform</label>
+      <description>Filename to which save the (optional) estimated transform. NOTE: You must set at least one output object (either a deformed image or a transform.  NOTE: USE THIS ONLY IF THE FINAL TRANSFORM IS ---NOT--- BSpline</description>
       <channel>output</channel>
     </transform>
 
@@ -66,6 +73,14 @@
   <!-- -->
   <parameters advanced="true">
     <label>Transform Initialization Parameters</label>
+    <transform fileExtensions=".mat" reference="movingVolume">
+      <name>outputTransform</name>
+      <longflag>outputTransform</longflag>
+      <label>Output Transform</label>
+      <description>Filename to which save the (optional) estimated transform. NOTE: You must select either the outputTransform or the outputVolume option.</description>
+      <channel>output</channel>
+    </transform>
+
 
     <string-enumeration>
       <name>initializeTransformMode</name>
@@ -172,7 +187,7 @@
   <parameters advanced="true">
     <label>Advanced Output Settings</label>
 
-    <transform fileExtensions=".mat">
+    <transform fileExtensions=".mat" type="linear">
       <name>strippedOutputTransform</name>
       <longflag>strippedOutputTransform</longflag>
       <label>Stripped Output Transform</label>
@@ -219,14 +234,17 @@
       <default>false</default>
     </boolean>
 
-    <boolean>
-      <name>useWindowedSinc</name>
-      <label>useWindowedSinc</label>
-      <longflag>useWindowedSinc</longflag>
-      <description>Use windowedSinc interpolation to create output images.  WARNING: This will add 8 minutes to the interpolation of the final image of size 256x256x256.</description>
-      <default>false</default>
-    </boolean>
-
+    <string-enumeration>
+      <name>interpolationMode</name>
+      <longflag>interpolationMode</longflag>
+      <label>Interpolation Mode</label>
+      <description>Type of interpolation used</description>
+      <default>Linear</default>
+      <element>NearestNeighbor</element>
+      <element>Linear</element>
+      <element>BSpline</element>
+      <element>WindowedSinc</element>
+    </string-enumeration>
   </parameters>
   <!-- -->
   <parameters advanced="true">
@@ -308,7 +326,7 @@
     <boolean>
        <name>histogramMatch</name>
        <flag>e</flag>
-       <longflag alias="use_histogram_matching">histogramMatch</longflag>
+       <longflag deprecatedalias="use_histogram_matching">histogramMatch</longflag>
        <description>Histogram Match the input images.  This is suitable for images of the same modality that may have different absolute scales, but the same overall intensity profile.</description>
        <label>Histogram Match</label>
        <default>false</default>
@@ -422,9 +440,8 @@
       <longflag>projectedGradientTolerance</longflag>
       <description> From itkLBFGSBOptimizer.h: Set/Get the ProjectedGradientTolerance. Algorithm terminates when the project gradient is below the tolerance. Default lbfgsb value is 1e-5, but 1e-4 seems to work well.
       </description>
-      <default>1e-4</default>
+      <default>1e-5</default>
     </double>
-
 
     <boolean>
       <name>UseDebugImageViewer</name>

@@ -98,7 +98,7 @@ add_test(ValidateDiffeomorphicTest2_nii ${BRAINS_Demon_Warp_TESTS}
  --compare
     ${BRAINSCommonLib_DATA_DIRS}/diffeomorphicDemons2.nii.gz
     ${BRAINSDemonWarp_BINARY_DIR}/diffeomorphicDemons2_test.nii.gz
-    --compareNumberOfPixelsTolerance 200
+    --compareNumberOfPixelsTolerance 300
     --compareIntensityTolerance 10
     BRAINSDemonWarpTest
     --movingVolume ${BRAINSCommonLib_DATA_DIRS}/SUBJ_B_small/SUBJ_B_small_T1.nii.gz
@@ -172,21 +172,21 @@ add_test(ValidateDiffeomorphicTest4_nii ${BRAINS_Demon_Warp_TESTS}
     --arrayOfPyramidLevelIterations 10,5,5
     --minimumFixedPyramid 4,4,4
     --minimumMovingPyramid 4,4,4
-    --registrationFilterType Diffeomorphic
     --outputDisplacementFieldPrefix ${BRAINSDemonWarp_BINARY_DIR}/displacement.nii.gz
+    --registrationFilterType Diffeomorphic
 )
 
 ### Need to add more test to get better code coverage of this test suite.  Need to make sure that all the command line options are tested.
 add_test(ValidateOrientedImagesTest5_nii ${BRAINS_Demon_Warp_TESTS}
  --compare
-    ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_dbg_splayed.nii.gz
-    ${BRAINSDemonWarp_BINARY_DIR}/orientedImagesDemons_test.nii.gz
+    ${BRAINSCommonLib_DATA_DIRS}/ValidateOrientedImagesTest5.nii.gz
+    ${BRAINSDemonWarp_BINARY_DIR}/ValidateOrientedImagesTest5.nii.gz
     --compareNumberOfPixelsTolerance 49800
     --compareIntensityTolerance 25
     BRAINSDemonWarpTest
     --movingVolume ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_sag_twisted.nii.gz
     --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_dbg_splayed.nii.gz
-    --outputVolume ${BRAINSDemonWarp_BINARY_DIR}/orientedImagesDemons_test.nii.gz
+    --outputVolume ${BRAINSDemonWarp_BINARY_DIR}/ValidateOrientedImagesTest5.nii.gz
     --outputDeformationFieldVolume ${BRAINSDemonWarp_BINARY_DIR}/OutDefField_orientedImage.nii.gz
     --inputPixelType uchar
     --smoothDeformationFieldSigma 1.5
@@ -213,6 +213,7 @@ add_test(ValidateVectorBRAINSDemonWarpTest_nii ${VBRAINS_Demon_Warp_TESTS}
     --arrayOfPyramidLevelIterations 100,100,100
     --minimumFixedPyramid 4,4,4
     --minimumMovingPyramid 4,4,4
+    --registrationFilterType Demons
 )
 
 
@@ -268,7 +269,7 @@ add_test(ValidateVectorDiffeomorphicTest2_nii ${VBRAINS_Demon_Warp_TESTS}
  --compare
     ${BRAINSCommonLib_DATA_DIRS}/diffeomorphicDemons2.nii.gz
     ${BRAINSDemonWarp_BINARY_DIR}/vectordiffeomorphicDemons2_test.nii.gz
-    --compareNumberOfPixelsTolerance 200
+    --compareNumberOfPixelsTolerance 300
     --compareIntensityTolerance 10
     VBRAINSDemonWarpTest
     --movingVolume ${BRAINSCommonLib_DATA_DIRS}/SUBJ_B_small/SUBJ_B_small_T1.nii.gz,${BRAINSCommonLib_DATA_DIRS}/SUBJ_B_small/SUBJ_B_small_T1.nii.gz
@@ -402,14 +403,14 @@ add_test(ValidateVectorDiffeomorphicTest6_nii ${VBRAINS_Demon_Warp_TESTS}
 
 add_test(ValidateVectorOrientedImagesTest6_nii ${VBRAINS_Demon_Warp_TESTS}
  --compare
-    ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_dbg_splayed.nii.gz
-    ${BRAINSDemonWarp_BINARY_DIR}/orientedVectorImagesDemons_test.nii.gz
+    ${BRAINSCommonLib_DATA_DIRS}/ValidateVectorOrientedImagesTest6.nii.gz
+    ${BRAINSDemonWarp_BINARY_DIR}/ValidateVectorOrientedImagesTest6.nii.gz
     --compareNumberOfPixelsTolerance 50000
     --compareIntensityTolerance 25
     VBRAINSDemonWarpTest
     --movingVolume ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_sag_twisted.nii.gz,${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_sag_twisted.nii.gz
     --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_dbg_splayed.nii.gz,${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_dbg_splayed.nii.gz
-    --outputVolume ${BRAINSDemonWarp_BINARY_DIR}/orientedVectorImagesDemons_test.nii.gz
+    --outputVolume ${BRAINSDemonWarp_BINARY_DIR}/ValidateVectorOrientedImagesTest6.nii.gz
     --inputPixelType uchar
     --smoothDeformationFieldSigma 1.5
     --outputDebug
@@ -420,14 +421,14 @@ add_test(ValidateVectorOrientedImagesTest6_nii ${VBRAINS_Demon_Warp_TESTS}
 
 add_test(ValidateVectorOrientedImagesTest7_nii ${VBRAINS_Demon_Warp_TESTS}
  --compare
-    ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_dbg_splayed.nii.gz
-    ${BRAINSDemonWarp_BINARY_DIR}/orientedVectorImagesDemons1_test.nii.gz
+    ${BRAINSCommonLib_DATA_DIRS}/ValidateVectorOrientedImagesTest7.nii.gz
+    ${BRAINSDemonWarp_BINARY_DIR}/ValidateVectorOrientedImagesTest7.nii.gz
     --compareNumberOfPixelsTolerance 51000
     --compareIntensityTolerance 25
     VBRAINSDemonWarpTest
     --movingVolume ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_sag_twisted.nii.gz,${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_sag_twisted.nii.gz
     --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_dbg_splayed.nii.gz,${BRAINSCommonLib_DATA_DIRS}/ANON0006_20_T1_dbg_splayed.nii.gz
-    --outputVolume ${BRAINSDemonWarp_BINARY_DIR}/orientedVectorImagesDemons1_test.nii.gz
+    --outputVolume ${BRAINSDemonWarp_BINARY_DIR}/ValidateVectorOrientedImagesTest7.nii.gz
     --inputPixelType uchar
     --smoothDeformationFieldSigma 1.5
     --outputDebug
@@ -459,13 +460,13 @@ add_test(ValidateDiffeomorphicWithAUTOMask_Test_nii ${BRAINS_Demon_Warp_TESTS}
     --arrayOfPyramidLevelIterations 100,50,5
     --minimumFixedPyramid 4,4,4
     --minimumMovingPyramid 4,4,4
-    --registrationFilterType Diffeomorphic
     --maskProcessingMode ROIAUTO
+    --registrationFilterType Diffeomorphic
 )
 
 add_test(ValidateDiffeomorphicWithMask_Test_nii ${BRAINS_Demon_Warp_TESTS}
   --compare
-    ${BRAINSCommonLib_DATA_DIRS}/diffeomorphicDemons_AutoMask.nii.gz
+    ${BRAINSCommonLib_DATA_DIRS}/diffeomorphicDemonsWithMask.nii.gz
     ${BRAINSDemonWarp_BINARY_DIR}/diffeomorphicDemonsWithMask_test.nii.gz
     --compareNumberOfPixelsTolerance 50
     --compareIntensityTolerance 10
@@ -485,26 +486,26 @@ add_test(ValidateDiffeomorphicWithMask_Test_nii ${BRAINS_Demon_Warp_TESTS}
     --arrayOfPyramidLevelIterations 100,50,5
     --minimumFixedPyramid 4,4,4
     --minimumMovingPyramid 4,4,4
-    --registrationFilterType Diffeomorphic
     --maskProcessingMode ROI
     --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/SUBJ_A_small/SUBJ_A_small_T2_mask.nii.gz
     --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/SUBJ_B_small/SUBJ_B_small_T2_mask.nii.gz
+    --registrationFilterType Diffeomorphic
 )
 
 #Test for initial Transform
 add_test(ValidateInitialTransform_Test_nii ${BRAINS_Demon_Warp_TESTS}
   --compare
-    ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_RigidRotationMasks.output.nii.gz
-    ${BRAINSDemonWarp_BINARY_DIR}/diffeomorphicDemonsWithTransform_test.nii.gz
+    ${BRAINSCommonLib_DATA_DIRS}/ValidateInitialTransform_Test.nii.gz
+    ${BRAINSDemonWarp_BINARY_DIR}/ValidateInitialTransform_Test.nii.gz
     --compareNumberOfPixelsTolerance 20
     --compareIntensityTolerance 10
     BRAINSDemonWarpTest
-    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_rotation.input.nii.gz
-    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_RigidRotationMasks.output.nii.gz
-    --outputVolume ${BRAINSDemonWarp_BINARY_DIR}/diffeomorphicDemonsWithTransform_test.nii.gz
-    --outputPixelType uchar
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.rescale.rigid.nii.gz
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSDemonWarp_BINARY_DIR}/ValidateInitialTransform_Test.nii.gz
+    --outputPixelType short
     --outputDebug
-    --initializeWithTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_RigidRotationMasks.mat
+    --initializeWithTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_BSplineAnteScaleRotationRescaleHeadMasks.mat
     --smoothDeformationFieldSigma 0.0
     --numberOfPyramidLevels 1
     --arrayOfPyramidLevelIterations 1
@@ -518,7 +519,7 @@ add_test(ValidateLogDemons_Test_nii ${BRAINS_Demon_Warp_TESTS}
   --compare
     ${BRAINSCommonLib_DATA_DIRS}/logDemons.nii.gz
     ${BRAINSDemonWarp_BINARY_DIR}/logDemons_test.nii.gz
-    --compareNumberOfPixelsTolerance 0
+    --compareNumberOfPixelsTolerance 500
     --compareIntensityTolerance 10
     BRAINSDemonWarpTest
     --movingVolume ${BRAINSCommonLib_DATA_DIRS}/SUBJ_B_small/SUBJ_B_small_T1.nii.gz
@@ -540,7 +541,7 @@ add_test(ValidateSymmetricLogDemons_Test1_nii ${BRAINS_Demon_Warp_TESTS}
   --compare
     ${BRAINSCommonLib_DATA_DIRS}/symmetricLogDemons1.nii.gz
     ${BRAINSDemonWarp_BINARY_DIR}/symmetricLogDemons_test1.nii.gz
-    --compareNumberOfPixelsTolerance 0
+    --compareNumberOfPixelsTolerance 1300
     --compareIntensityTolerance 10
     BRAINSDemonWarpTest
     --movingVolume ${BRAINSCommonLib_DATA_DIRS}/SUBJ_B_small/SUBJ_B_small_T1.nii.gz
@@ -562,7 +563,7 @@ add_test(ValidateSymmetricLogDemons_Test2_nii ${BRAINS_Demon_Warp_TESTS}
   --compare
     ${BRAINSCommonLib_DATA_DIRS}/symmetricLogDemons2.nii.gz
     ${BRAINSDemonWarp_BINARY_DIR}/symmetricLogDemons_test2.nii.gz
-    --compareNumberOfPixelsTolerance 0
+    --compareNumberOfPixelsTolerance 1300
     --compareIntensityTolerance 10
     BRAINSDemonWarpTest
     --movingVolume ${BRAINSCommonLib_DATA_DIRS}/SUBJ_B_small/SUBJ_B_small_T1.nii.gz
@@ -577,6 +578,6 @@ add_test(ValidateSymmetricLogDemons_Test2_nii ${BRAINS_Demon_Warp_TESTS}
     --arrayOfPyramidLevelIterations 100,50,5
     --minimumFixedPyramid 4,4,4
     --minimumMovingPyramid 4,4,4
-    --registrationFilterType SymmetricLogDemons
     --initializeWithDeformationField ${BRAINSCommonLib_DATA_DIRS}/InitialDeformationField.nii.gz
+    --registrationFilterType SymmetricLogDemons
 )
