@@ -4961,6 +4961,8 @@ void vtkSlicerApplicationGUI::ModifyAllWidgetLock(int lockFlag)
   else
     {
     app->Script("$::slicer3::MeasurementsGUI ModifyAllLock %d", lockFlag);
+    /// 2d rulers
+    app->Script("foreach r [itcl::find objects -class RulerSWidget] {$r lockWidget %d }", lockFlag);
     }
 
 
