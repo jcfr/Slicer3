@@ -215,6 +215,7 @@ void vtkVolumeRenderingGUI::BuildGUI(void)
   // Define your help text and build the help frame here.
   const char *help = "Volume Rendering allows the rendering of volumes in 3D space and not only as 2D surfaces defined in 3D space. \n<a>http://wiki.slicer.org/slicerWiki/index.php/Modules:VolumeRendering-Documentation-3.6</a>\n Tutorials are available at <a>http://www.slicer.org/slicerWiki/index.php/Slicer3:Volume_Rendering_Tutorials</a>";
   const char *about = "This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details. The VolumeRendering module was contributed by Yanling Liu, NCI-Frederick/SAIC-Frederick, Andreas Freudling, Student Intern at SPL, BWH (Ron Kikinis) and Alex Yarmarkovich, Isomics Inc. (Steve Pieper). Some of the transfer functions were contributed by Kitware, Inc. (VolView)";
+
   vtkKWWidget *page = this->UIPanel->GetPageWidget ( "VolumeRendering" );
   this->BuildHelpAndAboutFrame ( page, help, about );
 
@@ -700,7 +701,7 @@ void vtkVolumeRenderingGUI::ProcessGUIEvents(vtkObject *caller, unsigned long ev
         if (dim[ii] < 2) 
           {
           this->DisplayMessageDialog("Invalid volume dimension, at least 2 is required");
-          this->NS_ImageData->SetSelected(NULL);
+          this->NS_ImageDataFg->SetSelected(NULL);
           return;
           }
         }
@@ -868,7 +869,7 @@ void vtkVolumeRenderingGUI::ProcessMRMLEvents(vtkObject *caller, unsigned long e
       if (slicer_viewer_widget)
       {
         slicer_viewer_widget->GetMainViewer()->RemoveViewProp(this->GetLogic()->GetVolumeActor() );
-        slicer_viewer_widget->Render();
+        slicer_viewer_widget->RequestRender();
       }
     }
 
@@ -1512,6 +1513,7 @@ void vtkVolumeRenderingGUI::InitializePipelineFromImageDataFg()
   }
 
   this->GetApplicationGUI()->SetExternalProgress(buf, 1.0);
+
 }
 
 int vtkVolumeRenderingGUI::ValidateParametersNode(vtkMRMLVolumeRenderingParametersNode* vspNode)

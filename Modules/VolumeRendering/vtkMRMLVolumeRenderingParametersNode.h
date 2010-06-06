@@ -152,6 +152,9 @@ class VTK_SLICERVOLUMERENDERING_EXPORT vtkMRMLVolumeRenderingParametersNode : pu
   vtkGetMacro (DepthPeelingThreshold, float);
   vtkSetMacro (DepthPeelingThreshold, float);
 
+  vtkGetMacro (DistanceColorBlending, float);
+  vtkSetMacro (DistanceColorBlending, float);
+
   vtkGetMacro (ICPEScale, float);
   vtkSetMacro (ICPEScale, float);
 
@@ -185,9 +188,15 @@ class VTK_SLICERVOLUMERENDERING_EXPORT vtkMRMLVolumeRenderingParametersNode : pu
   vtkGetMacro(FollowVolumeDisplayNode, int);
   vtkSetMacro(FollowVolumeDisplayNode, int);
 
+  vtkGetMacro(UseSingleVolumeProperty, int);
+  vtkSetMacro(UseSingleVolumeProperty, int);
+  
   vtkSetVector2Macro(WindowLevel, double);
   vtkGetVectorMacro(WindowLevel, double, 2);
 
+  vtkSetVector2Macro(WindowLevelFg, double);
+  vtkGetVectorMacro(WindowLevelFg, double, 2);
+  
 protected:
   vtkMRMLVolumeRenderingParametersNode();
   ~vtkMRMLVolumeRenderingParametersNode();
@@ -252,6 +261,7 @@ protected:
   int CPURaycastMode;
 
   float DepthPeelingThreshold;
+  float DistanceColorBlending;
 
   float ICPEScale;
   float ICPESmoothness;
@@ -312,8 +322,13 @@ protected:
   //follow window/level and thresholding setting in volume display node
   int FollowVolumeDisplayNode;
 
+  int UseSingleVolumeProperty;
+
   //bg volume window & level
   double WindowLevel[2];
+
+  //fg volume window & level
+  double WindowLevelFg[2];
 };
 
 #endif

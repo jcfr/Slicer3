@@ -212,14 +212,28 @@ protected:
     vtkKWScaleWithEntry *SC_GPURayCastICPEkt;//depth
     vtkKWScaleWithEntry *SC_GPURayCastICPEks;//smoothness
 
+    // Description:
+    // Distance Color Blending for GPU ray casting
+    vtkKWScaleWithEntry *SC_GPURayCastDistanceColorBlending;
+
     //--------------------------------------------------------------------------
     // Volume Property
     //--------------------------------------------------------------------------
+    
+    // Description:
+    // kwWidget volume property widget for default (bg) volume
     vtkSlicerVolumePropertyWidget *SVP_VolumePropertyWidget;
+
+    // Description:
+    // kwWidget volume property widget for fg volume
     vtkSlicerVolumePropertyWidget *SVP_VolumePropertyWidgetFg;
 
     vtkKWCheckButtonWithLabel *CB_FollowVolumeDisplayNode;
     vtkKWCheckButtonWithLabel *CB_FollowVolumeDisplayNodeFg;
+
+    // Description:
+    // Enable/Disable same volume property for both bg and fg volume
+    vtkKWCheckButtonWithLabel *CB_UseSingleVolumeProperty;
     
     // Description:
     // Enable/Disable thresholding
@@ -230,7 +244,7 @@ protected:
     vtkKWScaleWithEntry       *SC_ThresholdOpacity;
 
     vtkKWCheckButtonWithLabel *CB_UseThresholdFg;
-
+    
     vtkKWFrameWithLabel       *FrameThresholdingFg;
     vtkKWRange                *RA_ThresholdFg;
     vtkKWScaleWithEntry       *SC_ThresholdOpacityFg;

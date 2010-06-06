@@ -77,6 +77,7 @@ vtkMRMLVolumeRenderingParametersNode::vtkMRMLVolumeRenderingParametersNode()
   this->CPURaycastMode = 0;
 
   this->DepthPeelingThreshold = 0.0f;
+  this->DistanceColorBlending = 0.0f;
 
   this->ICPEScale = 1.0f;
   this->ICPESmoothness = 0.5f;
@@ -105,9 +106,13 @@ vtkMRMLVolumeRenderingParametersNode::vtkMRMLVolumeRenderingParametersNode()
   this->GPURaycastIIFusion = 0;
 
   this->FollowVolumeDisplayNode = 0;// by default do not follow volume display node
-
+  this->UseSingleVolumeProperty = 0;
+  
   this->WindowLevel[0] = 0.0;
   this->WindowLevel[1] = 0.0;
+
+  this->WindowLevelFg[0] = 0.0;
+  this->WindowLevelFg[1] = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -217,6 +222,13 @@ void vtkMRMLVolumeRenderingParametersNode::ReadXMLAttributes(const char** atts)
       ss >> this->DepthPeelingThreshold;
       continue;
     }
+    if (!strcmp(attName,"distanceColorBlending"))
+    {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> this->DistanceColorBlending;
+      continue;
+    }
     if (!strcmp(attName,"icpeScale"))
     {
       std::stringstream ss;
@@ -297,12 +309,26 @@ void vtkMRMLVolumeRenderingParametersNode::ReadXMLAttributes(const char** atts)
       ss >> this->WindowLevel[1];
       continue;
     }
+    if (!strcmp(attName,"windowLevelFg"))
+    {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> this->WindowLevelFg[0];
+      ss >> this->WindowLevelFg[1];
+      continue;
+    }
     if (!strcmp(attName,"followVolumeDisplayNode"))
     {
       std::stringstream ss;
       ss << attValue;
       ss >> this->FollowVolumeDisplayNode;
       continue;
+    }
+    if (!strcmp(attName, "useSingleVolumeProperty"))
+    {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> this->UseSingleVolumeProperty;
     }
   }
 }
@@ -323,6 +349,7 @@ void vtkMRMLVolumeRenderingParametersNode::WriteXML(ostream& of, int nIndent)
   of << indent << " currentVolumeMapper=\"" << this->CurrentVolumeMapper << "\"";
   of << indent << " cpuRaycastMode=\"" << this->CPURaycastMode << "\"";
   of << indent << " depthPeelingThreshold=\"" << this->DepthPeelingThreshold << "\"";
+  of << indent << " distanceColorBlending=\"" << this->DistanceColorBlending << "\"";
   of << indent << " icpeScale=\"" << this->ICPEScale << "\"";
   of << indent << " icpeSmoothness=\"" << this->ICPESmoothness << "\"";
   of << indent << " gpuRaycastTechnique=\"" << this->GPURaycastTechnique << "\"";
@@ -336,7 +363,9 @@ void vtkMRMLVolumeRenderingParametersNode::WriteXML(ostream& of, int nIndent)
   of << indent << " useFgThreshold=\"" << this->UseFgThreshold << "\"";
   of << indent << " gpuRaycastIIBgFgRatio=\"" << this->GPURaycastIIBgFgRatio << "\"";
   of << indent << " followVolumeDisplayNode=\"" << this->FollowVolumeDisplayNode << "\"";
+  of << indent << " useSingleVolumeProperty=\"" << this->UseSingleVolumeProperty << "\"";
   of << indent << " windowLevel=\"" << this->WindowLevel[0] << " " << this->WindowLevel[1] << "\"";
+  of << indent << " windowLevelFg=\"" << this->WindowLevelFg[0] << " " << this->WindowLevelFg[1] << "\"";
 }
 
 //----------------------------------------------------------------------------
@@ -410,6 +439,7 @@ void vtkMRMLVolumeRenderingParametersNode::Copy(vtkMRMLNode *anode)
   this->SetGPUMemorySize(node->GetGPUMemorySize());
   this->SetEstimatedSampleDistance(node->GetEstimatedSampleDistance());
   this->SetDepthPeelingThreshold(node->GetDepthPeelingThreshold());
+  this->SetDistanceColorBlending(node->GetDistanceColorBlending());
   this->SetICPEScale(node->GetICPEScale());
   this->SetICPESmoothness(node->GetICPESmoothness());
   this->SetCPURaycastMode(node->GetCPURaycastMode());
@@ -424,7 +454,9 @@ void vtkMRMLVolumeRenderingParametersNode::Copy(vtkMRMLNode *anode)
   this->SetGPURaycastIIBgFgRatio(node->GetGPURaycastIIBgFgRatio());
   this->SetGPURaycastIIFusion(node->GetGPURaycastIIFusion());
   this->SetWindowLevel(node->GetWindowLevel());
+  this->SetWindowLevelFg(node->GetWindowLevelFg());
   this->SetFollowVolumeDisplayNode(node->GetFollowVolumeDisplayNode());
+  this->SetUseSingleVolumeProperty(node->GetUseSingleVolumeProperty());
   
   this->DisableModifiedEventOff();
   this->InvokePendingModifiedEvent();
