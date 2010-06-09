@@ -29,20 +29,6 @@
       <channel>input</channel>
     </image>
 
-    <!--
-    <string-enumeration>
-      <name>initializeTransformMode</name>
-      <longflag>initializeTransformMode</longflag>
-      <label>Intitialze Transform Mode</label>
-      <description>Determine how to initialize the transform center.  GeometryAlign on assumes that the center of the voxel lattice of the images represent similar structures.  MomentsAlign assumes that the center of mass of the images represent similar structures.  useCenterOfHeadAlign attempts to use the top of head and shape of neck to drive a center of mass estimate.  Off assumes that the physical space of the images are close, and that centering in terms of the image Origins is a good starting point.  This flag is mutually exclusive with the initialTransform flag.</description>
-      <default>useGeometryAlign</default>
-      <element>Off</element>
-      <element>useMomentsAlign</element>
-      <element>useCenterOfHeadAlign</element>
-      <element>useGeometryAlign</element>
-    </string-enumeration>
-    -->
-
   </parameters>
   <!-- -->
   <parameters>
@@ -111,21 +97,6 @@
        <description>Perform a rigid registration as part of the sequential registration steps.  This family of options superceeds the use of transformType if any of them are set.</description>
        <default>false</default>
     </boolean>
-    <!--
-    <string-enumeration>
-      <name>registrationClass</name>
-      <longflag>registrationClass</longflag>
-      <label>Class of Registration</label>
-      <description>Specifies one of the five supported transform types.  The valid types are, (R)Rigid, (R+S)ScaleVersor3D, (R+S+S)ScaleSkewVersor3D, (A)Affine, (BS)BSpline, (O)ther.  Note that registration proceeds from the lowest parameter dimension upto the parameter type choosen.  Selecting BS for registrationClass has the same effect as setting transformType to "Rigid,ScaleVersor3D,ScaleSkewVersor3D,Affine,BSpline".  Set to (O)ther when using the more flexible Transform Type flag under Registration Parameters settings.</description>
-      <default>O</default>
-      <element>R</element>
-      <element>R+S</element>
-      <element>R+S+S</element>
-      <element>A</element>
-      <element>BS</element>
-      <element>O</element>
-    </string-enumeration>
-  -->
   </parameters>
 
   <parameters advanced="false">
@@ -183,11 +154,12 @@
   <parameters advanced="true">
     <label>Registration Parameters</label>
 
+
     <string-vector>
       <name>transformType</name>
       <longflag>transformType</longflag>
       <label>Transform Type</label>
-      <description>Specifies a list of registration types to be used.  The valid types are, Rigid, ScaleVersor3D, ScaleSkewVersor3D, Affine, and BSpline.  Specifiying more than one in a comma separated list will initialize the next stage with the previous results. If registrationClass flag is used, it overrides this parameter setting.</description>
+      <description>Specifies a list of registration types to be used.  The valid types are, Rigid, ScaleVersor3D, ScaleSkewVersor3D, Affine, and BSpline.  Specifiying more than one in a comma separated list will initialize the next stage with the previous results.</description>
       <default></default>
     </string-vector>
 
@@ -529,24 +501,6 @@
       <description>A bit vector to permit linear transform parameters to vary under optimization.  The vector order corresponds with transform parameters, and beyond the end ones fill in as a default.  For instance, you can choose to rotate only in x (pitch) with 1,0,0;  this is mostly for expert use in turning on and off individual degrees of freedom in rotation, translation or scaling without multiplying the number of transform representations; this trick is probably meaningless when tried with the general affine transform.</description>
       <default></default>
     </integer-vector>
-<!-- //No longer in use
-    <integer-vector>
-      <name>fixedVolumeOrigin</name>
-      <longflag>fixedVolumeOrigin</longflag>
-      <label>Fixed Image Origin</label>
-      <description>The coordinates of the origin of the fixed image.  This will over-ride the information read from disk and is VERY DANGEROUS.</description>
-      <default>0,0,0</default>
-    </integer-vector>
-
-    <integer-vector>
-      <name>movingVolumeOrigin</name>
-      <longflag>movingVolumeOrigin</longflag>
-      <label>Moving Image Origin</label>
-      <description>The coordinates of the origin of the moving image.  This will over-ride the information read from disk and is VERY DANGEROUS.</description>
-      <default>0,0,0</default>
-    </integer-vector>
-    -->
-
   </parameters>
 
 </executable>
