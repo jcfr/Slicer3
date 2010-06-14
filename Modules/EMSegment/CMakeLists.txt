@@ -18,8 +18,6 @@ endif(NOT Slicer3_SOURCE_DIR)
 # --------------------------------------------------------------------------
 # Include dirs
 
-set (IBM_FLAG 0)
-
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentConfigure.h.in 
   ${CMAKE_CURRENT_BINARY_DIR}/vtkEMSegmentConfigure.h

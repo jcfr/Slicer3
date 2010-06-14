@@ -89,7 +89,7 @@ namespace eval EMSegmenterPreProcessingTcl {
       # -------------------------------------
       proc Run { } {
           variable preGUI
-      variable workingDN 
+          variable workingDN 
           variable subjectNode
           variable inputAtlasNode
           variable mrmlManager
@@ -106,15 +106,15 @@ namespace eval EMSegmenterPreProcessingTcl {
           # Step 1 : Initialize/Check Input 
           if {[InitPreProcessing]} { return 1}
 
-      # ----------------------------------------------------------------------------
+          # ----------------------------------------------------------------------------
           # We have to create this function so that we can run it in command line mode 
           #
-      set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
+          set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
           set skullStrippedFlag [ GetCheckButtonValueFromMRML  $skullStrippedFlagID ]
           set iccMaskVTKID [GetVolumeMenuButtonValueFromMRML $iccMaskSelectID ] 
           set inhomogeneityCorrectionFlag [GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID ]
 
-      puts "==>Setting $atlasAlignedFlag $skullStrippedFlag $iccMaskVTKID $inhomogeneityCorrectionFlag"
+          puts "==>Setting $atlasAlignedFlag $skullStrippedFlag $iccMaskVTKID $inhomogeneityCorrectionFlag"
 
           if { ($atlasAlignedFlag == 0) && ($skullStrippedFlag == 1) } {
              PrintError "Run: We currently cannot align the atlas to skull stripped image" 
@@ -146,7 +146,7 @@ namespace eval EMSegmenterPreProcessingTcl {
           } else {
               puts "Skipping ICC Mask generation! - Not yet implemented"
               set subjectICCMaskNode ""
-      } 
+          } 
 
           # -------------------------------------
           # Step 4: Perform Intensity Correction
@@ -162,15 +162,15 @@ namespace eval EMSegmenterPreProcessingTcl {
                puts "Skipping intensity correction"
          } 
 
-     # write results over to subjectNode 
-
-     # -------------------------------------
-     # Step 5: Atlas Alignment - you will also have to include the masks 
-     # Defines $workingDN GetAlignedAtlasNode
-      if { [RegisterAtlas [expr !$atlasAlignedFlag]] } { 
-           PrintError "Run: Atlas alignment  failed !" 
-           return 1
-     }
+          # write results over to subjectNode 
+     
+          # -------------------------------------
+          # Step 5: Atlas Alignment - you will also have to include the masks 
+          # Defines $workingDN GetAlignedAtlasNode
+           if { [RegisterAtlas [expr !$atlasAlignedFlag]] } { 
+                PrintError "Run: Atlas alignment  failed !" 
+                return 1
+          }
 
 
          # -------------------------------------
@@ -180,7 +180,7 @@ namespace eval EMSegmenterPreProcessingTcl {
              return 1
          } 
 
-    return 0
+       return 0
     }
 
     #
@@ -272,7 +272,7 @@ namespace eval EMSegmenterPreProcessingTcl {
            # $n4Node SetParameterAsString "outputBiasFieldName" [$outputBiasVolume GetID]      
            [$n4Module GetLogic] LazyEvaluateModuleTarget $n4Node 
            [$n4Module GetLogic] ApplyAndWait $n4Node
-        set outputVolume  [$outputNode GetImageData]
+           set outputVolume  [$outputNode GetImageData]
 
        # Make sure that input and output are of the same type !
        if {[$inputVolume GetScalarType] != [$outputVolume GetScalarType] } {
@@ -286,7 +286,7 @@ namespace eval EMSegmenterPreProcessingTcl {
            set result "${result}$outputNode " 
        }
 
-       $n4Node Delete
+       DeleteCommandLine $n4Node 
        $n4Module Exit
 
        return "$result"
@@ -325,11 +325,13 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable subjectNode 
         variable inputAtlasNode 
         variable outputAtlasNode 
+    
+        set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationOff]) ] 
+        set bSplineFlag [expr ([$mrmlManager GetRegistrationDeformableType ]  == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationOff]) ] 
 
-        if {($alignFlag == 0) || (([$mrmlManager GetRegistrationAffineType] == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationOff])  && ([$mrmlManager GetRegistrationDeformableType ]  == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationOff])) } {
-          return [SkipAtlasRegistration]
+        if {($alignFlag == 0) || (( $affineFlag == 0 ) && ( $bSplineFlag == 0 ))  } {
+        return [SkipAtlasRegistration]
         }
-
 
         puts "=========================================="
         puts "== Register Atlas "
@@ -390,51 +392,79 @@ namespace eval EMSegmenterPreProcessingTcl {
         set fixedRASToMovingRASTransformAffine [ vtkTransform New]
         set fixedRASToMovingRASTransformDeformable ""
 
-    puts "========== Info ========="
+        puts "========== Info ========="
         puts "= Fixed:   [$fixedTargetVolumeNode GetName] "
         puts "= Moving:  [$movingAtlasVolumeNode GetName] "
         puts "= Affine:  $affineType"
         puts "= BSpline: $deformableType"
-    puts "= Interp:  $interpolationType"
-    puts "========================="
-
-        
-
-    
+        puts "= Interp:  $interpolationType"
+        puts "========================="
 
         # ----------------------------------------------------------------
         # affine registration
         # ----------------------------------------------------------------
-
-        if { $affineType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationOff ] } {
-           puts "Skipping affine registration of atlas image." 
-        } else {
-           puts  "Registering atlas image rigid..."
-           $LOGIC SlicerRigidRegister $fixedTargetVolumeNode $movingAtlasVolumeNode "" $fixedRASToMovingRASTransformAffine $affineType $interpolationType 0 
-           puts "Atlas-to-target transform (fixedRAS -->> movingRAS): " 
-           for { set  r 0 } { $r < 4 } { incr r } {
-              puts -nonewline "    "
-              for { set  c 0 } { $c < 4 } { incr c } {
-                 puts -nonewline "[[$fixedRASToMovingRASTransformAffine GetMatrix] GetElement $r $c]   " 
-              }
-              puts " " 
-           }
-    }
+        # old Style 
+        if { 0 } {
+             if { $affineType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationOff ] } {
+               puts "Skipping affine registration of atlas image." 
+             } else {
+               puts  "Registering atlas image rigid..."
+              $LOGIC SlicerRigidRegister $fixedTargetVolumeNode $movingAtlasVolumeNode "" $fixedRASToMovingRASTransformAffine $affineType $interpolationType 0 
+               puts "Atlas-to-target transform (fixedRAS -->> movingRAS): " 
+               for { set  r 0 } { $r < 4 } { incr r } {
+                  puts -nonewline "    "
+                  for { set  c 0 } { $c < 4 } { incr c } {
+                     puts -nonewline "[[$fixedRASToMovingRASTransformAffine GetMatrix] GetElement $r $c]   " 
+                  }
+                  puts " " 
+               }
+             }
+        }
 
         # ----------------------------------------------------------------
         # deformable registration
         # ----------------------------------------------------------------
 
-    set OffType [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationOff ]
-    puts "Deformable registration $deformableType Off: $OffType" 
-
-        if { $deformableType == $OffType } {
-             puts "Skipping deformable registration of atlas image" 
+        if { 0 }  {
+            # old Style 
+            set OffType [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationOff ]
+            
+            puts "Deformable registration $deformableType Off: $OffType" 
+            if { $deformableType == $OffType } {
+            puts "Skipping deformable registration of atlas image" 
+            } else {
+                  puts "Registering atlas image B-Spline..." 
+                  set fixedRASToMovingRASTransformDeformable [vtkGridTransform New]
+                  $fixedRASToMovingRASTransformDeformable SetInterpolationModeToCubic
+                  $LOGIC SlicerBSplineRegister $fixedTargetVolumeNode $movingAtlasVolumeNode "" $fixedRASToMovingRASTransformDeformable $fixedRASToMovingRASTransformAffine $deformableType $interpolationType 0
+               }
         } else {
-            puts "Registering atlas image B-Spline..." 
-            set fixedRASToMovingRASTransformDeformable [vtkGridTransform New]
-            $fixedRASToMovingRASTransformDeformable SetInterpolationModeToCubic
-            $LOGIC SlicerBSplineRegister $fixedTargetVolumeNode $movingAtlasVolumeNode "" $fixedRASToMovingRASTransformDeformable $fixedRASToMovingRASTransformAffine $deformableType $interpolationType 0
+            # New type 
+            set registrationType  "CenterOfHeadAlign Rigid"
+        set fastFlag 0 
+            if { $affineFlag } {
+               set registrationType  "${registrationType} Affine"
+           if { $affineType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationRigidMMIFast ] } {
+           set fastFlag 1
+           } else {
+           set fastFlag 0 
+           }
+            }
+    
+            if { $bSplineFlag } {
+                set registrationType  "${registrationType} BSpline"
+        if { $deformableType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationBSplineMMIFast ] } {
+           set fastFlag 1
+           } else {
+           set fastFlag 0 
+           }
+            }
+    
+            set backgroundLevel  [$LOGIC GuessRegistrationBackgroundLevel $movingAtlasVolumeNode]
+            set transformNode [BRAINSRegistration $fixedTargetVolumeNode  $movingAtlasVolumeNode  $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag ]
+            if {  $transformNode == "" } {
+            return 1
+            }
         }
 
         # ----------------------------------------------------------------
@@ -442,34 +472,44 @@ namespace eval EMSegmenterPreProcessingTcl {
         # ----------------------------------------------------------------
  
         for { set i  0 } {$i < [$outputAtlasNode GetNumberOfVolumes] } { incr i } {
-           set movingVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
-           set outputVolumeNode  [$outputAtlasNode GetNthVolumeNode $i ]
-
-           if {[$movingVolumeNode GetImageData] == ""} {
-             PrintError "RegisterAtlas: Moving image is null, skipping: $i"
-             return 1
-           }    
-           if { [$outputVolumeNode GetImageData]  == ""} {
-             PrintError "RegisterAtlas: Registration output is null, skipping: $i" 
-             return 1
+            if { $i == $atlasRegistrationVolumeIndex} { continue } 
+               set movingVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
+               set outputVolumeNode  [$outputAtlasNode GetNthVolumeNode $i ]
+        
+               if {[$movingVolumeNode GetImageData] == ""} {
+                 PrintError "RegisterAtlas: Moving image is null, skipping: $i"
+                 return 1
+               }    
+               if { [$outputVolumeNode GetImageData]  == ""} {
+                 PrintError "RegisterAtlas: Registration output is null, skipping: $i" 
+                 return 1
+               }
+               puts "Resampling atlas image $i ..." 
+        
+               set backgroundLevel  [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
+               puts "Guessed background level: $backgroundLevel"
+        
+               if { 0 } {
+                 # resample moving image
+                 # old style
+                 if {$fixedRASToMovingRASTransformDeformable != "" } {
+                   $LOGIC SlicerImageResliceWithGrid $movingVolumeNode $outputVolumeNode $fixedTargetVolumeNode $fixedRASToMovingRASTransformDeformable $interpolationType $backgroundLevel
+                 } else {
+                   $LOGIC SlicerImageReslice $movingVolumeNode $outputVolumeNode $fixedTargetVolumeNode $fixedRASToMovingRASTransformAffine $interpolationType $backgroundLevel
+                 }
+             } else {
+                if { [BRAINSResample  $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel ] } {
+                return 1
+             }
            }
-           puts "Resampling atlas image $i ..." 
+        } 
 
-           set backgroundLevel  [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
-           puts "Guessed background level: $backgroundLevel"
-
-           # resample moving image
-           if {$fixedRASToMovingRASTransformDeformable != "" } {
-               $LOGIC SlicerImageResliceWithGrid $movingVolumeNode $outputVolumeNode $fixedTargetVolumeNode $fixedRASToMovingRASTransformDeformable $interpolationType $backgroundLevel
-           } else {
-             $LOGIC SlicerImageReslice $movingVolumeNode $outputVolumeNode $fixedTargetVolumeNode $fixedRASToMovingRASTransformAffine $interpolationType $backgroundLevel
-           }
-    } 
-
+    if { 0 } {
         $fixedRASToMovingRASTransformAffine Delete
         if { $fixedRASToMovingRASTransformDeformable != "" } { 
-          $fixedRASToMovingRASTransformDeformable Delete
+        $fixedRASToMovingRASTransformDeformable Delete
         }
+    }
 
         puts "Atlas-to-target registration complete." 
         $workingDN SetAlignedAtlasNodeIsValid 1
@@ -496,8 +536,8 @@ namespace eval EMSegmenterSimpleTcl {
             return 1
         }
 
-        $inputChannelGUI DefineCheckButton "Are the input scans skull stripped ?" 0 $EMSegmenterPreProcessingTcl::skullStrippedFlagID
-        $inputChannelGUI DefineCheckButton "Are the input scans image inhomogeneity corrected ?" 0 $EMSegmenterPreProcessingTcl::inhomogeneityCorrectionFlagID
+        $inputChannelGUI DefineCheckButton "Skull strip input scans:" 0 $EMSegmenterPreProcessingTcl::skullStrippedFlagID
+        $inputChannelGUI DefineCheckButton "Do not perform image inhomogeneity correction on input scans ?" 0 $EMSegmenterPreProcessingTcl::inhomogeneityCorrectionFlagID
    
         # Define this at the end of the function so that values are set by corresponding MRML node
         $inputChannelGUI SetButtonsFromMRML
