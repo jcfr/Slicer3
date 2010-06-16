@@ -60,6 +60,10 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/vtkProstateNavConfigure.h
   )
 
+#
+# Installation
+#
+
 file(GLOB headers 
   "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/TransPerinealProstateRobot/*.h"
@@ -75,6 +79,25 @@ install(FILES
   DESTINATION ${Slicer3_INSTALL_MODULES_INCLUDE_DIR}/${PROJECT_NAME} COMPONENT Development
   )
 
+# Install transrectal robot files
+set(TransRectalRobotSubdir TransRectalProstateRobot)
+foreach(TransRectalRobotFile 
+  Sheath.stl
+  Workspace150mm.stl
+  Workspace200mm.stl
+  )
+  # Copy to the build tree (for Slicer execution in the Slicer3-build directory)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/${TransRectalRobotSubdir}/${TransRectalRobotFile}
+    ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/${TransRectalRobotSubdir}/${TransRectalRobotFile}
+    COPYONLY
+    )
+  # Copy to the installation target (for Slicer execution when it is installed)
+  install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/${TransRectalRobotSubdir}/${TransRectalRobotFile} 
+    DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/${TransRectalRobotSubdir}
+    )
+endforeach(TransRectalRobotFile)  
 
 # --------------------------------------------------------------------------
 # Sources
