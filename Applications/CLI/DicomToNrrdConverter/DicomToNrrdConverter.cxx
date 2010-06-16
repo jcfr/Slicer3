@@ -127,7 +127,8 @@ namespace {
   const gdcm::DictEntry PhilipsDictDiffusionDirectionAP( 0x2005, 0x10b1, "FL", "4", "Diffusion Direction A/P" );
   const gdcm::DictEntry PhilipsDictDiffusionDirectionFH( 0x2005, 0x10b2, "FL", "4", "Diffusion Direction F/H" );
 
-#if 1 //Defined in gdcm dicmoV3.dic
+#if 0 
+  //Defined in gdcm dicomV3.dic
   // Tags defined in Supplement 49 
   // 0018 9075 CS 1 Diffusion Directionality
   // 0018 9076 SQ 1 Diffusion Gradient Direction Sequence
@@ -276,7 +277,7 @@ int main(int argc, char* argv[])
 {
   PARSE_ARGS;
 
-#if 1 //Defined in gdcm dicomV3.dic
+#if 0 //Defined in gdcm dicomV3.dic
   gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(Supplement49DictDiffusionDirection);
   gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(Supplement49DictDiffusionGradientDirectionSequence);
   gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(Supplement49DictDiffusionBValue);
@@ -405,6 +406,40 @@ int main(int argc, char* argv[])
     vendor[k] =  toupper( vendor[k] );
   }
 
+  // check the tag 0008|0060 for modlity information
+  std::string modality;
+  ExtractBinValEntry( headerLite, 0x0008, 0x0060, modality );
+  for (unsigned int k = 0; k < modality.size(); k++)
+  {
+    modality[k] =  toupper( modality[k] );
+  }
+  if (  modality.find("PT") != std::string::npos 
+        || modality.find("ST") != std::string::npos )
+    {
+      typedef itk::Image<float, 3> USVolumeType;
+      itk::ImageSeriesReader<USVolumeType>::Pointer seriesReader = 
+        itk::ImageSeriesReader<USVolumeType>::New();
+      seriesReader->SetFileNames( filenamesInSeries );
+
+      itk::ImageFileWriter<USVolumeType>::Pointer nrrdImageWriter = 
+        itk::ImageFileWriter<USVolumeType>::New();
+
+      nrrdImageWriter->SetFileName( nhdrname );
+      nrrdImageWriter->SetInput( seriesReader->GetOutput() );
+      try 
+        { 
+          nrrdImageWriter->Update(); 
+        } 
+      catch( itk::ExceptionObject & err ) 
+        { 
+          std::cerr << "ExceptionObject caught !" << std::endl; 
+          std::cerr << err << std::endl; 
+          return EXIT_FAILURE;
+        } 
+      return EXIT_SUCCESS;
+    }
+
+  
   std::string ImageType;
   ExtractBinValEntry( headerLite, 0x0008, 0x0008, ImageType );
   std::cout << ImageType << std::endl;
@@ -519,13 +554,74 @@ int main(int argc, char* argv[])
 
   //Make a hash of the sliceLocations in order to get the correct count.  This is more reliable since SliceLocation may not be available.
   std::map<std::string,int> sliceLocations;
+  std::vector<int> sliceLocationIndicator;
+  std::vector<std::string> sliceLocationStrings;
+  sliceLocationIndicator.resize( nSlice );
   for (unsigned int k = 0; k < nSlice; k++)
     {
       ExtractBinValEntry( allHeaders[k], 0x0020, 0x0032, tag );
+      sliceLocationStrings.push_back( tag );
       sliceLocations[tag]++;
     }
+
+  for (unsigned int k = 0; k < nSlice; k++)
+    {
+      std::map<std::string,int>::iterator it = sliceLocations.find( sliceLocationStrings[k] );
+      sliceLocationIndicator[k] = distance( sliceLocations.begin(), it );
+      // std::cout << k << ": " << filenames[k] << " -- " << sliceLocationStrings[k] << " -- " << sliceLocationIndicator[k] << std::endl;
+    }
+
   unsigned int numberOfSlicesPerVolume=sliceLocations.size();
   std::cout << "=================== numberOfSlicesPerVolume:" << numberOfSlicesPerVolume << std::endl;
+
+  if ( nSlice >= 2)
+    {
+      if (sliceLocationIndicator[0] == sliceLocationIndicator[1])
+        {
+          std::cout << "Dicom images are ordered in a slice interleaving way.\n";
+          // reorder slices into a volume interleaving manner
+          int Ns = numberOfSlicesPerVolume;
+          int Nv = nSlice / Ns; // do we need to do error check here
+
+          VolumeType::RegionType R = reader->GetOutput()->GetLargestPossibleRegion();
+          R.SetSize(2,1);
+          std::vector<VolumeType::PixelType> v(nSlice);
+          std::vector<VolumeType::PixelType> w(nSlice);
+          
+          itk::ImageRegionIteratorWithIndex<VolumeType> I( reader->GetOutput(), R );
+          for (I.GoToBegin(); !I.IsAtEnd(); ++I)
+            {
+              VolumeType::IndexType idx = I.GetIndex();
+              
+              // extract all values in one "column"
+              for (unsigned int k = 0; k < nSlice; k++)
+                {
+                  idx[2] = k;
+                  v[k] = reader->GetOutput()->GetPixel( idx );
+                }
+
+              // permute
+              for (int k = 0; k < Nv; k++)
+                {
+                  for (int m = 0; m < Ns; m++)
+                    {
+                      w[k*Ns+m] = v[m*Nv+k];
+                    }
+                }
+
+              // put things back in order
+              for (unsigned int k = 0; k < nSlice; k++)
+                {
+                  idx[2] = k;
+                  reader->GetOutput()->SetPixel( idx, w[k] );
+                }              
+            }
+        }
+      else
+        {
+          std::cout << "Dicom images are ordered in a volume interleaving way.\n";
+        }
+    }
 
   itk::Matrix<double,3,3> MeasurementFrame;
   MeasurementFrame.SetIdentity();
@@ -756,7 +852,7 @@ int main(int argc, char* argv[])
       else
         {
         UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
-        vect3d.normalize();
+        // vect3d.normalize();
         DiffusionVectors.push_back(vect3d);
         }
 
@@ -928,9 +1024,10 @@ int main(int argc, char* argv[])
           }
 
         UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
-        vect3d.normalize();
+        // vect3d.normalize();
         DiffusionVectors.push_back(vect3d);
         }
+
       std::cout << "DiffusionDirectionality: " << DiffusionDirectionality  << " :B-Value " << b << " :DiffusionOrientation " << vect3d << " :Filename " << filenames[k] << std::endl;
       }
     }
@@ -1003,7 +1100,7 @@ int main(int argc, char* argv[])
         vect3d[1] = valueArray[1];
         vect3d[2] = valueArray[2];
         UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
-        vect3d.normalize();
+        // vect3d.normalize();
         DiffusionVectors.push_back(vect3d);
         int p = bValues.size();
         std::cout << "Image#: " << k << " BV: " << bValues[p-1] << " GD: " << DiffusionVectors[p-1] << std::endl;
@@ -1160,7 +1257,7 @@ int main(int argc, char* argv[])
           vnl_vector_fixed<double, 3> vect3d;
           vect3d[0] = v[0]; vect3d[1] = v[1]; vect3d[2] = v[2];
           UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
-          vect3d.normalize();
+          // vect3d.normalize();
           DiffusionVectors.push_back( vect3d );
 
           bValues.push_back( *(double*)(dwbValue.c_str()) );
@@ -1316,13 +1413,12 @@ int main(int argc, char* argv[])
       region.SetIndex( 2, slcMosaic );
 
       itk::ImageRegionConstIteratorWithIndex<VolumeType> imIt( img, region );
-
       for ( dmIt.GoToBegin(), imIt.GoToBegin(); !dmIt.IsAtEnd(); ++dmIt, ++imIt)
         {
         dmIt.Set( imIt.Get() );
         }
+      
       }
-
     if (nUsableVolumes == 1)
       {
       imgWriter->SetInput( dmImage );
@@ -1343,7 +1439,7 @@ int main(int argc, char* argv[])
       {
         if ( !NrrdFormat )
           { 
-            rawWriter->SetInput( reader->GetOutput() );
+            rawWriter->SetInput( dmImage );
             try
               {
                 rawWriter->Update();
@@ -1567,7 +1663,7 @@ int main(int argc, char* argv[])
         {
         scaleFactor = sqrt( bValues[k]/maxBvalue );
         }
-      //std::cout << "For Multiple BValues: " << k << ": " << scaleFactor << std::endl;
+      std::cout << "For Multiple BValues: " << k << " -- " << bValues[k] << " / " << maxBvalue << " = " << scaleFactor << std::endl;
       if(useIdentityMeaseurementFrame)
         {
         vnl_vector_fixed<double,3> RotatedDiffusionVectors=InverseMeasurementFrame*(DiffusionVectors[k-nBaseline]);
