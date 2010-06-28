@@ -146,6 +146,7 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   //----------------------------------------------------------------
   // Configuration Frame
 
+  this->ShowSecondaryWindowCheckButton = NULL; 
   this->ProstateNavManagerSelectorWidget = NULL;
   this->RobotSelectorWidget = NULL;
 
@@ -194,6 +195,13 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
 
   //----------------------------------------------------------------
   // Configuration Frame
+
+   if (this->ShowSecondaryWindowCheckButton)
+    {
+    this->ShowSecondaryWindowCheckButton->SetParent(NULL);
+    this->ShowSecondaryWindowCheckButton->Delete();
+    this->ShowSecondaryWindowCheckButton = NULL;
+    }
 
   if (this->ProstateNavManagerSelectorWidget)
     {
@@ -774,21 +782,6 @@ void vtkProstateNavGUI::Enter()
       }
     }
 
-  if (this->SecondaryWindow==NULL)
-  {
-    this->SecondaryWindow=vtkSlicerSecondaryViewerWindow::New();
-  }
-  if (!this->SecondaryWindow->IsCreated())
-  {
-    this->SecondaryWindow->SetApplication(this->GetApplication());
-    this->SecondaryWindow->Create();
-    vtkSlicerViewerWidget* viewerWidget=this->SecondaryWindow->GetViewerWidget();
-    if (viewerWidget!=NULL && viewerWidget->GetViewNode()!=NULL)
-    {
-      viewerWidget->GetViewNode()->SetRenderMode(vtkMRMLViewNode::Orthographic);
-    }
-  }
-  this->SecondaryWindow->DisplayOnSecondaryMonitor();
 
   AddMRMLObservers();
 
@@ -962,6 +955,18 @@ void vtkProstateNavGUI::BuildGUIForConfigurationFrame ()
   configurationFrame->ExpandFrame();
   app->Script("pack %s -side top -anchor center -fill x -padx 2 -pady 2 -in %s",
               configurationFrame->GetWidgetName(), page->GetWidgetName());
+
+
+  // add an option to show the secondary window
+  this->ShowSecondaryWindowCheckButton = vtkKWCheckButton::New();
+  this->ShowSecondaryWindowCheckButton->SetParent (configurationFrame->GetFrame());
+  this->ShowSecondaryWindowCheckButton->Create ( );
+  this->ShowSecondaryWindowCheckButton->SetText("Show the Secondary Window");
+  this->ShowSecondaryWindowCheckButton->SelectedStateOff();
+  this->ShowSecondaryWindowCheckButton->SetCommand(this, "ShowSecondaryWindowCheckButtonCallback");
+  this->ShowSecondaryWindowCheckButton->SetBalloonHelpString("Show the secondary window.");
+  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+               this->ShowSecondaryWindowCheckButton->GetWidgetName());
   
   //  Manager node selector widget
   this->ProstateNavManagerSelectorWidget = vtkSlicerNodeSelectorWidget::New() ;
@@ -2004,3 +2009,34 @@ void vtkProstateNavGUI::RequestRenderInViewerWidgets()
     }
   }
 }
+
+
+void vtkProstateNavGUI::ShowSecondaryWindowCheckButtonCallback(int checked)
+{
+  // ShowSecondaryWindowCheckButton Pressed
+  if (this->ShowSecondaryWindowCheckButton)
+    {
+    if (checked)
+      {
+       if (this->SecondaryWindow==NULL)
+         {
+         this->SecondaryWindow=vtkSlicerSecondaryViewerWindow::New();
+         }
+         if (!this->SecondaryWindow->IsCreated())
+           {
+           this->SecondaryWindow->SetApplication(this->GetApplication());
+           this->SecondaryWindow->Create();
+           vtkSlicerViewerWidget* viewerWidget=this->SecondaryWindow->GetViewerWidget();
+           if (viewerWidget!=NULL && viewerWidget->GetViewNode()!=NULL)
+             {
+             viewerWidget->GetViewNode()->SetRenderMode(vtkMRMLViewNode::Orthographic);
+             }
+           }
+         this->SecondaryWindow->DisplayOnSecondaryMonitor();
+      } 
+    else
+    {
+    }
+    }
+}
+

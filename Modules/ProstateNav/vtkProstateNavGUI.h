@@ -169,6 +169,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   // Description:
   // Request render in all viewer widgets
   void RequestRenderInViewerWidgets();
+  void ShowSecondaryWindowCheckButtonCallback (int checked);
 
  protected:
   vtkProstateNavGUI ( );
@@ -189,6 +190,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
   // Configuration Frame
 
+  vtkKWCheckButton *ShowSecondaryWindowCheckButton;
   vtkSlicerNodeSelectorWidget* ProstateNavManagerSelectorWidget;
   vtkSlicerNodeSelectorWidget* RobotSelectorWidget;
 
@@ -220,6 +222,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   //----------------------------------------------------------------
 
   void UpdateGUI();  
+
 
  private:
 
