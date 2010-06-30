@@ -919,7 +919,7 @@ void vtkProstateNavStepTargetingTemplate::UpdateTargetListGUI()
 
   bool deleteFlag = true;
 
-  if (numPoints != this->TargetList->GetWidget()->GetNumberOfRows())
+  if (this->TargetList && numPoints != this->TargetList->GetWidget()->GetNumberOfRows())
     {
     // clear out the multi column list box and fill it in with the
     // new list
@@ -1114,7 +1114,7 @@ void vtkProstateNavStepTargetingTemplate::UpdateGUI()
 
   const char* volNodeID = mrmlNode->GetTargetingVolumeNodeRef();
   vtkMRMLScalarVolumeNode *volNode=vtkMRMLScalarVolumeNode::SafeDownCast(this->GetLogic()->GetApplicationLogic()->GetMRMLScene()->GetNodeByID(volNodeID));
-  if ( volNode )
+  if (volNode && this->VolumeSelectorWidget)
   {
     this->VolumeSelectorWidget->UpdateMenu();
     this->VolumeSelectorWidget->SetSelected( volNode );
@@ -1122,7 +1122,7 @@ void vtkProstateNavStepTargetingTemplate::UpdateGUI()
 
   const char* targetNodeID = mrmlNode->GetTargetPlanListNodeID();
   vtkMRMLFiducialListNode *targetNode=vtkMRMLFiducialListNode::SafeDownCast(this->GetLogic()->GetApplicationLogic()->GetMRMLScene()->GetNodeByID(targetNodeID));
-  if (targetNode)
+  if (targetNode && this->TargetListSelectorWidget)
     {
     this->TargetListSelectorWidget->UpdateMenu();
     this->TargetListSelectorWidget->SetSelected(targetNode);
