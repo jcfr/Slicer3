@@ -526,10 +526,13 @@ void vtkProstateNavLogic::UpdateTargetListFromMRML()
         vtkErrorMacro("Failed to set info for needle "<<needleIndex);
       }
 
-      std::ostrstream strvalue;
-      strvalue << needleDesc.mTargetNamePrefix << needleDesc.mLastTargetIndex << std::ends;        
-      fidNode->SetNthFiducialLabelText(i,strvalue.str());
-      strvalue.rdbuf()->freeze(0);     
+      // Haiying: this fixes the issue of target name changes 
+      // when you switch among fiducial lists on the Targeting tab.  
+      //std::ostrstream strvalue;
+      //strvalue << needleDesc.mTargetNamePrefix << needleDesc.mLastTargetIndex << std::ends;        
+      //fidNode->SetNthFiducialLabelText(i,strvalue.str());
+      //strvalue.rdbuf()->freeze(0);     
+      
 
       std::string FoR = this->GetFoRStrFromVolumeNodeID(manager->GetTargetingVolumeNodeRef());
       targetDesc->SetTargetingVolumeFoR(FoR);
