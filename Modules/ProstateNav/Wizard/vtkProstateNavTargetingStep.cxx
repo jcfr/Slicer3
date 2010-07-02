@@ -84,7 +84,7 @@ enum
   COL_COUNT // all valid columns should be inserted above this line
 };
 static const char* COL_LABELS[COL_COUNT] = { "Name", "R", "A", "S", "Needle", "OrW", "OrX", "OrY", "OrZ" };
-static const int COL_WIDTHS[COL_COUNT] = { 8, 6, 6, 6, 10, 6, 6, 6, 6 };
+static const int COL_WIDTHS[COL_COUNT] = { 20, 20, 20, 20, 10, 6, 6, 6, 6 };
 
 
 //----------------------------------------------------------------------------

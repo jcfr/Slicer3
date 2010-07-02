@@ -947,7 +947,7 @@ void vtkMRMLProstateNavManagerNode::Init(const char* defaultNeedleListConfig)
     // create targeting fiducials list
     vtkSmartPointer<vtkMRMLFiducialListNode> targetFidList = vtkSmartPointer<vtkMRMLFiducialListNode>::New();  
     targetFidList->SetLocked(true);
-    targetFidList->SetName("ProstateNavTargetList");
+    targetFidList->SetName("Tgts");
     targetFidList->SetDescription("ProstateNav target point list");
     targetFidList->SetColor(1.0,1.0,0);
     targetFidList->SetSelectedColor(1.0, 0.0, 0.0);
