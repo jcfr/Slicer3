@@ -217,7 +217,8 @@ class VTK_OPENIGTLINKIF_EXPORT vtkMRMLIGTLConnectorNode : public vtkMRMLNode
   
   // Description:
   // Set and start observing MRML node for outgoing data.
-  int RegisterOutgoingMRMLNode(vtkMRMLNode* node);
+  // If devType == NULL, a converter is chosen based only on MRML Tag.
+  int RegisterOutgoingMRMLNode(vtkMRMLNode* node, const char* devType=NULL);
 
   // Description:
   // Stop observing and remove MRML node for outgoing data.
@@ -230,6 +231,10 @@ class VTK_OPENIGTLINKIF_EXPORT vtkMRMLIGTLConnectorNode : public vtkMRMLNode
   // Description:
   // Unregister MRML node for incoming data.
   void UnregisterIncomingMRMLNode(vtkMRMLNode* node);
+
+  // Description:
+  // Get MRML to IGTL converter assigned to the specified MRML node ID
+  vtkIGTLToMRMLBase* GetConverterByNodeID(const char* id);
 
   // Description:
   // Get number of registered outgoing MRML nodes:

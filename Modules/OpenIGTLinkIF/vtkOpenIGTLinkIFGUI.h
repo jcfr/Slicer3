@@ -153,7 +153,7 @@ class VTK_OPENIGTLINKIF_EXPORT vtkOpenIGTLinkIFGUI : public vtkSlicerModuleGUI
   void         AddLogicObservers ( );
   void         RemoveLogicObservers ( );
   //virtual void AddNodeCallback(const char* conID, int io, const char* name, const char* type);
-  virtual void AddNodeCallback(const char* conID, int io, const char* nodeID);
+  virtual void AddNodeCallback(const char* conID, int io, const char* nodeID, const char* devType);
   virtual void DeleteNodeCallback(const char* conID, int io, const char* nodeID);
 
   // Description:

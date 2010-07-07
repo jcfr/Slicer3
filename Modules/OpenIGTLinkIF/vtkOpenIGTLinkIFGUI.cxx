@@ -2164,7 +2164,7 @@ void vtkOpenIGTLinkIFGUI::AddIOConfigContextMenuItem(int type, const char* conID
     vtkOpenIGTLinkIFLogic::IGTLMrmlNodeListType::iterator iter;
     for (iter = this->CurrentNodeListAvailable.begin(); iter != this->CurrentNodeListAvailable.end(); iter ++)
       {
-      sprintf(command, "AddNodeCallback %s %d %s", conID, io, iter->nodeID.c_str());
+      sprintf(command, "AddNodeCallback %s %d %s %s", conID, io, iter->nodeID.c_str(), iter->type.c_str());
       sprintf(label, "Add %s (%s)", iter->name.c_str(), iter->type.c_str());
       this->IOConfigContextMenu->AddCommand(label, this, command);
       }
@@ -2179,7 +2179,7 @@ void vtkOpenIGTLinkIFGUI::AddIOConfigContextMenuItem(int type, const char* conID
 
 
 //---------------------------------------------------------------------------
-void vtkOpenIGTLinkIFGUI::AddNodeCallback(const char* conID, int io, const char* nodeID)
+void vtkOpenIGTLinkIFGUI::AddNodeCallback(const char* conID, int io, const char* nodeID, const char* devType)
 {
   vtkMRMLIGTLConnectorNode* connector = GetConnector(conID);
   vtkMRMLNode* node = this->GetMRMLScene()->GetNodeByID(nodeID);
@@ -2192,7 +2192,7 @@ void vtkOpenIGTLinkIFGUI::AddNodeCallback(const char* conID, int io, const char*
       }
     else if (io == vtkMRMLIGTLConnectorNode::IO_OUTGOING)
       {
-      connector->RegisterOutgoingMRMLNode(node);
+      connector->RegisterOutgoingMRMLNode(node, devType);
       }
     }
 
@@ -2459,11 +2459,13 @@ void vtkOpenIGTLinkIFGUI::UpdateIOConfigTree()
       for (int i = 0; i < numOutDevice; i ++)
         {
         vtkMRMLNode* node = con->GetOutgoingMRMLNode(i);
-        if (node != NULL)
+        vtkIGTLToMRMLBase* converter = con->GetConverterByNodeID(node->GetID());
+        if (node != NULL && converter != NULL)
           {
           //const char* deviceType = this->GetLogic()->MRMLTagToIGTLName(node->GetTag());
           sprintf(conDeviceNode, "%s/out/%s", id, node->GetID());
-          sprintf(conDeviceNodeName, "%s (%s)",  node->GetName(), node->GetNodeTagName());
+          sprintf(conDeviceNodeName, "%s (%s->%s)",
+                  node->GetName(), node->GetNodeTagName(), converter->GetIGTLName());
           tree->AddNode(conOutNode, conDeviceNode, conDeviceNodeName);
           
           nodeInfo.nodeName = conDeviceNode;

@@ -265,9 +265,10 @@ void vtkMRMLIGTLConnectorNode::ProcessMRMLEvents( vtkObject *caller, unsigned lo
   Superclass::ProcessMRMLEvents(caller, event, callData);
 
   MRMLNodeListType::iterator iter;
+  vtkMRMLNode* node = vtkMRMLNode::SafeDownCast(caller);
+
   for (iter = this->OutgoingMRMLNodeList.begin(); iter != this->OutgoingMRMLNodeList.end(); iter ++)
     {
-    vtkMRMLNode* node = vtkMRMLNode::SafeDownCast(caller);
     if (node == *iter)
       {
       int size;
@@ -923,7 +924,7 @@ void vtkMRMLIGTLConnectorNode::UnregisterMessageConverter(vtkIGTLToMRMLBase* con
 
 
 //---------------------------------------------------------------------------
-int vtkMRMLIGTLConnectorNode::RegisterOutgoingMRMLNode(vtkMRMLNode* node)
+int vtkMRMLIGTLConnectorNode::RegisterOutgoingMRMLNode(vtkMRMLNode* node, const char* devType)
 {
 
   if (!node)
@@ -932,8 +933,17 @@ int vtkMRMLIGTLConnectorNode::RegisterOutgoingMRMLNode(vtkMRMLNode* node)
     }
 
   // Find a converter for the node
-  const char* tag = node->GetNodeTagName();
-  vtkIGTLToMRMLBase* converter = GetConverterByMRMLTag(tag);
+  vtkIGTLToMRMLBase* converter = NULL;
+  if (devType == NULL)
+    {
+    const char* tag = node->GetNodeTagName();
+    converter = GetConverterByMRMLTag(tag);
+    }
+  else
+    {
+    converter = GetConverterByIGTLDeviceType(devType);
+    }
+
   if (!converter)
     {
     return 0;
@@ -1040,9 +1050,6 @@ int vtkMRMLIGTLConnectorNode::RegisterIncomingMRMLNode(vtkMRMLNode* node)
 void vtkMRMLIGTLConnectorNode::UnregisterIncomingMRMLNode(vtkMRMLNode* node)
 {
 
-  std::cerr << "void vtkMRMLIGTLConnectorNode::UnregisterIncomingMRMLNode(vtkMRMLNode* node)" << std::endl;
-  
-
   if (!node)
     {
     return;
@@ -1082,6 +1089,21 @@ vtkMRMLNode* vtkMRMLIGTLConnectorNode::GetOutgoingMRMLNode(unsigned int i)
     {
     return NULL;
     }
+}
+
+
+//---------------------------------------------------------------------------
+vtkIGTLToMRMLBase* vtkMRMLIGTLConnectorNode::GetConverterByNodeID(const char* id)
+{
+
+  MessageConverterMapType::iterator iter;
+  iter = this->MRMLIDToConverterMap.find(id);
+  if (iter == this->MRMLIDToConverterMap.end())
+    {
+    return NULL;
+    }
+  return iter->second;
+  
 }
 
 
@@ -1141,7 +1163,7 @@ vtkIGTLToMRMLBase* vtkMRMLIGTLConnectorNode::GetConverterByIGTLDeviceType(const 
     vtkIGTLToMRMLBase* converter = *iter;
     if (converter->GetConverterType() == vtkIGTLToMRMLBase::TYPE_NORMAL)
       {
-      if (strcmp(converter->GetMRMLName(), type) == 0)
+      if (strcmp(converter->GetIGTLName(), type) == 0)
         {
         return converter;
         }
