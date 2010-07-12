@@ -53,7 +53,9 @@ vtkVolumeRenderingGUI::vtkVolumeRenderingGUI(void)
 
   this->NewVolumePropertyAddedFlag = 0;
   this->NewFgVolumePropertyAddedFlag = 0;
-
+  this->NewParametersNodeForNewInputFlag = 0;
+  this->NewParametersNodeFromSceneLoadingFlag = 0;
+  
   this->ScenarioNode = NULL;
 
   this->Presets = NULL;
@@ -461,6 +463,8 @@ void vtkVolumeRenderingGUI::AddMRMLObservers(void)
   if ( this->GetApplicationGUI() )
   {
     this->GetApplicationGUI()->GetMRMLScene()->AddObserver(vtkMRMLScene::SceneCloseEvent, this->MRMLCallbackCommand);
+    this->GetApplicationGUI()->GetMRMLScene()->AddObserver(vtkMRMLScene::SceneLoadStartEvent, this->MRMLCallbackCommand);
+    this->GetApplicationGUI()->GetMRMLScene()->AddObserver(vtkMRMLScene::SceneLoadEndEvent, this->MRMLCallbackCommand);
     this->GetApplicationGUI()->GetMRMLScene()->AddObserver(vtkMRMLScene::NodeAddedEvent, this->MRMLCallbackCommand);
     this->GetApplicationGUI()->GetMRMLScene()->AddObserver(vtkMRMLScene::NodeRemovedEvent, this->MRMLCallbackCommand);
   }
@@ -472,6 +476,8 @@ void vtkVolumeRenderingGUI::RemoveMRMLObservers(void)
   if ( this->GetApplicationGUI() )
   {
     this->GetApplicationGUI()->GetMRMLScene()->RemoveObservers(vtkMRMLScene::SceneCloseEvent, this->MRMLCallbackCommand);
+    this->GetApplicationGUI()->GetMRMLScene()->RemoveObservers(vtkMRMLScene::SceneLoadStartEvent, this->MRMLCallbackCommand);
+    this->GetApplicationGUI()->GetMRMLScene()->RemoveObservers(vtkMRMLScene::SceneLoadEndEvent, this->MRMLCallbackCommand);
     this->GetApplicationGUI()->GetMRMLScene()->RemoveObservers(vtkMRMLScene::NodeAddedEvent, this->MRMLCallbackCommand);
     this->GetApplicationGUI()->GetMRMLScene()->RemoveObservers(vtkMRMLScene::NodeRemovedEvent, this->MRMLCallbackCommand);
   }
@@ -840,17 +846,47 @@ void vtkVolumeRenderingGUI::ProcessMRMLEvents(vtkObject *caller, unsigned long e
         //remember the newly added scenarioNode
         vtkMRMLVolumeRenderingScenarioNode *sNode = vtkMRMLVolumeRenderingScenarioNode::SafeDownCast(addedNode);
         this->ScenarioNode = sNode;
-
-        if (this->GetCurrentParametersNode() != NULL && this->CB_VolumeRenderingOnOff->GetWidget()->GetSelectedState())
+      }
+      else if (addedNode->IsA("vtkMRMLVolumeRenderingParametersNode") )
+      {
+        //make sure we only process this for new parameters node from other module
+        if (!this->NewParametersNodeForNewInputFlag && !this->NewParametersNodeFromSceneLoadingFlag)
         {
-          this->InitializePipelineFromParametersNode();
+          vtkMRMLVolumeRenderingParametersNode *addedVspNode = vtkMRMLVolumeRenderingParametersNode::SafeDownCast(addedNode);
+
+          if (this->ScenarioNode == NULL)
+            this->ScenarioNode = this->GetLogic()->CreateScenarioNode();
+          
+          this->ScenarioNode->SetParametersNodeID(addedVspNode->GetID());
+          
+          if (this->GetCurrentParametersNode() != NULL && this->ValidateParametersNode(this->GetCurrentParametersNode()) )
+          {
+            this->InitializePipelineFromParametersNode();
+          }
         }
+        else if (this->NewParametersNodeForNewInputFlag)
+        {
+          this->NewParametersNodeForNewInputFlag = 0;
+        }        
       }
       else if (addedNode->IsA("vtkMRMLViewNode"))
       {
         vtkMRMLViewNode *viewNode = vtkMRMLViewNode::SafeDownCast(addedNode);
         viewNode->AddObserver(vtkMRMLViewNode::GraphicalResourcesCreatedEvent, (vtkCommand *) this->MRMLCallbackCommand);
       }
+    }
+  }
+  else if (event == vtkMRMLScene::SceneLoadStartEvent)
+  {
+    this->NewParametersNodeFromSceneLoadingFlag = 1;
+  }
+  else if (event == vtkMRMLScene::SceneLoadEndEvent)
+  {
+    this->NewParametersNodeFromSceneLoadingFlag = 0;
+    
+    if (this->GetCurrentParametersNode() != NULL && this->CB_VolumeRenderingOnOff->GetWidget()->GetSelectedState())
+    {
+      this->InitializePipelineFromParametersNode();
     }
   }
   else if(event == vtkMRMLScalarVolumeNode::ImageDataModifiedEvent)
@@ -1280,6 +1316,9 @@ void vtkVolumeRenderingGUI::InitializePipelineFromImageData()
     selectedImageData->RemoveObservers(vtkMRMLTransformableNode::TransformModifiedEvent, this->MRMLCallbackCommand);
     selectedImageData->RemoveObservers(vtkMRMLScalarVolumeNode::ImageDataModifiedEvent, this->MRMLCallbackCommand);
     selectedImageData->RemoveObservers(vtkMRMLVolumeNode::DisplayModifiedEvent, this->MRMLCallbackCommand);
+
+    if (vspNode->GetROINode())
+      vspNode->GetROINode()->RemoveObservers(vtkCommand::ModifiedEvent, (vtkCommand *) this->MRMLCallbackCommand);
   }
 
   this->GetApplicationGUI()->SetExternalProgress(buf, 0.2);
@@ -1316,7 +1355,10 @@ void vtkVolumeRenderingGUI::InitializePipelineFromImageData()
 
   if ( !vspNode )//no match
   {
+    this->NewParametersNodeForNewInputFlag = 1;//distiguish from new parameters node created from other modules
+    
     vspNode = this->GetLogic()->CreateParametersNode();
+    
     vspNode->SetAndObserveVolumeNodeID(this->NS_ImageData->GetSelected()->GetID());
 
     vtkMRMLVolumePropertyNode *vpNode = vtkMRMLVolumePropertyNode::New();
@@ -1520,13 +1562,14 @@ int vtkVolumeRenderingGUI::ValidateParametersNode(vtkMRMLVolumeRenderingParamete
 {
   if (vspNode == NULL)
     return 0;
+    
   //check all inputs
   if (vspNode->GetVolumeNodeID() && strcmp(vspNode->GetVolumeNodeID(), "NULL") != 0 && vspNode->GetVolumeNode() == NULL)
     return 0;
 
   if (vspNode->GetFgVolumeNodeID() && strcmp(vspNode->GetFgVolumeNodeID(), "NULL") != 0 && vspNode->GetFgVolumeNode() == NULL)
     return 0;
-  
+    
   return 1;
 }
 
@@ -1537,7 +1580,7 @@ void vtkVolumeRenderingGUI::InitializePipelineFromParametersNode()
 
   if (!ValidateParametersNode(vspNode))
     return;
-  
+
   char buf[32] = "Initializing...";
   this->GetApplicationGUI()->SetExternalProgress(buf, 0.1);
 

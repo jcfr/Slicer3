@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkSlicerGPURayCastVolumeTextureMapper3D.h,v $
+  Module:    $RCSfile: vtkSlicerGPURayCastMultiVolumeMapper.h,v $
 
    Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
@@ -15,19 +15,19 @@
 
 
 =========================================================================*/
-// .NAME vtkSlicerGPURayCastVolumeTextureMapper3D - concrete implementation of 3D volume texture mapping
+// .NAME vtkSlicerGPURayCastMultiVolumeMapper - concrete implementation of 3D volume texture mapping
 
 // .SECTION Description
-// vtkSlicerGPURayCastVolumeTextureMapper3D renders a volume using ray casting on 3D texture.
+// vtkSlicerGPURayCastMultiVolumeMapper renders two volume using ray casting on 3D texture.
 // See vtkVolumeTextureMapper3D for full description.
 
 // .SECTION see also
 // vtkVolumeTextureMapper3D vtkVolumeMapper
 
-#ifndef __vtkSlicerGPURayCastVolumeTextureMapper3D_h
-#define __vtkSlicerGPURayCastVolumeTextureMapper3D_h
+#ifndef __vtkSlicerGPURayCastMultiVolumeMapper_h
+#define __vtkSlicerGPURayCastMultiVolumeMapper_h
 
-#include "vtkSlicerGPUVolumeTextureMapper3D.h"
+#include "vtkSlicerGPUMultiVolumeMapper.h"
 #include "vtkVolumeRenderingReplacements.h"
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
@@ -38,19 +38,20 @@ class vtkMatrix4x4;
 class vtkRenderWindow;
 class vtkVolumeProperty;
 
-class VTK_VOLUMERENDERINGREPLACEMENTS_EXPORT vtkSlicerGPURayCastVolumeTextureMapper3D : public vtkSlicerGPUVolumeTextureMapper3D
+class VTK_VOLUMERENDERINGREPLACEMENTS_EXPORT vtkSlicerGPURayCastMultiVolumeMapper : public vtkSlicerGPUMultiVolumeMapper
 {
 public:
-  vtkTypeRevisionMacro(vtkSlicerGPURayCastVolumeTextureMapper3D,vtkSlicerGPUVolumeTextureMapper3D);
+  vtkTypeRevisionMacro(vtkSlicerGPURayCastMultiVolumeMapper,vtkSlicerGPUMultiVolumeMapper);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  static vtkSlicerGPURayCastVolumeTextureMapper3D *New();
+  static vtkSlicerGPURayCastMultiVolumeMapper *New();
 
   // Description:
-  // Distance color blending (closer voxels brighter, more far voxels darker)
-  // Default value: 0.0, no blending
-  vtkSetMacro(DistanceColorBlending, float);
-  vtkGetMacro(DistanceColorBlending, float);
+  // Overall alpha for volume rendering result
+  // Used for blending volume rendering with polygons
+  // Default value: 1.0
+  vtkSetMacro(GlobalAlpha, float);
+  vtkGetMacro(GlobalAlpha, float);
 
   // Description:
   // Depth peeling threshold
@@ -58,9 +59,9 @@ public:
   vtkGetMacro(DepthPeelingThreshold, float);
 
   // Description:
-  // ICPE kt and ks
-  vtkSetMacro(ICPEScale, float);
-  vtkSetMacro(ICPESmoothness, float);
+  // Depth peeling threshold
+  vtkSetMacro(FgBgRatio, float);
+  vtkGetMacro(FgBgRatio, float);
 
   // Description:
   // set internal volume size
@@ -73,8 +74,12 @@ public:
   vtkBooleanMacro(Clipping,int);
 
   // Description:
-  // Set technique
-  void SetTechnique(int tech);
+  // Set rendering technique for both bg/fg volumes
+  void SetTechniques(int tech, int techFg);
+
+  // Description:
+  // Set multi-volume color/opacity fusion method
+  void SetColorOpacityFusion(int fusion);
 
   // Description:
   // Is hardware rendering supported? No if the input data is
@@ -105,8 +110,8 @@ public:
   void ReleaseGraphicsResources(vtkWindow *);
 
 protected:
-  vtkSlicerGPURayCastVolumeTextureMapper3D();
-  ~vtkSlicerGPURayCastVolumeTextureMapper3D();
+  vtkSlicerGPURayCastMultiVolumeMapper();
+  ~vtkSlicerGPURayCastMultiVolumeMapper();
 
 //ETX
 
@@ -116,13 +121,16 @@ protected:
   int              RayCastSupported;
 
   int              Technique;
+  int              TechniqueFg;
+  int              ColorOpacityFusion;
+  float            FgBgRatio;
   int              Clipping;
   int              Shading;
   int              InternalVolumeSize;
 
   GLuint           Volume1Index;
-  GLuint           Volume2Index;
   GLuint           ColorLookupIndex;
+  GLuint           ColorLookup2Index;
   GLuint           RayCastVertexShader;
   GLuint           RayCastFragmentShader;
   GLuint           RayCastProgram;
@@ -132,13 +140,11 @@ protected:
   double           VolumeBBoxVerticesColor[8][3];
 
   GLfloat          ParaMatrix[16];//4x4 matrix uniform for ray casting parameters
-
+  GLfloat          ParaMatrix1[16];
+  
   float            RaySteps;
-  float            DistanceColorBlending;
+  float            GlobalAlpha;
   float            DepthPeelingThreshold;
-
-  float            ICPEScale;
-  float            ICPESmoothness;
 
   void Initialize();
   void InitializeRayCast();
@@ -154,7 +160,7 @@ protected:
   void SetupRayCastParameters( vtkRenderer *pRen, vtkVolume *pVol);
 
   void LoadVertexShader();
-  void LoadFragmentShaders();
+  void LoadBgFgFragmentShader();
 
   void LoadRayCastProgram();
 
@@ -170,8 +176,8 @@ protected:
   void Setup3DTextureParameters( vtkVolumeProperty *property );
 
 private:
-  vtkSlicerGPURayCastVolumeTextureMapper3D(const vtkSlicerGPURayCastVolumeTextureMapper3D&);  // Not implemented.
-  void operator=(const vtkSlicerGPURayCastVolumeTextureMapper3D&);  // Not implemented.
+  vtkSlicerGPURayCastMultiVolumeMapper(const vtkSlicerGPURayCastMultiVolumeMapper&);  // Not implemented.
+  void operator=(const vtkSlicerGPURayCastMultiVolumeMapper&);  // Not implemented.
 
   void PrintGLErrorString();
   void PrintFragmentShaderInfoLog();

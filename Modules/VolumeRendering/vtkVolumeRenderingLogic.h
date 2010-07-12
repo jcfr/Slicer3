@@ -11,8 +11,8 @@
 
 class vtkSlicerVolumeTextureMapper3D;
 class vtkSlicerFixedPointVolumeRayCastMapper;
-class vtkSlicerGPURayCastVolumeTextureMapper3D;
 class vtkSlicerGPURayCastVolumeMapper;
+class vtkSlicerGPURayCastMultiVolumeMapper;
 class vtkGPUVolumeRayCastMapper;
 
 class vtkKWHistogramSet;
@@ -103,10 +103,16 @@ public:
    * 0: cpu ray cast not used
    * 1: success
    */
-  int SetupCPURayCastInteractive(vtkMRMLVolumeRenderingParametersNode* vspNode, int buttonDown);
+  int SetupVolumeRenderingInteractive(vtkMRMLVolumeRenderingParametersNode* vspNode, int buttonDown);
 
   vtkMRMLVolumePropertyNode* AddVolumePropertyFromFile (const char* filename);
 
+  /* return values:
+   * 0: mapper not supported
+   * 1: mapper supported
+   */
+  int IsCurrentMapperSupported(vtkMRMLVolumeRenderingParametersNode* vspNode);
+  
 protected:
   vtkVolumeRenderingLogic();
   ~vtkVolumeRenderingLogic();
@@ -121,11 +127,11 @@ protected:
 
   // Description:
   // The hardware accelerated gpu ray cast mapper.
-  vtkSlicerGPURayCastVolumeTextureMapper3D *MapperGPURaycast;
+  vtkSlicerGPURayCastVolumeMapper *MapperGPURaycast;
 
   // Description:
   // The hardware accelerated multi-volume gpu ray cast mapper.
-  vtkSlicerGPURayCastVolumeMapper *MapperGPURaycastII;
+  vtkSlicerGPURayCastMultiVolumeMapper *MapperGPURaycastII;
 
   // Description:
   // The software accelerated software mapper

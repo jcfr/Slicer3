@@ -45,6 +45,7 @@ class vtkKWRange;
 class vtkSlicerROIDisplayWidget;
 class vtkKWLoadSaveButton;
 class vtkMRMLVolumeRenderingParametersNode;
+class vtkKWCheckButton;
 
 class VTK_SLICERVOLUMERENDERING_EXPORT vtkSlicerVolumeRenderingHelper :public vtkKWObject
 {
@@ -101,6 +102,10 @@ public:
     // process when user change the expected FPS
     void ProcessExpectedFPS(void);
 
+    // Description:
+    // process when user change the performance control method
+    void ProcessPerformanceControl(int id);
+
     //--------------------------------------------------------
     // Property
     //--------------------------------------------------------
@@ -150,11 +155,14 @@ protected:
     // Icon for the visibility of volume rendering
     vtkSlicerVisibilityIcons *VI_PauseResume;
 
-
     // Description:
     // Adjust the frame for interactive rendering methods
-    vtkKWScale *SC_ExpectedFPS;
+    vtkKWScaleWithEntry *SC_ExpectedFPS;
 
+    // Description:
+    // Define performance control method
+    vtkKWMenuButtonWithLabel *MB_PerformanceControl;
+    
     vtkKWPushButton *PB_HideSurfaceModels;
 
     //--------------------------------------------------------------------------
@@ -169,15 +177,10 @@ protected:
     vtkKWFrameWithLabel *FrameGPURayCasting3;
     vtkKWFrameWithLabel *FramePolygonBlending;
     vtkKWFrameWithLabel *FrameCPURayCasting;
-    vtkKWFrameWithLabel *FrameFPS;
 
     // Description:
     // Menu button to select which mapper to use
     vtkKWMenuButtonWithLabel *MB_Mapper;
-
-    // Description:
-    // Enable/Disable shading in CUDA Ray Cast Mapping
-    vtkKWCheckButtonWithLabel *CB_CUDARayCastShading;
 
     // Description:
     // Menu button to select internal volume size
@@ -263,7 +266,7 @@ protected:
 
     // Description:
     // if cpu ray casting is in interaction mode
-    int CPURayCastingInteractionFlag;
+    int VolumeRenderingInteractionFlag;
 
     // Description:
     // Indicates if the VolumeRendering is Paused or not
@@ -309,7 +312,7 @@ private:
     void SetROIRange(vtkMRMLVolumeRenderingParametersNode* vspNode);
 
     // Description:
-    // Setup CPU ray casing interactive mode parameters
-    void SetupCPURayCastInteractive();
+    // Setup volume rendering interactive mode parameters
+    void SetupVolumeRenderingInteractive();
 };
 #endif

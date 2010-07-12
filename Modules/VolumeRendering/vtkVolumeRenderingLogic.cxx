@@ -21,10 +21,11 @@
 #include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkMRMLLabelMapVolumeDisplayNode.h"
 
+// Slicer includes
 #include "vtkSlicerVolumeTextureMapper3D.h"
 #include "vtkSlicerFixedPointVolumeRayCastMapper.h"
-#include "vtkSlicerGPURayCastVolumeTextureMapper3D.h"
 #include "vtkSlicerGPURayCastVolumeMapper.h"
+#include "vtkSlicerGPURayCastMultiVolumeMapper.h"
 #include "vtkImageGradientMagnitude.h"
 
 #include "vtkKWHistogramSet.h"
@@ -34,14 +35,15 @@
 
 bool vtkVolumeRenderingLogic::First = true;
 
+
 vtkVolumeRenderingLogic::vtkVolumeRenderingLogic(void)
 {
   //create instances of mappers
   this->MapperTexture = vtkSlicerVolumeTextureMapper3D::New();
 
-  this->MapperGPURaycast = vtkSlicerGPURayCastVolumeTextureMapper3D::New();
+  this->MapperGPURaycast = vtkSlicerGPURayCastVolumeMapper::New();
 
-  this->MapperGPURaycastII = vtkSlicerGPURayCastVolumeMapper::New();
+  this->MapperGPURaycastII = vtkSlicerGPURayCastMultiVolumeMapper::New();
 
   this->MapperRaycast = vtkSlicerFixedPointVolumeRayCastMapper::New();
   this->MapperGPURaycast3 = vtkGPUVolumeRayCastMapper::New();
@@ -245,9 +247,9 @@ void vtkVolumeRenderingLogic::Reset()
   //create instances of mappers
   this->MapperTexture = vtkSlicerVolumeTextureMapper3D::New();
 
-  this->MapperGPURaycast = vtkSlicerGPURayCastVolumeTextureMapper3D::New();
+  this->MapperGPURaycast = vtkSlicerGPURayCastVolumeMapper::New();
 
-  this->MapperGPURaycastII = vtkSlicerGPURayCastVolumeMapper::New();
+  this->MapperGPURaycastII = vtkSlicerGPURayCastMultiVolumeMapper::New();
 
   this->MapperRaycast = vtkSlicerFixedPointVolumeRayCastMapper::New();
 
@@ -726,44 +728,44 @@ void vtkVolumeRenderingLogic::ComputeInternalVolumeSize(int index)
     break;
   case 1://256M
     this->MapperGPURaycast->SetInternalVolumeSize(256);//256^3
-    this->MapperGPURaycastII->SetInternalVolumeSize(256);
+    this->MapperGPURaycastII->SetInternalVolumeSize(320);
     this->MapperGPURaycast3->SetMaxMemoryInBytes(256*1024*1024);
     this->MapperTexture->SetInternalVolumeSize(256);
     break;
   case 2://512M
     this->MapperGPURaycast->SetInternalVolumeSize(320);
-    this->MapperGPURaycastII->SetInternalVolumeSize(320);
+    this->MapperGPURaycastII->SetInternalVolumeSize(500);
     this->MapperGPURaycast3->SetMaxMemoryInBytes(512*1024*1024);
     this->MapperTexture->SetInternalVolumeSize(256);
     break;
   case 3://1024M
     this->MapperGPURaycast->SetInternalVolumeSize(400);
-    this->MapperGPURaycastII->SetInternalVolumeSize(400);
+    this->MapperGPURaycastII->SetInternalVolumeSize(620);
     this->MapperGPURaycast3->SetMaxMemoryInBytes(1024*1024*1024);
     this->MapperTexture->SetInternalVolumeSize(256);
     break;
   case 4://1.5G
     this->MapperGPURaycast->SetInternalVolumeSize(460);
-    this->MapperGPURaycastII->SetInternalVolumeSize(460);
+    this->MapperGPURaycastII->SetInternalVolumeSize(700);
     this->MapperGPURaycast3->SetMaxMemoryInBytes(1536*1024*1024);
     this->MapperTexture->SetInternalVolumeSize(256);
     break;
   case 5://2.0G
     this->MapperGPURaycast->SetInternalVolumeSize(512);
-    this->MapperGPURaycastII->SetInternalVolumeSize(512);
+    this->MapperGPURaycastII->SetInternalVolumeSize(775);
     this->MapperGPURaycast3->SetMaxMemoryInBytes(2047*1024*1024);
     this->MapperTexture->SetInternalVolumeSize(512);
     break;
   case 6://3.0G
     this->MapperGPURaycast->SetInternalVolumeSize(700);
-    this->MapperGPURaycastII->SetInternalVolumeSize(700);
+    this->MapperGPURaycastII->SetInternalVolumeSize(900);
 //    this->MapperGPURaycast3->SetMaxMemoryInBytes(3071*1024*1024);
     this->MapperGPURaycast3->SetMaxMemoryInBytes(2047*1024*1024);
     this->MapperTexture->SetInternalVolumeSize(512);
     break;
   case 7://4.0G
     this->MapperGPURaycast->SetInternalVolumeSize(800);
-    this->MapperGPURaycastII->SetInternalVolumeSize(800);
+    this->MapperGPURaycastII->SetInternalVolumeSize(1000);
 //    this->MapperGPURaycast3->SetMaxMemoryInBytes(4095*1024*1024);
     this->MapperGPURaycast3->SetMaxMemoryInBytes(2047*1024*1024);
     this->MapperTexture->SetInternalVolumeSize(512);
@@ -801,7 +803,11 @@ void vtkVolumeRenderingLogic::CalculateMatrix(vtkMRMLVolumeRenderingParametersNo
 
 void vtkVolumeRenderingLogic::SetExpectedFPS(vtkMRMLVolumeRenderingParametersNode* vspNode)
 {
-  int fps = vspNode->GetExpectedFPS();
+  float fps;
+  if (vspNode->GetExpectedFPS() == 0)
+    fps = 0.001;
+  else
+    fps = vspNode->GetExpectedFPS();
 
   this->MapperTexture->SetFramerate(fps);
   this->MapperGPURaycast->SetFramerate(fps);
@@ -876,6 +882,75 @@ void vtkVolumeRenderingLogic::EstimateSampleDistance(vtkMRMLVolumeRenderingParam
   }
   else
     vspNode->SetEstimatedSampleDistance( 1.0f);
+}
+
+int vtkVolumeRenderingLogic::IsCurrentMapperSupported(vtkMRMLVolumeRenderingParametersNode* vspNode)
+{
+  if (vspNode == NULL)
+    return 0;
+
+  switch(vspNode->GetCurrentVolumeMapper())//mapper specific initialization
+  {
+  case 0:
+    return 1;
+  case 3:
+    {
+      vtkSlicerGPURayCastVolumeMapper* MapperGPURaycast = vtkSlicerGPURayCastVolumeMapper::New();
+
+      MapperGPURaycast->SetInput( vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData() );
+      
+      if (MapperGPURaycast->IsRenderSupported(vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
+      {
+        MapperGPURaycast->Delete();
+        return 1;
+      }
+      else
+      {
+        MapperGPURaycast->Delete();
+        return 0;
+      }
+    }
+  case 4:
+    {
+      vtkSlicerGPURayCastMultiVolumeMapper* MapperGPURaycastII = vtkSlicerGPURayCastMultiVolumeMapper::New();
+      
+      MapperGPURaycastII->SetNthInput(0, vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData());
+      if (vspNode->GetFgVolumeNode())
+        MapperGPURaycastII->SetNthInput(1, vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetFgVolumeNode())->GetImageData());
+      
+      if (MapperGPURaycastII->IsRenderSupported(vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
+      {
+        MapperGPURaycastII->Delete();
+        return 1;
+      }
+      else
+      {
+        MapperGPURaycastII->Delete();
+        return 0;
+      }
+    }
+  case 2:
+    {
+      vtkSlicerVolumeTextureMapper3D* MapperTexture = vtkSlicerVolumeTextureMapper3D::New();
+    
+      MapperTexture->SetInput( vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData() );
+
+      if (MapperTexture->IsRenderSupported(vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
+      {
+        MapperTexture->Delete();
+        return 1;
+      }
+      else
+      {
+        MapperTexture->Delete();
+        return 0;
+      }
+    }
+  case 1:
+    return 1;//assume vtkGPURayCastMapper is supported
+  default:
+    return 0;
+  }
 }
 
 /*
@@ -965,22 +1040,25 @@ int vtkVolumeRenderingLogic::SetupMapperFromParametersNode(vtkMRMLVolumeRenderin
 }
 
 /* return values:
- * 0: cpu ray cast not used
+ * 0: vtk gpu ray cast mapper used
  * 1: success
  */
-int vtkVolumeRenderingLogic::SetupCPURayCastInteractive(vtkMRMLVolumeRenderingParametersNode* vspNode, int buttonDown)
+int vtkVolumeRenderingLogic::SetupVolumeRenderingInteractive(vtkMRMLVolumeRenderingParametersNode* vspNode, int buttonDown)
 {
-  if (this->Volume->GetMapper() != this->MapperRaycast)
+  if (vspNode->GetCurrentVolumeMapper() == 1)//vtk gpu mapper has different defination of interaction
     return 0;
 
   //when start (rendering??) set CPU ray casting to be interactive
-  if (buttonDown == 1)
+  if (buttonDown == 1 && vspNode->GetExpectedFPS() > 0)
   {
-    float desiredTime = 1.0f/vspNode->GetExpectedFPS();//expected fps will not be 0 so safe to do division here
+    float desiredTime = 1.0f/vspNode->GetExpectedFPS();
 
     this->MapperRaycast->SetAutoAdjustSampleDistances(1);
     this->MapperRaycast->ManualInteractiveOn();
     this->MapperRaycast->SetManualInteractiveRate(desiredTime);
+
+    this->MapperGPURaycast->SetFramerate(vspNode->GetExpectedFPS());
+    this->MapperGPURaycastII->SetFramerate(vspNode->GetExpectedFPS());
   }
   else
   {
@@ -989,6 +1067,9 @@ int vtkVolumeRenderingLogic::SetupCPURayCastInteractive(vtkMRMLVolumeRenderingPa
     this->MapperRaycast->SetSampleDistance(vspNode->GetEstimatedSampleDistance());
     this->MapperRaycast->SetImageSampleDistance(1.0f);
     this->MapperRaycast->ManualInteractiveOff();
+
+    this->MapperGPURaycast->SetFramerate(1.0);
+    this->MapperGPURaycastII->SetFramerate(1.0);
   }
 
   return 1;

@@ -50,11 +50,8 @@ vtkStandardNewMacro(vtkSlicerGPURayCastVolumeMapper);
 vtkSlicerGPURayCastVolumeMapper::vtkSlicerGPURayCastVolumeMapper()
 {
   this->Initialized          =  0;
-  this->RayCastInitialized       =  0;
-  this->Technique            =  0;//by default composit shading
-  this->TechniqueFg            =  0;//by default composit shading
-  this->ColorOpacityFusion   =  0;
-  this->FgBgRatio            =  0.0;
+  this->RayCastInitialized   =  0;
+  this->Technique            =  0;//by default composit with shading
 
   this->Clipping             =  0;
   this->ReloadShaderFlag     =  0;
@@ -62,18 +59,18 @@ vtkSlicerGPURayCastVolumeMapper::vtkSlicerGPURayCastVolumeMapper()
 
   this->Volume1Index         =  0;
   this->Volume2Index         =  0;
-  this->Volume3Index         =  0;
-
   this->ColorLookupIndex         =  0;
-  this->ColorLookup2Index         =  0;
   this->RayCastVertexShader      =  0;
   this->RayCastFragmentShader    =  0;
   this->RayCastProgram           =  0;
   this->RayCastSupported         =  0;
   this->RenderWindow         = NULL;
-  this->RaySteps             = 450.0f;
+  this->RaySteps             = 500.0f;
 
-  this->GlobalAlpha          = 1.0f;
+  this->ICPEScale            = 1.0f;
+  this->ICPESmoothness       = 0.5f;
+
+  this->DistanceColorBlending   = 0.0f;
 }
 
 vtkSlicerGPURayCastVolumeMapper::~vtkSlicerGPURayCastVolumeMapper()
@@ -84,17 +81,14 @@ vtkSlicerGPURayCastVolumeMapper::~vtkSlicerGPURayCastVolumeMapper()
 void vtkSlicerGPURayCastVolumeMapper::ReleaseGraphicsResources(vtkWindow
                                 *renWin)
 {
-  if (( this->Volume1Index || this->Volume2Index || this->Volume3Index
-    || this->ColorLookupIndex || this->ColorLookup2Index) && renWin)
+  if (( this->Volume1Index || this->Volume2Index || this->ColorLookupIndex ) && renWin)
     {
     static_cast<vtkRenderWindow *>(renWin)->MakeCurrent();
 #ifdef GL_VERSION_1_1
     // free any textures
     this->DeleteTextureIndex( &this->Volume1Index );
     this->DeleteTextureIndex( &this->Volume2Index );
-    this->DeleteTextureIndex( &this->Volume3Index );
     this->DeleteTextureIndex( &this->ColorLookupIndex );
-    this->DeleteTextureIndex( &this->ColorLookup2Index );
 #endif
     }
   if ( this->RayCastVertexShader || this->RayCastFragmentShader || this->RayCastProgram)
@@ -106,10 +100,7 @@ void vtkSlicerGPURayCastVolumeMapper::ReleaseGraphicsResources(vtkWindow
 
   this->Volume1Index     = 0;
   this->Volume2Index     = 0;
-  this->Volume3Index     = 0;
-
   this->ColorLookupIndex = 0;
-  this->ColorLookup2Index = 0;
   this->RayCastVertexShader   = 0;
   this->RayCastFragmentShader = 0;
   this->RayCastProgram    = 0;
@@ -122,15 +113,23 @@ void vtkSlicerGPURayCastVolumeMapper::Render(vtkRenderer *ren, vtkVolume *vol)
   ren->GetRenderWindow()->MakeCurrent();
 
   if ( !this->Initialized )
-    {
+  {
     this->Initialize();
-    }
+  }
 
   if ( !this->RayCastInitialized || this->ReloadShaderFlag)
-    {
+  {
     this->InitializeRayCast();
-    }
+  }
 
+  //adjust ray steps based on requrestd frame rate
+  if ( this->TimeToDraw == 0.0 )
+  {
+    this->TimeToDraw = 0.0001;
+  }
+  
+  this->AdaptivePerformanceControl();
+  
   glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT);
 
   //setup material based on volume property
@@ -138,6 +137,9 @@ void vtkSlicerGPURayCastVolumeMapper::Render(vtkRenderer *ren, vtkVolume *vol)
   float specular = vol->GetProperty()->GetSpecular();
   float diffuse = vol->GetProperty()->GetDiffuse();
   float power = 128*vol->GetProperty()->GetSpecularPower()/50;
+
+//  cout<<ambient<<" "<<diffuse<<" "<<specular<<endl;
+//  cout.flush();
 
   float ambientMaterial[4];
   float diffuseMaterial[4];
@@ -160,16 +162,6 @@ void vtkSlicerGPURayCastVolumeMapper::Render(vtkRenderer *ren, vtkVolume *vol)
 
   this->TimeToDraw = static_cast<float>(this->Timer->GetElapsedTime());
 
-  // If the timer is not accurate enough, set it to a small
-  // time so that it is not zero
-  if ( this->TimeToDraw == 0.0 )
-    {
-    this->TimeToDraw = 0.0001;
-    }
-
-  //adjust ray steps based on requrestd frame rate
-  this->AdaptivePerformanceControl();
-
   //printf("ray step: %f, fps: %f\n", this->RaySteps, 1.0/this->TimeToDraw);
 
 //  double progress = 1;
@@ -186,9 +178,9 @@ void vtkSlicerGPURayCastVolumeMapper::AdaptivePerformanceControl()
 
   if (fabs(targetTime - this->TimeToDraw) < 0.1*targetTime)
     return;
-    
+  
   this->RaySteps *= targetTime/(this->TimeToDraw*1.5);
-
+  
   int dim[3];
   this->GetVolumeDimensions(dim);
 
@@ -198,18 +190,21 @@ void vtkSlicerGPURayCastVolumeMapper::AdaptivePerformanceControl()
   maxRaysteps *= 16.0f; //make sure we have enough sampling rate to recover details
 
   maxRaysteps = maxRaysteps < 1050.0f ? 1050.0f : maxRaysteps;//ensure high sampling rate on low resolution volumes
-
+  
   // add clamp
   if (this->RaySteps > maxRaysteps) this->RaySteps = maxRaysteps;
   if (this->RaySteps < 150.0f)       this->RaySteps = 150.0f;
+
+//  cout<<this->Framerate<<" "<<this->TimeToDraw<<" "<<this->RaySteps<<endl;
+//  cout.flush();
 }
 
 //needs to be cleaned, 2008/10/20, Yanling Liu
 void vtkSlicerGPURayCastVolumeMapper::SetupRayCastParameters(vtkRenderer *vtkNotUsed(pRen),
-                                                             vtkVolume *pVol)
+                                                                      vtkVolume *pVol)
 {
   double bounds[6];
-  this->GetNthInput(0)->GetBounds(bounds);
+  this->GetInput()->GetBounds(bounds);
 
   vtkMatrix4x4       *matrix = vtkMatrix4x4::New();
 
@@ -316,8 +311,8 @@ void vtkSlicerGPURayCastVolumeMapper::SetupRayCastParameters(vtkRenderer *vtkNot
       {
         for (int j = 0; j < 3; j++)
         {
-          vertices[i][j] = vertices[i][j] < lowerBounds[j] ? lowerBounds[j] : vertices[i][j];
-          vertices[i][j] = vertices[i][j] > upperBounds[j] ? upperBounds[j] : vertices[i][j];
+            vertices[i][j] = vertices[i][j] < lowerBounds[j] ? lowerBounds[j] : vertices[i][j];
+            vertices[i][j] = vertices[i][j] > upperBounds[j] ? upperBounds[j] : vertices[i][j];
         }
       }
     }
@@ -326,10 +321,10 @@ void vtkSlicerGPURayCastVolumeMapper::SetupRayCastParameters(vtkRenderer *vtkNot
   {//volume bbox vertices coords
     for (int i = 0; i < 8; i++)
     {
-        for (int j = 0; j < 3; j++)
-        {
-            VolumeBBoxVertices[i][j] = vertices[i][j];
-        }
+      for (int j = 0; j < 3; j++)
+      {
+        VolumeBBoxVertices[i][j] = vertices[i][j];
+      }
     }
   }
 
@@ -338,22 +333,22 @@ void vtkSlicerGPURayCastVolumeMapper::SetupRayCastParameters(vtkRenderer *vtkNot
     matrix->Invert();
     for (int i = 0; i < 8; i++)
     {
-      vtkMatrix4x4::MultiplyPoint(*(matrix->Element), vertices[i], vertices[i]);
+        vtkMatrix4x4::MultiplyPoint(*(matrix->Element), vertices[i], vertices[i]);
     }
 
     double verticesColor[8][3];
     double bboxLen[3] = {
-      bounds[1] - bounds[0],
-      bounds[3] - bounds[2],
-      bounds[5] - bounds[4],
+        bounds[1] - bounds[0],
+        bounds[3] - bounds[2],
+        bounds[5] - bounds[4],
     };
 
     double lowerBounds[3] = {bounds[0], bounds[2], bounds[4]};
 
     for (int i = 0; i < 8; i++)
     {
-      for (int j = 0; j < 3; j++)
-        verticesColor[i][j] = (vertices[i][j] - lowerBounds[j])/bboxLen[j];
+        for (int j = 0; j < 3; j++)
+            verticesColor[i][j] = (vertices[i][j] - lowerBounds[j])/bboxLen[j];
     }
 
     memcpy(VolumeBBoxVerticesColor, verticesColor, sizeof(double)*24);
@@ -362,8 +357,8 @@ void vtkSlicerGPURayCastVolumeMapper::SetupRayCastParameters(vtkRenderer *vtkNot
   //ParaMatrix:
   //EyePos.x,      EyePos.y,      EyePos.z,     Step
   //VolBBoxLow.x,  VolBBoxLow.y,  VolBBoxLow.z, VolBBoxHigh.x
-  //VolBBoxHigh.y, VolBBoxHigh.z, FgBgRatio, DepthPeelingThreshold,
-  //N/A,           GlobalAlpha,   Debug,
+  //VolBBoxHigh.y, VolBBoxHigh.z, MinDist,      DepthPeelingThreshold,
+  //ICPE_s,        GlobalAlpha,   MinMaxLen,    ICPE_t
 
   double modelViewMat[16];
   glGetDoublev(GL_MODELVIEW_MATRIX, modelViewMat);
@@ -386,7 +381,7 @@ void vtkSlicerGPURayCastVolumeMapper::SetupRayCastParameters(vtkRenderer *vtkNot
 
   for (int i = 0; i < 3; i++)
   {
-    eye[i] = (eye[i] - lowerBounds[i])/bboxLen[i];
+    eye[i] = (eye[i] - lowerBounds[i])/bboxLen[i];//eye pos in texture space
   }
 
   this->ParaMatrix[0] = (GLfloat)eye[0];
@@ -415,24 +410,60 @@ void vtkSlicerGPURayCastVolumeMapper::SetupRayCastParameters(vtkRenderer *vtkNot
   this->ParaMatrix[8] = (GLfloat)clrUpperBounds[1] > 1.0f ? 1.0f : (GLfloat)clrUpperBounds[1];
   this->ParaMatrix[9] = (GLfloat)clrUpperBounds[2] > 1.0f ? 1.0f : (GLfloat)clrUpperBounds[2];
 
-//  printf("%f %f %f %f %f %f\n", this->ParaMatrix[4], this->ParaMatrix[5], this->ParaMatrix[6], this->ParaMatrix[7], this->ParaMatrix[8], this->ParaMatrix[9]);
-  this->ParaMatrix[10] = this->FgBgRatio;
+  float maxDist, minDist;
+
+  {
+    float x = VolumeBBoxVerticesColor[0][0] - eye[0];
+    float y = VolumeBBoxVerticesColor[0][1] - eye[1];
+    float z = VolumeBBoxVerticesColor[0][2] - eye[2];
+    float dist = sqrtf(x*x + y*y + z*z);
+
+    maxDist = dist;
+    minDist = dist;
+  }
+
+  for (int i = 1; i < 8; i++)
+  {
+    float x = VolumeBBoxVerticesColor[i][0] - eye[0];
+    float y = VolumeBBoxVerticesColor[i][1] - eye[1];
+    float z = VolumeBBoxVerticesColor[i][2] - eye[2];
+    float dist = sqrtf(x*x + y*y + z*z);
+
+    maxDist = maxDist < dist ? dist : maxDist;
+    minDist = minDist > dist ? dist : minDist;
+  }
+
+  this->ParaMatrix[10] = minDist;
 
   //scalar range is 0 ~ 255
   this->ParaMatrix[11] = ((this->DepthPeelingThreshold + this->ScalarOffset) * this->ScalarScale )/255.0f;
-  this->ParaMatrix[12] = 0.0f;
+  this->ParaMatrix[12] = this->ICPESmoothness;
 
-  this->ParaMatrix[13] = GlobalAlpha;
+  this->ParaMatrix[13] = DistanceColorBlending;
 
-  this->ParaMatrix[14] = 0.0f;//debug, 0: no debug, 1: show ray origin, 2: show ray end
+  this->ParaMatrix[14] = maxDist - minDist;
+
+//  cout<<eye[0]<<" "<<eye[1]<<" "<<eye[2]<<" "<<minDist<<" "<<maxDist<<endl;cout.flush();
+
+  this->ParaMatrix[15] = this->ICPEScale;
 
   GLfloat volMat[16];
   for (int i = 0; i < 16; i++)
     volMat[i] = (GLfloat)(*(matrix->Element))[i];
 
+  int dim[3];
+  this->GetInput()->GetDimensions(dim);
+
+  this->ParaMatrix1[0] = 1.0f / dim[0];
+  this->ParaMatrix1[1] = 1.0f / dim[1];
+  this->ParaMatrix1[2] = 1.0f / dim[2];
+  
   GLint loc = vtkgl::GetUniformLocation(RayCastProgram, "ParaMatrix");
   if (loc >= 0)
     vtkgl::UniformMatrix4fv(loc, 1, false, this->ParaMatrix);
+//  loc = vtkgl::GetUniformLocation(RayCastProgram, "ParaMatrix1");
+//  if (loc >= 0)
+//    vtkgl::UniformMatrix4fv(loc, 1, false, this->ParaMatrix1);
   loc = vtkgl::GetUniformLocation(RayCastProgram, "VolumeMatrix");
   if (loc >= 0)
     vtkgl::UniformMatrix4fv(loc, 1, false, volMat);
@@ -443,8 +474,8 @@ void vtkSlicerGPURayCastVolumeMapper::RenderGLSL( vtkRenderer *ren, vtkVolume *v
 {
   //force shader program reinit in dual 3D view mode
   if (vol->GetNumberOfConsumers() > 1)
-    this->InitializeRayCast(); 
-
+    this->InitializeRayCast();
+    
   vtkgl::UseProgram(RayCastProgram);
 
   this->SetupTextures( ren, vol );
@@ -484,29 +515,29 @@ void vtkSlicerGPURayCastVolumeMapper::CreateTextureIndex( GLuint *index )
 void vtkSlicerGPURayCastVolumeMapper::Setup3DTextureParameters( vtkVolumeProperty *property )
 {
   if ( property->GetInterpolationType() == VTK_NEAREST_INTERPOLATION )
-  {
+    {
     glTexParameterf( vtkgl::TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
     glTexParameterf( vtkgl::TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-  }
+    }
   else
-  {
+    {
     glTexParameterf( vtkgl::TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameterf( vtkgl::TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  }
-  glTexParameterf( vtkgl::TEXTURE_3D, vtkgl::TEXTURE_WRAP_R, GL_REPEAT );
-  glTexParameterf( vtkgl::TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-  glTexParameterf( vtkgl::TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    }
+  glTexParameterf( vtkgl::TEXTURE_3D, vtkgl::TEXTURE_WRAP_R, GL_CLAMP );
+  glTexParameterf( vtkgl::TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameterf( vtkgl::TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP );
 }
 
 void vtkSlicerGPURayCastVolumeMapper::SetupTextures(vtkRenderer *vtkNotUsed(ren),
-                                                    vtkVolume *vol )
+                                                             vtkVolume *vol )
 {
   //0, 1, 2, 3
   //7, 6, 5, 4
   // Update the volume containing the 2 byte scalar / gradient magnitude
-  if ( this->UpdateVolumes( vol ) || !this->Volume1Index ||
-   !this->Volume2Index || !this->Volume3Index || vol->GetNumberOfConsumers() > 1)
-  {
+  // copy texture into GPU memory every frame for Dual 3D view mode
+  if ( this->UpdateVolumes( vol ) || !this->Volume1Index || !this->Volume2Index || vol->GetNumberOfConsumers() > 1)
+    {
     int dim[3];
     this->GetVolumeDimensions(dim);
 
@@ -517,39 +548,29 @@ void vtkSlicerGPURayCastVolumeMapper::SetupTextures(vtkRenderer *vtkNotUsed(ren)
     vtkgl::TexImage3D( vtkgl::TEXTURE_3D, 0, GL_RGBA8, dim[0], dim[1], dim[2], 0,
                GL_RGBA, GL_UNSIGNED_BYTE, this->Volume1 );
 
-    vtkgl::ActiveTexture( vtkgl::TEXTURE8 );
+
+    vtkgl::ActiveTexture( vtkgl::TEXTURE5 );
     this->DeleteTextureIndex(&this->Volume2Index);
     this->CreateTextureIndex(&this->Volume2Index);
     glBindTexture(vtkgl::TEXTURE_3D, this->Volume2Index);
     vtkgl::TexImage3D( vtkgl::TEXTURE_3D, 0, GL_RGBA8, dim[0], dim[1], dim[2], 0,
                GL_RGBA, GL_UNSIGNED_BYTE, this->Volume2 );
-
-    vtkgl::ActiveTexture( vtkgl::TEXTURE9 );
-    this->DeleteTextureIndex(&this->Volume3Index);
-    this->CreateTextureIndex(&this->Volume3Index);
-    glBindTexture(vtkgl::TEXTURE_3D, this->Volume3Index);
-    vtkgl::TexImage3D( vtkgl::TEXTURE_3D, 0, GL_RGBA8, dim[0], dim[1], dim[2], 0,
-               GL_RGBA, GL_UNSIGNED_BYTE, this->Volume3 );
-  }
+    }
 
   vtkgl::ActiveTexture( vtkgl::TEXTURE7 );
   glBindTexture(vtkgl::TEXTURE_3D, this->Volume1Index);
   this->Setup3DTextureParameters( vol->GetProperty() );
 
-  vtkgl::ActiveTexture( vtkgl::TEXTURE8 );
+  vtkgl::ActiveTexture( vtkgl::TEXTURE5 );
   glBindTexture(vtkgl::TEXTURE_3D, this->Volume2Index);
   this->Setup3DTextureParameters( vol->GetProperty() );
 
-  vtkgl::ActiveTexture( vtkgl::TEXTURE9 );
-  glBindTexture(vtkgl::TEXTURE_3D, this->Volume3Index);
-  this->Setup3DTextureParameters( vol->GetProperty() );
+  vtkgl::ActiveTexture( vtkgl::TEXTURE6 );
 
   // Update the dependent 2D color table mapping scalar value and
   // gradient magnitude to RGBA
-  if ( this->UpdateColorLookup( vol ) || !this->ColorLookupIndex
-  || !this->ColorLookup2Index || vol->GetNumberOfConsumers() > 1)
-  {
-    vtkgl::ActiveTexture( vtkgl::TEXTURE6 );
+  if ( this->UpdateColorLookup( vol ) || !this->ColorLookupIndex || vol ->GetNumberOfConsumers() > 1)
+    {
     this->DeleteTextureIndex( &this->ColorLookupIndex );
 
     this->CreateTextureIndex( &this->ColorLookupIndex );
@@ -562,43 +583,20 @@ void vtkSlicerGPURayCastVolumeMapper::SetupTextures(vtkRenderer *vtkNotUsed(ren)
 
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, 256, 256, 0,
           GL_RGBA, GL_UNSIGNED_BYTE, this->ColorLookup );
-
-    vtkgl::ActiveTexture( vtkgl::TEXTURE5 );
-    this->DeleteTextureIndex( &this->ColorLookup2Index );
-
-    this->CreateTextureIndex( &this->ColorLookup2Index );
-    glBindTexture(GL_TEXTURE_2D, this->ColorLookup2Index);
-
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, 256, 256, 0,
-          GL_RGBA, GL_UNSIGNED_BYTE, this->ColorLookup2nd );
-  }
+    }
 
   vtkgl::ActiveTexture( vtkgl::TEXTURE6 );
   glBindTexture(GL_TEXTURE_2D, this->ColorLookupIndex);
 
-  vtkgl::ActiveTexture( vtkgl::TEXTURE5 );
-  glBindTexture(GL_TEXTURE_2D, this->ColorLookup2Index);
-
   GLint loc = vtkgl::GetUniformLocation(RayCastProgram, "TextureVol");
   if (loc >= 0)
     vtkgl::Uniform1i(loc, 7);
-  loc = vtkgl::GetUniformLocation(RayCastProgram, "TextureNormalA");
-  if (loc >= 0)
-    vtkgl::Uniform1i(loc, 8);
-  loc = vtkgl::GetUniformLocation(RayCastProgram, "TextureNormalB");
-  if (loc >= 0)
-    vtkgl::Uniform1i(loc, 9);
-  loc = vtkgl::GetUniformLocation(RayCastProgram, "TextureColorLookupA");
-  if (loc >= 0)
-    vtkgl::Uniform1i(loc, 6);
-  loc = vtkgl::GetUniformLocation(RayCastProgram, "TextureColorLookupB");
+  loc = vtkgl::GetUniformLocation(RayCastProgram, "TextureVol1");
   if (loc >= 0)
     vtkgl::Uniform1i(loc, 5);
+  loc = vtkgl::GetUniformLocation(RayCastProgram, "TextureColorLookup");
+  if (loc >= 0)
+    vtkgl::Uniform1i(loc, 6);
 }
 
 int  vtkSlicerGPURayCastVolumeMapper::IsRenderSupported(vtkVolumeProperty *property )
@@ -626,7 +624,7 @@ int  vtkSlicerGPURayCastVolumeMapper::IsRenderSupported(vtkVolumeProperty *prope
 
   GLint num = 0;
   glGetIntegerv(vtkgl::MAX_TEXTURE_IMAGE_UNITS, &num);
-  if (num < 10)
+  if (num < 8)//we use texture unit 4,5,6,7 to avoid conflict with slice planes
     return 0;
 
   num = 0;
@@ -863,517 +861,9 @@ void vtkSlicerGPURayCastVolumeMapper::InitializeRayCast()
     this->RayCastProgram = vtkgl::CreateProgram();
 
     LoadVertexShader();
-    LoadBgFgFragmentShader();
+    LoadFragmentShaders();
+
     LoadRayCastProgram();
-}
-
-void vtkSlicerGPURayCastVolumeMapper::LoadBgFgFragmentShader()
-{
-  /* techniques in GPU ray cast II
-   * 0: composite with directional lighting (default)
-   * 1: composite with fake lighting (edge coloring, faster)
-   * 2: MIP
-   * 3: MINIP
-   * 4: Gradient Magnitude Opacity Modulation
-   * 5: Illustrative Context Preserving Exploration
-   * */
-  std::ostringstream fp_oss;
-  fp_oss <<
-    "varying vec3 ViewDir;                                                                  \n"
-    "uniform sampler3D TextureVol;                                                          \n"
-    "uniform sampler3D TextureNormalA;                                                      \n"
-    "uniform sampler3D TextureNormalB;                                                      \n"
-    "uniform sampler2D TextureColorLookupA;                                                 \n"
-    "uniform sampler2D TextureColorLookupB;                                                 \n"
-    "uniform mat4 ParaMatrix;                                                               \n"
-    "uniform mat4 VolumeMatrix;                                                             \n"
-    "uniform mat4 VolumeMatrix1;                                                            \n"
-    "                                                                                       \n"
-    "//ParaMatrix:                                                                          \n"
-    "//EyePos.x,      EyePos.y,      EyePos.z,     Step                                     \n"
-    "//VolBBoxLow.x,  VolBBoxLow.y,  VolBBoxLow.z, VolBBoxHigh.x                            \n"
-    "//VolBBoxHigh.y, VolBBoxHigh.z, FgBgRatio,    DepthPeelingThreshold,                   \n"
-    "//N/A,           GlobalAlpha,   Debug,                                                 \n"
-    "                                                                                       \n"
-    "vec4 computeRayEnd()                                                                   \n"
-    "{                                                                                      \n"
-    "   vec3 o = vec3(ParaMatrix[0][0], ParaMatrix[0][1], ParaMatrix[0][2]);                \n"
-    "    vec3 mmn = vec3(ParaMatrix[1][0], ParaMatrix[1][1], ParaMatrix[1][2]);             \n"
-    "    vec3 mmx = vec3(ParaMatrix[1][3], ParaMatrix[2][0], ParaMatrix[2][1]);             \n"
-    "    mmn = clamp(mmn, 0.0, 1.0);                                                        \n"
-    "    mmx = clamp(mmx, 0.0, 1.0);                                                        \n"
-    "                                                                                       \n"
-    "    if (all(greaterThanEqual(o, mmn)) && all(lessThanEqual(o, mmx)) )                  \n"
-    "        return gl_TexCoord[0];                                                         \n"
-    "                                                                                       \n"
-    "    vec3 a1 = gl_TexCoord[0].xyz;                                                      \n"
-    "    vec3 a2 = a1 + normalize(a1 - o) * length(mmx - mmn);                              \n"
-    "    vec3 a3;                                                                           \n"
-    "                                                                                       \n"
-    "    float halfStep = ParaMatrix[0][3]*0.5;                                             \n"
-    "    for (int i = 0; i < 10; i++)                                                       \n"
-    "    {                                                                                  \n"
-    "        a3 = (a1 + a2) * 0.5;                                                          \n"
-    "        if (length(a2 - a1) <= halfStep)                                               \n"
-    "            return vec4(clamp(a3, mmn, mmx), 1.0);                                     \n"
-    "        if ( all(greaterThanEqual(a3, mmn)) && all(lessThanEqual(a3, mmx)) )           \n"
-    "            a1 = a3;                                                                   \n"
-    "        else                                                                           \n"
-    "            a2 = a3;                                                                   \n"
-    "    }                                                                                  \n"
-    "    return vec4(clamp(a3, mmn, mmx), 1.0);                                             \n"
-    "}                                                                                      \n"
-    "                                                                                       \n"
-    "vec4 computeRayOrigin()                                                                \n"
-    "{                                                                                      \n"
-    "    vec3 o = vec3(ParaMatrix[0][0], ParaMatrix[0][1], ParaMatrix[0][2]);               \n"
-    "    vec3 mmn = vec3(ParaMatrix[1][0], ParaMatrix[1][1], ParaMatrix[1][2]);             \n"
-    "    vec3 mmx = vec3(ParaMatrix[1][3], ParaMatrix[2][0], ParaMatrix[2][1]);             \n"
-    "    mmn = clamp(mmn, 0.0, 1.0);                                                        \n"
-    "    mmx = clamp(mmx, 0.0, 1.0);                                                        \n"
-    "                                                                                       \n"
-    "    if (all(greaterThanEqual(o, mmn)) && all(lessThanEqual(o, mmx)) )                  \n"
-    "        return vec4(o, 1.0);                                                           \n"
-    "    else                                                                               \n"
-    "        return gl_TexCoord[0];                                                         \n"
-    "}                                                                                      \n"
-    "                                                                                       \n"
-    "//perform 3D texture lookup based on RenderMethod                                      \n"
-    "vec4 voxelColorA(vec3 coord)                                                           \n"
-    "{                                                                                      \n"
-    "    vec4 scalar = texture3D(TextureVol, coord);                                        \n"
-    "    vec4 normal = texture3D(TextureNormalA, coord);                                    \n"
-    "    return texture2D(TextureColorLookupA, vec2(scalar.x, normal.w));                   \n"
-    "}                                                                                      \n"
-    "                                                                                       \n"
-    "vec4 voxelColorB(vec3 coord)                                                           \n"
-    "{                                                                                      \n"
-    "    vec4 scalar = texture3D(TextureVol, coord);                                        \n"
-    "    vec4 normal = texture3D(TextureNormalB, coord);                                    \n"
-    "    return texture2D(TextureColorLookupB, vec2(scalar.y, normal.w));                   \n"
-    "}                                                                                      \n"
-    "                                                                                       \n"
-    "vec3 voxelNormalA(vec3 coord)                                                          \n"
-    "{                                                                                      \n"
-    "  //vec4 sample1, sample2;                                                             \n"
-    "  //sample1.x = texture3D(TextureVol, coord + vec3(-0.00195, 0.0, 0.0)).x;             \n"
-    "  //sample1.y = texture3D(TextureVol, coord + vec3(0.0, -0.00195, 0.0)).x;             \n"
-    "  //sample1.z = texture3D(TextureVol, coord + vec3(0.0, 0.0, -0.002873)).x;            \n"
-    "  //sample2.x = texture3D(TextureVol, coord + vec3(0.00195, 0.0, 0.0)).x;              \n"
-    "  //sample2.y = texture3D(TextureVol, coord + vec3(0.0, 0.00195, 0.0)).x;              \n"
-    "  //sample2.z = texture3D(TextureVol, coord + vec3(0.0, 0.0, 0.002873)).x;             \n"
-    "  //vec4 normal = normalize(sample1 - sample2);                                         \n"
-    "                                                                                        \n"
-    "  vec4 normal = texture3D(TextureNormalA, coord);                                       \n"
-    "  normal = normal * 2.0 - 1.0;                                                          \n"
-    "  normal = VolumeMatrix * normal;                                                       \n"
-    "  return gl_NormalMatrix * normal.xyz;                                                  \n"
-    "}                                                                                       \n"
-    "                                                                                        \n"
-    "vec3 voxelNormalB(vec3 coord)                                                           \n"
-    "{                                                                                       \n"
-    "  //vec4 sample1, sample2;                                                              \n"
-    "  //sample1.x = texture3D(TextureVol, coord + vec3(-0.01, 0.0, 0.0)).y;                 \n"
-    "  //sample1.y = texture3D(TextureVol, coord + vec3(0.0, -0.01, 0.0)).y;                 \n"
-    "  //sample1.z = texture3D(TextureVol, coord + vec3(0.0, 0.0, -0.01)).y;                 \n"
-    "  //sample2.x = texture3D(TextureVol, coord + vec3(0.01, 0.0, 0.0)).y;                  \n"
-    "  //sample2.y = texture3D(TextureVol, coord + vec3(0.0, 0.01, 0.0)).y;                  \n"
-    "  //sample2.z = texture3D(TextureVol, coord + vec3(0.0, 0.0, 0.01)).y;                  \n"
-    "  //vec4 normal = normalize(sample1 - sample2);                                         \n"
-    "                                                                                        \n"
-    "  vec4 normal = texture3D(TextureNormalB, coord);                                       \n"
-    "  normal = normal * 2.0 - 1.0;                                                          \n"
-    "  normal = VolumeMatrix * normal;                                                       \n"
-    "  return gl_NormalMatrix * normal.xyz;                                                  \n"
-    "}                                                                                       \n";
-    
-  //shading A
-  if (this->Technique == 0 || this->Technique == 4 || this->Technique == 5)
-  {
-    fp_oss <<
-      "vec4 directionalLightA(vec3 coord, vec3 lightDir, vec4 color)                           \n"
-      "{                                                                                       \n"
-      "  vec3    normal = normalize(voxelNormalA(coord));                                      \n"
-      "  float   NdotL = abs( dot( normal, lightDir ) );                                       \n"
-      "  vec4    specular = vec4(0);                                                           \n"
-      "  if (NdotL > 0.0)                                                                      \n"
-      "  {                                                                                     \n"
-      "    float   NdotHV = max( dot( normal, gl_LightSource[0].halfVector.xyz), 0.0);         \n"
-      "    specular = (gl_FrontMaterial.specular) * pow(NdotHV, gl_FrontMaterial.shininess);   \n"
-      "  }                                                                                     \n"
-      "  vec4 diffuse = (gl_FrontMaterial.ambient + gl_FrontMaterial.diffuse * NdotL) * color; \n"
-      "  return (specular + diffuse);                                                          \n"
-      "}                                                                                       \n";
-  }
-  else if (this->Technique == 1)
-  {
-    fp_oss <<
-      "vec4 edgeColoringA(vec3 coord, vec4 diffuse)                                            \n"
-      "{                                                                                       \n"
-      "  vec3    normal = normalize(voxelNormalA(coord));                                      \n"
-      "  float   NdotV = abs( dot( normal, normalize(-ViewDir) ) );                            \n"
-      "  return diffuse*NdotV;                                                                 \n"
-      "}                                                                                       \n";
-  }
-
-  //shading B
-  if (this->TechniqueFg == 0 || this->TechniqueFg == 4 || this->TechniqueFg == 5)
-  {
-    fp_oss <<
-      "vec4 directionalLightB(vec3 coord, vec3 lightDir, vec4 color)                           \n"
-      "{                                                                                       \n"
-      "  vec3    normal = normalize(voxelNormalB(coord));                                      \n"
-      "  float   NdotL = abs( dot( normal, lightDir ));                                        \n"
-      "  vec4    specular = vec4(0);                                                           \n"
-      "  if (NdotL > 0.0)                                                                      \n"
-      "  {                                                                                     \n"
-      "    float   NdotHV = max( dot( normal, gl_LightSource[0].halfVector.xyz), 0.0);         \n"
-      "    specular = (gl_FrontMaterial.specular) * pow(NdotHV, gl_FrontMaterial.shininess);   \n"
-      "  }                                                                                     \n"
-      "  vec4 diffuse = (gl_FrontMaterial.ambient + gl_FrontMaterial.diffuse * NdotL) * color; \n"
-      "  return (specular + diffuse);                                                          \n"
-      "}                                                                                       \n";
-  }
-  else if (this->TechniqueFg == 1)
-  {
-    fp_oss <<
-      "vec4 edgeColoringB(vec3 coord, vec4 diffuse)                                            \n"
-      "{                                                                                       \n"
-      "  vec3    normal = normalize(voxelNormalB(coord));                                      \n"
-      "  float   NdotV = abs( dot( normal, normalize(-ViewDir) ) );                            \n"
-      "  return diffuse*NdotV;                                                                 \n"
-      "}                                                                                       \n";
-  }
-
-  fp_oss <<
-    "void main()                                                                            \n"
-    "{                                                                                      \n"
-    "    vec4 rayOrigin = computeRayOrigin();                                               \n"
-    "    vec4 rayEnd = computeRayEnd();                                                     \n"
-    "    vec3 rayDir = rayEnd.xyz - rayOrigin.xyz;                                          \n"
-    "    float rayLen = length(rayDir);                                                     \n"
-    "                                                                                       \n"
-    "    if (rayLen > 1.732)                                                                \n"
-    "      rayLen = 1.732;                                                                  \n"
-    "                                                                                       \n"
-    "    rayDir = normalize(rayDir);                                                        \n"
-    "                                                                                       \n"
-    "    //do ray casting                                                                   \n"
-    "    vec3 rayStep = rayDir*ParaMatrix[0][3];                                            \n"
-    "    vec3 nextRayOrigin = rayOrigin.xyz;                                                \n"
-    "                                                                                       \n"
-    "    vec4 pixelColor = vec4(0);                                                         \n"
-    "    float alpha = 0.0;                                                                 \n";
-
-  if (this->Technique != 2 || this->Technique != 3)
-  {
-    fp_oss <<
-    "    float alphaA = 0.0;                                                                  \n";
-  }
-
-  if (this->TechniqueFg != 2 || this->TechniqueFg != 3)
-  {
-    fp_oss <<
-    "    float alphaB = 0.0;                                                                  \n";
-  }
-
-  fp_oss <<
-    "    float t = 0.0;                                                                       \n"
-    "    vec3  lightDir = normalize( gl_LightSource[0].position.xyz );                        \n"
-    "    float fgRatio = ParaMatrix[2][2];                                                    \n";
-
-  switch(this->Technique)
-  {
-    case 0:
-      switch(this->TechniqueFg)
-      {
-        case 0:
-          switch(this->ColorOpacityFusion)
-          {
-            case 0://alpha blending or
-              fp_oss <<
-                "{                                                                                           \n"
-                "  while( (t < rayLen) && (alpha < 0.975) )                                                  \n"
-                "  {                                                                                         \n"
-                "    vec4 nextColorA = voxelColorA(nextRayOrigin);                                           \n"
-                "    vec4 nextColorB = voxelColorB(nextRayOrigin);                                           \n"
-                "    float tempAlphaA = nextColorA.w;                                                        \n"
-                "    float tempAlphaB = nextColorB.w;                                                        \n"
-                "                                                                                            \n"
-                "    if (tempAlphaA > 0.0)                                                                   \n"
-                "    {                                                                                       \n"
-                "      nextColorA = directionalLightA(nextRayOrigin, lightDir, nextColorA);                  \n"
-                "                                                                                            \n"
-                "      tempAlphaA *= (1.0 - alpha);                                                          \n"
-                "      pixelColor += nextColorA * tempAlphaA * (1.0 - fgRatio);                              \n"
-                "      alphaA += tempAlphaA;                                                                 \n"
-                "    }                                                                                       \n"
-                "    alpha = alphaA * (1.0 - fgRatio) + alphaB * fgRatio;                                    \n"
-                "    if (tempAlphaB > 0.0)                                                                   \n"
-                "    {                                                                                       \n"
-                "      nextColorB = directionalLightB(nextRayOrigin, lightDir, nextColorB);                  \n"
-                "                                                                                            \n"
-                "      tempAlphaB *= (1.0 - alpha);                                                          \n"
-                "      pixelColor += nextColorB * tempAlphaB * fgRatio;                                      \n"
-                "      alphaB += tempAlphaB;                                                                 \n"
-                "    }                                                                                       \n"
-                "                                                                                            \n"
-                "    alpha = alphaA * (1.0 - fgRatio) + alphaB * fgRatio;                                    \n"
-                "    t += ParaMatrix[0][3];                                                                  \n"
-                "    nextRayOrigin += rayStep;                                                               \n"
-                "  }                                                                                         \n"
-                "}                                                                                           \n"
-                "gl_FragColor = vec4(pixelColor.xyz, alpha);                                                 \n";
-              break;
-            case 1://alpha blending and
-              fp_oss <<
-                "{                                                                                           \n"
-                "  while( (t < rayLen) && (alpha < 0.975) )                                                  \n"
-                "  {                                                                                         \n"
-                "    vec4 nextColorA = voxelColorA(nextRayOrigin);                                           \n"
-                "    vec4 nextColorB = voxelColorB(nextRayOrigin);                                           \n"
-                "    float tempAlphaA = nextColorA.w;                                                        \n"
-                "    float tempAlphaB = nextColorB.w;                                                        \n"
-                "                                                                                            \n"
-                "    if (tempAlphaA > 0.0 && tempAlphaB > 0.0)                                               \n"
-                "    {                                                                                       \n"
-                "      nextColorA = directionalLightA(nextRayOrigin, lightDir, nextColorA);                  \n"
-                "                                                                                            \n"
-                "      tempAlphaA *= (1.0 - alpha);                                                          \n"
-                "      if (tempAlphaB > 0.0)                                                                 \n"
-                "        pixelColor += nextColorA * tempAlphaA * (1.0 - fgRatio);                            \n"
-                "      alphaA += tempAlphaA;                                                                 \n"
-                "                                                                                            \n"
-                "      alpha = alphaA * (1.0 - fgRatio) + alphaB * fgRatio;                                  \n"
-                "                                                                                            \n"
-                "      nextColorB = directionalLightB(nextRayOrigin, lightDir, nextColorB);                  \n"
-                "                                                                                            \n"
-                "      tempAlphaB *= (1.0 - alpha);                                                          \n"
-                "      if (tempAlphaA > 0.0)                                                                 \n"
-                "        pixelColor += nextColorB * tempAlphaB * fgRatio;                                    \n"
-                "      alphaB += tempAlphaB;                                                                 \n"
-                "                                                                                            \n"
-                "      alpha = alphaA * (1.0 - fgRatio) + alphaB * fgRatio;                                  \n"
-                "    }                                                                                       \n"
-                "                                                                                            \n"
-                "    t += ParaMatrix[0][3];                                                                  \n"
-                "    nextRayOrigin += rayStep;                                                               \n"
-                "  }                                                                                         \n"
-                "}                                                                                           \n"
-                "gl_FragColor = vec4(pixelColor.xyz, alpha);                                                 \n";
-              break;
-          }
-          break;
-        case 1:
-          break;
-        case 2:
-          fp_oss <<
-            "{                                                                                           \n"
-            "  while( (t < rayLen) && (alphaA < 0.975) )                                                 \n"
-            "  {                                                                                         \n"
-            "    vec4 nextColorA = voxelColorA(nextRayOrigin);                                           \n"
-            "    float tempAlphaA = nextColorA.w;                                                        \n"
-            "                                                                                            \n"
-            "    if (tempAlphaA > 0.0)                                                                   \n"
-            "    {                                                                                       \n"
-            "      nextColorA = directionalLightA(nextRayOrigin, lightDir, nextColorA);                  \n"
-            "                                                                                            \n"
-            "      tempAlphaA *= (1.0 - alphaA);                                                         \n"
-            "      pixelColor += nextColorA * tempAlphaA * (1.0 - fgRatio);                              \n"
-            "      alphaA += tempAlphaA;                                                                 \n"
-            "    }                                                                                       \n"
-            "                                                                                            \n"
-            "    t += ParaMatrix[0][3];                                                                  \n"
-            "    nextRayOrigin += rayStep;                                                               \n"
-            "  }                                                                                         \n"
-            "                                                                                            \n"
-            "  t = 0.0;//reset parameters for mip traversal                                              \n"
-            "  nextRayOrigin = rayOrigin.xyz;                                                            \n"
-            "                                                                                            \n"
-            "  float maxScalarB = texture3D(TextureVol, nextRayOrigin).y;                                \n"
-            "  vec3 maxScalarCoordB = nextRayOrigin;                                                     \n"
-            "                                                                                            \n"
-            "  while( t < rayLen )                                                                       \n"
-            "  {                                                                                         \n"
-            "    float scalar = texture3D(TextureVol, nextRayOrigin).y;                                  \n"
-            "    if (maxScalarB < scalar)                                                                \n"
-            "    {                                                                                       \n"
-            "       maxScalarB = scalar;                                                                 \n"
-            "       maxScalarCoordB = nextRayOrigin;                                                     \n"
-            "    }                                                                                       \n"
-            "                                                                                            \n"
-            "    t += ParaMatrix[0][3];                                                                  \n"
-            "    nextRayOrigin += rayStep;                                                               \n"
-            "  }                                                                                         \n"
-            "                                                                                            \n"
-            "  vec4 mipColor = voxelColorB(maxScalarCoordB);                                             \n"
-            "  pixelColor += mipColor * fgRatio;                                                         \n"
-            "  alpha = alphaA * (1.0 - fgRatio) +  mipColor.w * fgRatio;                                 \n"
-            "}                                                                                           \n"
-            "gl_FragColor = vec4(pixelColor.xyz, alpha);                                                 \n";
-          break;
-        case 3:
-          break;
-      }
-      break;
-    case 1:
-      switch(this->TechniqueFg)
-      {
-        case 0:
-          break;
-        case 1:
-          break;
-        case 2:
-          break;
-        case 3:
-          break;
-      }
-      break;
-    case 2:
-      switch(this->TechniqueFg)
-      {
-        case 0:
-          break;
-        case 1:
-          break;
-        case 2:
-          fp_oss <<
-            "{                                                                                           \n"
-            "  float maxScalarA = texture3D(TextureVol, nextRayOrigin).x;                                \n"
-            "  vec3 maxScalarCoordA = nextRayOrigin;                                                     \n"
-            "  while( t < rayLen )                                                                       \n"
-            "  {                                                                                         \n"
-            "    float scalar = texture3D(TextureVol, nextRayOrigin).x;                                  \n"
-            "    if (maxScalarA < scalar)                                                                \n"
-            "    {                                                                                       \n"
-            "       maxScalarA = scalar;                                                                 \n"
-            "       maxScalarCoordA = nextRayOrigin;                                                     \n"
-            "    }                                                                                       \n"
-            "                                                                                            \n"
-            "    t += ParaMatrix[0][3];                                                                  \n"
-            "    nextRayOrigin += rayStep;                                                               \n"
-            "  }                                                                                         \n"
-            "                                                                                            \n"
-            "  t = 0.0;//reset parameters for mip traversal                                              \n"
-            "  nextRayOrigin = rayOrigin.xyz;                                                            \n"
-            "                                                                                            \n"
-            "  float maxScalarB = texture3D(TextureVol, nextRayOrigin).y;                                \n"
-            "  vec3 maxScalarCoordB = nextRayOrigin;                                                     \n"
-            "                                                                                            \n"
-            "  while( t < rayLen )                                                                       \n"
-            "  {                                                                                         \n"
-            "    float scalar = texture3D(TextureVol, nextRayOrigin).y;                                  \n"
-            "    if (maxScalarB < scalar)                                                                \n"
-            "    {                                                                                       \n"
-            "       maxScalarB = scalar;                                                                 \n"
-            "       maxScalarCoordB = nextRayOrigin;                                                     \n"
-            "    }                                                                                       \n"
-            "                                                                                            \n"
-            "    t += ParaMatrix[0][3];                                                                  \n"
-            "    nextRayOrigin += rayStep;                                                               \n"
-            "  }                                                                                         \n"
-            "                                                                                            \n"
-            "  vec4 mipColorA = voxelColorA(maxScalarCoordA);                                            \n"
-            "  vec4 mipColorB = voxelColorB(maxScalarCoordB);                                            \n"
-            "  pixelColor = mipColorA * (1.0 - fgRatio) + mipColorB * fgRatio;                           \n"
-            "  alpha = mipColorA.w * (1.0 - fgRatio) +  mipColorB.w * fgRatio;                           \n"
-            "}                                                                                           \n"
-            "gl_FragColor = vec4(pixelColor.xyz, alpha);                                                 \n";
-          break;
-        case 3:
-          break;
-      }
-      break;
-    case 3:
-      switch(this->TechniqueFg)
-      {
-        case 0:
-          break;
-        case 1:
-          break;
-        case 2:
-          break;
-        case 3:
-          break;
-      }
-      break;
-    case 4:
-      switch(this->TechniqueFg)
-      {
-        case 4:
-          switch(this->ColorOpacityFusion)
-          {
-            case 0://alpha blending or
-              fp_oss <<
-                "{                                                                                           \n"
-                "  while( (t < rayLen) && (alpha < 0.975) )                                                  \n"
-                "  {                                                                                         \n"
-                "    vec4 nextColorA = voxelColorA(nextRayOrigin);                                           \n"
-                "    vec4 nextColorB = voxelColorB(nextRayOrigin);                                           \n"
-                "    float tempAlphaA = nextColorA.w;                                                        \n"
-                "    float tempAlphaB = nextColorB.w;                                                        \n"
-                "                                                                                            \n"
-                "    if (tempAlphaA > 0.0)                                                                   \n"
-                "    {                                                                                       \n"
-                "      nextColorA = directionalLightA(nextRayOrigin, lightDir, nextColorA);                  \n"
-                "                                                                                            \n"
-                "      tempAlphaA *= (1.0 - alpha)*texture3D(TextureNormalA, nextRayOrigin).w;               \n"
-                "      pixelColor += nextColorA * tempAlphaA * (1.0 - fgRatio);                              \n"
-                "      alphaA += tempAlphaA;                                                                 \n"
-                "    }                                                                                       \n"
-                "    alpha = alphaA * (1.0 - fgRatio) + alphaB * fgRatio;                                    \n"
-                "    if (tempAlphaB > 0.0)                                                                   \n"
-                "    {                                                                                       \n"
-                "      nextColorB = directionalLightB(nextRayOrigin, lightDir, nextColorB);                  \n"
-                "                                                                                            \n"
-                "      tempAlphaB *= (1.0 - alpha)*texture3D(TextureNormalB, nextRayOrigin).w;               \n"
-                "      pixelColor += nextColorB * tempAlphaB * fgRatio;                                      \n"
-                "      alphaB += tempAlphaB;                                                                 \n"
-                "    }                                                                                       \n"
-                "                                                                                            \n"
-                "    alpha = alphaA * (1.0 - fgRatio) + alphaB * fgRatio;                                    \n"
-                "    t += ParaMatrix[0][3];                                                                  \n"
-                "    nextRayOrigin += rayStep;                                                               \n"
-                "  }                                                                                         \n"
-                "}                                                                                           \n"
-                "gl_FragColor = vec4(pixelColor.xyz, alpha);                                                 \n";
-              break;
-          }
-          break;
-      }
-      break;
-  }
-
-  fp_oss <<
-    "}                                                                                        \n";
-
-  std::string source = fp_oss.str();
-  const char* pSourceText = source.c_str();
-
-//  std::cerr << source;
-
-  vtkgl::ShaderSource(RayCastFragmentShader, 1, &pSourceText, NULL);
-  vtkgl::CompileShader(RayCastFragmentShader);
-
-  GLint result;
-  vtkgl::GetShaderiv(RayCastFragmentShader, vtkgl::COMPILE_STATUS, &result);
-
-  if (!result)
-    std::cerr << "Fragment Shader Compile Status: FALSE" << std::endl;
-
-  GLint infoLogLen;
-  vtkgl::GetShaderiv(RayCastFragmentShader, vtkgl::INFO_LOG_LENGTH, &infoLogLen);
-  vtkgl::GLchar *pInfoLog = (vtkgl::GLchar*)malloc(sizeof(vtkgl::GLchar)*(infoLogLen+1));
-
-  try
-  {
-    vtkgl::GetShaderInfoLog(RayCastFragmentShader, infoLogLen, NULL, pInfoLog);
-    std::cerr << pInfoLog;
-  }catch(...)
-  {
-  }
-
-  free(pInfoLog);
 }
 
 void vtkSlicerGPURayCastVolumeMapper::LoadRayCastProgram()
@@ -1392,59 +882,443 @@ void vtkSlicerGPURayCastVolumeMapper::LoadRayCastProgram()
 
 void vtkSlicerGPURayCastVolumeMapper::LoadVertexShader()
 {
-  std::ostringstream vp_oss;
-  vp_oss <<
-    "varying vec3 ViewDir;                                                                     \n"
-    "void main()                                                                               \n"
-    "{                                                                                         \n"
-    "  gl_Position = ftransform();                                                             \n"
-    "  gl_TexCoord[0] = gl_Color;                                                              \n"
-    "  ViewDir = vec3(gl_ModelViewMatrix * gl_Vertex);                                         \n"
-    "}                                                                                         \n";
+    std::ostringstream vp_oss;
+    vp_oss <<
+        "varying vec3 ViewDir;                                                                     \n"
+        "void main()                                                                               \n"
+        "{                                                                                         \n"
+        "    gl_Position = ftransform();                                                           \n"
+        "    gl_TexCoord[0] = gl_Color;                                                            \n"
+        "    ViewDir = vec3(gl_ModelViewMatrix * gl_Vertex);                                       \n"
+        "}                                                                                         \n";
 
-  std::string source = vp_oss.str();
+
+    std::string source = vp_oss.str();
+    const char* pSourceText = source.c_str();
+
+    vtkgl::ShaderSource(RayCastVertexShader, 1, &pSourceText, NULL);
+    vtkgl::CompileShader(RayCastVertexShader);
+
+    GLint result;
+    vtkgl::GetShaderiv(RayCastVertexShader, vtkgl::COMPILE_STATUS, &result);
+
+    if (!result )
+        printf("Vertex Shader Compile Status: FALSE\n");
+
+    GLint infoLogLen;
+    vtkgl::GetShaderiv(RayCastVertexShader, vtkgl::INFO_LOG_LENGTH, &infoLogLen);
+    try
+    {
+        vtkgl::GLchar *pInfoLog = (vtkgl::GLchar*)malloc(sizeof(vtkgl::GLchar)*(infoLogLen+1));
+        vtkgl::GetShaderInfoLog(RayCastVertexShader, infoLogLen, NULL, pInfoLog);
+        printf("%s", pInfoLog);
+    }catch(...)
+    {
+    }
+}
+
+void vtkSlicerGPURayCastVolumeMapper::LoadFragmentShaders()
+{
+  std::ostringstream fp_oss;
+    fp_oss <<
+      "varying vec3 ViewDir;                                                                 \n"
+      "uniform sampler3D TextureVol;                                                         \n"
+      "uniform sampler3D TextureVol1;                                                        \n"
+      "uniform sampler2D TextureColorLookup;                                                 \n"
+      "uniform mat4 ParaMatrix;                                                              \n"
+      "uniform mat4 VolumeMatrix;                                                            \n"
+      "//uniform mat4 ParaMatrix1;                                                             \n"
+      "                                                                                      \n"
+      "//ParaMatrix:                                                                         \n"
+      "//EyePos.x,      EyePos.y,      EyePos.z,     Step                                    \n"
+      "//VolBBoxLow.x,  VolBBoxLow.y,  VolBBoxLow.z, VolBBoxHigh.x                           \n"
+      "//VolBBoxHigh.y, VolBBoxHigh.z, MinDist,      DepthPeelingThreshold,                  \n"
+      "//ICPE_s,        GlobalAlpha,   MinMaxLen,    ICPE_t                                  \n"
+      "                                                                                      \n"
+      "vec4 computeRayEnd()                                                                  \n"
+      "{                                                                                     \n"
+      "  vec3 o = vec3(ParaMatrix[0][0], ParaMatrix[0][1], ParaMatrix[0][2]);                \n"
+      "  vec3 mmn = vec3(ParaMatrix[1][0], ParaMatrix[1][1], ParaMatrix[1][2]);              \n"
+      "  vec3 mmx = vec3(ParaMatrix[1][3], ParaMatrix[2][0], ParaMatrix[2][1]);              \n"
+      "  mmn = clamp(mmn, 0.0, 1.0);                                                         \n"
+      "  mmx = clamp(mmx, 0.0, 1.0);                                                         \n"
+      "                                                                                      \n"
+      "  if (all(greaterThanEqual(o, mmn)) && all(lessThanEqual(o, mmx)) )                   \n"
+      "    return gl_TexCoord[0];                                                            \n"
+      "                                                                                      \n"
+      "  vec3 a1 = gl_TexCoord[0].xyz;                                                       \n"
+      "  vec3 a2 = a1 + normalize(a1 - o) * length(mmx - mmn);                               \n"
+      "  vec3 a3;                                                                            \n"
+      "                                                                                      \n"
+      "  float halfStep = ParaMatrix[0][3]*0.5;                                              \n"
+      "  for (int i = 0; i < 10; i++)                                                        \n"
+      "  {                                                                                   \n"
+      "    a3 = (a1 + a2) * 0.5;                                                             \n"
+      "    if (length(a2 - a1) <= halfStep)                                                  \n"
+      "      return vec4(clamp(a3, mmn, mmx), 1.0);                                          \n"
+      "    if ( all(greaterThanEqual(a3, mmn)) && all(lessThanEqual(a3, mmx)) )              \n"
+      "      a1 = a3;                                                                        \n"
+      "    else                                                                              \n"
+      "      a2 = a3;                                                                        \n"
+      "  }                                                                                   \n"
+      "  return vec4(clamp(a3, mmn, mmx), 1.0);                                              \n"
+      "}                                                                                     \n"
+      "                                                                                      \n"
+      "vec4 computeRayOrigin()                                                               \n"
+      "{                                                                                     \n"
+      "  vec3 o = vec3(ParaMatrix[0][0], ParaMatrix[0][1], ParaMatrix[0][2]);                \n"
+      "  vec3 mmn = vec3(ParaMatrix[1][0], ParaMatrix[1][1], ParaMatrix[1][2]);              \n"
+      "  vec3 mmx = vec3(ParaMatrix[1][3], ParaMatrix[2][0], ParaMatrix[2][1]);              \n"
+      "  mmn = clamp(mmn, 0.0, 1.0);                                                         \n"
+      "  mmx = clamp(mmx, 0.0, 1.0);                                                         \n"
+      "                                                                                      \n"
+      "  if (all(greaterThanEqual(o, mmn)) && all(lessThanEqual(o, mmx)) )                   \n"
+      "    return vec4(o, 1.0);                                                              \n"
+      "  else                                                                                \n"
+      "    return gl_TexCoord[0];                                                            \n"
+      "}                                                                                     \n"
+      "                                                                                      \n";
+  //color lookup    
+  switch(this->GetInput()->GetNumberOfScalarComponents())
+  {
+  case 1:
+    fp_oss <<
+      "vec4 voxelColor(vec3 coord)                                                          \n"
+      "{                                                                                    \n"
+      "  vec4 scalar = texture3D(TextureVol, coord);                                        \n"
+      "  return texture2D(TextureColorLookup, vec2(scalar.x, scalar.w));                    \n"
+      "}                                                                                    \n"
+      "                                                                                     \n";
+    break;
+  case 2:
+    fp_oss <<
+      "vec4 voxelColor(vec3 coord)                                                          \n"
+      "{                                                                                    \n"
+      "  vec4 color = vec4(0);                                                              \n"
+      "  vec4 scalar = texture3D(TextureVol, coord);                                        \n"
+      "  color = texture2D(TextureColorLookup, vec2(scalar.x, scalar.w));                   \n"
+      "  vec4 opacity = texture2D(TextureAlphaLookup, vec2(scalar.y, scalar.w));            \n"
+      "  color.w = opacity.w;                                                               \n"
+      "  return color;                                                                      \n"
+      "}                                                                                    \n";
+    break;
+  case 3:
+  case 4:
+    fp_oss <<
+      "vec4 voxelColor(vec3 coord)                                                          \n"
+      "{                                                                                    \n"
+      "  vec4 color = vec4(0);                                                              \n"
+      "  color = texture3D(TextureVol, coord);                                              \n"
+      "  vec4 scalar = texture3D(TextureVol1, coord);                                       \n"
+      "  vec4 opacity = texture2D(TextureAlphaLookup, vec2(color.w, scalar.w));             \n"
+      "  color.w = opacity.w;                                                               \n"
+      "  return color;                                                                      \n"
+      "}                                                                                    \n";
+    break;
+  }
+
+  //scalar lookup
+  switch(this->GetInput()->GetNumberOfScalarComponents())
+  {
+    case 1:
+    case 2:
+      fp_oss <<
+        "float voxelScalar(vec3 coord)                                                        \n"
+        "{                                                                                    \n"
+        "  return texture3D(TextureVol, coord).x;                                             \n"
+        "}                                                                                    \n";
+      break;
+    case 3:
+    case 4:
+      fp_oss <<
+        "float voxelScalar(vec3 coord)                                                        \n"
+        "{                                                                                    \n"
+        "  return texture3D(TextureVol, coord).w;                                             \n"
+        "}                                                                                    \n";
+      break;
+  }
+  
+  if (this->Technique != 2 && this->Technique != 3) //normal lookup (not needed for MIP and MINIP)
+  {
+    fp_oss <<
+      "vec3 voxelNormal(vec3 coord)                                                           \n"
+        "{                                                                                    \n"
+        "  {//on-the-fly normal estimation                                                    \n"
+        "   //vec4 sample1, sample2;                                                            \n"
+        "   //sample1.x = texture3D(TextureVol, coord + vec3(-ParaMatrix1[0][0], 0.0, 0.0)).x;  \n"
+        "   //sample1.y = texture3D(TextureVol, coord + vec3(0.0, -ParaMatrix1[0][1], 0.0)).x;  \n"
+        "   //sample1.z = texture3D(TextureVol, coord + vec3(0.0, 0.0, -ParaMatrix1[0][2])).x;  \n"
+        "   //sample2.x = texture3D(TextureVol, coord + vec3(ParaMatrix1[0][0], 0.0, 0.0)).x;   \n"
+        "   //sample2.y = texture3D(TextureVol, coord + vec3(0.0, ParaMatrix1[0][1], 0.0)).x;   \n"
+        "   //sample2.z = texture3D(TextureVol, coord + vec3(0.0, 0.0, ParaMatrix1[0][2])).x;   \n"
+        "   //vec4 normal = sample1 - sample2;                                                  \n"
+        "   //if (length(normal) < 0.001) return vec3(0);                                     \n"
+        "   //normal = VolumeMatrix * normalize(normal);                                      \n"
+        "   //return gl_NormalMatrix * normal.xyz;                                            \n"
+        "  }                                                                                  \n"
+        "  {                                                                                  \n"
+        "   vec4 normal = texture3D(TextureVol1, coord);                                      \n"
+        "   normal = normal * 2.0 - 1.0;                                                      \n"
+        "   normal = VolumeMatrix * normal;                                                   \n"
+        "   return gl_NormalMatrix * normal.xyz;                                              \n"
+        "  }                                                                                  \n"
+        "}                                                                                    \n";
+  }
+
+  // shading
+  if (this->Technique == 0 || this->Technique == 4 || this->Technique == 5)
+  {
+    fp_oss <<
+      "vec4 directionalLight(vec3 coord, vec3 lightDir, vec4 color)                              \n"
+      "{                                                                                         \n"
+      "  vec3    normal = voxelNormal(coord);                                                    \n"
+      "  //if (length(normal) < 0.001)                                                             \n"
+      "  //  return gl_FrontMaterial.ambient * color;                                              \n"
+      "  normal = normalize(normal);                                                             \n"
+      "  float   NdotL = abs(dot(normal, lightDir));                                             \n"
+      "  vec4    specular = vec4(0);                                                             \n"
+      "  if (NdotL > 0.0)                                                                        \n"
+      "  {                                                                                       \n"
+      "    float   NdotHV = max( dot( normal, gl_LightSource[0].halfVector.xyz), 0.0);           \n"
+      "    specular = (gl_FrontMaterial.specular) * pow(NdotHV, gl_FrontMaterial.shininess)*color;   \n"
+      "  }                                                                                           \n"
+      "  vec4    diffuse = (gl_FrontMaterial.ambient + gl_FrontMaterial.diffuse * NdotL) * color;    \n"
+      "  return (specular + diffuse);                                                                \n"
+      "}                                                                                             \n";
+  }
+  else if (this->Technique == 1)
+  {
+    fp_oss <<
+      "vec4 edgeColoring(vec3 coord, vec4 diffuse)                                              \n"
+      "{                                                                                        \n"
+      "  vec3    normal = normalize(voxelNormal(coord));                                        \n"
+      "  float   NdotV = abs(dot(normal, normalize(-ViewDir)));                                 \n"
+      "  return diffuse*NdotV;                                                                  \n"
+      "}                                                                                        \n";
+  }
+
+  if (this->Technique == 5)
+  {
+    fp_oss <<
+      "float ICPE(vec3 coord, float shading, float alpha, float dist)                           \n"
+      "{                                                                                        \n"
+      "   float gradMag = texture3D(TextureVol, coord).w;                                       \n"
+      "   float base = shading*ParaMatrix[3][3]*(1.0-dist)*(1.0-alpha);                         \n"
+      "   if (base > 0.0)                                                                       \n"
+      "     return pow(gradMag, pow(base, ParaMatrix[3][0]));                                   \n"
+      "   else                                                                                  \n"
+      "     return 1.0;                                                                         \n"
+      "}                                                                                        \n";
+  }
+      
+  fp_oss <<      
+    "void main()                                                                            \n"
+    "{                                                                                      \n"
+    "  vec4 rayOrigin = computeRayOrigin();                                                 \n"
+    "  vec4 rayEnd = computeRayEnd();                                                       \n"
+    "  vec3 rayDir = rayEnd.xyz - rayOrigin.xyz;                                            \n"
+    "  float rayLen = length(rayDir);                                                       \n"
+    "                                                                                       \n"
+    " if (rayLen > 1.732)                                                                   \n"
+    "   rayLen = 1.732;                                                                     \n"
+    "                                                                                       \n"
+    "  rayDir = normalize(rayDir);                                                          \n"
+    "                                                                                       \n"
+    "  //do ray casting                                                                     \n"
+    "  vec3 rayStep = rayDir*ParaMatrix[0][3];                                              \n"
+    "  vec3 nextRayOrigin = rayOrigin.xyz;                                                  \n"
+    "                                                                                       \n"
+    "  float fading = 1.0;                                                                  \n"
+    "  if (ParaMatrix[3][1] > 0.0001)                                                       \n"
+    "  {                                                                                    \n"
+    "    vec3 eyePos = vec3(ParaMatrix[0][0], ParaMatrix[0][1], ParaMatrix[0][2]);          \n"
+    "    vec3 mmn = vec3(ParaMatrix[1][0], ParaMatrix[1][1], ParaMatrix[1][2]);             \n"
+    "    vec3 mmx = vec3(ParaMatrix[1][3], ParaMatrix[2][0], ParaMatrix[2][1]);             \n"
+    "    mmn = clamp(mmn, 0.0, 1.0);                                                        \n"
+    "    mmx = clamp(mmx, 0.0, 1.0);                                                        \n"
+    "                                                                                       \n"
+    "    if ( any(lessThanEqual(eyePos, mmn)) || any(greaterThanEqual(eyePos, mmx)) )       \n"
+    "    {                                                                                  \n"
+    "      float toEyeDist = length(nextRayOrigin - eyePos);                                \n"
+    "      fading = 1.0 - (toEyeDist - ParaMatrix[2][2])/ParaMatrix[3][2];                  \n"
+    "    }                                                                                  \n"
+    "  }                                                                                    \n"
+    "                                                                                       \n"
+    "  vec4 pixelColor = vec4(0);                                                           \n"
+    "  float alpha = 0.0;                                                                   \n"
+    "  float t = 0.0;                                                                       \n"
+    "  vec3  lightDir = normalize( gl_LightSource[0].position.xyz );                        \n"
+    "  float depthPeeling = ParaMatrix[2][3];                                               \n"
+    "                                                                                       \n"
+    "  while( t < rayLen)                                                                   \n"
+    "  {                                                                                    \n"
+    "    if ( voxelScalar(nextRayOrigin) >= depthPeeling )                                  \n"
+    "      break;                                                                           \n"
+    "    t += ParaMatrix[0][3];                                                             \n"
+    "    nextRayOrigin += rayStep;                                                          \n"
+    "    fading -= ParaMatrix[3][1]*ParaMatrix[0][3];                                       \n"
+    "  }                                                                                    \n";
+
+  switch(this->Technique)
+  {
+    case 0:
+      fp_oss <<
+        "  while( (t < rayLen) && (alpha < 0.985) )                                          \n"
+        "  {                                                                                 \n"
+        "    vec4 nextColor = voxelColor(nextRayOrigin);                                     \n"
+        "    float tempAlpha = nextColor.w;                                                  \n"
+        "    nextColor *= vec4(fading, fading, fading, 1.0);                                 \n"
+        "                                                                                    \n"
+        "    if (tempAlpha > 0.0)                                                            \n"
+        "    {                                                                               \n"
+        "      nextColor = directionalLight(nextRayOrigin, lightDir, nextColor);             \n"
+        "                                                                                    \n"
+        "      tempAlpha = (1.0-alpha)*tempAlpha;                                            \n"
+        "      pixelColor += nextColor*tempAlpha;                                            \n"
+        "      alpha += tempAlpha;                                                           \n"
+        "    }                                                                               \n"
+        "                                                                                    \n"
+        "    t += ParaMatrix[0][3];                                                          \n"
+        "    nextRayOrigin += rayStep;                                                       \n"
+        "    fading -= ParaMatrix[3][1]*ParaMatrix[0][3];                                    \n"
+        "  }                                                                                 \n"
+        "    gl_FragColor = vec4(pixelColor.xyz, alpha);                                     \n"
+        "}                                                                                   \n";
+      break;
+    case 1:
+      fp_oss <<
+        "  while( (t < rayLen) && (alpha < 0.985) )                                          \n"
+        "  {                                                                                 \n"
+        "    vec4 nextColor = voxelColor(nextRayOrigin);                                     \n"
+        "    float tempAlpha = nextColor.w;                                                  \n"
+        "    nextColor *= vec4(fading, fading, fading, 1.0);                                 \n"
+        "                                                                                    \n"
+        "    if (tempAlpha > 0.0)                                                            \n"
+        "    {                                                                               \n"
+        "      nextColor = edgeColoring(nextRayOrigin, nextColor);                           \n"
+        "      tempAlpha = (1.0-alpha)*tempAlpha;                                            \n"
+        "      pixelColor += nextColor*tempAlpha;                                            \n"
+        "      alpha += tempAlpha;                                                           \n"
+        "    }                                                                               \n"
+        "                                                                                    \n"
+        "    t += ParaMatrix[0][3];                                                          \n"
+        "    nextRayOrigin += rayStep;                                                       \n"
+        "    fading -= ParaMatrix[3][1]*ParaMatrix[0][3];                                    \n"
+        "  }                                                                                 \n"
+        "  gl_FragColor = vec4(pixelColor.xyz, alpha);                                       \n"
+        "}                                                                                   \n";
+      break;
+    case 2:
+      fp_oss <<
+        "  float maxScalar = voxelScalar(nextRayOrigin);                                     \n"
+        "  vec3 maxScalarCoord = nextRayOrigin;                                              \n"
+        "  float maxFading = fading;                                                         \n"
+        "                                                                                    \n"
+        "  while( t < rayLen )                                                               \n"
+        "  {                                                                                 \n"
+        "    float scalar = voxelScalar(nextRayOrigin);                                      \n"
+        "    if (maxScalar < scalar)                                                         \n"
+        "    {                                                                               \n"
+        "      maxScalar = scalar;                                                           \n"
+        "      maxScalarCoord = nextRayOrigin;                                               \n"
+        "      maxFading = fading;                                                           \n"
+        "    }                                                                               \n"
+        "                                                                                    \n"
+        "    fading -= ParaMatrix[3][1]*ParaMatrix[0][3];                                    \n"
+        "    t += ParaMatrix[0][3];                                                          \n"
+        "    nextRayOrigin += rayStep;                                                       \n"
+        "  }                                                                                 \n"
+        "                                                                                    \n"
+        "  pixelColor = voxelColor(maxScalarCoord) * vec4(maxFading, maxFading, maxFading, 1.0);      \n"
+        "  alpha = pixelColor.w;                                                             \n"
+        "  gl_FragColor = vec4(pixelColor.xyz, alpha);                                       \n"
+        "}                                                                                   \n";
+      break;
+    case 3:
+      fp_oss <<
+        "  float minScalar = voxelScalar(nextRayOrigin);                                     \n"
+        "  vec3 minScalarCoord = nextRayOrigin;                                              \n"
+        "  while( t < rayLen )                                                               \n"
+        "  {                                                                                 \n"
+        "    float scalar = voxelScalar(nextRayOrigin);                                      \n"
+        "    if (minScalar > scalar)                                                         \n"
+        "    {                                                                               \n"
+        "      minScalar = scalar;                                                           \n"
+        "      minScalarCoord = nextRayOrigin;                                               \n"
+        "    }                                                                               \n"
+        "                                                                                    \n"
+        "    t += ParaMatrix[0][3];                                                          \n"
+        "    nextRayOrigin += rayStep;                                                       \n"
+        "  }                                                                                 \n"
+        "                                                                                    \n"
+        "  pixelColor = voxelColor(minScalarCoord);                                          \n"
+        "  alpha = pixelColor.w;                                                             \n"
+        "  gl_FragColor = vec4(pixelColor.xyz, alpha);                                       \n"
+        "}                                                                                   \n";
+      break;
+    case 4:
+      fp_oss <<
+        "  while( (t < rayLen) && (alpha < 0.985) )                                          \n"
+        "  {                                                                                 \n"
+        "    vec4 nextColor = voxelColor(nextRayOrigin);                                     \n"
+        "    float tempAlpha = nextColor.w;                                                  \n"
+        "    nextColor *= vec4(fading, fading, fading, 1.0);                                 \n"
+        "                                                                                    \n"
+        "    if (tempAlpha > 0.0)                                                            \n"
+        "    {                                                                               \n"
+        "      nextColor = directionalLight(nextRayOrigin, lightDir, nextColor);             \n"
+        "                                                                                    \n"
+        "      tempAlpha = (1.0-alpha)*tempAlpha*texture3D(TextureVol, nextRayOrigin).w;     \n"
+        "      pixelColor += nextColor*tempAlpha;                                            \n"
+        "      alpha += tempAlpha;                                                           \n"
+        "    }                                                                               \n"
+        "                                                                                    \n"
+        "    t += ParaMatrix[0][3];                                                          \n"
+        "    nextRayOrigin += rayStep;                                                       \n"
+        "    fading -= ParaMatrix[3][1]*ParaMatrix[0][3];                                    \n"
+        "  }                                                                                 \n"
+        "    gl_FragColor = vec4(pixelColor.xyz, alpha);                                     \n"
+        "}                                                                                   \n";
+      break;
+    case 5:
+      fp_oss <<
+        "  vec3 eyePos = vec3(ParaMatrix[0][0], ParaMatrix[0][1], ParaMatrix[0][2]);         \n"
+        "  while( (t < rayLen) && (alpha < 0.985) )                                          \n"
+        "  {                                                                                 \n"
+        "    vec4 nextColor = voxelColor(nextRayOrigin);                                     \n"
+        "    float tempAlpha = nextColor.w;                                                  \n"
+        "                                                                                    \n"
+        "    if (tempAlpha > 0.0)                                                            \n"
+        "    {                                                                               \n"
+        "      nextColor = directionalLight(nextRayOrigin, lightDir, nextColor);             \n"
+        "      float toEyeDist = (length(nextRayOrigin - eyePos) - ParaMatrix[2][2])/ParaMatrix[3][2];\n"
+        "      float icpe = ICPE(nextRayOrigin, length(nextColor), alpha, toEyeDist);        \n"
+        "                                                                                    \n"
+        "      tempAlpha = (1.0-alpha)*tempAlpha*icpe;                                       \n"
+        "      pixelColor += nextColor*tempAlpha;                                            \n"
+        "      alpha += tempAlpha;                                                           \n"
+        "    }                                                                               \n"
+        "                                                                                    \n"
+        "    t += ParaMatrix[0][3];                                                          \n"
+        "    nextRayOrigin += rayStep;                                                       \n"
+        "  }                                                                                 \n"
+        "  gl_FragColor = vec4(pixelColor.xyz, alpha);                                       \n"
+        "}                                                                                   \n";
+      break;
+  }
+
+  std::string source = fp_oss.str();
   const char* pSourceText = source.c_str();
 
-  vtkgl::ShaderSource(RayCastVertexShader, 1, &pSourceText, NULL);
-  vtkgl::CompileShader(RayCastVertexShader);
+  vtkgl::ShaderSource(RayCastFragmentShader, 1, &pSourceText, NULL);
+  vtkgl::CompileShader(RayCastFragmentShader);
 
   GLint result;
-  vtkgl::GetShaderiv(RayCastVertexShader, vtkgl::COMPILE_STATUS, &result);
+  vtkgl::GetShaderiv(RayCastFragmentShader, vtkgl::COMPILE_STATUS, &result);
 
-  if (!result )
-    printf("Vertex Shader Compile Status: FALSE\n");
+  if (!result)
+    printf("Fragment Shader Compile Status: FALSE\n");
 
-  GLint infoLogLen;
-  vtkgl::GetShaderiv(RayCastVertexShader, vtkgl::INFO_LOG_LENGTH, &infoLogLen);
-  try
-  {
-    vtkgl::GLchar *pInfoLog = (vtkgl::GLchar*)malloc(sizeof(vtkgl::GLchar)*(infoLogLen+1));
-    vtkgl::GetShaderInfoLog(RayCastVertexShader, infoLogLen, NULL, pInfoLog);
-    printf("%s", pInfoLog);
-  }catch(...)
-  {
-  }
-}
-
-void vtkSlicerGPURayCastVolumeMapper::PrintGLErrorString()
-{
-  GLenum error = glGetError();
-
-  switch(error)
-  {
-    case GL_NO_ERROR: printf("GL_NO_ERROR\n");break;
-    case GL_INVALID_ENUM: printf("GL_INVALID_ENUM\n");break;
-    case GL_INVALID_VALUE: printf("GL_INVALID_VALUE\n");break;
-    case GL_INVALID_OPERATION: printf("GL_INVALID_OPERATION\n");break;
-
-    case GL_STACK_OVERFLOW: printf("GL_STACK_OVERFLOW\n");break;
-    case GL_STACK_UNDERFLOW: printf("GL_STACK_UNDERFLOW\n");break;
-    case GL_OUT_OF_MEMORY: printf("GL_OUT_OF_MEMORY\n");break;
-  }
-}
-
-void vtkSlicerGPURayCastVolumeMapper::PrintFragmentShaderInfoLog()
-{
   GLint infoLogLen;
   vtkgl::GetShaderiv(RayCastFragmentShader, vtkgl::INFO_LOG_LENGTH, &infoLogLen);
   try
@@ -1457,26 +1331,50 @@ void vtkSlicerGPURayCastVolumeMapper::PrintFragmentShaderInfoLog()
   }
 }
 
-void vtkSlicerGPURayCastVolumeMapper::SetTechniques(int tech, int techFg)
+void vtkSlicerGPURayCastVolumeMapper::PrintGLErrorString()
 {
-  this->Technique = tech;
-  this->TechniqueFg = techFg;
-  this->ReloadShaderFlag = 1;
+    GLenum error = glGetError();
+
+    switch(error)
+    {
+    case GL_NO_ERROR: printf("GL_NO_ERROR\n");break;
+    case GL_INVALID_ENUM: printf("GL_INVALID_ENUM\n");break;
+    case GL_INVALID_VALUE: printf("GL_INVALID_VALUE\n");break;
+    case GL_INVALID_OPERATION: printf("GL_INVALID_OPERATION\n");break;
+
+    case GL_STACK_OVERFLOW: printf("GL_STACK_OVERFLOW\n");break;
+    case GL_STACK_UNDERFLOW: printf("GL_STACK_UNDERFLOW\n");break;
+    case GL_OUT_OF_MEMORY: printf("GL_OUT_OF_MEMORY\n");break;
+    }
 }
 
-void vtkSlicerGPURayCastVolumeMapper::SetColorOpacityFusion(int fusion)
+void vtkSlicerGPURayCastVolumeMapper::PrintFragmentShaderInfoLog()
 {
-  this->ColorOpacityFusion = fusion;
-  this->ReloadShaderFlag = 1;
+    GLint infoLogLen;
+    vtkgl::GetShaderiv(RayCastFragmentShader, vtkgl::INFO_LOG_LENGTH, &infoLogLen);
+    try
+    {
+        vtkgl::GLchar *pInfoLog = (vtkgl::GLchar*)malloc(sizeof(vtkgl::GLchar)*(infoLogLen+1));
+        vtkgl::GetShaderInfoLog(RayCastFragmentShader, infoLogLen, NULL, pInfoLog);
+        printf("%s", pInfoLog);
+    }catch(...)
+    {
+    }
+}
+
+void vtkSlicerGPURayCastVolumeMapper::SetTechnique(int tech)
+{
+    this->Technique = tech;
+    this->ReloadShaderFlag = 1;
 }
 
 void vtkSlicerGPURayCastVolumeMapper::SetInternalVolumeSize(int size)
 {
-  if (this->InternalVolumeSize != size)
-  {
-    this->InternalVolumeSize = size;
-    this->SavedTextureInput = NULL;//dirty input, force reprocess input
-  }
+    if (this->InternalVolumeSize != size)
+    {
+        this->InternalVolumeSize = size;
+        this->SavedTextureInput = NULL;//dirty input, force reprocess input
+    }
 }
 
 
