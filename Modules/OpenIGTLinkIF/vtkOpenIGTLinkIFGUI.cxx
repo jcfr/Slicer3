@@ -169,6 +169,7 @@ vtkOpenIGTLinkIFGUI::vtkOpenIGTLinkIFGUI ( )
   // Locator  (MRML)
   this->CloseScene              = false;
   this->TimerFlag = 0;
+  this->TimerLog = vtkTimerLog::New();
   this->ConnectorNodeList.clear();
   this->IOConfigTreeConnectorList.clear();
   this->IOConfigTreeIOList.clear();
@@ -202,6 +203,11 @@ vtkOpenIGTLinkIFGUI::~vtkOpenIGTLinkIFGUI ( )
 
   this->SetModuleLogic ( NULL );
 
+  if (this->TimerLog)
+    {
+    this->TimerLog->Delete();
+    }
+    
 
   //----------------------------------------------------------------
   // Visualization Control Frame
@@ -1406,6 +1412,8 @@ void vtkOpenIGTLinkIFGUI::ProcessTimerEvents()
     // -----------------------------------------
     // Update connector list, property frame and IO config tree
 
+    this->TimerLog->StartTimer();
+      
     // TODO: This part should be handled in MRML event handler
     if (this->UpdateConnectorListFlag)
       {
@@ -1431,9 +1439,15 @@ void vtkOpenIGTLinkIFGUI::ProcessTimerEvents()
     // Check incomming new data
     this->GetLogic()->ImportEvents();
     this->GetLogic()->ImportFromCircularBuffers();
+
+    this->TimerLog->StopTimer();
+    int msec = (int) (this->TimerLog->GetElapsedTime() * 1000.0); /* Elapsed time in the timer handler (ms)*/
+    int newtimer = this->TimerInterval - msec;
+    if (newtimer < 5) newtimer = 5;
+
     vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
-                                         this->TimerInterval,
-                                         this, "ProcessTimerEvents");        
+                                         newtimer,
+                                         this, "ProcessTimerEvents");
     }
 }
 
@@ -1452,7 +1466,8 @@ void vtkOpenIGTLinkIFGUI::Enter()
   if (this->TimerFlag == 0)
     {
     this->TimerFlag = 1;
-    this->TimerInterval = 100;  // 100 ms
+    //this->TimerInterval = 100;  // 100 ms
+    this->TimerInterval = 50;  // 50 ms
     ProcessTimerEvents();
     }
 
@@ -2460,7 +2475,7 @@ void vtkOpenIGTLinkIFGUI::UpdateIOConfigTree()
         {
         vtkMRMLNode* node = con->GetOutgoingMRMLNode(i);
         vtkIGTLToMRMLBase* converter = con->GetConverterByNodeID(node->GetID());
-        if (node != NULL && converter != NULL)
+        if (node != NULL && converter)
           {
           //const char* deviceType = this->GetLogic()->MRMLTagToIGTLName(node->GetTag());
           sprintf(conDeviceNode, "%s/out/%s", id, node->GetID());
