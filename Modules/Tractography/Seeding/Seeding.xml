@@ -10,10 +10,10 @@
   Seed tracts from a label map
   </description>
   <version>0.1.0.$Revision: 1892 $(alpha)</version>
-  <documentation-url>http://www.slicer.org/slicerWiki/index.php/Modules:ROISeeding-Documentation-3.6</documentation-url>
-  <license></license>
+  <documentation-url>http://wiki.slicer.org/slicerWiki/index.php/Modules:ROISeeding-Documentation-3.6</documentation-url>
+  <license>slicer3</license>
   <contributor>Raul San Jose</contributor>
-  <acknowledgements>LMI</acknowledgements>
+  <acknowledgements>Laboratory of Mathematics in Imaging. This work is part of the National Alliance for Medical Image Computing (NAMIC), funded by the National Institutes of Health through the NIH Roadmap for Medical Research, Grant U54 EB005149.</acknowledgements>
 
   <parameters>
     <label>IO</label>
@@ -71,20 +71,29 @@
   <parameters>
     <label>Seed Placement Options</label>
     <description>Options for seed placement</description>
-    
+
+    <boolean>
+      <name>UseIndexSpace</name>
+      <label>Use Index Space</label>
+      <flag>-x</flag>
+      <longflag>--useindexspace</longflag>
+      <description>Seed at IJK voxel grid</description>
+      <default>false</default>  	
+    </boolean>
+      
     <double>
       <name>SeedSpacing</name>
       <label>Seed Spacing</label>
       <flag>-s</flag>
       <longflag>--seedspacing</longflag>
-      <description>Spacing (in mm) between seed points</description>
+      <description>Spacing (in mm) between seed points, only matters if use Use Index Space is off</description>
       <default>2</default>
       <constraints>
       	<minimum>0.1</minimum>
 	<maximum>10</maximum>
 	<step>0.1</step>
       </constraints>
-    </double>
+    </double>    
     
     <boolean>
       <name>RandomGrid</name>
