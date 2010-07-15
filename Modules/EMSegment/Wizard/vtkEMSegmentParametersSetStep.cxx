@@ -116,7 +116,7 @@ void vtkEMSegmentParametersSetStep::ShowUserInterface()
 
   wizardWidget->GetCancelButton()->SetEnabled(0);
   wizardWidget->SetNextButtonVisibility(0);
-
+  wizardWidget->SetBackButtonVisibility(0);
 
   // Create the Parameters set frame
 
@@ -521,9 +521,13 @@ void vtkEMSegmentParametersSetStep::LoadTask(int index, bool warningFlag)
         {
           // Select the Node 
           this->SelectedParameterSetChangedCallback(index,0);
-      break;
+          break;
         }
       }
+    }
+  else 
+    {
+      // pop up warning messages 
     }
 }
 
@@ -549,8 +553,12 @@ int vtkEMSegmentParametersSetStep::LoadDefaultData(const char *tclFile, bool war
   vtkMRMLScene *scene = mrmlManager->GetMRMLScene();
   const char* mrmlFile = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication())->Script("::EMSegmenterParametersStepTcl::DefineMRMLFile");
   scene->SetURL(mrmlFile);
-  scene->Import();
   this->GetGUI()->GetApplicationGUI()->SelectModule("EMSegmenter");
+
+  if (!scene->Import()) 
+    {
+      return 1;
+    }
 
   if(scene->GetErrorCode())
     {
@@ -558,6 +566,7 @@ int vtkEMSegmentParametersSetStep::LoadDefaultData(const char *tclFile, bool war
       << " Error message: " << scene->GetErrorMessage());
       return 1;
     }
+
   return 0;
 }
 
