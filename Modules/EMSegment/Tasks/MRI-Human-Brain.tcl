@@ -74,7 +74,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
-        $preGUI DefineCheckButton "Is the Atlas aligned to the image ?" 0 $atlasAlignedFlagID 
+        $preGUI DefineCheckButton "Is Atlas aligned to the image ?" 0 $atlasAlignedFlagID 
         $preGUI DefineCheckButton "Are the input scans skull stripped ?" 0 $skullStrippedFlagID  
         $preGUI DefineVolumeMenuButton "Define ICC mask of the atlas ?" 0 $iccMaskSelectID
         $preGUI DefineCheckButton "Are the input scans image inhomogeneity corrected ?" 0 $inhomogeneityCorrectionFlagID
