@@ -28,6 +28,7 @@ PURPOSE.  See the above copyright notices for more information.
 // and the view window to view the objects. Also contains access to a pop-up
 // window to change the display settings.
 
+
 #ifndef __vtkKWMimxMainWindow_h
 #define __vtkKWMimxMainWindow_h
 
@@ -36,6 +37,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWRenderWidget.h"
 #include "vtkKWWindow.h"
 #include "vtkBuildingBlockWin32Header.h"
+//#include "vtkKWMimxViewProperties.h"
 
 
 class vtkCallbackCommand;
@@ -272,7 +274,8 @@ public:
   // Widgets that must be public
   vtkKWRenderWidget *RenderWidget;
   vtkRenderer *AxesRenderer;
-        
+  vtkKWMimxMainNotebook *MainUserInterfacePanel;
+
 protected:
   vtkKWMimxMainWindow();
   ~vtkKWMimxMainWindow();
@@ -280,9 +283,7 @@ protected:
   vtkMimxErrorCallback *ErrorCallback;
   vtkKWMimxViewProperties *ViewProperties;
   vtkLinkedListWrapperTree *DoUndoTree;
-  vtkKWMimxMainNotebook *MainUserInterfacePanel;
   vtkKWMimxDisplayPropertiesGroup *DisplayPropertyDialog;
-
   vtkSlicerModuleCollapsibleFrame *MainFrame;
 
         

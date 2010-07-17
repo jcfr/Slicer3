@@ -40,7 +40,7 @@ Version:   $Revision: 1.2 $
 #include "vtkCommand.h"
 #include "vtkRenderWindowInteractor.h"
 
-// STL includes
+// STD includes
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -92,12 +92,11 @@ vtkIA_FEMeshGUI::vtkIA_FEMeshGUI()
 //    this->MainUserInterfacePanel = NULL;
 //    this->DisplayPropertyDialog = NULL;
 
-  // try to load supporting libraries dynamically.  This is needed
-  // since the toplevel is a loadable module but the other libraries
-  // didn't get loaded
-  Tcl_Interp* interp = this->GetApplication()->GetMainInterp();
-  Mimxcommon_Init(interp);
-  Buildingblock_Init(interp);
+
+//  Tcl_Interp* interp = this->GetApplication()->GetMainInterp();
+//  Mimxcommon_Init(interp);
+//  Buildingblock_Init(interp);
+  this->InitializeSupportingLibraries();
     
   this->SavedBoxState = 0;
   this->SavedAxisLabelState = 0;
@@ -110,6 +109,8 @@ vtkIA_FEMeshGUI::vtkIA_FEMeshGUI()
 vtkIA_FEMeshGUI::~vtkIA_FEMeshGUI()
 {
 
+    // remove MRML callbacks registered when Gui was built
+    //this->RemoveMRMLObservers();
 
   if (this->Logic != NULL)
     {
@@ -124,6 +125,15 @@ vtkIA_FEMeshGUI::~vtkIA_FEMeshGUI()
 
 }
 
+void vtkIA_FEMeshGUI::InitializeSupportingLibraries()
+{
+    // load supporting libraries dynamically.  This is needed
+    // since the toplevel is a loadable module but the other libraries
+    // didn't get loaded
+    Tcl_Interp* interp = this->GetApplication()->GetMainInterp();
+    Mimxcommon_Init(interp);
+    Buildingblock_Init(interp);
+}
 
 //----------------------------------------------------------------------------
 void vtkIA_FEMeshGUI::PrintSelf(ostream& os, vtkIndent indent)
@@ -135,7 +145,6 @@ void vtkIA_FEMeshGUI::PrintSelf(ostream& os, vtkIndent indent)
 void vtkIA_FEMeshGUI::AddGUIObservers ( )
 {
 
-  //this->ApplyButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 }
 
 
@@ -143,8 +152,31 @@ void vtkIA_FEMeshGUI::AddGUIObservers ( )
 //---------------------------------------------------------------------------
 void vtkIA_FEMeshGUI::RemoveGUIObservers ( )
 {
-  // Fill in
-  //this->ApplyButton->RemoveObservers ( vtkCommand::ModifiedEvent,  (vtkCommand *)this->GUICallbackCommand );
+
+}
+
+
+//---------------------------------------------------------------------------
+void vtkIA_FEMeshGUI::AddMRMLObservers ( )
+{
+    // register with the MRML scene to receive callbacks when the scene is closed or opened.
+//    this->GetMRMLScene()->AddObserver(vtkMRMLScene::SceneImportedEvent, (vtkCommand *)this->MRMLCallbackCommand);
+//    this->GetMRMLScene()->AddObserver(vtkMRMLScene::SceneAboutToBeImportedEvent, (vtkCommand *)this->MRMLCallbackCommand);
+//    this->GetMRMLScene()->AddObserver(vtkMRMLScene::SceneClosedEvent, (vtkCommand *)this->MRMLCallbackCommand);
+//    this->GetMRMLScene()->AddObserver(vtkMRMLScene::NewSceneEvent, (vtkCommand *)this->MRMLCallbackCommand);
+
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkIA_FEMeshGUI::RemoveMRMLObservers ( )
+{
+    // release callbacks so nothing is called while module is not active
+//     this->GetMRMLScene()->RemoveObservers(vtkMRMLScene::SceneImportedEvent,  (vtkCommand *)this->MRMLCallbackCommand);
+//     this->GetMRMLScene()->RemoveObservers(vtkMRMLScene::SceneAboutToBeImportedEvent,  (vtkCommand *)this->MRMLCallbackCommand);
+//     this->GetMRMLScene()->RemoveObservers(vtkMRMLScene::SceneClosedEvent,  (vtkCommand *)this->MRMLCallbackCommand);
+//     this->GetMRMLScene()->RemoveObservers(vtkMRMLScene::NewSceneEvent,  (vtkCommand *)this->MRMLCallbackCommand);
 }
 
 //---------------------------------------------------------------------------
@@ -166,17 +198,22 @@ void vtkIA_FEMeshGUI::ProcessGUIEvents ( vtkObject *vtkNotUsed(caller),
 
 
 //---------------------------------------------------------------------------
-void vtkIA_FEMeshGUI::ProcessMrmlEvents ( vtkObject *vtkNotUsed(caller),
-                                          unsigned long vtkNotUsed(event),
-                                          void *vtkNotUsed(callData) )
+void vtkIA_FEMeshGUI::ProcessMRMLEvents ( vtkObject *caller,
+                                          unsigned long event,
+                                          void *callData )
 {
-  /**
-  vtkMRMLIA_FEMeshNode* node = dynamic_cast<vtkMRMLIA_FEMeshNode *> (this->ApplicationLogic->GetMRMLScene()->GetNextNodeByClass("vtkMRMLIA_FEMeshNode"));
+      // If there is a scene close or open event, the wizard should
+      // keep the lists and viewProperties in sync
+      std::cout << "IA_FEMesh: MRML callback command received" << std::endl;
 
-  if (node) {
-    this->SetIA_FEMeshNode(node);
-  }
-  **/
+//      if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene  && (event == vtkMRMLScene::SceneClosedEvent ))
+//        {
+//            std::cout << "IA-FEMesh: got MRML scene close event.  Do housekeeping here to clear out lists and view properties. " << endl;
+//        }
+//      if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene  && (event == vtkMRMLScene::NewSceneEvent ))
+//        {
+//            std::cout << "IA-FEMesh: got MRML new scene event. " << endl;
+//        }
 }
 
 
@@ -242,6 +279,9 @@ void vtkIA_FEMeshGUI::BuildGUI ( )
 
   this->MeshingUI->CustomApplicationSettingsModuleEntry();
 
+  // setup callbacks to keep track of MRML changes and update the module automatically
+  //this->AddMRMLObservers();
+
 }
 
 void vtkIA_FEMeshGUI::SetActiveViewer(vtkSlicerViewerWidget *activeViewer)
@@ -276,29 +316,44 @@ void vtkIA_FEMeshGUI::TearDownGUI ( )
 // Describe behavior at module startup and exit.
 void vtkIA_FEMeshGUI::Enter ( )
 {
-  // get pointers to the current scene.  
+    // moved out of the constructor to reduce danger of memory leaks
+    if (this->FirstEntryToModule)
+    {
+        //this->InitializeSupportingLibraries();
+    }
+
+    // get pointers to the current scene.
   //vtkMRMLScene *SlicerScene = vtkMRMLScene::GetActiveScene();
   vtkMRMLViewNode *viewnode = this->GetApplicationGUI()->GetViewControlGUI()->GetActiveView();
   vtkMRMLLayoutNode *layoutnode = this->GetApplicationGUI()->GetGUILayoutNode();
-  this->SavedBoxState = viewnode->GetBoxVisible();
-  this->SavedAxisLabelState = viewnode->GetAxisLabelsVisible();
-  this->SavedLayoutEnumeration = layoutnode->GetViewArrangement();
-  viewnode->GetBackgroundColor(this->SavedBackgroundColor);
+  if (this->SavedBoxState) this->SavedBoxState = viewnode->GetBoxVisible();
+  if (this->SavedAxisLabelState) this->SavedAxisLabelState = viewnode->GetAxisLabelsVisible();
+  if (this->SavedLayoutEnumeration) this->SavedLayoutEnumeration = layoutnode->GetViewArrangement();
+  if (viewnode) {
+      viewnode->GetBackgroundColor(this->SavedBackgroundColor);
+      viewnode->SetBoxVisible(0);
+      viewnode->SetAxisLabelsVisible(0);
+      double blackBackground[3]; blackBackground[0]=blackBackground[1]=blackBackground[2] = 0.0;
+      viewnode->SetBackgroundColor(blackBackground);
+  }
   // add the specific application settings for this module here
-  viewnode->SetBoxVisible(0);
-  viewnode->SetAxisLabelsVisible(0);
-  double blackBackground[3]; blackBackground[0]=blackBackground[1]=blackBackground[2] = 0.0;
-  viewnode->SetBackgroundColor(blackBackground);
-  layoutnode->SetViewArrangement(vtkMRMLLayoutNode::SlicerLayoutOneUp3DView);    
-  this->MeshingUI->AddOrientationAxis();
+
+  if (layoutnode) layoutnode->SetViewArrangement(vtkMRMLLayoutNode::SlicerLayoutOneUp3DView);
+  //this->MeshingUI->AddOrientationAxis();
   this->MeshingUI->CustomApplicationSettingsModuleEntry();
   
+
+
+
   // restore the state of object visibility depending on how they were when exiting the module
   // This is gated to happen only after returning to the module.  Not the first time, when the 
   // lists aren't initialized yet. 
   
   if (this->FirstEntryToModule)
-    this->FirstEntryToModule=false;  
+  {
+    //std::cout << "IA_FEMesh: First entry received" << std::endl;
+    this->FirstEntryToModule=false;
+  }
   else
     this->MeshingUI->RestoreVisibilityStateOfObjectLists(); 
 }
@@ -311,12 +366,16 @@ void vtkIA_FEMeshGUI::Exit ( )
   vtkMRMLViewNode *viewnode = this->GetApplicationGUI()->GetViewControlGUI()->GetActiveView();
   vtkMRMLLayoutNode *layoutnode = this->GetApplicationGUI()->GetGUILayoutNode();
   // remove the specific application settings for this module here
-  layoutnode->SetViewArrangement(this->SavedLayoutEnumeration);
-  viewnode->SetBoxVisible(this->SavedBoxState);
-  viewnode->SetAxisLabelsVisible(this->SavedAxisLabelState);
-  viewnode->SetBackgroundColor(this->SavedBackgroundColor);
-  this->MeshingUI->RemoveOrientationAxis();    
+  if (layoutnode) layoutnode->SetViewArrangement(this->SavedLayoutEnumeration);
+  if (viewnode) {
+    viewnode->SetBoxVisible(this->SavedBoxState);
+    viewnode->SetAxisLabelsVisible(this->SavedAxisLabelState);
+    viewnode->SetBackgroundColor(this->SavedBackgroundColor);
+  }
+  //this->MeshingUI->RemoveOrientationAxis();
   this->MeshingUI->CustomApplicationSettingsModuleExit();
   // save the state of object visibility so we can restore later
   this->MeshingUI->SaveVisibilityStateOfObjectLists();
+
+
 }

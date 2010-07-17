@@ -36,6 +36,7 @@ PURPOSE.  See the above copyright notices for more information.
 /* VTK Headers */
 #include "vtkCommand.h"
 
+
 /* KWWidget Headers */
 #include "vtkKWCompositeWidget.h"
 
@@ -75,6 +76,7 @@ public:
   vtkSetObjectMacro(ViewProperties, vtkKWMimxViewProperties);
   vtkSetObjectMacro(MenuGroup, vtkKWMimxMainMenuGroup);
   vtkSetObjectMacro(ImageList, vtkLinkedListWrapper);
+  vtkGetObjectMacro(ImageList, vtkLinkedListWrapper);
   vtkSetObjectMacro(DoUndoTree, vtkLinkedListWrapperTree);
 
   // Description:
@@ -94,6 +96,14 @@ public:
   int UpdateSurfaceComboBox(vtkKWComboBox *combobox);
   int UpdateImageComboBox(vtkKWComboBox *combobox);
   
+  // added for slicer integration, treat images as first class objects and read from MRML tree
+  void AddImageToDisplay(vtkImageData *surface,
+            const char *namePrefix, const char *foundationName);
+
+  // version that accepts a transform matrix to orient the images to RAS for Slicer
+  void AddImageToDisplay(vtkImageData *surface,
+            const char *namePrefix, const char *foundationName, vtkMatrix4x4 *matrix, double origin[3], double spacing[3]);
+
   int CancelStatus;
 
 protected:

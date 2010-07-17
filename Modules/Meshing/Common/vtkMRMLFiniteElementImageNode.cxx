@@ -6,7 +6,7 @@ See Doc/copyright/copyright.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLFESurfaceNode.cxx,v $
+Module:    $RCSfile: vtkMRMLFiniteElementImageNode.cxx,v $
 Date:      $Date: 2006/03/17 15:10:10 $
 Version:   $Revision: 1.2 $
 
@@ -18,61 +18,61 @@ Version:   $Revision: 1.2 $
 
 #include "vtkObjectFactory.h"
 
-#include "vtkMRMLFESurfaceNode.h"
+#include "vtkMRMLFiniteElementImageNode.h"
 #include "vtkMRMLScene.h"
 //***
-#include "vtkMimxSurfacePolyDataActor.h"
-
-
+#include "vtkMimxImageActor.h"
 
 
 //------------------------------------------------------------------------------
-vtkMRMLFESurfaceNode* vtkMRMLFESurfaceNode::New()
+vtkMRMLFiniteElementImageNode* vtkMRMLFiniteElementImageNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFESurfaceNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFiniteElementImageNode");
   if(ret)
     {
-      return (vtkMRMLFESurfaceNode*)ret;
+      return (vtkMRMLFiniteElementImageNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  vtkMRMLFESurfaceNode* newnode = new vtkMRMLFESurfaceNode;
-  // next two lines caused leaks!
-  //vtkMimxSurfacePolyDataActor* newactor = new vtkMimxSurfacePolyDataActor;
-  //newnode->SetMimxSurfacePolyDataActor(newactor);
+
+  vtkMRMLFiniteElementImageNode* newnode = new vtkMRMLFiniteElementImageNode;
+
+  // these two lines caused memory leaks!
+  //vtkMimxImageActor* newactor = new vtkMimxImageActor;
+  //newnode->SetMimxImageActor(newactor);
   return newnode;
-  
 
 }
 
 //----------------------------------------------------------------------------
 
-vtkMRMLModelNode* vtkMRMLFESurfaceNode::CreateNodeInstance()
+vtkMRMLScalarVolumeNode* vtkMRMLFiniteElementImageNode::CreateNodeInstance()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFESurfaceNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFiniteElementImageNode");
   if(ret)
     {
-      return (vtkMRMLFESurfaceNode*)ret;
+      return (vtkMRMLFiniteElementImageNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  vtkMRMLFESurfaceNode* newnode = new vtkMRMLFESurfaceNode;
+  vtkMRMLFiniteElementImageNode* newnode = new vtkMRMLFiniteElementImageNode;
   return newnode;
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLFESurfaceNode::vtkMRMLFESurfaceNode()
+vtkMRMLFiniteElementImageNode::vtkMRMLFiniteElementImageNode()
 {
-
+ //this->actor->SetFilePath("");
+ //this->actor->SetFoundationName("");
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLFESurfaceNode::~vtkMRMLFESurfaceNode()
+vtkMRMLFiniteElementImageNode::~vtkMRMLFiniteElementImageNode()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFESurfaceNode::WriteXML(ostream& of, int nIndent)
+void vtkMRMLFiniteElementImageNode::WriteXML(ostream& of, int nIndent)
 {
 Superclass::WriteXML(of, nIndent);
 
@@ -90,15 +90,15 @@ Superclass::WriteXML(of, nIndent);
     ss << this->actor->GetFileName();
     of << indent << " fileName=\"" << ss.str() << "\"";
   }
-  {
-    std::stringstream ss;
-    ss << this->actor->GetFilePath();
-    of << indent << " FilePath=\"" << ss.str() << "\"";
-  }
+//  {
+//    std::stringstream ss;
+//    ss << this->actor->GetFilePath();
+//    of << indent << " FilePath=\"" << ss.str() << "\"";
+//  }
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFESurfaceNode::ReadXMLAttributes(const char** atts)
+void vtkMRMLFiniteElementImageNode::ReadXMLAttributes(const char** atts)
 {
 
   Superclass::ReadXMLAttributes(atts);
@@ -128,23 +128,23 @@ void vtkMRMLFESurfaceNode::ReadXMLAttributes(const char** atts)
       //***this->SetFileName(StringAttribute);
       //this->fileName(StringAttribute);
       }
-    else if (!strcmp(attName, "FilePath"))
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> StringAttribute;
-      this->SetFilePath(StringAttribute);
-      }
+//    else if (!strcmp(attName, "FilePath"))
+//      {
+//      std::stringstream ss;
+//      ss << attValue;
+//      ss >> StringAttribute;
+//      this->SetFilePath(StringAttribute);
+//      }
     }
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, VolumeID
-void vtkMRMLFESurfaceNode::Copy(vtkMRMLNode *anode)
+void vtkMRMLFiniteElementImageNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-  vtkMRMLFESurfaceNode *node = (vtkMRMLFESurfaceNode *) anode;
+  vtkMRMLFiniteElementImageNode *node = (vtkMRMLFiniteElementImageNode *) anode;
 
   this->actor->SetDataType(node->GetDataType());
   //***this->actor->SetFileName(node->GetFileName());
@@ -152,7 +152,7 @@ void vtkMRMLFESurfaceNode::Copy(vtkMRMLNode *anode)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFESurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLFiniteElementImageNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
     Superclass::PrintSelf(os,indent);

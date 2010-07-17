@@ -51,6 +51,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxLoadSurfaceGroup.h"
 
 
+#include "vtkKWMimxImportModelSurfaceGroup.h"
 
 
 //----------------------------------------------------------------------------
@@ -122,6 +123,8 @@ void vtkKWMimxSurfaceMenuGroup::CreateWidget()
         this->OperationMenuButton->GetWidget()->GetMenu()->AddRadioButton(
                 "Load",this, "LoadSurfaceCallback");
         this->OperationMenuButton->GetWidget()->GetMenu()->AddRadioButton(
+                "Import Model",this, "ImportModelSurfaceCallback");
+        this->OperationMenuButton->GetWidget()->GetMenu()->AddRadioButton(
                 "Delete",this, "DeleteSurfaceCallback");
         this->OperationMenuButton->GetWidget()->GetMenu()->AddRadioButton(
                 "Save",this, "SaveSurfaceCallback");
@@ -153,6 +156,21 @@ void vtkKWMimxSurfaceMenuGroup::LoadSurfaceCallback()
   loadSurfaceGroup->Create();
   loadSurfaceGroup->Delete();   
 }
+
+
+
+//----------------------------------------------------------------------------
+void vtkKWMimxSurfaceMenuGroup::ImportModelSurfaceCallback()
+{
+    vtkKWMimxImportModelSurfaceGroup *importSurfaceGroup = vtkKWMimxImportModelSurfaceGroup::New();
+        importSurfaceGroup->SetParent( this->GetParent() );
+        importSurfaceGroup->SetSurfaceList(this->SurfaceList);
+        importSurfaceGroup->SetMenuGroup(this);
+        importSurfaceGroup->SetMimxMainWindow(this->GetMimxMainWindow());
+        importSurfaceGroup->Create();
+        importSurfaceGroup->Delete();
+}
+
 
 //----------------------------------------------------------------------------
 void vtkKWMimxSurfaceMenuGroup::SaveSurfaceCallback()
