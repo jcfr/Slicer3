@@ -908,7 +908,7 @@ int vtkVolumeRenderingLogic::IsCurrentMapperSupported(vtkMRMLVolumeRenderingPara
 
       MapperGPURaycast->SetInput( vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData() );
       
-      if (MapperGPURaycast->IsRenderSupported(vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
+      if (MapperGPURaycast->IsRenderSupported(window,vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
       {
         MapperGPURaycast->Delete();
         return 1;
@@ -927,7 +927,7 @@ int vtkVolumeRenderingLogic::IsCurrentMapperSupported(vtkMRMLVolumeRenderingPara
       if (vspNode->GetFgVolumeNode())
         MapperGPURaycastII->SetNthInput(1, vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetFgVolumeNode())->GetImageData());
       
-      if (MapperGPURaycastII->IsRenderSupported(vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
+      if (MapperGPURaycastII->IsRenderSupported(window, vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
       {
         MapperGPURaycastII->Delete();
         return 1;
@@ -944,7 +944,7 @@ int vtkVolumeRenderingLogic::IsCurrentMapperSupported(vtkMRMLVolumeRenderingPara
     
       MapperTexture->SetInput( vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData() );
 
-      if (MapperTexture->IsRenderSupported(vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
+      if (MapperTexture->IsRenderSupported(window, vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
       {
         MapperTexture->Delete();
         return 1;
@@ -956,7 +956,20 @@ int vtkVolumeRenderingLogic::IsCurrentMapperSupported(vtkMRMLVolumeRenderingPara
       }
     }
   case 1:
-    return 1;//assume vtkGPURayCastMapper is supported
+    {
+    vtkGPUVolumeRayCastMapper* VTKGPURaycast = vtkGPUVolumeRayCastMapper::New();
+    VTKGPURaycast->SetInput( vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData() );
+    if (VTKGPURaycast->IsRenderSupported(window,vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
+      {
+        VTKGPURaycast->Delete();
+        return 1;
+      }
+      else
+      {
+        VTKGPURaycast->Delete();
+        return 0;
+      }
+    }
   default:
     return 0;
   }
