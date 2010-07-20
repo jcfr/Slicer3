@@ -536,8 +536,12 @@ void vtkVolumeRenderingLogic::SetupVolumePropertyFromImageData(vtkMRMLVolumeRend
     
     if (vpNode)
       {
+      char histogramName[1024];
+      vtkImageData *input = vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData();
+      this->Histograms->ComputeHistogramName(input->GetPointData()->GetScalars()->GetName(), 0, 0, histogramName);
+
       //add points into transfer functions
-      vtkKWHistogram *histogram = this->Histograms->GetHistogramWithName("0");
+      vtkKWHistogram *histogram = this->Histograms->GetHistogramWithName(histogramName);
 
       double range[2];
       histogram->GetRange(range);
@@ -897,6 +901,10 @@ int vtkVolumeRenderingLogic::IsCurrentMapperSupported(vtkMRMLVolumeRenderingPara
 {
   if (vspNode == NULL)
     return 0;
+
+  vtkRenderWindow* window = vtkSlicerApplication::GetInstance()
+    ->GetApplicationGUI()->GetActiveViewerWidget()->GetMainViewer()
+    ->GetRenderWindow();
 
   switch(vspNode->GetCurrentVolumeMapper())//mapper specific initialization
   {
