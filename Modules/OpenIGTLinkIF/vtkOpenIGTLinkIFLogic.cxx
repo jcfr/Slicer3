@@ -272,10 +272,12 @@ int vtkOpenIGTLinkIFLogic::EnableLocatorDriver(int sw)
       vtkMRMLLinearTransformNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorDriverNodeID));
     if (!tnode)
       {
+      mnode->Delete();
       return 0;
       }
     mnode->SetAndObserveTransformNodeID(tnode->GetID());
     mnode->InvokeEvent(vtkMRMLTransformableNode::TransformModifiedEvent);
+    mnode->Delete();
     }
   else  // turn off
     {
@@ -283,7 +285,8 @@ int vtkOpenIGTLinkIFLogic::EnableLocatorDriver(int sw)
     //vtkMRMLModelNode* mnode = 
     //  SetVisibilityOfLocatorModel("IGTLLocator", 0);
     //mnode->SetAndObserveTransformNodeID(NULL);
-    SetVisibilityOfLocatorModel("IGTLLocator", 0);
+    vtkMRMLModelNode* mnode = SetVisibilityOfLocatorModel("IGTLLocator", 0);
+    mnode->Delete();
     }
   return 1;
 
