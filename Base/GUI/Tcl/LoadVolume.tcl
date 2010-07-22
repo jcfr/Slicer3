@@ -50,10 +50,12 @@ namespace eval LoadVolume {
       return ""
     }
     set files ""
-    set entries [glob -nocomplain $dir/*]
+    set entries [glob -nocomplain -directory $dir *]
     foreach e $entries {
       if { $progressCmd != "" } {
-        set ret [eval $progressCmd \"$e\"]
+        # escape any brackets in entry
+        regsub -all {\[} $e {\[} ee
+        set ret [eval $progressCmd \"$ee\"]
         update ;# TODO: this update should be in the progressCmd itself
         if { $ret != "" && $ret != 0} {
           set ::LoadVolume::FindSubfiles_Abort 1
@@ -684,7 +686,6 @@ itcl::body LoadVolume::apply { } {
                 if {$lev == ""} {
                     set lev 0.0
                 }
-                puts "Adding window level preset w = '$dicomwin', l = '$lev'"
                 $dispNode AddWindowLevelPreset $dicomwin $lev
             }
             # now use the first one, this call turns off the auto flag
@@ -692,32 +693,32 @@ itcl::body LoadVolume::apply { } {
         }
       }
     }
-      if {0} {
-    if {$_dicomWindowLevel(window) != -1} {
-      if {[$node IsA "vtkMRMLScalarVolumeNode"] == 1} {
-        set dispNode [$node GetScalarVolumeDisplayNode]
-        if {$dispNode != ""} {
-          $dispNode AutoWindowLevelOff
-          # for now, take the first if there's a list
-          set dicomwin [lindex [split $_dicomWindowLevel(window) {\\}] 0]
-          # puts "Got $dicomwin out of  $_dicomWindowLevel(window)"
-          $dispNode SetWindow $dicomwin
+    if {0} {
+      if {$_dicomWindowLevel(window) != -1} {
+        if {[$node IsA "vtkMRMLScalarVolumeNode"] == 1} {
+          set dispNode [$node GetScalarVolumeDisplayNode]
+          if {$dispNode != ""} {
+            $dispNode AutoWindowLevelOff
+            # for now, take the first if there's a list
+            set dicomwin [lindex [split $_dicomWindowLevel(window) {\\}] 0]
+            # puts "Got $dicomwin out of  $_dicomWindowLevel(window)"
+            $dispNode SetWindow $dicomwin
+          }
+        }
+      }
+      if {$_dicomWindowLevel(level) != -1} {
+        if {[$node IsA "vtkMRMLScalarVolumeNode"] == 1} {
+          set dispNode [$node GetScalarVolumeDisplayNode]
+          if {$dispNode != ""} {
+            $dispNode AutoWindowLevelOff
+            # for now, take the first if there's a list
+            set lev  [lindex [split $_dicomWindowLevel(level) {\\}] 0]
+            # puts "Got $lev out of $_dicomWindowLevel(level)"
+            $dispNode SetLevel $lev
+          }
         }
       }
     }
-    if {$_dicomWindowLevel(level) != -1} {
-      if {[$node IsA "vtkMRMLScalarVolumeNode"] == 1} {
-        set dispNode [$node GetScalarVolumeDisplayNode]
-        if {$dispNode != ""} {
-          $dispNode AutoWindowLevelOff
-          # for now, take the first if there's a list
-          set lev  [lindex [split $_dicomWindowLevel(level) {\\}] 0]
-          # puts "Got $lev out of $_dicomWindowLevel(level)"
-          $dispNode SetLevel $lev
-        }
-      }
-    }
-      }
     $::slicer3::ApplicationLogic PropagateVolumeSelection
 
     $::slicer3::Application SetRegistry "OpenPath" [file dirname $fileName]
@@ -790,7 +791,7 @@ itcl::body LoadVolume::processEvent { {caller ""} {event ""} } {
       set fileName [$directoryExplorer GetSelectedDirectory]
     }
     if { [file isdirectory $fileName] } {
-      set pathName [lindex [glob -nocomplain $fileName/*] 0]
+      set pathName [lindex [glob -directory $fileName -nocomplain *] 0]
       if { ![file isdirectory $pathName] } {
         set fileName $pathName
       }
@@ -903,18 +904,10 @@ itcl::body LoadVolume::processEvent { {caller ""} {event ""} } {
 
     # extract the file list corresponding to the selection (it is all the files in the selected series)
     # - the archetype file is the first one in the list
-    # - strip leading node serial number and (optional) trailing parenthetical description
+    # - use the cache of file names that was created when the dicom tree was populated
     set fileList ""
     foreach fileNode [$t GetNodeChildren $seriesNode] {
-      # - extract file name from node name
-      set nodeText [$t GetNodeText $fileNode]
-      set openParen [string last ( $nodeText]
-      set closeParen [string last ) $nodeText]
-      if { $openParen != -1 && $closeParen != -1 } {
-        set fileName [string range $nodeText [expr $openParen + 1] [expr $closeParen - 1]]
-      } else {
-        set fileName $nodeText
-      }
+      set fileName $_dicomTree(subscriptName,$fileNode)
       lappend fileList $fileName
     }
 
@@ -936,8 +929,10 @@ itcl::body LoadVolume::processEvent { {caller ""} {event ""} } {
     # try to open the series and see the contents
     # - this is in a catch, since selectArchetype may have changed the layout
     #   of the tree
-    catch "$t OpenNode $seriesNode"
-    catch "$t SeeNode $selection"
+    set ret [catch "$t OpenNode $seriesNode" res]
+    if { $ret } { puts $res }
+    set ret [catch "$t SeeNode $selection" res]
+    if { $ret } { puts $res }
 
     set _processingEvents 0
     return
@@ -1333,7 +1328,7 @@ itcl::body LoadVolume::parseDICOMDirectory {directoryName arrayName {includeSubs
   upvar $arrayName tree
 
   set progressDialog [$this progressDialog]
-  $progressDialog SetTitle "Parsing DICOM Files in $directoryName..."
+  $progressDialog SetTitle "Parsing DICOM Files in {$directoryName}..."
   $progressDialog SetMessageText "Starting..."
 
   set PATIENT "0010|0010"
@@ -1341,7 +1336,7 @@ itcl::body LoadVolume::parseDICOMDirectory {directoryName arrayName {includeSubs
   set SERIES "0008|103e"
   set SERIESNUMBER "0020|0011"
 
-  set files [glob -nocomplain $directoryName/*]
+  set files [glob -nocomplain -directory $directoryName *]
   set subdirs ""
   foreach f $files {
     if { [file isdirectory $f] } {
@@ -1506,7 +1501,8 @@ itcl::body LoadVolume::organizeDICOMSeries {arrayName {includeSubseries 0} {prog
           if { [llength $subseries] > 1 } {
             foreach sub $subseries {
               foreach {name value files} [split $sub ","] {}
-              set newSeries "$series for $name $value"
+              set seriesName $tree($patient,$study,series,displayName,$series)
+              set newSeries "$seriesName for $name $value"
               lappend tree($patient,$study,series) $newSeries
               set tree($patient,$study,$newSeries,files) $subseriesValues($sub)
             }
