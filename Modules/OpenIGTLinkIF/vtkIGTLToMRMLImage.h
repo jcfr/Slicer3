@@ -20,7 +20,7 @@
 #include "vtkMRMLNode.h"
 #include "vtkIGTLToMRMLBase.h"
 
-#include "igtlTransformMessage.h"
+#include "igtlImageMessage.h"
 
 class vtkMRMLVolumeNode;
 
@@ -52,7 +52,7 @@ class VTK_OPENIGTLINKIF_EXPORT vtkIGTLToMRMLImage : public vtkIGTLToMRMLBase
 
  protected:
   //BTX
-  igtl::TransformMessage::Pointer OutTransformMsg;
+  igtl::ImageMessage::Pointer OutImageMessage;
   //ETX
   
 };

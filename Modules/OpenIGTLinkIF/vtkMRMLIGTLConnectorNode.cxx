@@ -1191,4 +1191,24 @@ vtkIGTLToMRMLBase* vtkMRMLIGTLConnectorNode::GetConverterByIGTLDeviceType(const 
 }
 
 
+//---------------------------------------------------------------------------
+void vtkMRMLIGTLConnectorNode::PushNode(vtkMRMLNode* node)
+{
+  if (!node)
+    {
+    return;
+    }
+
+  vtkIGTLToMRMLBase* converter = this->MRMLIDToConverterMap[node->GetID()];
+  if (!converter)
+    {
+    return;
+    }
+    
+  vtkIntArray* eventlist = converter->GetNodeEvents();
+  if (eventlist->GetNumberOfTuples() > 0)
+    {
+    node->InvokeEvent(eventlist->GetValue(0));
+    }
+}
 
