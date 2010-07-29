@@ -7,9 +7,9 @@
 
 #ifdef USE_DEBUG_IMAGE_VIEWER
 /*************************
- * Have a global variable to
- * add debugging information.
- */
+  * Have a global variable to
+  * add debugging information.
+  */
 DebugImageViewerClient DebugImageDisplaySender;
 #endif
 
@@ -18,11 +18,8 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
   // Apparently when you register one transform, you need to register all your
   // transforms.
   //
-  itk::TransformFactory<VersorRigid3DTransformType>::RegisterTransform();
-  itk::TransformFactory<ScaleVersor3DTransformType>::RegisterTransform();
-  itk::TransformFactory<ScaleSkewVersor3DTransformType>::RegisterTransform();
-  itk::TransformFactory<AffineTransformType>::RegisterTransform();
-  itk::TransformFactory<BSplineTransformType>::RegisterTransform();
+  itk::AddExtraTransformRegister();
+
   struct BRAINSDemonWarpAppParameters command;
 
     {
@@ -49,11 +46,11 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
     command.lowerThresholdForBOBF = lowerThresholdForBOBF;
     command.upperThresholdForBOBF = upperThresholdForBOBF;
     command.backgroundFillValue = backgroundFillValue;
-    //Not yet implemented.
-    //command.forceCoronalZeroOrigin = forceCoronalZeroOrigin;
-//    command.movingLandmarks = movingLandmarks;
-//    command.fixedLandmarks = fixedLandmarks;
-//    command.initializeWithFourier = initializeWithFourier;
+    // Not yet implemented.
+    // command.forceCoronalZeroOrigin = forceCoronalZeroOrigin;
+    //    command.movingLandmarks = movingLandmarks;
+    //    command.fixedLandmarks = fixedLandmarks;
+    //    command.initializeWithFourier = initializeWithFourier;
     command.initializeWithDeformationField = initializeWithDeformationField;
     command.initializeWithTransform = initializeWithTransform;
 
@@ -68,7 +65,7 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
     command.smoothDeformationFieldSigma = smoothDeformationFieldSigma;
     command.smoothingUp = smoothingUp;
     command.numberOfBCHApproximationTerms = numberOfBCHApproximationTerms;
-    command.interpolationMode=interpolationMode;
+    command.interpolationMode = interpolationMode;
 
     for ( int i = 0; i < numberOfPyramidLevels; i++ )
       {
@@ -83,8 +80,8 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
 
     for ( int i = 0; i < 3; i++ )
       {
-      command.checkerboardPatternSubdivisions[i]
-        = checkerboardPatternSubdivisions[i];
+      command.checkerboardPatternSubdivisions[i] =
+        checkerboardPatternSubdivisions[i];
       command.seedForBOBF[i] = seedForBOBF[i];
       command.neighborhoodForBOBF[i] = neighborhoodForBOBF[i];
       command.medianFilterSize[i] = medianFilterSize[i];
@@ -95,73 +92,73 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
   if ( command.outputDebug )
     {
     std::cout
-      << "                   movingVolume: " << command.movingVolume
-      << std::endl
-      << "                    fixedVolume: " << command.fixedVolume
-      << std::endl
-      << "                   outputVolume: " << command.outputVolume
-      << std::endl
-      << "   outputDeformationFieldVolume: "
-      << command.outputDeformationFieldVolume << std::endl
-      << "                 inputPixelType: " << command.inputPixelType
-      << std::endl
-      << "                outputPixelType: " << command.outputPixelType
-      << std::endl
-      << "  outputDisplacementFieldPrefix: "
-      << command.outputDisplacementFieldPrefix << std::endl
-      << "       outputCheckerboardVolume: "
-      << command.outputCheckerboardVolume << std::endl
-      << "checkerboardPatternSubdivisions: "
-      << command.checkerboardPatternSubdivisions << std::endl
-      << "               outputNormalized: " << command.outputNormalized
-      << std::endl
-      << "                    outputDebug: " << command.outputDebug
-      << std::endl
-      << "             maskProcessingMode: " << command.maskProcessingMode
-      << std::endl
-      << "              fixedBinaryVolume: " << command.fixedBinaryVolume
-      << std::endl
-      << "             movingBinaryVolume: " << command.movingBinaryVolume
-      << std::endl
-      << "          lowerThresholdForBOBF: "
-      << command.lowerThresholdForBOBF << std::endl
-      << "          upperThresholdForBOBF: "
-      << command.upperThresholdForBOBF << std::endl
-      << "            backgroundFillValue: " << command.backgroundFillValue
-      << std::endl
-      << "                    seedForBOBF: " << command.seedForBOBF
-      << std::endl
-      << "            neighborhoodForBOBF: " << command.neighborhoodForBOBF
-      << std::endl
-      << "               medianFilterSize: " << command.medianFilterSize
-      << std::endl
-/** NOT YET IMPLEMENTED
-      << "        movingLandmarks: " << command.movingLandmarks << std::endl
-      << "         fixedLandmarks: " << command.fixedLandmarks << std::endl
-      << "     initializeWithFourier: " << command.initializeWithFourier
-      << std::endl
-*/
-      << "  initializeWithDeformationField: "
-      << command.initializeWithDeformationField  << std::endl
-      << "       initializeWithTransform: "
-      << command.initializeWithTransform << std::endl
-      << "                    gradientType: " << command.gradientType
-      << std::endl
-      << "                   maxStepLength: " << command.maxStepLength
-      << std::endl
-      << "     smoothDeformationFieldSigma: "
-      << command.smoothDeformationFieldSigma << std::endl
-      << "                     smoothingUp: " << command.smoothingUp
-      << std::endl
-      << "                   histogramMatch: " << command.histogramMatch
-      << std::endl
-      << "                histogram levels: "
-      << command.numberOfHistogramLevels << std::endl
-      << "                 matching points: " << command.numberOfMatchPoints
-      << std::endl
-      << "   numberOfBCHApproximationTerms: " << command.numberOfBCHApproximationTerms
-      << std::endl
-      ;
+    << "                   movingVolume: " << command.movingVolume
+    << std::endl
+    << "                    fixedVolume: " << command.fixedVolume
+    << std::endl
+    << "                   outputVolume: " << command.outputVolume
+    << std::endl
+    << "   outputDeformationFieldVolume: "
+    << command.outputDeformationFieldVolume << std::endl
+    << "                 inputPixelType: " << command.inputPixelType
+    << std::endl
+    << "                outputPixelType: " << command.outputPixelType
+    << std::endl
+    << "  outputDisplacementFieldPrefix: "
+    << command.outputDisplacementFieldPrefix << std::endl
+    << "       outputCheckerboardVolume: "
+    << command.outputCheckerboardVolume << std::endl
+    << "checkerboardPatternSubdivisions: "
+    << command.checkerboardPatternSubdivisions << std::endl
+    << "               outputNormalized: " << command.outputNormalized
+    << std::endl
+    << "                    outputDebug: " << command.outputDebug
+    << std::endl
+    << "             maskProcessingMode: " << command.maskProcessingMode
+    << std::endl
+    << "              fixedBinaryVolume: " << command.fixedBinaryVolume
+    << std::endl
+    << "             movingBinaryVolume: " << command.movingBinaryVolume
+    << std::endl
+    << "          lowerThresholdForBOBF: "
+    << command.lowerThresholdForBOBF << std::endl
+    << "          upperThresholdForBOBF: "
+    << command.upperThresholdForBOBF << std::endl
+    << "            backgroundFillValue: " << command.backgroundFillValue
+    << std::endl
+    << "                    seedForBOBF: " << command.seedForBOBF
+    << std::endl
+    << "            neighborhoodForBOBF: " << command.neighborhoodForBOBF
+    << std::endl
+    << "               medianFilterSize: " << command.medianFilterSize
+    << std::endl
+    /** NOT YET IMPLEMENTED
+      *  << "        movingLandmarks: " << command.movingLandmarks << std::endl
+      *  << "         fixedLandmarks: " << command.fixedLandmarks << std::endl
+      *  << "     initializeWithFourier: " << command.initializeWithFourier
+      *  << std::endl
+      */
+    << "  initializeWithDeformationField: "
+    << command.initializeWithDeformationField  << std::endl
+    << "       initializeWithTransform: "
+    << command.initializeWithTransform << std::endl
+    << "                    gradientType: " << command.gradientType
+    << std::endl
+    << "                   maxStepLength: " << command.maxStepLength
+    << std::endl
+    << "     smoothDeformationFieldSigma: "
+    << command.smoothDeformationFieldSigma << std::endl
+    << "                     smoothingUp: " << command.smoothingUp
+    << std::endl
+    << "                   histogramMatch: " << command.histogramMatch
+    << std::endl
+    << "                histogram levels: "
+    << command.numberOfHistogramLevels << std::endl
+    << "                 matching points: " << command.numberOfMatchPoints
+    << std::endl
+    << "   numberOfBCHApproximationTerms: " << command.numberOfBCHApproximationTerms
+    << std::endl
+    ;
     }
 
   bool violated = false;
@@ -175,19 +172,20 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
     }
 
   if ( ( command.checkerboardPatternSubdivisions[0] == 0 )
-    || ( command.checkerboardPatternSubdivisions[1] == 0 )
-    || ( command.checkerboardPatternSubdivisions[2] == 0 ) )
+       || ( command.checkerboardPatternSubdivisions[1] == 0 )
+       || ( command.checkerboardPatternSubdivisions[2] == 0 ) )
     {
     std::cout
-      <<
-      "Invalid Patameters. The value of checkboardPatternSubdivisions should not be zero!"
-      << std::endl;
+    <<
+    "Invalid Patameters. The value of checkboardPatternSubdivisions should not be zero!"
+    << std::endl;
     exit(-1);
     }
 
   //   if (command.outputVolume.size() == 0)
   //   {
-  //   violated = true; std::cout << "  --outputVolume Required! "  << std::endl;
+  //   violated = true; std::cout << "  --outputVolume Required! "  <<
+  // std::endl;
   //   }
   // if (outputDeformationFieldVolume.size() == 0) { violated = true; std::cout
   // << "  --outputDeformationFieldVolume Required! "  << std::endl; }
@@ -204,24 +202,25 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
   if ( command.inputPixelType != "" )
     {
     // check to see if valid type
-    if ( ( CompareNoCase( command.inputPixelType.c_str(), std::string("uchar" ) ) )
-      && ( CompareNoCase( command.inputPixelType.c_str(), std::string("short" ) ) )
-      && ( CompareNoCase( command.inputPixelType.c_str(),
-          std::string("ushort") ) )
-      && ( CompareNoCase( command.inputPixelType.c_str(), std::string("int"   ) ) )
-      && ( CompareNoCase( command.inputPixelType.c_str(), std::string("float" ) ) )
-#ifdef _USE_UNCOMMON_TYPES // This is commented out because it causes too many
-      // segments in one object file for the intel compiler
-      &&
-      ( CompareNoCase( command.inputPixelType.c_str(), std::string("uint"  ) ) )
-      && ( CompareNoCase( command.inputPixelType.c_str(),
-          std::string("double") ) )
+    if ( ( CompareNoCase( command.inputPixelType.c_str(), std::string("uchar") ) )
+         && ( CompareNoCase( command.inputPixelType.c_str(), std::string("short") ) )
+         && ( CompareNoCase( command.inputPixelType.c_str(),
+                             std::string("ushort") ) )
+         && ( CompareNoCase( command.inputPixelType.c_str(), std::string("int") ) )
+         && ( CompareNoCase( command.inputPixelType.c_str(), std::string("float") ) )
+#ifdef _USE_UNCOMMON_TYPES  // This is commented out because it causes too many
+                            // segments in one object file for the intel
+                            // compiler
+         &&
+         ( CompareNoCase( command.inputPixelType.c_str(), std::string("uint") ) )
+         && ( CompareNoCase( command.inputPixelType.c_str(),
+                             std::string("double") ) )
 #endif
-    )
+          )
       {
       std::cout
-        << "Error. Invalid data type string specified with --inputPixelType!"
-        << std::endl;
+      << "Error. Invalid data type string specified with --inputPixelType!"
+      << std::endl;
       std::cout << "Use one of the following:" << std::endl;
       PrintDataTypeStrings();
       exit(-1);
@@ -232,26 +231,27 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
     {
     // check to see if valid type
     if ( ( CompareNoCase( command.outputPixelType.c_str(),
-          std::string("uchar" ) ) )
-      &&            ( CompareNoCase( command.outputPixelType.c_str(),
-          std::string("SHORT") ) )
-      && ( CompareNoCase( command.outputPixelType.c_str(),
-          std::string("ushort") ) )
-      && ( CompareNoCase( command.outputPixelType.c_str(), std::string("int"   ) ) )
-      && ( CompareNoCase( command.outputPixelType.c_str(),
-          std::string("float" ) ) )
-#ifdef _USE_UNCOMMON_TYPES // This is commented out because it causes too many
-      // segments in one object file for the intel compiler
-      &&
-      ( CompareNoCase( command.outputPixelType.c_str(), std::string("uint"  ) ) )
-      && ( CompareNoCase( command.outputPixelType.c_str(),
-          std::string("double") ) )
+                          std::string("uchar") ) )
+         &&            ( CompareNoCase( command.outputPixelType.c_str(),
+                                        std::string("SHORT") ) )
+         && ( CompareNoCase( command.outputPixelType.c_str(),
+                             std::string("ushort") ) )
+         && ( CompareNoCase( command.outputPixelType.c_str(), std::string("int") ) )
+         && ( CompareNoCase( command.outputPixelType.c_str(),
+                             std::string("float") ) )
+#ifdef _USE_UNCOMMON_TYPES  // This is commented out because it causes too many
+                            // segments in one object file for the intel
+                            // compiler
+         &&
+         ( CompareNoCase( command.outputPixelType.c_str(), std::string("uint") ) )
+         && ( CompareNoCase( command.outputPixelType.c_str(),
+                             std::string("double") ) )
 #endif
-    )
+          )
       {
       std::cout
-        << "Error. Invalid data type string specified with --outputPixelType!"
-        << std::endl;
+      << "Error. Invalid data type string specified with --outputPixelType!"
+      << std::endl;
       std::cout << "Use one of the following:" << std::endl;
       PrintDataTypeStrings();
       exit(-1);
@@ -279,8 +279,9 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
     {
     ProcessOutputType_float(command);
     }
-#ifdef _USE_UNCOMMON_TYPES // This is commented out because it causes too many
-  // segments in one object file for the intel compiler
+#ifdef _USE_UNCOMMON_TYPES  // This is commented out because it causes too many
+                            // segments in one object file for the intel
+                            // compiler
   else if ( CompareNoCase ( command.inputPixelType, std::string ("uint") ) == 0 )
     {
     ProcessOutputType_uint(command);
@@ -293,11 +294,10 @@ int BRAINSDemonWarpPrimary(int argc, char *argv[])
   else
     {
     std::cout
-      << "Error. Invalid data type for --inputPixelType!  Use one of these:"
-      << std::endl;
+    << "Error. Invalid data type for --inputPixelType!  Use one of these:"
+    << std::endl;
     PrintDataTypeStrings ();
     exit (-1);
     }
   return 0;
 }
-

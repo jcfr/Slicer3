@@ -1,9 +1,9 @@
-/*==================================================================
-
-TODO:  NEED TO COMMENT WHAT THIS PROGRAM IS TO BE USED FOR
-HACK:  Need to update documentation and licensing.
-
-==================================================================*/
+/* ==================================================================
+ *
+ *  TODO:  NEED TO COMMENT WHAT THIS PROGRAM IS TO BE USED FOR
+ *  HACK:  Need to update documentation and licensing.
+ *
+ *  ================================================================== */
 
 #include "BRAINSResamplePrimary.h"
 #include <iostream>
@@ -32,16 +32,20 @@ HACK:  Need to update documentation and licensing.
 
 #include "itkGridImageSource.h"
 
-//A filter to debug the min/max values
-  template <class TImage>
-void PrintImageMinAndMax(TImage * inputImage)
+typedef float                                                                    InternalPixelType;
+typedef itk::Image< InternalPixelType, GenericTransformImageNS::SpaceDimension > TBRAINSResampleInternalImageType;
+typedef TBRAINSResampleInternalImageType                                         TBRAINSResampleReferenceImageType;
+
+// A filter to debug the min/max values
+template< class TImage >
+void PrintImageMinAndMax(TImage *inputImage)
 {
-  typedef typename itk::StatisticsImageFilter<TImage> StatisticsFilterType;
+  typedef typename itk::StatisticsImageFilter< TImage > StatisticsFilterType;
   typename StatisticsFilterType::Pointer statsFilter = StatisticsFilterType::New();
-  statsFilter->SetInput( inputImage );
+  statsFilter->SetInput(inputImage);
   statsFilter->Update();
   std::cerr << "StatisticsFilter gave Minimum of " << statsFilter->GetMinimum()
-    << " and Maximum of " << statsFilter->GetMaximum() << std::endl;
+            << " and Maximum of " << statsFilter->GetMaximum() << std::endl;
 }
 
 /* This does all the work! */
@@ -49,10 +53,10 @@ static int ResampleTransformOrDeformationField(int argc, char *argv[])
 {
   PARSE_ARGS;
 
-  const bool         debug = true;
-  const bool useTransform = (warpTransform.size() > 0);
+  const bool debug = true;
+  const bool useTransform = ( warpTransform.size() > 0 );
     {
-    const bool useDeformationField = (deformationVolume.size() > 0);
+    const bool useDeformationField = ( deformationVolume.size() > 0 );
 
     if ( debug )
       {
@@ -63,89 +67,93 @@ static int ResampleTransformOrDeformationField(int argc, char *argv[])
       std::cout << "Pixel Type:       " <<  pixelType << std::endl;
       std::cout << "Interpolation:    " <<  interpolationMode << std::endl;
       std::cout << "Background Value: " <<  defaultValue << std::endl;
-      if (useDeformationField) std::cout << "Warp by Deformation Volume: " <<   deformationVolume   << std::endl;
-      if (useTransform)  std::cout << "Warp By Transform: "   <<   warpTransform << std::endl;
+      if ( useDeformationField ) { std::cout << "Warp by Deformation Volume: " <<  deformationVolume   << std::endl; }
+      if ( useTransform ) { std::cout << "Warp By Transform: "  <<   warpTransform << std::endl; }
       std::cout << "=====================================================" << std::endl;
       }
 
-    if (useTransform == useDeformationField)
+    if ( useTransform == useDeformationField )
       {
       std::cout
-        << "Choose one of the two possibilities, "
-        "an ITK compliant transform (BSpline, Rigid, Versor3D, Affine) --or-- a high-dimensional"
-        "deformation field."
-        << std::endl;
+      << "Choose one of the two possibilities, "
+         "an ITK compliant transform (BSpline, Rigid, Versor3D, Affine) --or-- a high-dimensional"
+         "deformation field."
+      << std::endl;
       exit(1);
       }
     }
 
-  ImageType::Pointer PrincipalOperandImage;  // One name for the image to be warped.
+  TBRAINSResampleInternalImageType::Pointer PrincipalOperandImage;  // One name
+                                                                    // for the
+                                                                    // image to
+                                                                    // be
+                                                                    // warped.
     {
-    typedef itk::ImageFileReader<ImageType>  ReaderType;
+    typedef itk::ImageFileReader< TBRAINSResampleInternalImageType > ReaderType;
     ReaderType::Pointer imageReader = ReaderType::New();
-    imageReader->SetFileName( inputVolume );
-    imageReader->Update( );
+    imageReader->SetFileName(inputVolume);
+    imageReader->Update();
 
     PrincipalOperandImage = imageReader->GetOutput();
     }
 
   // Read ReferenceVolume and DeformationVolume
-  typedef float                                      VectorComponentType;
-  typedef itk::Vector<VectorComponentType, GenericTransformImageNS::SpaceDimension> VectorPixelType;
-  typedef itk::Image<VectorPixelType,  GenericTransformImageNS::SpaceDimension>     DeformationFieldType;
+  typedef float                                                                       VectorComponentType;
+  typedef itk::Vector< VectorComponentType, GenericTransformImageNS::SpaceDimension > VectorPixelType;
+  typedef itk::Image< VectorPixelType,  GenericTransformImageNS::SpaceDimension >     DeformationFieldType;
 
-  // An empty SmartPointer constructor sets up someImage.IsNull() to represent a not-supplied state:
-  DeformationFieldType::Pointer DeformationField;
-  RefImageType::Pointer ReferenceImage;
+  // An empty SmartPointer constructor sets up someImage.IsNull() to represent a
+  // not-supplied state:
+  DeformationFieldType::Pointer              DeformationField;
+  TBRAINSResampleReferenceImageType::Pointer ReferenceImage;
 
   if ( useTransform )
     {
-    typedef itk::ImageFileReader<RefImageType>   ReaderType;
+    typedef itk::ImageFileReader< TBRAINSResampleReferenceImageType > ReaderType;
     ReaderType::Pointer refImageReader = ReaderType::New();
     if ( referenceVolume.size() > 0 )
       {
-      refImageReader->SetFileName( referenceVolume );
+      refImageReader->SetFileName(referenceVolume);
       }
     else
       {
       std::cout << "Alert:  missing Reference Volume defaulted to: " <<  inputVolume << std::endl;
-      refImageReader->SetFileName( inputVolume );
+      refImageReader->SetFileName(inputVolume);
       }
-    refImageReader->Update( );
+    refImageReader->Update();
     ReferenceImage = refImageReader->GetOutput();
     }
-  else if (!useTransform) // that is, it's a warp by deformation field:
+  else if ( !useTransform ) // that is, it's a warp by deformation field:
     {
-    typedef itk::ImageFileReader<DeformationFieldType>  DefFieldReaderType;
+    typedef itk::ImageFileReader< DeformationFieldType > DefFieldReaderType;
     DefFieldReaderType::Pointer fieldImageReader = DefFieldReaderType::New();
-    fieldImageReader->SetFileName( deformationVolume );
-    fieldImageReader->Update( );
+    fieldImageReader->SetFileName(deformationVolume);
+    fieldImageReader->Update();
     DeformationField = fieldImageReader->GetOutput();
 
     if ( referenceVolume.size() > 0 )
       {
-      typedef itk::ImageFileReader<RefImageType>   ReaderType;
+      typedef itk::ImageFileReader< TBRAINSResampleReferenceImageType > ReaderType;
       ReaderType::Pointer refImageReader = ReaderType::New();
-      refImageReader->SetFileName( referenceVolume );
-      refImageReader->Update( );
+      refImageReader->SetFileName(referenceVolume);
+      refImageReader->Update();
       ReferenceImage = refImageReader->GetOutput();
       }
     // else ReferenceImage.IsNull() represents the delayed default
     }
 
-
-
   // Read optional transform:
 
-  // An empty SmartPointer constructor sets up someTransform.IsNull() to represent a not-supplied state:
+  // An empty SmartPointer constructor sets up someTransform.IsNull() to
+  // represent a not-supplied state:
   GenericTransformType::Pointer genericTransform;
 
   if ( useTransform )
     {
-    genericTransform=itk::ReadTransformFromDisk(warpTransform);
+    genericTransform = itk::ReadTransformFromDisk(warpTransform);
     }
-  ImageType::Pointer TransformedImage
-    = GenericTransformImage<ImageType, ImageType, DeformationFieldType>(
+  TBRAINSResampleInternalImageType::Pointer TransformedImage =
+    GenericTransformImage< TBRAINSResampleInternalImageType, TBRAINSResampleInternalImageType, DeformationFieldType >(
       PrincipalOperandImage,
       ReferenceImage,
       DeformationField,
@@ -153,45 +161,46 @@ static int ResampleTransformOrDeformationField(int argc, char *argv[])
       defaultValue,
       interpolationMode,
       pixelType == "binary");
-  if(gridSpacing.size() == ImageType::ImageDimension )
+  if ( gridSpacing.size() == TBRAINSResampleInternalImageType::ImageDimension )
     {
     // find min/max pixels for image
     //
-    typedef itk::StatisticsImageFilter<ImageType> StatisticsFilterType;
+    typedef itk::StatisticsImageFilter< TBRAINSResampleInternalImageType > StatisticsFilterType;
 
     StatisticsFilterType::Pointer statsFilter =
       StatisticsFilterType::New();
-    statsFilter->SetInput( TransformedImage );
+    statsFilter->SetInput(TransformedImage);
     statsFilter->Update();
-    ImageType::PixelType minPixel(statsFilter->GetMinimum());
-    ImageType::PixelType maxPixel(statsFilter->GetMaximum());
+    TBRAINSResampleInternalImageType::PixelType minPixel( statsFilter->GetMinimum() );
+    TBRAINSResampleInternalImageType::PixelType maxPixel( statsFilter->GetMaximum() );
 
     //
     // create the grid
     if ( useTransform )
-      { //HACK:  Need to make handeling of transforms more elegant as is done in BRAINSFitHelper.
-      typedef itk::TransformToDeformationFieldSource<DeformationFieldType,double> ConverterType;
-      ConverterType::Pointer myConverter=ConverterType::New();
+      { // HACK:  Need to make handeling of transforms more elegant as is done
+        // in BRAINSFitHelper.
+      typedef itk::TransformToDeformationFieldSource< DeformationFieldType, double > ConverterType;
+      ConverterType::Pointer myConverter = ConverterType::New();
       myConverter->SetTransform(genericTransform);
       myConverter->SetOutputParametersFromImage(TransformedImage);
       myConverter->Update();
-      DeformationField=myConverter->GetOutput();
+      DeformationField = myConverter->GetOutput();
       }
-    typedef itk::MaximumImageFilter<ImageType> MaxFilterType;
+    typedef itk::MaximumImageFilter< TBRAINSResampleInternalImageType > MaxFilterType;
     typedef itk::GridForwardWarpImageFilterNew
-      <DeformationFieldType,ImageType> GFType;
+    < DeformationFieldType, TBRAINSResampleInternalImageType > GFType;
     GFType::Pointer GFFilter = GFType::New();
     GFFilter->SetInput(DeformationField);
-    GFType::GridSpacingType  GridOffsets;
-    GridOffsets[0]=gridSpacing[0];
-    GridOffsets[1]=gridSpacing[1];
-    GridOffsets[2]=gridSpacing[2];
+    GFType::GridSpacingType GridOffsets;
+    GridOffsets[0] = gridSpacing[0];
+    GridOffsets[1] = gridSpacing[1];
+    GridOffsets[2] = gridSpacing[2];
     GFFilter->SetGridPixelSpacing(GridOffsets);
     GFFilter->SetBackgroundValue(minPixel);
     GFFilter->SetForegroundValue(maxPixel);
     // merge grid with warped image
     MaxFilterType::Pointer MFilter = MaxFilterType::New();
-    MFilter->SetInput1(GFFilter->GetOutput());
+    MFilter->SetInput1( GFFilter->GetOutput() );
     MFilter->SetInput2(TransformedImage);
     MFilter->Update();
     TransformedImage = MFilter->GetOutput();
@@ -202,102 +211,108 @@ static int ResampleTransformOrDeformationField(int argc, char *argv[])
     {
     // A special case for dealing with binary images
     // where signed distance maps are warped and thresholds created
-    typedef short int                             MaskPixelType;
-    typedef itk::Image<MaskPixelType,  GenericTransformImageNS::SpaceDimension> MaskImageType;
-    typedef itk::CastImageFilter<ImageType, MaskImageType> CastImageFilter;
+    typedef short int                                                               MaskPixelType;
+    typedef itk::Image< MaskPixelType,  GenericTransformImageNS::SpaceDimension >   MaskImageType;
+    typedef itk::CastImageFilter< TBRAINSResampleInternalImageType, MaskImageType > CastImageFilter;
     CastImageFilter::Pointer castFilter = CastImageFilter::New();
-    castFilter->SetInput( TransformedImage );
-    castFilter->Update( );
+    castFilter->SetInput(TransformedImage);
+    castFilter->Update();
 
     MaskImageType::Pointer outputImage = castFilter->GetOutput();
-    typedef itk::ImageFileWriter<MaskImageType> WriterType;
+    typedef itk::ImageFileWriter< MaskImageType > WriterType;
     WriterType::Pointer imageWriter = WriterType::New();
-    imageWriter->SetFileName( outputVolume );
+    imageWriter->UseCompressionOn();
+    imageWriter->SetFileName(outputVolume);
     imageWriter->SetInput( castFilter->GetOutput() );
-    imageWriter->Update( );
+    imageWriter->Update();
     }
   else if ( pixelType == "uchar" )
     {
-    typedef unsigned char                    NewPixelType;
-    typedef itk::Image<NewPixelType, GenericTransformImageNS::SpaceDimension> NewImageType;
-    typedef itk::CastImageFilter<ImageType, NewImageType> CastImageFilter;
+    typedef unsigned char                                                          NewPixelType;
+    typedef itk::Image< NewPixelType, GenericTransformImageNS::SpaceDimension >    NewImageType;
+    typedef itk::CastImageFilter< TBRAINSResampleInternalImageType, NewImageType > CastImageFilter;
     CastImageFilter::Pointer castFilter = CastImageFilter::New();
-    castFilter->SetInput( TransformedImage );
-    castFilter->Update( );
+    castFilter->SetInput(TransformedImage);
+    castFilter->Update();
 
-    typedef itk::ImageFileWriter<NewImageType> WriterType;
+    typedef itk::ImageFileWriter< NewImageType > WriterType;
     WriterType::Pointer imageWriter = WriterType::New();
-    imageWriter->SetFileName( outputVolume );
+    imageWriter->UseCompressionOn();
+    imageWriter->SetFileName(outputVolume);
     imageWriter->SetInput( castFilter->GetOutput() );
-    imageWriter->Update( );
+    imageWriter->Update();
     }
   else if ( pixelType == "short" )
     {
-    typedef signed short                     NewPixelType;
-    typedef itk::Image<NewPixelType, GenericTransformImageNS::SpaceDimension> NewImageType;
-    typedef itk::CastImageFilter<ImageType, NewImageType> CastImageFilter;
+    typedef signed short                                                           NewPixelType;
+    typedef itk::Image< NewPixelType, GenericTransformImageNS::SpaceDimension >    NewImageType;
+    typedef itk::CastImageFilter< TBRAINSResampleInternalImageType, NewImageType > CastImageFilter;
     CastImageFilter::Pointer castFilter = CastImageFilter::New();
-    castFilter->SetInput( TransformedImage );
-    castFilter->Update( );
+    castFilter->SetInput(TransformedImage);
+    castFilter->Update();
 
-    typedef itk::ImageFileWriter<NewImageType> WriterType;
+    typedef itk::ImageFileWriter< NewImageType > WriterType;
     WriterType::Pointer imageWriter = WriterType::New();
-    imageWriter->SetFileName( outputVolume );
+    imageWriter->UseCompressionOn();
+    imageWriter->SetFileName(outputVolume);
     imageWriter->SetInput( castFilter->GetOutput() );
-    imageWriter->Update( );
+    imageWriter->Update();
     }
   else if ( pixelType == "ushort" )
     {
-    typedef unsigned short                  NewPixelType;
-    typedef itk::Image<NewPixelType, GenericTransformImageNS::SpaceDimension> NewImageType;
-    typedef itk::CastImageFilter<ImageType, NewImageType> CastImageFilter;
+    typedef unsigned short                                                         NewPixelType;
+    typedef itk::Image< NewPixelType, GenericTransformImageNS::SpaceDimension >    NewImageType;
+    typedef itk::CastImageFilter< TBRAINSResampleInternalImageType, NewImageType > CastImageFilter;
     CastImageFilter::Pointer castFilter = CastImageFilter::New();
-    castFilter->SetInput( TransformedImage );
-    castFilter->Update( );
+    castFilter->SetInput(TransformedImage);
+    castFilter->Update();
 
-    typedef itk::ImageFileWriter<NewImageType> WriterType;
+    typedef itk::ImageFileWriter< NewImageType > WriterType;
     WriterType::Pointer imageWriter = WriterType::New();
-    imageWriter->SetFileName( outputVolume );
+    imageWriter->UseCompressionOn();
+    imageWriter->SetFileName(outputVolume);
     imageWriter->SetInput( castFilter->GetOutput() );
-    imageWriter->Update( );
+    imageWriter->Update();
     }
   else if ( pixelType == "int" )
     {
-    typedef int                             NewPixelType;
-    typedef itk::Image<NewPixelType, GenericTransformImageNS::SpaceDimension> NewImageType;
-    typedef itk::CastImageFilter<ImageType, NewImageType> CastImageFilter;
+    typedef int                                                                    NewPixelType;
+    typedef itk::Image< NewPixelType, GenericTransformImageNS::SpaceDimension >    NewImageType;
+    typedef itk::CastImageFilter< TBRAINSResampleInternalImageType, NewImageType > CastImageFilter;
     CastImageFilter::Pointer castFilter = CastImageFilter::New();
-    castFilter->SetInput( TransformedImage );
-    castFilter->Update( );
+    castFilter->SetInput(TransformedImage);
+    castFilter->Update();
 
-    typedef itk::ImageFileWriter<NewImageType> WriterType;
+    typedef itk::ImageFileWriter< NewImageType > WriterType;
     WriterType::Pointer imageWriter = WriterType::New();
-    imageWriter->SetFileName( outputVolume );
+    imageWriter->UseCompressionOn();
+    imageWriter->SetFileName(outputVolume);
     imageWriter->SetInput( castFilter->GetOutput() );
-    imageWriter->Update( );
+    imageWriter->Update();
     }
   else if ( pixelType == "uint" )
     {
-    typedef unsigned int                  NewPixelType;
-    typedef itk::Image<NewPixelType, GenericTransformImageNS::SpaceDimension> NewImageType;
-    typedef itk::CastImageFilter<ImageType, NewImageType> CastImageFilter;
+    typedef unsigned int                                                           NewPixelType;
+    typedef itk::Image< NewPixelType, GenericTransformImageNS::SpaceDimension >    NewImageType;
+    typedef itk::CastImageFilter< TBRAINSResampleInternalImageType, NewImageType > CastImageFilter;
     CastImageFilter::Pointer castFilter = CastImageFilter::New();
-    castFilter->SetInput( TransformedImage );
-    castFilter->Update( );
-    ;
-    typedef itk::ImageFileWriter<NewImageType> WriterType;
+    castFilter->SetInput(TransformedImage);
+    castFilter->Update();
+    typedef itk::ImageFileWriter< NewImageType > WriterType;
     WriterType::Pointer imageWriter = WriterType::New();
-    imageWriter->SetFileName( outputVolume );
+    imageWriter->UseCompressionOn();
+    imageWriter->SetFileName(outputVolume);
     imageWriter->SetInput( castFilter->GetOutput() );
-    imageWriter->Update( );
+    imageWriter->Update();
     }
   else if ( pixelType == "float" )
     {
-    typedef itk::ImageFileWriter<ImageType> WriterType;
+    typedef itk::ImageFileWriter< TBRAINSResampleInternalImageType > WriterType;
     WriterType::Pointer imageWriter = WriterType::New();
-    imageWriter->SetFileName( outputVolume );
-    imageWriter->SetInput( TransformedImage );
-    imageWriter->Update( );
+    imageWriter->UseCompressionOn();
+    imageWriter->SetFileName(outputVolume);
+    imageWriter->SetInput(TransformedImage);
+    imageWriter->Update();
     }
   else
     {
@@ -307,20 +322,15 @@ static int ResampleTransformOrDeformationField(int argc, char *argv[])
   return EXIT_SUCCESS;
 }
 
-int BRAINSResamplePrimary( int argc, char *argv[] )
+int BRAINSResamplePrimary(int argc, char *argv[])
 {
-  //HACK:  BRAINS2 Masks are currently broken
-  //The direction cosines are and the direction labels are not consistently being set.
+  // HACK:  BRAINS2 Masks are currently broken
+  // The direction cosines are and the direction labels are not consistently
+  // being set.
   itk::Brains2MaskImageIOFactory::RegisterOneFactory();
 
   // Apparently when you register one transform, you need to register all your
   // transforms.
-  //
-  itk::TransformFactory<VersorRigid3DTransformType>::RegisterTransform();
-  itk::TransformFactory<ScaleVersor3DTransformType>::RegisterTransform();
-  itk::TransformFactory<ScaleSkewVersor3DTransformType>::RegisterTransform();
-  itk::TransformFactory<AffineTransformType>::RegisterTransform();
-  itk::TransformFactory<BSplineTransformType>::RegisterTransform();
-
+  itk::AddExtraTransformRegister();
   return ResampleTransformOrDeformationField(argc, argv);
 }

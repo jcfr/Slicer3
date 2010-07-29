@@ -11,35 +11,35 @@
 
 namespace itk
 {
-  /*This file defines Thirion registration class which initializes the input
-    parser, preprocessor and the registrator. */
+/*This file defines Thirion registration class which initializes the input
+  * parser, preprocessor and the registrator. */
 
-  template <typename TImage,
-           typename TRealImage, typename TOutputImage
-             >
-             class BRAINSDemonWarp : public ApplicationBase<
-                                     ValidationInputParser<TImage>,
-                                     DemonsPreprocessor<TImage, TRealImage>,
-                                     DemonsRegistrator<TRealImage, TOutputImage,
-                                     ITK_TYPENAME TRealImage::PixelType>
-                                     >
-  {
+template< typename TImage,
+          typename TRealImage, typename TOutputImage
+          >
+class BRAINSDemonWarp:public ApplicationBase<
+    ValidationInputParser< TImage >,
+    DemonsPreprocessor< TImage, TRealImage >,
+    DemonsRegistrator< TRealImage, TOutputImage,
+                       ITK_TYPENAME TRealImage::PixelType >
+    >
+{
 public:
 
   /** Standard class typedefs. */
   typedef BRAINSDemonWarp Self;
-  typedef ApplicationBase<ValidationInputParser<TImage>,
-          DemonsPreprocessor<TImage, TRealImage>,
-          DemonsRegistrator<TRealImage, TRealImage,
-          ITK_TYPENAME TRealImage::PixelType>
-            > Superclass;
-  typedef SmartPointer<Self>       Pointer;
-  typedef SmartPointer<const Self> ConstPointer;
+  typedef ApplicationBase< ValidationInputParser< TImage >,
+                           DemonsPreprocessor< TImage, TRealImage >,
+                           DemonsRegistrator< TRealImage, TRealImage,
+                                              ITK_TYPENAME TRealImage::PixelType >
+                           > Superclass;
+  typedef SmartPointer< Self >       Pointer;
+  typedef SmartPointer< const Self > ConstPointer;
 
   /** Deformation field pixel type. */
-  typedef float                     FieldValueType;
-  typedef Vector<FieldValueType, 3> FieldPixelType;
-  typedef Image<FieldPixelType, 3>  TDeformationField;
+  typedef float                       FieldValueType;
+  typedef Vector< FieldValueType, 3 > FieldPixelType;
+  typedef Image< FieldPixelType, 3 >  TDeformationField;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro (BRAINSDemonWarp, ApplicationBase);
@@ -53,23 +53,23 @@ public:
 
   /** Image dimension. */
   itkStaticConstMacro (ImageDimension, unsigned int,
-    TImage::ImageDimension);
+                       TImage::ImageDimension);
 
   /** Type to hold the number of checker boxes per dimension */
-  typedef FixedArray<unsigned int, ::itk::GetImageDimension<
-    TImage>::ImageDimension> PatternArrayType;
+  typedef FixedArray< unsigned int, ::itk::GetImageDimension<
+                        TImage >::ImageDimension > PatternArrayType;
 
   typedef typename ImageType::PixelType PixelType;
   typedef typename ImageType::IndexType IndexType;
   typedef typename ImageType::SizeType  SizeType;
 
   /** ShrinkFactors type. */
-  typedef FixedArray<unsigned int,
-          itk::GetImageDimension<TImage>::ImageDimension>
-            ShrinkFactorsType;
+  typedef FixedArray< unsigned int,
+                      itk::GetImageDimension< TImage >::ImageDimension >
+  ShrinkFactorsType;
 
   /** IterationArray type. */
-  typedef Array<unsigned int> IterationsArrayType;
+  typedef Array< unsigned int > IterationsArrayType;
 
   /** Set the atlas patient ID. */
   itkSetStringMacro (TheMovingImageFilename);
@@ -119,8 +119,8 @@ public:
   itkGetMacro (AppendOutputFile, bool);
   itkBooleanMacro (AppendOutputFile);
 
-  /*BOBF macros */
-  /**Set Target Mask filename*/
+  /*BOBF macros
+   *Set Target Mask filename*/
   itkSetStringMacro (FixedBinaryVolume);
   itkGetStringMacro (FixedBinaryVolume);
 
@@ -145,8 +145,8 @@ public:
   itkGetMacro (Upper, PixelType);
 
   /** Set/Get value to replace thresholded pixels. Pixels that lie *
-   *  within Lower and Upper (inclusive) will be replaced with this
-   *  value. The default is 1. */
+    *  within Lower and Upper (inclusive) will be replaced with this
+    *  value. The default is 1. */
   itkSetMacro (DefaultPixelValue, PixelType);
   itkGetMacro (DefaultPixelValue, PixelType);
 
@@ -171,88 +171,88 @@ public:
   itkSetStringMacro (MovingLandmarkFilename);
   itkGetStringMacro (MovingLandmarkFilename);
   /*
-  itkSetStringMacro (FixedMaskFilename);
-  itkGetStringMacro (FixedMaskFilename);
-  itkSetStringMacro (MovingMaskFilename);
-  itkGetStringMacro (MovingMaskFilename);
-  */
+    * itkSetStringMacro (FixedMaskFilename);
+    * itkGetStringMacro (FixedMaskFilename);
+    * itkSetStringMacro (MovingMaskFilename);
+    * itkGetStringMacro (MovingMaskFilename);
+    */
   /**Set histogram matching*/
   itkSetMacro(UseHistogramMatching, bool);
   itkGetConstMacro(UseHistogramMatching, bool);
 
   /** Get the number of histogram bins. */
-  itkGetConstMacro( NumberOfHistogramLevels, unsigned long );
-  itkSetMacro( NumberOfHistogramLevels, unsigned long );
+  itkGetConstMacro(NumberOfHistogramLevels, unsigned long);
+  itkSetMacro(NumberOfHistogramLevels, unsigned long);
 
   /** Get the number of match points. */
-  itkGetConstMacro( NumberOfMatchPoints, unsigned long );
-  itkSetMacro( NumberOfMatchPoints, unsigned long );
+  itkGetConstMacro(NumberOfMatchPoints, unsigned long);
+  itkSetMacro(NumberOfMatchPoints, unsigned long);
 
   /** Get the number of levels. */
-  itkGetMacro( NumberOfLevels, unsigned short );
-  itkSetMacro( NumberOfLevels, unsigned short );
+  itkGetMacro(NumberOfLevels, unsigned short);
+  itkSetMacro(NumberOfLevels, unsigned short);
 
   /** Get the interpolation Mode. */
-  itkGetMacro( InterpolationMode, std::string );
-  itkSetMacro( InterpolationMode, std::string );
+  itkGetMacro(InterpolationMode, std::string);
+  itkSetMacro(InterpolationMode, std::string);
 
   /** Get the atlas image starting shrink factors. */
-  itkGetConstReferenceMacro( TheMovingImageShrinkFactors, ShrinkFactorsType );
+  itkGetConstReferenceMacro(TheMovingImageShrinkFactors, ShrinkFactorsType);
   void SetTheMovingImageShrinkFactors(const ShrinkFactorsType & shrinkfactors)
-    {
+  {
     this->m_TheMovingImageShrinkFactors = shrinkfactors;
-    }
+  }
 
   /** Get the subject image starting shrink factors. */
-  itkGetConstReferenceMacro( TheFixedImageShrinkFactors, ShrinkFactorsType );
+  itkGetConstReferenceMacro(TheFixedImageShrinkFactors, ShrinkFactorsType);
   void SetTheFixedImageShrinkFactors(const ShrinkFactorsType & shrinkfactors)
-    {
+  {
     this->m_TheFixedImageShrinkFactors = shrinkfactors;
-    }
+  }
 
   /** Get the number of iterations at each level. */
-  itkGetConstReferenceMacro( NumberOfIterations, IterationsArrayType );
+  itkGetConstReferenceMacro(NumberOfIterations, IterationsArrayType);
   void SetNumberOfIterations(const IterationsArrayType & iterations)
-    {
+  {
     m_NumberOfIterations = iterations;
-    }
+  }
 
-  typedef itk::PDEDeformableRegistrationFilter<RealImageType, RealImageType,
-          TDeformationField>
-            BaseRegistrationFilterType;
+  typedef itk::PDEDeformableRegistrationFilter< RealImageType, RealImageType,
+                                                TDeformationField >
+  BaseRegistrationFilterType;
   void SetRegistrationFilter(
-    BaseRegistrationFilterType * filter)
-    {
+    BaseRegistrationFilterType *filter)
+  {
     this->m_Registrator->SetRegistrationFilter(filter);
-    }
+  }
 
-  typedef itk::LogDomainDeformableRegistrationFilter<RealImageType, RealImageType,
-          TDeformationField>
-            LDDRegistrationFilterType;
-  void SetLDDRegistrationFilter( LDDRegistrationFilterType * filter)
-    {
+  typedef itk::LogDomainDeformableRegistrationFilter< RealImageType, RealImageType,
+                                                      TDeformationField >
+  LDDRegistrationFilterType;
+  void SetLDDRegistrationFilter(LDDRegistrationFilterType *filter)
+  {
     this->m_Registrator->SetLDDRegistrationFilter(filter);
-    }
+  }
 
   void SetLogDomain(bool bl)
-    {
+  {
     this->m_Registrator->SetUseLogDomain(bl);
-    }
+  }
 
 protected:
 
   BRAINSDemonWarp ();
   virtual ~BRAINSDemonWarp ()
-    {}
+  {}
 
   /** Initialize the input parser. */
-  virtual void InitializeParser ();
+  virtual void InitializeParser();
 
   /*** Initialize the preprocessor */
-  virtual void InitializePreprocessor ();
+  virtual void InitializePreprocessor();
 
   /*** Initialize the registrator  */
-  virtual void InitializeRegistrator ();
+  virtual void InitializeRegistrator();
 
 private:
 
@@ -281,7 +281,7 @@ private:
   PixelType        m_Lower;
   PixelType        m_Upper;
   PixelType        m_DefaultPixelValue;
-  SizeType         m_Radius; // for BOBF filter.
+  SizeType         m_Radius;   // for BOBF filter.
   SizeType         m_MedianFilterSize;
   std::string      m_FixedLandmarkFilename;
   std::string      m_MovingLandmarkFilename;
@@ -294,10 +294,10 @@ private:
   ShrinkFactorsType   m_TheFixedImageShrinkFactors;
   IterationsArrayType m_NumberOfIterations;
   std::string         m_InterpolationMode;
-  };
+};
 }          // namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "BRAINSDemonWarp.txx"
+#  include "BRAINSDemonWarp.txx"
 #endif
 #endif

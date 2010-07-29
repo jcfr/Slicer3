@@ -9,15 +9,16 @@ void PrintDataTypeStrings(void)
   std::cout << "ushort" << std::endl;
   std::cout << "int" << std::endl;
   std::cout << "float" << std::endl;
-#ifdef _USE_UNCOMMON_TYPES // This is commented out because it causes
-  // too many segments in one object file for the intel compiler
+#ifdef _USE_UNCOMMON_TYPES  // This is commented out because it causes
+                            // too many segments in one object file for the
+                            // intel compiler
   std::cout << "uint" << std::endl;
   std::cout << "double" << std::endl;
 #endif
 }
 
 // This function compares strings ignoring case.
-int CompareNoCase( const std::string & s, const std::string & s2 )
+int CompareNoCase(const std::string & s, const std::string & s2)
 {
   // Compare strings.
   std::string::const_iterator p = s.begin();
@@ -35,5 +36,3 @@ int CompareNoCase( const std::string & s, const std::string & s2 )
 
   return ( s2.size() == s.size() ) ? 0 : ( s.size() < s2.size() ) ? -1 : 1;
 }
-
-

@@ -6,17 +6,18 @@
 
 namespace itk
 {
-  // TODO: Need comment here
-  template <class TInputImage, class TOutputImage>
-    class ITK_EXPORT BOBFFilter :
-      public ImageToImageFilter<TInputImage, TOutputImage>
-  {
+/** \class BOBFilter
+  */
+template< class TInputImage, class TOutputImage >
+class ITK_EXPORT BOBFFilter:
+  public ImageToImageFilter< TInputImage, TOutputImage >
+{
 public:
   /** Standard class typedefs. */
-  typedef BOBFFilter                                    Self;
-  typedef ImageToImageFilter<TInputImage, TOutputImage> Superclass;
-  typedef SmartPointer<Self>                            Pointer;
-  typedef SmartPointer<const Self>                      ConstPointer;
+  typedef BOBFFilter                                      Self;
+  typedef ImageToImageFilter< TInputImage, TOutputImage > Superclass;
+  typedef SmartPointer< Self >                            Pointer;
+  typedef SmartPointer< const Self >                      ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
@@ -26,7 +27,7 @@ public:
 
   /** ImageDimension enumeration. */
   itkStaticConstMacro(ImageDimension, unsigned int,
-    TInputImage::ImageDimension);
+                      TInputImage::ImageDimension);
 
   /** Typedef to describe the output image region type. */
   typedef typename TOutputImage::RegionType OutputImageRegionType;
@@ -45,18 +46,18 @@ public:
   typedef typename InputImageType::SizeType   InputSizeType;
 
   /** Set/Get the Input image. */
-  void SetInputImage( const InputImageType *source )
-    {
-    this->SetInput( source );
-    }
+  void SetInputImage(const InputImageType *source)
+  {
+    this->SetInput(source);
+  }
 
   const InputImageType * GetInputImage(void)
-    {
+  {
     return this->GetInput();
-    }
+  }
 
   /** Set the input mask */
-  void SetInputMask( const InputImageType *image );
+  void SetInputMask(const InputImageType *image);
 
   /** Get the input mask */
   const InputImageType * GetInputMask(void);
@@ -68,13 +69,13 @@ public:
   itkGetMacro(Lower, InputPixelType);
 
   /** Set/Get the upper threshold. The default is the largest possible
-   *  value for the InputPixelType. */
+    *  value for the InputPixelType. */
   itkSetMacro(Upper, InputPixelType);
   itkGetMacro(Upper, InputPixelType);
 
   /** Set/Get value to replace thresholded pixels. Pixels that lie *
-   *  within Lower and Upper (inclusive) will be replaced with this
-   *  value. The default is 1. */
+    *  within Lower and Upper (inclusive) will be replaced with this
+    *  value. The default is 1. */
   itkSetMacro(ReplaceValue, OutputPixelType);
   itkGetMacro(ReplaceValue, OutputPixelType);
 
@@ -95,7 +96,7 @@ public:
 
 protected:
   BOBFFilter();
-  ~BOBFFilter() { };
+  ~BOBFFilter() {}
 private:
   BOBFFilter(const Self &);      // purposely not implemented
   void operator=(const Self &);  // purposely not implemented
@@ -108,11 +109,11 @@ private:
   InputPixelType  m_Upper;
   OutputPixelType m_ReplaceValue;
   InputSizeType   m_Radius;
-  };
+};
 }   // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkBOBFFilter.txx"
+#  include "itkBOBFFilter.txx"
 #endif
 
 #endif

@@ -2,6 +2,5 @@
 
 void VectorProcessOutputType_ushort(struct BRAINSDemonWarpAppParameters & command)
 {
-  VectorProcessOutputType<unsigned short>(command);
+  VectorProcessOutputType< unsigned short >(command);
 }
-

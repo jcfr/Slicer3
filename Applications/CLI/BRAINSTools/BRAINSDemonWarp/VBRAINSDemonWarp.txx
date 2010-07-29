@@ -5,10 +5,10 @@
 
 namespace itk
 {
-template<typename TImage, typename TRealImage, typename TOutputImage>
-VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
-  ::VBRAINSDemonWarp()
-  {
+template< typename TImage, typename TRealImage, typename TOutputImage >
+VBRAINSDemonWarp< TImage, TRealImage, TOutputImage >
+::VBRAINSDemonWarp()
+{
   m_TheMovingImageFilename.reserve(10);
   m_TheFixedImageFilename.reserve(10);
 
@@ -19,10 +19,10 @@ VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
   m_CheckerBoardFilename = "none";
   m_DeformationFieldOutputName = "none";
   m_DisplacementBaseName = "none";
-  m_CheckerBoardPattern.Fill( 4 );
-  m_Lower = NumericTraits<PixelType>::NonpositiveMin();
-  m_Upper = NumericTraits<PixelType>::max();
-  m_DefaultPixelValue = NumericTraits<PixelType>::Zero;
+  m_CheckerBoardPattern.Fill(4);
+  m_Lower = NumericTraits< PixelType >::NonpositiveMin();
+  m_Upper = NumericTraits< PixelType >::max();
+  m_DefaultPixelValue = NumericTraits< PixelType >::Zero;
   m_Radius.Fill(1);
   m_FixedBinaryVolume = "none";
   m_MovingBinaryVolume = "none";
@@ -45,19 +45,19 @@ VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
     m_Seed[i] = 0;
     m_MedianFilterSize[i] = 0;
     }
-  }
+}
 
 /*This method initializes the input parser which reads in the moving image,
-  fixed image and parameter file.*/
+  * fixed image and parameter file.*/
 
-template<typename TImage, typename TRealImage, typename TOutputImage>
+template< typename TImage, typename TRealImage, typename TOutputImage >
 void
-VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
-  ::InitializeParser()
+VBRAINSDemonWarp< TImage, TRealImage, TOutputImage >
+::InitializeParser()
 {
-  this->m_Parser->SetTheMovingImageFilename( this->m_TheMovingImageFilename );
+  this->m_Parser->SetTheMovingImageFilename(this->m_TheMovingImageFilename);
 
-  this->m_Parser->SetTheFixedImageFilename( this->m_TheFixedImageFilename);
+  this->m_Parser->SetTheFixedImageFilename(this->m_TheFixedImageFilename);
   this->m_Parser->SetForceCoronalZeroOrigin( this->GetForceCoronalZeroOrigin() );
 
   this->m_Parser->SetInitialDeformationFieldFilename(
@@ -80,13 +80,14 @@ VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
 }
 
 /*This method initializes the preprocessor which processes the moving and fixed
-  images before registration. The image files which are read in using the parser
-  are given to the preprocessor.*/
+  * images before registration. The image files which are read in using the
+  * parser
+  * are given to the preprocessor.*/
 
-template<typename TImage, typename TRealImage, typename TOutputImage>
+template< typename TImage, typename TRealImage, typename TOutputImage >
 void
-VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
-  ::InitializePreprocessor()
+VBRAINSDemonWarp< TImage, TRealImage, TOutputImage >
+::InitializePreprocessor()
 {
   this->m_Preprocessor->SetInputFixedImage( this->m_Parser->GetTheFixedImages() );
   this->m_Preprocessor->SetInputMovingImage( this->m_Parser->GetTheMovingImages() );
@@ -108,16 +109,16 @@ VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
   this->m_Preprocessor->SetMedianFilterSize( this->GetMedianFilterSize() );
   this->m_Preprocessor->SetInitialDeformationField(
     this->m_Parser->GetInitialDeformationField() );
-//  this->m_Preprocessor->SetWeightFactors( this->GetWeightFactors() );
+  //  this->m_Preprocessor->SetWeightFactors( this->GetWeightFactors() );
 }
 
 /*This method initializes the registration process. The preprocessed output
-  files are passed to the registrator.*/
+  * files are passed to the registrator.*/
 
-template<typename TImage, typename TRealImage, typename TOutputImage>
+template< typename TImage, typename TRealImage, typename TOutputImage >
 void
-VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
-  ::InitializeRegistrator()
+VBRAINSDemonWarp< TImage, TRealImage, TOutputImage >
+::InitializeRegistrator()
 {
   this->m_Registrator->SetDisplacementBaseName( this->GetDisplacementBaseName() );
   this->m_Registrator->SetWarpedImageName( this->GetWarpedImageName() );
@@ -140,7 +141,7 @@ VBRAINSDemonWarp<TImage, TRealImage, TOutputImage>
   this->m_Registrator->SetNumberOfLevels( this->m_Parser->GetNumberOfLevels() );
   this->m_Registrator->SetNumberOfIterations(
     this->m_Parser->GetNumberOfIterations() );
-  this->m_Registrator->SetInterpolationMode(this->GetInterpolationMode());
+  this->m_Registrator->SetInterpolationMode( this->GetInterpolationMode() );
 
   this->m_Registrator->SetFixedImageShrinkFactors(
     this->m_Parser->GetTheFixedImageShrinkFactors() );

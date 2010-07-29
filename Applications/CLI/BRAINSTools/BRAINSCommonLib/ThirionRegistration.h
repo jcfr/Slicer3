@@ -1,5 +1,5 @@
-#ifndef _ThirionRegistration_h
-#define _ThirionRegistration_h
+#ifndef __ThirionRegistration_h
+#define __ThirionRegistration_h
 
 #include <string>
 #include "DemonsPreprocessor.h"
@@ -9,35 +9,35 @@
 #include "itkCheckerBoardImageFilter.h"
 namespace itk
 {
-  /*This file defines Thirion registration class which initializes the input
-    parser, preprocessor and the registrator. */
+/*This file defines Thirion registration class which initializes the input
+  * parser, preprocessor and the registrator. */
 
-  template <typename TImage,
-           typename TRealImage, typename TOutputImage
-             >
-             class ThirionRegistration : public ApplicationBase<
-                                         ValidationInputParser<TImage>,
-                                         DemonsPreprocessor<TImage, TRealImage>,
-                                         DemonsRegistrator<TRealImage, TOutputImage,
-                                         ITK_TYPENAME TRealImage::PixelType>
-                                         >
-  {
+template< typename TImage,
+          typename TRealImage, typename TOutputImage
+          >
+class ThirionRegistration:public ApplicationBase<
+    ValidationInputParser< TImage >,
+    DemonsPreprocessor< TImage, TRealImage >,
+    DemonsRegistrator< TRealImage, TOutputImage,
+                       ITK_TYPENAME TRealImage::PixelType >
+    >
+{
 public:
 
   /** Standard class typedefs. */
   typedef ThirionRegistration Self;
-  typedef ApplicationBase<ValidationInputParser<TImage>,
-          DemonsPreprocessor<TImage, TRealImage>,
-          DemonsRegistrator<TRealImage, TRealImage,
-          ITK_TYPENAME TRealImage::PixelType>
-            > Superclass;
-  typedef SmartPointer<Self>       Pointer;
-  typedef SmartPointer<const Self> ConstPointer;
+  typedef ApplicationBase< ValidationInputParser< TImage >,
+                           DemonsPreprocessor< TImage, TRealImage >,
+                           DemonsRegistrator< TRealImage, TRealImage,
+                                              ITK_TYPENAME TRealImage::PixelType > >
+  Superclass;
+  typedef SmartPointer< Self >       Pointer;
+  typedef SmartPointer< const Self > ConstPointer;
 
   /** Deformation field pixel type. */
-  typedef float                     FieldValueType;
-  typedef Vector<FieldValueType, 3> FieldPixelType;
-  typedef Image<FieldPixelType, 3>  TDeformationField;
+  typedef float                       FieldValueType;
+  typedef Vector< FieldValueType, 3 > FieldPixelType;
+  typedef Image< FieldPixelType, 3 >  TDeformationField;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro (ThirionRegistration, ApplicationBase);
@@ -51,22 +51,22 @@ public:
 
   /** Image dimension. */
   itkStaticConstMacro (ImageDimension, unsigned int,
-    TImage::ImageDimension);
+                       TImage::ImageDimension);
 
   /** Type to hold the number of checker boxes per dimension */
-  typedef FixedArray<unsigned int, ::itk::GetImageDimension<
-    TImage>::ImageDimension> PatternArrayType;
+  typedef FixedArray< unsigned int, ::itk::GetImageDimension<
+                        TImage >::ImageDimension > PatternArrayType;
 
   typedef typename ImageType::PixelType PixelType;
   typedef typename ImageType::IndexType IndexType;
   typedef typename ImageType::SizeType  SizeType;
 
   /** ShrinkFactors type. */
-  typedef FixedArray<unsigned int,
-          itk::GetImageDimension<TImage>::ImageDimension> ShrinkFactorsType;
+  typedef FixedArray< unsigned int,
+                      itk::GetImageDimension< TImage >::ImageDimension > ShrinkFactorsType;
 
   /** IterationArray type. */
-  typedef Array<unsigned int> IterationsArrayType;
+  typedef Array< unsigned int > IterationsArrayType;
 
   /** Set the atlas patient ID. */
   itkSetStringMacro (TheMovingImageFilename);
@@ -99,11 +99,11 @@ public:
   /** Set output transformation filename. */
   itkSetStringMacro (OutputFilename);
 
-  /**Set checker board Image filename*/
+  /** Set checker board Image filename */
   itkSetStringMacro (CheckerBoardFilename);
   itkGetStringMacro (CheckerBoardFilename);
 
-  /**Set Deformation field output filename*/
+  /** Set Deformation field output filename */
   itkSetStringMacro (DeformationFieldOutputName);
   itkGetStringMacro (DeformationFieldOutputName);
 
@@ -116,20 +116,20 @@ public:
   itkGetMacro (AppendOutputFile, bool);
   itkBooleanMacro (AppendOutputFile);
 
-  /*BOBF macros */
-  /**Set Target Mask filename*/
+  /* BOBF macros
+    * Set Target Mask filename */
   itkSetStringMacro (BOBFTargetMask);
   itkGetStringMacro (BOBFTargetMask);
 
-  /**Set Template Mask filename*/
+  /** Set Template Mask filename */
   itkSetStringMacro (BOBFTemplateMask);
   itkGetStringMacro (BOBFTemplateMask);
 
-  /**Force Centered Image.*/
+  /** Force Centered Image. */
   itkSetMacro (ForceCoronalZeroOrigin, bool);
   itkGetConstMacro (ForceCoronalZeroOrigin, bool);
 
-  /**Output Normalized Image.*/
+  /** Output Normalized Image. */
   itkSetStringMacro (OutNormalized);
   itkGetStringMacro (OutNormalized);
 
@@ -142,8 +142,8 @@ public:
   itkGetMacro (Upper, PixelType);
 
   /** Set/Get value to replace thresholded pixels. Pixels that lie *
-   *  within Lower and Upper (inclusive) will be replaced with this
-   *  value. The default is 1. */
+    *  within Lower and Upper (inclusive) will be replaced with this
+    *  value. The default is 1. */
   itkSetMacro (DefaultPixelValue, PixelType);
   itkGetMacro (DefaultPixelValue, PixelType);
 
@@ -168,65 +168,65 @@ public:
   itkSetStringMacro (MovingLandmarkFilename);
   itkGetStringMacro (MovingLandmarkFilename);
 
-  /**Set histogram matching*/
+  /** Set histogram matching*/
   itkSetMacro(UseHistogramMatching, bool);
   itkGetConstMacro(UseHistogramMatching, bool);
 
   /** Get the number of histogram bins. */
-  itkGetConstMacro( NumberOfHistogramLevels, unsigned long );
-  itkSetMacro( NumberOfHistogramLevels, unsigned long );
+  itkGetConstMacro(NumberOfHistogramLevels, unsigned long);
+  itkSetMacro(NumberOfHistogramLevels, unsigned long);
 
   /** Get the number of match points. */
-  itkGetConstMacro( NumberOfMatchPoints, unsigned long );
-  itkSetMacro( NumberOfMatchPoints, unsigned long );
+  itkGetConstMacro(NumberOfMatchPoints, unsigned long);
+  itkSetMacro(NumberOfMatchPoints, unsigned long);
 
   /** Get the number of levels. */
-  itkGetMacro( NumberOfLevels, unsigned short );
-  itkSetMacro( NumberOfLevels, unsigned short );
+  itkGetMacro(NumberOfLevels, unsigned short);
+  itkSetMacro(NumberOfLevels, unsigned short);
 
   /** Get the atlas image starting shrink factors. */
-  itkGetConstReferenceMacro( TheMovingImageShrinkFactors, ShrinkFactorsType );
+  itkGetConstReferenceMacro(TheMovingImageShrinkFactors, ShrinkFactorsType);
   void SetTheMovingImageShrinkFactors(const ShrinkFactorsType & shrinkfactors)
-    {
+  {
     this->m_TheMovingImageShrinkFactors = shrinkfactors;
-    }
+  }
 
   /** Get the subject image starting shrink factors. */
-  itkGetConstReferenceMacro( TheFixedImageShrinkFactors, ShrinkFactorsType );
+  itkGetConstReferenceMacro(TheFixedImageShrinkFactors, ShrinkFactorsType);
   void SetTheFixedImageShrinkFactors(const ShrinkFactorsType & shrinkfactors)
-    {
+  {
     this->m_TheFixedImageShrinkFactors = shrinkfactors;
-    }
+  }
 
   /** Get the number of iterations at each level. */
-  itkGetConstReferenceMacro( NumberOfIterations, IterationsArrayType );
+  itkGetConstReferenceMacro(NumberOfIterations, IterationsArrayType);
   void SetNumberOfIterations(const IterationsArrayType & iterations)
-    {
+  {
     m_NumberOfIterations = iterations;
-    }
+  }
 
-  typedef itk::PDEDeformableRegistrationFilter<RealImageType, RealImageType,
-          TDeformationField> BaseRegistrationFilterType;
+  typedef itk::PDEDeformableRegistrationFilter< RealImageType, RealImageType,
+                                                TDeformationField > BaseRegistrationFilterType;
   void SetRegistrationFilter(
     typename BaseRegistrationFilterType::Pointer filter)
-    {
+  {
     this->m_Registrator->SetRegistrationFilter(filter);
-    }
+  }
 
 protected:
 
   ThirionRegistration ();
   virtual ~ThirionRegistration ()
-    {}
+  {}
 
   /** Initialize the input parser. */
-  virtual void InitializeParser ();
+  virtual void InitializeParser();
 
-  /*** Initialize the preprocessor */
-  virtual void InitializePreprocessor ();
+  /** Initialize the preprocessor */
+  virtual void InitializePreprocessor();
 
-  /*** Initialize the registrator  */
-  virtual void InitializeRegistrator ();
+  /** Initialize the registrator  */
+  virtual void InitializeRegistrator();
 
 private:
 
@@ -266,10 +266,10 @@ private:
   ShrinkFactorsType   m_TheMovingImageShrinkFactors;
   ShrinkFactorsType   m_TheFixedImageShrinkFactors;
   IterationsArrayType m_NumberOfIterations;
-  };
+};
 }          // namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "ThirionRegistration.txx"
+#  include "ThirionRegistration.txx"
 #endif
 #endif

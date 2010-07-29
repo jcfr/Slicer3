@@ -1,20 +1,20 @@
-#ifndef __CROSSOVER_AFFINE_SYSTEM_TXX__
-#define __CROSSOVER_AFFINE_SYSTEM_TXX__
+#ifndef __CrossOverAffineSystem_txx
+#define __CrossOverAffineSystem_txx
 
 #include "itkNumericTraits.h"
 #include "CrossOverAffineSystem.h"
 
 /**
- * Constructor
- */
-template<class TCoordinateType, unsigned int NDimensions>
-CrossOverAffineSystem<TCoordinateType, NDimensions>
-  ::CrossOverAffineSystem() :
+  * Constructor
+  */
+template< class TCoordinateType, unsigned int NDimensions >
+CrossOverAffineSystem< TCoordinateType, NDimensions >
+::CrossOverAffineSystem():
   m_InhaleEncodeConversion(),
   m_InhaleDecodeConversion(),
   m_ExhaleEncodeConversion(),
   m_ExhaleDecodeConversion()
-  {
+{
   m_InhaleEncodeConversion = AffineTransformType::New();
   m_InhaleDecodeConversion = AffineTransformType::New();
   m_ExhaleEncodeConversion = AffineTransformType::New();
@@ -24,28 +24,28 @@ CrossOverAffineSystem<TCoordinateType, NDimensions>
   m_InhaleDecodeConversion->SetIdentity();
   m_ExhaleEncodeConversion->SetIdentity();
   m_ExhaleDecodeConversion->SetIdentity();
-  }
+}
 
 /**
- * Destructor
- */
-template<class TCoordinateType, unsigned int NDimensions>
-CrossOverAffineSystem<TCoordinateType, NDimensions>::
-  ~CrossOverAffineSystem()
-  {
-  return;
-  }
-
-/**
- * Utility function not provided in general vector implementations.
- */
-template<class TCoordinateType, unsigned int NDimensions>
-typename CrossOverAffineSystem<TCoordinateType, NDimensions>::VectorType
-Reciprocal(const typename CrossOverAffineSystem<TCoordinateType,
-    NDimensions>::VectorType & Scale)
+  * Destructor
+  */
+template< class TCoordinateType, unsigned int NDimensions >
+CrossOverAffineSystem< TCoordinateType, NDimensions >::
+~CrossOverAffineSystem()
 {
-  typedef typename CrossOverAffineSystem<TCoordinateType,
-    NDimensions>::VectorType VectorType;
+  return;
+}
+
+/**
+  * Utility function not provided in general vector implementations.
+  */
+template< class TCoordinateType, unsigned int NDimensions >
+typename CrossOverAffineSystem< TCoordinateType, NDimensions >::VectorType
+Reciprocal(const typename CrossOverAffineSystem< TCoordinateType,
+                                                 NDimensions >::VectorType & Scale)
+{
+  typedef typename CrossOverAffineSystem< TCoordinateType,
+                                          NDimensions >::VectorType VectorType;
   VectorType ReciprocalScale(Scale);
 
   for ( unsigned int i = 0; i < NDimensions; i++ )
@@ -58,17 +58,16 @@ Reciprocal(const typename CrossOverAffineSystem<TCoordinateType,
 // #define VERBOSE_PRINTING 1
 
 /**
- * Build up the Inhale and Exhale transform enclosures by wrapping as follows:
- * (ResliceScaleReciprocal * InhaleEncode) * T * (InhaleDecode * StandardScale)
- * (ResliceScale * ExhaleEncode) * T * (ExhaleDecode * StandardScaleReciprocal)
- * So in EstablishCrossOverSystemForAir16() in TransformAdaptor.txx,
- * the two arguments are to be given from the 'inhale' point of view.
- */
-template<class TCoordinateType, unsigned int NDimensions>
+  * Build up the Inhale and Exhale transform enclosures by wrapping as follows:
+  * (ResliceScaleReciprocal * InhaleEncode) * T * (InhaleDecode * StandardScale)
+  * (ResliceScale * ExhaleEncode) * T * (ExhaleDecode * StandardScaleReciprocal)
+  * So in EstablishCrossOverSystemForAir16() in TransformAdaptor.txx,
+  * the two arguments are to be given from the 'inhale' point of view.
+  */
+template< class TCoordinateType, unsigned int NDimensions >
 void
-CrossOverAffineSystem<TCoordinateType, NDimensions>::
-  EncloseInScaling(const VectorType & EncodeScale,
-  const VectorType & DecodeScale)
+CrossOverAffineSystem< TCoordinateType, NDimensions >::EncloseInScaling(const VectorType & EncodeScale,
+                                                                        const VectorType & DecodeScale)
 {
 #ifdef VERBOSE_PRINTING
   std::cout << "Encode Scale: " << EncodeScale << std::endl;
@@ -79,34 +78,33 @@ CrossOverAffineSystem<TCoordinateType, NDimensions>::
   const bool DecodeApplyUpstream = true;
 
   m_InhaleEncodeConversion->Scale(EncodeScale,
-    EncodeApplyUpstream);
+                                  EncodeApplyUpstream);
   m_InhaleDecodeConversion->Scale(DecodeScale,
-    DecodeApplyUpstream);
+                                  DecodeApplyUpstream);
 
-  VectorType ReciprocalEncodeScale( Reciprocal<TCoordinateType, NDimensions>(
-      EncodeScale) );
+  VectorType ReciprocalEncodeScale( Reciprocal< TCoordinateType, NDimensions >(
+                                      EncodeScale) );
 
-  VectorType ReciprocalDecodeScale( Reciprocal<TCoordinateType, NDimensions>(
-      DecodeScale) );
+  VectorType ReciprocalDecodeScale( Reciprocal< TCoordinateType, NDimensions >(
+                                      DecodeScale) );
 
   m_ExhaleEncodeConversion->Scale(ReciprocalEncodeScale,
-    EncodeApplyUpstream);
+                                  EncodeApplyUpstream);
   m_ExhaleDecodeConversion->Scale(ReciprocalDecodeScale,
-    EncodeApplyUpstream);
+                                  EncodeApplyUpstream);
 }
 
 /**
- * Build up the Inhale and Exhale transform enclosures by wrapping as follows:
- * (-ResliceShift * InhaleEncode) * T * (InhaleDecode * StandardShift)
- * (ResliceShift * ExhaleEncode) * T * (ExhaleDecode * -StandardShift)
- * So in EstablishCrossOverSystemForAir16() in TransformAdaptor.txx,
- * the two arguments are to be given from the 'inhale' point of view.
- */
-template<class TCoordinateType, unsigned int NDimensions>
+  * Build up the Inhale and Exhale transform enclosures by wrapping as follows:
+  * (-ResliceShift * InhaleEncode) * T * (InhaleDecode * StandardShift)
+  * (ResliceShift * ExhaleEncode) * T * (ExhaleDecode * -StandardShift)
+  * So in EstablishCrossOverSystemForAir16() in TransformAdaptor.txx,
+  * the two arguments are to be given from the 'inhale' point of view.
+  */
+template< class TCoordinateType, unsigned int NDimensions >
 void
-CrossOverAffineSystem<TCoordinateType, NDimensions>::
-  EncloseInTranslation(const VectorType & EncodeShift,
-  const VectorType & DecodeShift)
+CrossOverAffineSystem< TCoordinateType, NDimensions >::EncloseInTranslation(const VectorType & EncodeShift,
+                                                                            const VectorType & DecodeShift)
 {
 #ifdef VERBOSE_PRINTING
   std::cout << "Encode Shift: " << EncodeShift << std::endl;
@@ -117,14 +115,14 @@ CrossOverAffineSystem<TCoordinateType, NDimensions>::
   const bool DecodeApplyUpstream = true;
 
   m_InhaleEncodeConversion->Translate(EncodeShift,
-    EncodeApplyUpstream);
+                                      EncodeApplyUpstream);
   m_InhaleDecodeConversion->Translate(DecodeShift,
-    DecodeApplyUpstream);
+                                      DecodeApplyUpstream);
 
   m_ExhaleEncodeConversion->Translate(-EncodeShift,
-    EncodeApplyUpstream);
+                                      EncodeApplyUpstream);
   m_ExhaleDecodeConversion->Translate(-DecodeShift,
-    DecodeApplyUpstream);
+                                      DecodeApplyUpstream);
 #ifdef VERBOSE_PRINTING
   std::cout << " -- InhaleEncoder Shift: "
             << m_InhaleEncodeConversion->GetOffset() << std::endl;
@@ -137,11 +135,10 @@ CrossOverAffineSystem<TCoordinateType, NDimensions>::
 #endif
 }
 
-template<class TCoordinateType, unsigned int NDimensions>
+template< class TCoordinateType, unsigned int NDimensions >
 void
-CrossOverAffineSystem<TCoordinateType, NDimensions>::
-  EncloseInCentering(const PointType & EncodeCenter,
-  const PointType & DecodeCenter)
+CrossOverAffineSystem< TCoordinateType, NDimensions >::EncloseInCentering(const PointType & EncodeCenter,
+                                                                          const PointType & DecodeCenter)
 {
 #ifdef VERBOSE_PRINTING
   std::cout << "Encode Center: " << EncodeCenter << std::endl;
@@ -166,33 +163,32 @@ CrossOverAffineSystem<TCoordinateType, NDimensions>::
 }
 
 /**
- * Build up the Inhale and Exhale transform enclosures by wrapping in
- * two entire transforms in like fashion to the more useful routines above.
- * The two arguments are to be given from the 'inhale' point of view.
- */
-template<class TCoordinateType, unsigned int NDimensions>
+  * Build up the Inhale and Exhale transform enclosures by wrapping in
+  * two entire transforms in like fashion to the more useful routines above.
+  * The two arguments are to be given from the 'inhale' point of view.
+  */
+template< class TCoordinateType, unsigned int NDimensions >
 void
-CrossOverAffineSystem<TCoordinateType, NDimensions>::
-  EncloseInAffineTransforms(AffineTransformPointer Encode,
-  AffineTransformPointer Decode)
+CrossOverAffineSystem< TCoordinateType, NDimensions >::EncloseInAffineTransforms(AffineTransformPointer Encode,
+                                                                                 AffineTransformPointer Decode)
 {
   const bool EncodeApplyUpstream = false;
   const bool DecodeApplyUpstream = true;
 
   m_InhaleEncodeConversion->Compose(Encode,
-    EncodeApplyUpstream);
+                                    EncodeApplyUpstream);
   m_InhaleDecodeConversion->Compose(Decode,
-    DecodeApplyUpstream);
+                                    DecodeApplyUpstream);
 
   AffineTransformPointer EncodeInverse = AffineTransformType::New();
   AffineTransformPointer DecodeInverse = AffineTransformType::New();
-  Encode->GetInverse( EncodeInverse );
-  Decode->GetInverse( DecodeInverse );
+  Encode->GetInverse(EncodeInverse);
+  Decode->GetInverse(DecodeInverse);
 
   m_ExhaleEncodeConversion->Compose(EncodeInverse,
-    EncodeApplyUpstream);
+                                    EncodeApplyUpstream);
   m_ExhaleDecodeConversion->Compose(DecodeInverse,
-    DecodeApplyUpstream);
+                                    DecodeApplyUpstream);
 }
 
 #endif

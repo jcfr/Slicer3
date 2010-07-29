@@ -1,5 +1,5 @@
-#ifndef    SimpleXMLParserBase_h
-#define   SimpleXMLParserBase_h
+#ifndef __SimpleXMLParserBase_h
+#define __SimpleXMLParserBase_h
 //
 // standard includes
 #include <iostream>
@@ -23,19 +23,21 @@
 #include <xercesc/util/XMLString.hpp>
 XERCES_CPP_NAMESPACE_USE
 
-//
-// SimpleXMLParserBase contains the common code
-// needed to Read and Write an XML file.
-// Any actual interpretation is delegated to subclass
+/**
+  * \class SimpleXMLParserBase
+  * contains the common code
+  * needed to Read and Write an XML file.
+  * Any actual interpretation is delegated to subclass
+  */
 class SimpleXMLParserBase
 {
 public:
   typedef XercesDOMParser ParserType;
-  SimpleXMLParserBase() : m_Parser(0)
+  SimpleXMLParserBase():m_Parser(0)
   {}
 
   void Read(const std::string & filename)
-    {
+  {
     try
       {
       XMLPlatformUtils::Initialize();
@@ -72,7 +74,7 @@ public:
     catch ( const XMLException & e )
       {
       std::cerr << "An error occurred during parsing\n   Message: "
-        << e.getMessage() << std::endl;
+                << e.getMessage() << std::endl;
       errorsOccurred = true;
       }
 
@@ -82,7 +84,7 @@ public:
       XMLCh              errText[maxChars + 1];
 
       std::cerr << "\nDOM Error during parsing: '" << filename << "'\n"
-        << "DOMException code is:  " << e.code << std::endl;
+                << "DOMException code is:  " << e.code << std::endl;
 
       if ( DOMImplementation::loadDOMExceptionMsg(e.code, errText, maxChars) )
         {
@@ -91,7 +93,7 @@ public:
 
       errorsOccurred = true;
       }
-    catch (... )
+    catch ( ... )
       {
       std::cerr << "An error occurred during parsing\n " << std::endl;
       errorsOccurred = true;
@@ -100,10 +102,10 @@ public:
       {
       throw;
       }
-    }
+  }
 
   void Write(const std::string & filename)
-    {
+  {
     if ( m_Parser == 0 )
       {
       throw;
@@ -111,22 +113,22 @@ public:
     // get a serializer, an instance of DOMWriter
     XMLCh tempStr[100];
     XMLString::transcode("LS", tempStr, 99);
-    DOMImplementation *impl
-      = DOMImplementationRegistry::getDOMImplementation(tempStr);
-    DOMWriter *theSerializer
-      = ( (DOMImplementationLS *)impl )->createDOMWriter();
+    DOMImplementation *impl =
+      DOMImplementationRegistry::getDOMImplementation(tempStr);
+    DOMWriter *theSerializer =
+      ( (DOMImplementationLS *)impl )->createDOMWriter();
 
     XMLFormatTarget *formatTarget = new LocalFileFormatTarget( filename.c_str() );
     theSerializer->writeNode
       ( formatTarget,
-        *static_cast<DOMNode *>( this->m_Parser->getDocument() ) );
+      *static_cast< DOMNode * >( this->m_Parser->getDocument() ) );
     delete theSerializer;
-    }
+  }
 
   ParserType * Parser()
-    {
+  {
     return m_Parser;
-    }
+  }
 
 protected:
   ParserType *m_Parser;
