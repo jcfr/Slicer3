@@ -19,7 +19,7 @@ namespace eval SWidget {
 # utility to run method only if instance hasn't already been deleted
 # (this is useful in event handling)
 #
-namespace eval SWidget set DEBUG_CALLBACKS 1
+namespace eval SWidget set DEBUG_CALLBACKS 0
 namespace eval SWidget {
   proc ProtectedCallback {instance args} {
     if { [info command $instance] != "" } {
@@ -160,9 +160,6 @@ if { [itcl::find class SWidget] == "" } {
 itcl::configbody SWidget::sliceGUI {
   set _renderWidget [[$sliceGUI GetSliceViewer] GetRenderWidget]
     
-  #set numberOfRenderers
-
-  #set _renderer [$_renderWidget GetRenderer]
   set _interactor [$_renderWidget GetRenderWindowInteractor]
   set _annotation [$_renderWidget GetCornerAnnotation]
   set _sliceNode [[$sliceGUI GetLogic] GetSliceNode]
@@ -232,7 +229,13 @@ itcl::body SWidget::queryLayers { x y {z 0} } {
   #
 
   # determine which renderer based on z position
-  set lightboxK [expr int($z + 0.5)]
+  # - ignore if z is not define (as when there is just one slice)
+  if { [catch "expr $z" res] } {
+    # puts "bad z: $res"
+    set lightboxK 0
+  } else {
+    set lightboxK [expr int($z + 0.5)]
+  }
       
   foreach layer {background foreground label} {
     set _layers($layer,logic) [[$sliceGUI GetLogic]  Get[string totitle $layer]Layer]

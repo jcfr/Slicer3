@@ -229,8 +229,11 @@ itcl::body SliceSWidget::resizeSliceNode {} {
 
   if { $_layers(background,node) != "" } {
     set logic [$sliceGUI GetLogic]
-    set sliceSpacing [$logic GetLowestVolumeSliceSpacing]
-    $this configure -sliceStep [lindex $sliceSpacing 2]
+    set sliceSpacing [lindex [$logic GetLowestVolumeSliceSpacing] 2]
+    if { [catch "expr $sliceSpacing"] } {
+      set sliceSpacing 1.0
+    }
+    $this configure -sliceStep $sliceSpacing
   }
 
   foreach {windoww windowh} [[$_interactor GetRenderWindow] GetSize] {}
@@ -246,6 +249,15 @@ itcl::body SliceSWidget::resizeSliceNode {} {
 
   foreach {nodeW nodeH nodeD} [$_sliceNode GetDimensions] {}
   foreach {nodefovx nodefovy nodefovz} [$_sliceNode GetFieldOfView] {}
+  if { [catch "expr $nodefovx"] } {
+    set nodefovx 1.0
+  }
+  if { [catch "expr $nodefovy"] } {
+    set nodefovy 1.0
+  }
+  if { [catch "expr $nodefovz"] } {
+    set nodefovz 1.0
+  }
 
   if { $windoww == "10" && $windowh == "10" } {
     #puts "ignoring bogus resize"
@@ -832,6 +844,11 @@ itcl::body SliceSWidget::updateAnnotations {r a s} {
     set logic [$sgui GetLogic]
     set sliceCompositeNode [$logic GetSliceCompositeNode]
 
+    if { $sliceCompositeNode == "" } {
+      # need a composite node to be able to do anything
+      return
+    }
+
     if { $lname != "Red" && [string first "Compare" $lname] != 0 } {
       continue
     } 
@@ -968,6 +985,11 @@ itcl::body SliceSWidget::updateAnnotation {r a s} {
   set logic [$sliceGUI GetLogic]
   set sliceCompositeNode [$logic GetSliceCompositeNode]
 
+  if { $sliceCompositeNode == "" } {
+    # need a composite node to be able to do anything
+    return
+  }
+
   set foregroundname "None"
   set backgroundname "None"
   set labelname "None"
@@ -1103,6 +1125,11 @@ itcl::body SliceSWidget::updateStatusAnnotation {r a s} {
 
   set logic [$sliceGUI GetLogic]
   set sliceCompositeNode [$logic GetSliceCompositeNode]
+
+  if { $sliceCompositeNode == "" } {
+    # need a composite node to be able to do anything
+    return
+  }
 
   set foregroundname "None"
   set backgroundname "None"
