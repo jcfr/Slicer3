@@ -131,7 +131,10 @@ itcl::body PaintEffect::createGlyph { {polyData ""} } {
   #
   $o(rasToXY) DeepCopy [$_sliceNode GetXYToRAS]
   $o(rasToXY) Invert
-  set xyRadius [$o(rasToXY) MultiplyPoint $radius $radius $radius 0]
+  set xyRadius "10 10"
+  if { $radius != "" } {
+    set xyRadius [$o(rasToXY) MultiplyPoint $radius $radius $radius 0]
+  }
   foreach {xRadius yRadius} $xyRadius {}
   set xRadius [expr abs([lindex $xyRadius 0])]
   set yRadius [expr abs([lindex $xyRadius 1])]
@@ -309,7 +312,7 @@ itcl::body PaintEffect::buildOptions {} {
   $o(radius) DisplayEntryOn
   $o(radius) DisplayLabelOn
   $o(radius) SetValue [[EditorGetParameterNode] GetParameter Paint,radius]
-  $o(radius) SetMinimumValue 1
+  $o(radius) SetMinimumValue 0.01
   $o(radius) ClampMinimumValueOn
   [$o(radius) GetLabel] SetText "Radius: "
   $o(radius) SetBalloonHelpString "Set the radius of the paint brush in millimeters"

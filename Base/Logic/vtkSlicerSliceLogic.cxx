@@ -1566,6 +1566,24 @@ void vtkSlicerSliceLogic::SetSliceOffset(double offset)
     }
 }
 
+//----------------------------------------------------------------------------
+void vtkSlicerSliceLogic::SnapSliceOffsetToIJK()
+{
+  double offset, *spacing, bounds[6];
+  double oldOffset = this->GetSliceOffset();
+  spacing = this->GetLowestVolumeSliceSpacing();
+  this->GetLowestVolumeSliceBounds( bounds );
+  
+  // number of slices along the offset dimension (depends on ijkToRAS and Transforms)
+  double slice = (oldOffset - bounds[4]) / spacing[2];
+  int intSlice = static_cast<int> (0.5 + slice);  
+  offset = intSlice * spacing[2] + bounds[4];
+  this->SetSliceOffset( offset );
+}
+
+
+
+//----------------------------------------------------------------------------
 void vtkSlicerSliceLogic::GetPolyDataAndLookUpTableCollections(vtkPolyDataCollection *polyDataCollection,
                                                                vtkCollection *lookupTableCollection)
 {
