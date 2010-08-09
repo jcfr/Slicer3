@@ -469,9 +469,6 @@ itcl::body EffectSWidget::postApply {} {
   set node [$logic GetVolumeNode]
   EditorStoreCheckPoint $node
   set targetImage [$node GetImageData]
-  if { $_outputLabel == "" } {
-    tk_messageBox -message "output label is null!"
-  }
   switch $scope {
     "all" {
       $targetImage DeepCopy $_outputLabel
