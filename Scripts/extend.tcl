@@ -332,7 +332,8 @@ proc upload {fileName} {
   flush $sock
   close $sock
   
-  vputs "uploaded $fileName ($size bytes)"
+  set uploadLocation "http://ext.slicer.org/[file tail $::EXTEND(slicerSVNSubpath)]/$::EXTEND(slicerSVNRevision)-$::env(BUILD)/[file tail $name]"
+  vputs "uploaded $fileName ($size bytes, ${uploadLocation})"
   flush stdout
 }
 
@@ -671,5 +672,6 @@ if { [llength $::EXTEND(FAILED)] != 0 } {
   }
 }
 
-vputs "\n[format %3.1f [expr 100 * (1.*[llength $::EXTEND(BUILT)] / [llength $::EXTEND(s3extFiles)])]]% succeeded" 
-
+if { [llength $::EXTEND(s3extFiles)] != 0 } {
+  vputs "\n[format %3.1f [expr 100 * (1.*[llength $::EXTEND(BUILT)] / [llength $::EXTEND(s3extFiles)])]]% succeeded" 
+}
