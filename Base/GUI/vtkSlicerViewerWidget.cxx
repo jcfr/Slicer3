@@ -246,6 +246,23 @@ void vtkSlicerViewerWidget::PrintSelf ( ostream& os, vtkIndent indent )
   os << indent << "PickedRAS = (" << this->PickedRAS[0] << ", " << this->PickedRAS[1] << ", "<< this->PickedRAS[2] << ")\n";
   os << indent << "PickedCellID = " << this->PickedCellID << "\n";
   os << indent << "PickedPointID = " << this->PickedPointID << "\n";
+
+  if (this->ViewNode)
+    {
+    os << indent << "View node id = " << this->ViewNode->GetID() << "\n";
+    }
+  else
+    {
+    os << indent << "No view node.\n";
+    }
+  if (this->CameraNode)
+    {
+    os << indent << "Camera node id = " << this->CameraNode->GetID() << ", active tag = " << this->CameraNode->GetActiveTag() << "\n";
+    }
+  else
+    {
+    os << indent << "No camera node.\n";
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -1067,7 +1084,7 @@ void vtkSlicerViewerWidget::UpdateCameraNode()
       if (unassignedCamera != NULL)
         {
         // swap!
-        vtkWarningMacro("Stealing an unasigned camera node " << unassignedCamera->GetID());
+        vtkWarningMacro("Stealing an unasigned camera node " << unassignedCamera->GetID() << " for view node " << this->ViewNode->GetID());
         unassignedCamera->SetActiveTag(this->ViewNode->GetID());
         this->SetAndObserveCameraNode(unassignedCamera);
         }
@@ -1827,6 +1844,13 @@ vtkMRMLDisplayNode*  vtkSlicerViewerWidget::GetHierarchyDisplayNode(vtkMRMLDispl
 //---------------------------------------------------------------------------
 void vtkSlicerViewerWidget::RequestRender()
 {
+  if (!this->GetEnableRender())
+    {
+    // rendering is disabled, returning. Otherwise can get into a state where
+    // rendering is disabled but there's a render pending and Render doesn't
+    // get called
+    return;
+    }
   if (this->GetRenderPending())
     {
     return;
@@ -1862,7 +1886,7 @@ void vtkSlicerViewerWidget::Render()
     //this->MainViewer->RenderStateOff();
     this->MainViewer->SetRenderState(currentRenderState);
     this->SetRenderPending(0);
-    } 
+    }
 }
 
 //---------------------------------------------------------------------------
