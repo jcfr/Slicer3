@@ -133,10 +133,10 @@ void vtkSlicerGPURayCastVolumeMapper::Render(vtkRenderer *ren, vtkVolume *vol)
   glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_LIGHTING_BIT);
 
   //setup material based on volume property
-  float ambient = vol->GetProperty()->GetAmbient();
+  float ambient = vol->GetProperty()->GetAmbient() * 1.2f;
   float specular = vol->GetProperty()->GetSpecular();
-  float diffuse = vol->GetProperty()->GetDiffuse();
-  float power = 128*vol->GetProperty()->GetSpecularPower()/50;
+  float diffuse = vol->GetProperty()->GetDiffuse() * 1.2f;
+  float power = 0.75f*128*vol->GetProperty()->GetSpecularPower()/50;
 
 //  cout<<ambient<<" "<<diffuse<<" "<<specular<<endl;
 //  cout.flush();
@@ -171,7 +171,7 @@ void vtkSlicerGPURayCastVolumeMapper::Render(vtkRenderer *ren, vtkVolume *vol)
 void vtkSlicerGPURayCastVolumeMapper::AdaptivePerformanceControl()
 {
   //do automatic performance control
-  if(this->Framerate <= 0.0f)
+  if(this->Framerate <= 0.01f)
     this->Framerate = 1.0f;
 
   float targetTime = 1.0/this->Framerate;
@@ -187,13 +187,13 @@ void vtkSlicerGPURayCastVolumeMapper::AdaptivePerformanceControl()
   float maxRaysteps = dim[0];
   maxRaysteps = maxRaysteps > dim[1] ? maxRaysteps : dim[1];
   maxRaysteps = maxRaysteps > dim[2] ? maxRaysteps : dim[2];
-  maxRaysteps *= 16.0f; //make sure we have enough sampling rate to recover details
+  maxRaysteps *= 1.8f; //make sure we have enough sampling rate to recover details
 
-  maxRaysteps = maxRaysteps < 1050.0f ? 1050.0f : maxRaysteps;//ensure high sampling rate on low resolution volumes
+//  maxRaysteps = maxRaysteps < 1050.0f ? 1050.0f : maxRaysteps;//ensure high sampling rate on low resolution volumes
   
   // add clamp
   if (this->RaySteps > maxRaysteps) this->RaySteps = maxRaysteps;
-  if (this->RaySteps < 150.0f)       this->RaySteps = 150.0f;
+  if (this->RaySteps < 200.0f)       this->RaySteps = 200.0f;
 
 //  cout<<this->Framerate<<" "<<this->TimeToDraw<<" "<<this->RaySteps<<endl;
 //  cout.flush();

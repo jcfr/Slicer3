@@ -1093,6 +1093,7 @@ int vtkVolumeRenderingLogic::SetupVolumeRenderingInteractive(vtkMRMLVolumeRender
 
     this->MapperGPURaycast->SetFramerate(vspNode->GetExpectedFPS());
     this->MapperGPURaycastII->SetFramerate(vspNode->GetExpectedFPS());
+    this->MapperTexture->SetFramerate(vspNode->GetExpectedFPS());
   }
   else
   {
@@ -1104,6 +1105,7 @@ int vtkVolumeRenderingLogic::SetupVolumeRenderingInteractive(vtkMRMLVolumeRender
 
     this->MapperGPURaycast->SetFramerate(1.0);
     this->MapperGPURaycastII->SetFramerate(1.0);
+    this->MapperTexture->SetFramerate(1.0);
   }
 
   return 1;
