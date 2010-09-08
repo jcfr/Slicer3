@@ -819,6 +819,23 @@ void vtkMRMLSliceNode::JumpSliceByOffsetting(double r, double a, double s)
   this->UpdateMatrices();
 }
 
+void vtkMRMLSliceNode::JumpSliceByOffsetting(int k, double r, double a, double s)
+{
+  // Jump the slice such that the kth slice is at the specified
+  // ras. If there are not k slices, then jump the first slice to the
+  // specified ras
+
+  if (!(k >=0 && k < this->LayoutGridColumns * this->LayoutGridRows))
+    {
+    k = 0;
+    }
+  
+  //int oldActiveSlice = this->ActiveSlice;
+  this->ActiveSlice = k;
+  this->JumpSliceByOffsetting(r, a, s);
+  //this->ActiveSlice = oldActiveSlice;
+}
+
 void vtkMRMLSliceNode::JumpAllSlices(double r, double a, double s)
 {
   vtkMRMLSliceNode *node= NULL;

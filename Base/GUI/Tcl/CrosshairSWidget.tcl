@@ -106,7 +106,7 @@ itcl::body CrosshairSWidget::constructor {sliceGUI} {
   # set the crosshair node and add observers to the crosshair
   # (for now, always talk to the singleton "default")
   #
-  set numberOfCrosshairs [$::slicer3::MRMLScene GetNumberOfNodesByClass vtkMRMLCrosshairNode]
+  set numberOfCrosshairs [$::slicer3::MRMLScene GetNumberOfNodesByClass "vtkMRMLCrosshairNode"]
   for {set xi 0} { $xi < $numberOfCrosshairs} { [incr xi] } {
       set xnode [$::slicer3::MRMLScene GetNthNodeByClass $xi vtkMRMLCrosshairNode]
       if { [$xnode GetCrosshairName] == "default" } {
@@ -135,7 +135,7 @@ itcl::body CrosshairSWidget::constructor {sliceGUI} {
   # watch for a scene close event so that we can get the state of the
   # crosshair back in sync with the SliceCompositeNode.  Scene close
   # events do not call modified when resetting the SliceCompositeNodes
-  $::slicer3::Broker AddObservation $::slicer3::MRMLScene 66003 "::SWidget::ProtectedCallback $this processEvent $::slicer3::MRMLScene SceneCloseEvent"
+  $::slicer3::Broker AddObservation $::slicer3::MRMLScene 66003 "::SWidget::ProtectedCallback $this processEvent $::slicer3::MRMLScene SceneClosedEvent"
 
   $this updateCrosshair
 }
@@ -214,6 +214,7 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
             # set the new crosshair position
             $_crosshairNode SetCrosshairRAS $r $a $s
           }
+          return
       } else {
           # Some crosshair was being dragged and changed the slice node. Do nothing.
           return
@@ -222,22 +223,23 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
 
   if { $caller == $_crosshairNode } {
 
-      # update the design and properties of the crosshair
-      $this updateCrosshair
-
       # position crosshair actor
       foreach {r a s} [$_crosshairNode GetCrosshairRAS] {}
       $this setPosition $r $a $s
       
-      if { [$_crosshairNode GetNavigation] == 0 } {
-          [$sliceGUI GetSliceViewer] RequestRender
-      }
+      # update the design and properties of the crosshair
+      $this updateCrosshair
+
+#      if { [$_crosshairNode GetNavigation] == 0 } {
+#          puts "call is crosshair node $this [expr rand()]"
+#          [$sliceGUI GetSliceViewer] RequestRender
+#      }
 
       return
   }
 
 
-  if { $caller == $::slicer3::MRMLScene && $event == "SceneCloseEvent" } {
+  if { $caller == $::slicer3::MRMLScene && $event == "SceneClosedEvent" } {
       $this updateCrosshair
       return
   }
@@ -260,6 +262,7 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
   }
 
   if { $caller == $sliceGUI } {
+      $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
 
       # handle events that do not depend on the pickstate
       switch $event {
@@ -284,6 +287,7 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
                   # update crosshair position (observers move the crosshair actors)
                   $_crosshairNode SetCrosshairRAS $r $a $s
               }
+              return
           }
       }
       
@@ -348,7 +352,12 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
                               # get the event position and convert to RAS
                               foreach {windowx windowy} [$_interactor GetEventPosition] {}
                               set xyz [$this dcToXYZ $windowx $windowy]
-                              
+                              foreach {x y z} $xyz {}
+                              set k [expr int($z + 0.5)]
+                              if { $k < 0 || $k >= [lindex [$_sliceNode GetDimensions] 2] } {                   
+                                  return
+                              }
+
                               set ras [$this xyzToRAS $xyz]
                               foreach {r a s} $ras {}
                               
@@ -356,8 +365,12 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
                               set itclobjects [itcl::find objects -class CrosshairSWidget]
                               
                               foreach cw $itclobjects {
-                                  if {$cw != $this} {
-                                      [[[$cw cget -sliceGUI] GetLogic] GetSliceNode] JumpSliceByOffsetting $r $a $s
+                                  if {1 || $cw != $this} {
+                                      set tlogic [[$cw cget -sliceGUI] GetLogic]
+                                      set tlink [[$tlogic GetSliceCompositeNode] GetLinkedControl]
+                                      [$tlogic GetSliceCompositeNode] SetLinkedControl 0
+                                      [$tlogic GetSliceNode] JumpSliceByOffsetting $k $r $a $s
+                                      [$tlogic GetSliceCompositeNode] SetLinkedControl $tlink
                                   }
                               }
 
@@ -371,6 +384,11 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
                               # get the event position in xyz
                               foreach {windowx windowy} [$_interactor GetEventPosition] {}
                               foreach {x y z} [$this dcToXYZ $windowx $windowy] {}
+                              set k [expr int($z + 0.5)]
+                              if { $k < 0 || $k >= [lindex [$_sliceNode GetDimensions] 2] } {                   
+                                  return
+                              }
+
                               # convert current (previous) RAS position to xyz
                               foreach {ox oy oz} [$this rasToXYZ [$_crosshairNode GetCrosshairRAS]] {}
                               # create RAS (use $z and not $oz so crosshair can switch viewports)
@@ -380,8 +398,12 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
                               set itclobjects [itcl::find objects -class CrosshairSWidget]
                               
                               foreach cw $itclobjects {
-                                  if {$cw != $this} {
-                                      [[[$cw cget -sliceGUI] GetLogic] GetSliceNode] JumpSliceByOffsetting $r $a $s
+                                  if {1 || $cw != $this} {
+                                      set tlogic [[$cw cget -sliceGUI] GetLogic]
+                                      set tlink [[$tlogic GetSliceCompositeNode] GetLinkedControl]
+                                      [$tlogic GetSliceCompositeNode] SetLinkedControl 0
+                                      [$tlogic GetSliceNode] JumpSliceByOffsetting $k $r $a $s
+                                      [$tlogic GetSliceCompositeNode] SetLinkedControl $tlink
                                   }
                               }
 
@@ -395,6 +417,11 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
                               # get the event position in xyz
                               foreach {windowx windowy} [$_interactor GetEventPosition] {}
                               foreach {x y z} [$this dcToXYZ $windowx $windowy] {}
+                              set k [expr int($z + 0.5)]
+                              if { $k < 0 || $k >= [lindex [$_sliceNode GetDimensions] 2] } {                   
+                                  return
+                              }
+
                               # convert current (previous) RAS position to xyz
                               foreach {ox oy oz} [$this rasToXYZ [$_crosshairNode GetCrosshairRAS]] {}
                               # create RAS (use $z and not $oz so crosshair can switch viewports)
@@ -404,8 +431,12 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
                               set itclobjects [itcl::find objects -class CrosshairSWidget]
                               
                               foreach cw $itclobjects {
-                                  if {$cw != $this} {
-                                      [[[$cw cget -sliceGUI] GetLogic] GetSliceNode] JumpSliceByOffsetting $r $a $s
+                                  if {1 || $cw != $this} {
+                                      set tlogic [[$cw cget -sliceGUI] GetLogic]
+                                      set tlink [[$tlogic GetSliceCompositeNode] GetLinkedControl]
+                                      [$tlogic GetSliceCompositeNode] SetLinkedControl 0
+                                      [$tlogic GetSliceNode] JumpSliceByOffsetting $k $r $a $s
+                                      [$tlogic GetSliceCompositeNode] SetLinkedControl $tlink
                                   }
                               }
 
@@ -581,6 +612,7 @@ itcl::body CrosshairSWidget::updateCrosshair { } {
   $cidArray InsertNextTuple1 $cindex
   $o(crosshairHighlightVerts) SetNumberOfCells [expr $ccellCount + 1]
 
+  #puts "updateCrosshair  $this [expr rand()]"
   [$sliceGUI GetSliceViewer] RequestRender
 }
 
@@ -594,7 +626,7 @@ itcl::body CrosshairSWidget::setPosition { r a s } {
 
   # determine which renderer based on z position
   # - ignore if z is not define (as when there is just one slice)
-  if { [catch expr $z] } {
+  if { [catch {expr $z}] } {
     set k -1
   } else {
     set k [expr int($z + 0.5)]
@@ -605,6 +637,7 @@ itcl::body CrosshairSWidget::setPosition { r a s } {
       # switching viewports
       $_renderer RemoveActor2D $o(crosshairActor)
       $_renderer RemoveActor2D $o(crosshairHighlightActor)
+
       set changed 1
     }
 
