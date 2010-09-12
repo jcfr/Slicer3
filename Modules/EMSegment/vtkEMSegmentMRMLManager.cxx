@@ -137,11 +137,31 @@ void vtkEMSegmentMRMLManager::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
   
-  os << indent 
+  os << indent << "NextVTKNodeID :" << this->NextVTKNodeID << "\n";
+  os << indent << "MRMLScene: " <<  (this->MRMLScene ? this->MRMLScene->GetURL() : "(none)") << "\n";
+
+  os << indent << "VTKNodeIDToMRMLNodeIDMap: " << "\n";
+  for (VTKToMRMLMapType::iterator i =   VTKNodeIDToMRMLNodeIDMap.begin(); i != this->  VTKNodeIDToMRMLNodeIDMap.end(); ++i)
+    {
+      vtkIdType   VTKNodeID  = (*i).first;
+      std::string MRMLNodeID = (*i).second;
+      os << indent << "  VTKNode " <<  VTKNodeID << " MRMLNodeID: " << MRMLNodeID.c_str() << "\n";
+    }
+ os << indent << "MRMLNodeIDToVTKNodeIDMap: " << "\n";
+  for (MRMLToVTKMapType::iterator i =   MRMLNodeIDToVTKNodeIDMap.begin(); i != this->  MRMLNodeIDToVTKNodeIDMap.end(); ++i)
+    {
+      vtkIdType   VTKNodeID  = (*i).second;
+      std::string MRMLNodeID = (*i).first;
+      os << indent << "   MRMLNodeID: " << MRMLNodeID.c_str() << "  VTKNode " <<  VTKNodeID << "\n";
+    }
+ 
+  os << indent << "Node: " 
      << (this->Node ? 
          this->Node->GetID() : 
          "(none)") 
      << "\n";
+
+
 }
 
 //----------------------------------------------------------------------------
