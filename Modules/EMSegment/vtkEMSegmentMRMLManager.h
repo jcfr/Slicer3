@@ -523,7 +523,7 @@ public:
   virtual void      GetSegmentationBoundaryMax(int maxPoint[3]);
   virtual void      SetSegmentationBoundaryMax(int maxPoint[3]);
 
-  virtual int       CheckMRMLNodeStructure();
+  virtual int       CheckMRMLNodeStructure(int ignoreOutputFlag = 0);
 
   //
   // this functions registers all of the MRML nodes needed by this
@@ -546,6 +546,8 @@ public:
   virtual vtkMRMLEMSTargetNode*           GetTargetInputNode();
   virtual vtkMRMLEMSAtlasNode*            GetAtlasInputNode();
   virtual vtkMRMLScalarVolumeNode*        GetOutputVolumeNode();
+  virtual void                            CreateOutputVolumeNode();
+
   virtual vtkMRMLEMSGlobalParametersNode* GetGlobalParametersNode();
   virtual vtkMRMLEMSTreeNode*             GetTreeRootNode();
   virtual vtkMRMLEMSTreeNode*             GetTreeNode(vtkIdType);
