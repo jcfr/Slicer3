@@ -120,34 +120,6 @@ vtkMRMLSliceNode::~vtkMRMLSliceNode()
   this->SetLayoutName(NULL);
 }
 
-//----------------------------------------------------------------------------
-void vtkMRMLSliceNode::SetOrientation(const char* orientation)
-{
-  if (!orientation)
-    {
-    return;
-    }
- if (!strcmp(orientation, "Axial"))
-    {
-    this->SetOrientationToAxial();
-    }
-  else if (!strcmp(orientation, "Sagittal"))
-    {
-    this->SetOrientationToSagittal();
-    }
-  else if (!strcmp(orientation, "Coronal"))
-    {
-    this->SetOrientationToCoronal();
-    }
-  else if (!strcmp(orientation, "Reformat"))
-    {
-    this->SetOrientationToReformat();
-    }
-  else
-    {
-    vtkErrorMacro("SetOrientation: invalid orientation: " << orientation);
-    }
-}
 
 //----------------------------------------------------------------------------
 void vtkMRMLSliceNode::SetOrientationToReformat()
@@ -348,7 +320,8 @@ void vtkMRMLSliceNode::UpdateMatrices()
     vtkSmartPointer<vtkMatrix4x4> xyToSlice = vtkSmartPointer<vtkMatrix4x4>::New();
     vtkSmartPointer<vtkMatrix4x4> xyToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
 
-    int disabledModify = this->StartModify();
+    int modifiedWasDisabled = this->GetDisableModifiedEvent();
+    this->SetDisableModifiedEvent(1);
 
     // the mapping from XY output slice pixels to Slice Plane coordinate
     xyToSlice->Identity();
@@ -434,10 +407,8 @@ void vtkMRMLSliceNode::UpdateMatrices()
 
     this->SetOrientationString( orientationString );
 
-    // as UpdateMatrices can be called from CopyWithSceneWithoutModifiedEvent
-    // (typically when the scene is closed, slice nodes are reset but shouldn't
-    // fire events. We should respect the modifiedWasDisabled flag.
-    this->EndModify(disabledModify);
+    this->SetDisableModifiedEvent(modifiedWasDisabled);
+    this->InvokePendingModifiedEvent ();
 }
 
 
@@ -482,14 +453,8 @@ void vtkMRMLSliceNode::WriteXML(ostream& of, int nIndent)
       }
     }
   of << indent << " sliceToRAS=\"" << ss.str().c_str() << "\"";
-  if (this->GetLayoutName())
-    {
-    of << indent << " layoutName=\"" << this->GetLayoutName() << "\"";
-    }
-  if (this->OrientationString)
-    {
-    of << indent << " orientation=\"" << this->OrientationString << "\"";
-    }
+  of << indent << " layoutName=\"" << this->GetLayoutName() << "\"";
+  of << indent << " orientation=\"" << this->OrientationString << "\"";
   of << indent << " jumpMode=\"" << this->JumpMode << "\"";
   of << indent << " sliceVisibility=\"" << (this->SliceVisible ? "true" : "false") << "\"";
   of << indent << " widgetVisibility=\"" << (this->WidgetVisible ? "true" : "false") << "\"";
@@ -707,19 +672,6 @@ void vtkMRMLSliceNode::Copy(vtkMRMLNode *anode)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLSliceNode::Reset()
-{
-  // The LayoutName is preserved by vtkMRMLNode::Reset, however the orientation
-  // (typically associated with the layoutName)is not preserved automatically.
-  // This require a custom behavior implemented here.
-  std::string orientation = this->GetOrientationString();
-  this->Superclass::Reset();
-  this->DisableModifiedEventOn();
-  this->SetOrientation(orientation.c_str());
-  this->DisableModifiedEventOff();
-}
-
-//----------------------------------------------------------------------------
 void vtkMRMLSliceNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   int idx;
@@ -768,6 +720,28 @@ void vtkMRMLSliceNode::PrintSelf(ostream& os, vtkIndent indent)
                                << this->PrescribedSliceSpacing[2] << ")\n";
 }
 
+//----------------------------------------------------------------------------
+void vtkMRMLSliceNode::UpdateScene(vtkMRMLScene* scene)
+{
+  vtkMRMLSliceNode *node= NULL;
+  int nnodes = scene->GetNumberOfNodesByClass("vtkMRMLSliceNode");
+  for (int n=0; n<nnodes; n++)
+    {
+    node = vtkMRMLSliceNode::SafeDownCast (
+          scene->GetNthNodeByClass(n, "vtkMRMLSliceNode"));
+    if (node != this && !strcmp(node->GetLayoutName(), this->GetLayoutName()))
+      {
+      break;
+      }
+    node = NULL;
+    }
+  if (node != NULL)
+    {
+    scene->RemoveNodeNoNotify(node);
+    }
+}
+// End
+
 void vtkMRMLSliceNode::JumpSlice(double r, double a, double s)
 {
   if (this->JumpMode == CenteredJumpSlice)
@@ -800,7 +774,7 @@ void vtkMRMLSliceNode::JumpSliceByCentering(double r, double a, double s)
   xyzToRAS->MultiplyPoint(p2xyz, p2ras);
 
   double sliceSpacing = sqrt(vtkMath::Distance2BetweenPoints(p2ras, p1ras));
-
+  
   if ( r != sr || a != sa || s != ss )
     {
     sliceToRAS->SetElement( 0, 3, r - this->ActiveSlice*sliceSpacing*sliceToRAS->GetElement(0,2) );
@@ -830,7 +804,7 @@ void vtkMRMLSliceNode::JumpSliceByOffsetting(double r, double a, double s)
   xyzToRAS->MultiplyPoint(p2xyz, p2ras);
 
   double sliceSpacing = sqrt(vtkMath::Distance2BetweenPoints(p2ras, p1ras));
-
+  
   double d;
   d = (r-sr)*sliceToRAS->GetElement(0,2)
       + (a-sa)*sliceToRAS->GetElement(1,2)
@@ -890,8 +864,8 @@ void vtkMRMLSliceNode::SetFieldOfView(double x, double y, double z)
     }
 }
 
-void vtkMRMLSliceNode::SetDimensions(int x, int y,
-                                     int z)
+void vtkMRMLSliceNode::SetDimensions(unsigned int x, unsigned int y,
+                                     unsigned int z)
 {
   if ( x != this->Dimensions[0] || y != this->Dimensions[1]
        || z != this->Dimensions[2] )
@@ -1063,92 +1037,6 @@ vtkMRMLSliceNode::SetJumpModeToOffset()
   this->SetJumpMode(OffsetJumpSlice);
 }
 
-
-//----------------------------------------------------------------------------
-// Get/Set the current distance from the origin to the slice plane
-double vtkMRMLSliceNode::GetSliceOffset()
-{
-  //
-  // - get the current translation in RAS space and convert it to Slice space
-  //   by transforming it by the inverse of the upper 3x3 of SliceToRAS
-  // - pull out the Z translation part
-  //
-
-  vtkSmartPointer<vtkMatrix4x4> sliceToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
-  sliceToRAS->DeepCopy( this->GetSliceToRAS() );
-  for (int i = 0; i < 3; i++)
-    {
-    sliceToRAS->SetElement( i, 3, 0.0 );  // Zero out the tranlation portion
-    }
-  sliceToRAS->Invert();
-  double v1[4], v2[4];
-  for (int i = 0; i < 4; i++)
-    { // get the translation back as a vector
-    v1[i] = this->GetSliceToRAS()->GetElement( i, 3 );
-    }
-  // bring the translation into slice space
-  // and overwrite the z part
-  sliceToRAS->MultiplyPoint(v1, v2);
-
-  return ( v2[2] );
-
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLSliceNode::SetSliceOffset(double offset)
-{
-  //
-  // Set the Offset
-  // - get the current translation in RAS space and convert it to Slice space
-  //   by transforming it by the invers of the upper 3x3 of SliceToRAS
-  // - replace the z value of the translation with the new value given by the slider
-  // - this preserves whatever translation was already in place
-  //
-
-  double oldOffset = this->GetSliceOffset();
-  if (fabs(offset - oldOffset) <= 1.0e-6)
-    {
-    return;
-    }
-
-  vtkSmartPointer<vtkMatrix4x4> sliceToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
-  sliceToRAS->DeepCopy( this->GetSliceToRAS() );
-  for (int i = 0; i < 3; i++)
-    {
-    sliceToRAS->SetElement( i, 3, 0.0 );  // Zero out the tranlation portion
-    }
-  vtkSmartPointer<vtkMatrix4x4> sliceToRASInverted = vtkSmartPointer<vtkMatrix4x4>::New(); // inverse sliceToRAS
-  sliceToRASInverted->DeepCopy( sliceToRAS );
-  sliceToRASInverted->Invert();
-  double v1[4], v2[4], v3[4];
-  for (int i = 0; i < 4; i++)
-    { // get the translation back as a vector
-    v1[i] = this->GetSliceToRAS()->GetElement( i, 3 );
-    }
-  // bring the translation into slice space
-  // and overwrite the z part
-  sliceToRASInverted->MultiplyPoint(v1, v2);
-
-  v2[2] = offset;
-
-  // Now bring the new translation vector back into RAS space
-  sliceToRAS->MultiplyPoint(v2, v3);
-
-  // if the translation has changed, update the rest of the matrices
-  double eps=1.0e-6;
-  if ( fabs(v1[0] - v3[0]) > eps ||
-       fabs(v1[1] - v3[1]) > eps ||
-       fabs(v1[2] - v3[2]) > eps )
-    {
-    // copy new translation into sliceToRAS
-    for (int i = 0; i < 4; i++)
-      {
-      sliceToRAS->SetElement( i, 3, v3[i] );
-      }
-    this->GetSliceToRAS()->DeepCopy( sliceToRAS );
-    this->UpdateMatrices();
-    }
-}
 
 void vtkMRMLSliceNode::RotateToVolumePlane(vtkMRMLVolumeNode *volumeNode)
 {
