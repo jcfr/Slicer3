@@ -565,7 +565,7 @@ int vtkMRMLIGTLConnectorNode::ReceiveController()
     // Nov 16, 2010: Currently the following code only checks
     // if the device name is defined in the message.
     const char* devName = headerMsg->GetDeviceName();
-    if (devName[0] == NULL)
+    if (devName[0] == '\0')
       {
       // If no device name is defined, skip processing the message.
       this->Skip(headerMsg->GetBodySizeToRead());
