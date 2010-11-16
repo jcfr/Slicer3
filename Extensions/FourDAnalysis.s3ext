@@ -13,7 +13,7 @@ svnpassword slicer
 # list dependencies 
 # - these should be names of other modules that have .s3ext files 
 # - the dependencies will be built first
-depends CommandLineModule Volumes
+depends FourDImage CommandLineModule Volumes
 
 # homepage
 homepage  http://www.na-mic.org/Wiki/index.php/Slicer3:FourDAnalysis
