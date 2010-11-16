@@ -2605,7 +2605,7 @@ vtkURIHandler * vtkMRMLScene::FindURIHandler(const char *URI)
 //-----------------------------------------------------------------------------
 void
 vtkMRMLScene::
-GetReferencedSubScene(vtkMRMLNode *rnode, vtkMRMLScene* newScene, int loadData)
+GetReferencedSubScene(vtkMRMLNode *rnode, vtkMRMLScene* newScene)
 {
   //
   // clear scene
@@ -2633,7 +2633,7 @@ GetReferencedSubScene(vtkMRMLNode *rnode, vtkMRMLScene* newScene, int loadData)
 
   newScene->SetURL(this->GetURL());
   newScene->SetRootDirectory(this->GetRootDirectory());
-  newScene->SetReadDataOnLoad(loadData);
+  newScene->SetReadDataOnLoad(0);
 
   newScene->Connect();
 
@@ -2669,10 +2669,13 @@ GetReferencedSubScene(vtkMRMLNode *rnode, vtkMRMLScene* newScene, int loadData)
       }
 
     vtkMRMLNode* node = n->CreateNodeInstance();
-
-    // don't copy over the old scene, just id
-    node->Copy(n);
-    node->CopyID(n);
+    vtkMRMLNode* originalNode = this->GetNodeByID(n->GetID());
+    
+    if (originalNode)
+      {
+      node->Copy(originalNode);
+      node->CopyID(originalNode);
+      }
 
     // add the nodes to the scene
     newScene->AddNodeNoNotify(node);
