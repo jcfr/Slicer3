@@ -2815,7 +2815,7 @@ void vtkOpenIGTLinkIFGUI::UpdateConnectorPropertyFrame(int i)
     this->ConnectorAddressEntry->SetValue("--.--.--.--");
     this->ConnectorAddressEntry->EnabledOff();
     }
-  else
+  else if (connector->GetType() == vtkMRMLIGTLConnectorNode::TYPE_CLIENT)
     {
     this->ConnectorAddressEntry->SetValue(connector->GetServerHostname());
     if (activeFlag)
@@ -2827,17 +2827,29 @@ void vtkOpenIGTLinkIFGUI::UpdateConnectorPropertyFrame(int i)
       this->ConnectorAddressEntry->EnabledOn();
       }
     }
+  else  // connector->GetType() == vtkMRMLIGTLConnectorNode::TYPE_NOT_DEFINED
+    {
+    this->ConnectorAddressEntry->EnabledOff();
+    }
+
   this->ConnectorAddressEntry->UpdateEnableState();
 
   // Connection Port entry
   this->ConnectorPortEntry->SetValueAsInt(connector->GetServerPort());
-  if (activeFlag)
+  if (connector->GetType() == vtkMRMLIGTLConnectorNode::TYPE_NOT_DEFINED)
     {
     this->ConnectorPortEntry->EnabledOff();
     }
   else
     {
-    this->ConnectorPortEntry->EnabledOn();
+    if (activeFlag)
+      {
+      this->ConnectorPortEntry->EnabledOff();
+      }
+    else 
+      {
+      this->ConnectorPortEntry->EnabledOn();
+      }
     }
   this->ConnectorPortEntry->UpdateEnableState();
 
