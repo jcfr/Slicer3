@@ -78,7 +78,6 @@ SET(modules
 # ExtractSubvolume <- replaced by ExtractSubvolumeROI
   FastMarchingSegmentation
   FourDImage
-#  FourDAnalysis
 #  ExtractSubvolumeROI <- renamed to CropVolume
   CropVolume
   CollectFiducials
