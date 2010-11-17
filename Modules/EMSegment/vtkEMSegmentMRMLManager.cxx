@@ -4674,15 +4674,15 @@ CopyEMRelatedNodesToMRMLScene(vtkMRMLScene* newScene)
     return;
     }
 
-  std::cout << "===========[BEGIN] PrintVolumeInfo Original Scene " << std::endl;
-  this->PrintVolumeInfo(  currentScene );
-  std::cout << "===========[END] PrintVolumeInfo " << std::endl;
+  //std::cout << "===========[BEGIN] PrintVolumeInfo Original Scene " << std::endl;
+  //this->PrintVolumeInfo(  currentScene );
+  //std::cout << "===========[END] PrintVolumeInfo " << std::endl;
 
   currentScene->GetReferencedSubScene(emNode, newScene);
 
-  std::cout << "[BEGIN] PrintVolumeInfo of new scene" << std::endl;
-  this->PrintVolumeInfo( newScene );
-  std::cout << "[END] PrintVolumeInfo of new scene" << std::endl;
+  //std::cout << "[BEGIN] PrintVolumeInfo of new scene" << std::endl;
+  //this->PrintVolumeInfo( newScene );
+  //std::cout << "[END] PrintVolumeInfo of new scene" << std::endl;
 
 
 

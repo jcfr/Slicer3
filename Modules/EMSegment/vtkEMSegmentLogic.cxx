@@ -2781,6 +2781,8 @@ bool vtkEMSegmentLogic::PackageAndWriteData(vtkSlicerApplication* app, vtkSlicer
   std::string mrmlURL(outputDirectory + "/_EMSegmenterScene.mrml");
 
   vtkMRMLScene* newScene = vtkMRMLScene::New();
+  newScene->SetRootDirectory(packageDirectory);
+  newScene->SetURL(mrmlURL.c_str());
 
   vtkDataIOManagerLogic* dataIOManagerLogic = vtkDataIOManagerLogic::New();
   this->AddDataIOToScene(newScene,app,appLogic,dataIOManagerLogic);
