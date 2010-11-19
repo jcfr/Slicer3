@@ -759,6 +759,10 @@ void vtkMRMLIGTLConnectorNode::ImportDataFromCircularBuffer()
 
     vtkMRMLScene* scene = this->GetScene();
 
+    vtkMRMLNode* updatedNode = NULL;
+
+    int found = 0;
+
     // look up the incoming MRML node list
     MRMLNodeListType::iterator inIter;
     for (inIter = this->IncomingMRMLNodeList.begin();
@@ -774,35 +778,53 @@ void vtkMRMLIGTLConnectorNode::ImportDataFromCircularBuffer()
         node->Modified();  // in case converter doesn't call any Modifeds itself
         node->DisableModifiedEventOff();
         node->InvokePendingModifiedEvent();
+        updatedNode = node;
+        found = 1;
         break;
         }
       }
 
-    // if the incoming data is not restricted by name and type, search the scene as well.
-    if (!this->RestrictDeviceName)
+    if (!found)
       {
-      const char* classname = scene->GetClassNameByTag(converter->GetMRMLName());
-      vtkCollection* collection = scene->GetNodesByClassByName(classname, buffer->GetDeviceName());
-      int nCol = collection->GetNumberOfItems();
-      if (nCol == 0)
+      // If the incoming data is not restricted by name and type, search the scene as well.
+      if (!this->RestrictDeviceName)
         {
-        vtkMRMLNode* node = converter->CreateNewNode(this->GetScene(), buffer->GetDeviceName());
-        RegisterIncomingMRMLNode(node);
-        converter->IGTLToMRML(buffer, node);
-        node->Modified();
-        }
-      else
-        {
-        for (int i = 0; i < nCol; i ++)
+        const char* classname = scene->GetClassNameByTag(converter->GetMRMLName());
+        vtkCollection* collection = scene->GetNodesByClassByName(classname, buffer->GetDeviceName());
+        int nCol = collection->GetNumberOfItems();
+        if (nCol == 0)
           {
-          vtkMRMLNode* node = vtkMRMLNode::SafeDownCast(collection->GetItemAsObject(i));
+          vtkMRMLNode* node = converter->CreateNewNode(this->GetScene(), buffer->GetDeviceName());
           RegisterIncomingMRMLNode(node);
+          node->DisableModifiedEventOn();
           converter->IGTLToMRML(buffer, node);
-          node->Modified();
-          continue;
+          node->Modified();  // in case converter doesn't call any Modifieds itself
+          node->DisableModifiedEventOff();
+          node->InvokePendingModifiedEvent();
+          updatedNode = node;
           }
+        else
+          {
+          for (int i = 0; i < nCol; i ++)
+            {
+            vtkMRMLNode* node = vtkMRMLNode::SafeDownCast(collection->GetItemAsObject(i));
+            RegisterIncomingMRMLNode(node);
+            node->DisableModifiedEventOn();
+            converter->IGTLToMRML(buffer, node);
+            node->Modified();  // in case converter doesn't call any Modifieds itself
+            node->DisableModifiedEventOff();
+            node->InvokePendingModifiedEvent();
+            updatedNode = node;
+            break;
+            // TODO: QueueNode supposes that there is only unique combination of type and node name,
+            // but it should be able to hold multiple nodes.
+            }
+          }
+        collection->Delete();
         }
       }
+
+
     circBuffer->EndPull();
     }
 
