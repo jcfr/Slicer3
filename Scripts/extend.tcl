@@ -504,8 +504,6 @@ proc buildExtension {s3ext} {
     set ::ext(cmakeproject) $::ext(name)
   }
 
-  set ::ext(date) [clock format [clock seconds] -format %Y-%m-%d]
-
 
   # make dirs, delete if asked for clean build
   foreach suffix {"" -build -install} {
@@ -518,6 +516,8 @@ proc buildExtension {s3ext} {
       file mkdir $dir
     }
   }
+
+  set ::ext(logdir) $::Slicer3_EXT/$::ext(name)-build
 
   # check out code
   # - set array variable srcDir
@@ -549,14 +549,41 @@ proc buildExtension {s3ext} {
     }
   }
 
+  set ::ext(date) [clock format [clock seconds] -format %Y-%m-%d]
+
+  # extract the extension revision number
+  switch $::ext(scm) {
+    "cvs" {
+      # TODO: look at file modification dates
+      set ::ext(revision) cvs$::ext(date)
+    }
+    "svn" {
+      set cwd [pwd]
+      cd $::ext(srcDir)
+      set svninfo [split [exec svn info] "\n"]
+      array set svn ""
+      foreach line $svninfo {
+        foreach {tag value} $line {
+          if { $tag == "Revision:" } {
+            set ::ext(revision) svn$value
+          }
+        }
+      }
+      cd $cwd
+    }
+  }
+
+  set ::ext(tag) $::ext(name)-$::ext(revision)-$::ext(date)-$::env(BUILD)
+
   if { $::ext(srcDir) == "" } {
     return
   }
 
+  set log $::ext(logdir)/$::ext(tag)-buildlog-ctest.txt
   if { $::isWindows } {
-    set makeCmd "$::MAKE $::ext(cmakeproject).sln /out buildlog-ctest.txt /build $::VTK_BUILD_TYPE /project ALL_BUILD"
+    set makeCmd "$::MAKE $::ext(cmakeproject).sln /out $log /build $::VTK_BUILD_TYPE /project ALL_BUILD"
   } else {
-    set makeCmd $::MAKE
+    set makeCmd "$::MAKE 2>&1 | tee $log"
   }
 
   set dependPaths ""
@@ -602,10 +629,11 @@ proc buildExtension {s3ext} {
 
   # build the project
   cd $::Slicer3_EXT/$::ext(name)-build
+  set log $::ext(logdir)/$::ext(tag)-buildlog-allbuild.txt
   if { $::isWindows } {
-    runcmd "$::MAKE" $::ext(cmakeproject).sln /out buildlog-allbuild.txt /build $::VTK_BUILD_TYPE /project ALL_BUILD
+    runcmd "$::MAKE" $::ext(cmakeproject).sln /out $log /build $::VTK_BUILD_TYPE /project ALL_BUILD
   } else {
-    eval runcmd $::MAKE
+    eval runcmd $::MAKE 2>&1 | tee $log
   }
 
   # run the tests
@@ -629,32 +657,11 @@ proc buildExtension {s3ext} {
 
   # run the install target
   cd $::Slicer3_EXT/$::ext(name)-build
+  set log $::ext(logdir)/$::ext(tag)-buildlog-install.txt
   if { $::isWindows } {
-    runcmd $::MAKE $::ext(cmakeproject).sln /out buildlog-install.txt /build $::VTK_BUILD_TYPE /project INSTALL
+    runcmd $::MAKE $::ext(cmakeproject).sln /out $log /build $::VTK_BUILD_TYPE /project INSTALL
   } else {
-    eval runcmd $::MAKE install
-  }
-
-  # extract the extension revision number
-  switch $::ext(scm) {
-    "cvs" {
-      # TODO: look at file modification dates
-      set ::ext(revision) cvs$::ext(date)
-    }
-    "svn" {
-      set cwd [pwd]
-      cd $::ext(srcDir)
-      set svninfo [split [exec svn info] "\n"]
-      array set svn ""
-      foreach line $svninfo {
-        foreach {tag value} $line {
-          if { $tag == "Revision:" } {
-            set ::ext(revision) svn$value
-          }
-        }
-      }
-      cd $cwd
-    }
+    eval runcmd $::MAKE install 2>&1 | tee $log
   }
 
   # make the zip file
@@ -677,6 +684,9 @@ proc buildExtension {s3ext} {
   if { $::EXTEND(upload) } {
     upload $::ext(zipFileName)  
     upload $s3ext
+    foreach log [glob $::ext(logdir)/*buildlog*] {
+      upload $log
+    }
   }
 
   # copy it
@@ -685,7 +695,12 @@ proc buildExtension {s3ext} {
   if { $::EXTEND(ext-dir) != "" } {
     copyToDir $::ext(zipFileName)  
     copyToDir $s3ext
+    foreach log [glob $::ext(logdir)/*buildlog*] {
+      copyToDir $log
+    }
   }
+
+
 }
 
 
