@@ -660,6 +660,7 @@ namespace eval EMSegmenterSimpleTcl {
             return 1
         }
 
+        $inputChannelGUI DefineTextLabel "Please insure that input scans are skull stripped" 0
         $inputChannelGUI DefineCheckButton "Perform image inhomogeneity correction on input scans ?" 0 $EMSegmenterPreProcessingTcl::inhomogeneityCorrectionFlagID
 
         # Define this at the end of the function so that values are set by corresponding MRML node
