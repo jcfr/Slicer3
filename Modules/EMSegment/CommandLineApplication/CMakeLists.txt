@@ -52,3 +52,22 @@ target_link_libraries(
 
 slicer3_install_plugins(${CLP_MODULE})
 
+# ==================================
+# Default install prefix
+# slicer3_set_default_install_prefix_for_external_projects()
+
+set(CLP_MODULE EMSegmentTclInterpreter)
+set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
+generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
+
+# --------------------------------------------------------------------------
+# Build and install the exe
+
+add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
+slicer3_set_plugins_output_path(${CLP_MODULE})
+target_link_libraries(
+  ${CLP_MODULE}
+  EMSegment
+  vtkCommon
+  )
+
