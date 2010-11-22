@@ -277,6 +277,10 @@ proc ModelIntoLabelVolumeApply {this} {
  
   if {$modelNode == ""} {
       set msg "You must select a model first"
+  } elseif { [$modelNode GetPolyData] == ""} {
+      set msg "No polydata on model [$modelNode GetName]"
+  } elseif { [[$modelNode GetPolyData] GetPoints] == ""} {
+      set msg "No points in the model [$modelNode GetName]"
   } elseif {$volumeNode == ""} {
       set msg "You must select a reference volume first"
   } else {
