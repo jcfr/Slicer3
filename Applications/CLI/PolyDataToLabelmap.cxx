@@ -119,6 +119,13 @@ template<class T> int DoIt( int argc, char * argv[], T )
   reader->SetFileName( InputVolume.c_str() );
   reader->Update();
 
+  if (reader->GetOutput() == NULL)
+    {
+    std::cerr << "PolyDataToLabelmap: input volume didn't read in properly: " << InputVolume.c_str() << std::endl;
+    reader->Delete();
+    return EXIT_FAILURE;
+    }
+
   // output label map
   LabelImageType::Pointer label = LabelImageType::New();
   label->CopyInformation( reader->GetOutput() );
@@ -132,6 +139,13 @@ template<class T> int DoIt( int argc, char * argv[], T )
   pdReader->Update();
   vtkPolyData *polyData = pdReader->GetOutput();
 
+  // did the file get read properly?
+  if (polyData == NULL ||
+      polyData->GetPoints() == NULL)
+    {
+    std::cerr << "PolyDataToLabelmap: input model file didn't get read from disk propery, no points! Check file : " << surface.c_str() << std::endl;
+    return EXIT_FAILURE;
+    }
   // LPS vs RAS
 
   vtkPoints * allPoints = polyData->GetPoints();
