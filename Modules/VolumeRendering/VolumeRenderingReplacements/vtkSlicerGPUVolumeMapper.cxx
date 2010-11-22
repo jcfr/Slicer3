@@ -773,11 +773,11 @@ int vtkSlicerGPUVolumeMapper::UpdateVolumes(vtkVolume *vtkNotUsed(vol))
   {
     if (this->Volume1)
         delete [] this->Volume1;
-    if (this->Volume2)
-        delete [] this->Volume2;
+//    if (this->Volume2)
+//        delete [] this->Volume2;
 
     this->Volume1 = new unsigned char [4*neededSize];
-    this->Volume2 = new unsigned char [4*neededSize];
+//    this->Volume2 = new unsigned char [4*neededSize];
 
     this->VolumeSize       = neededSize;
     this->VolumeComponents = components;
@@ -844,7 +844,7 @@ int vtkSlicerGPUVolumeMapper::UpdateVolumes(vtkVolume *vtkNotUsed(vol))
         offset, scale,
         this->Volume1));
     }
-
+/*
   int dataPtrSize = dim[0]*dim[1]*dim[2]*components;
   float* floatDataPtr = new float[dataPtrSize];
 
@@ -869,7 +869,7 @@ int vtkSlicerGPUVolumeMapper::UpdateVolumes(vtkVolume *vtkNotUsed(vol))
   this->Threader->SingleMethodExecute();
 
   delete [] floatDataPtr;
-
+*/
   return 1;
 }
 
