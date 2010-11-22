@@ -92,6 +92,8 @@ SET ( LIB_SRCS
     #
     vtkMimxBoundaryConditionActor.cxx
     vtkMimxTestErrorCallback.cxx
+    vtkMRMLFiniteElementBuildingBlockNode.cxx
+    vtkMRMLFiniteElementBuildingBlockDisplayNode.cxx
 )
  
 SET_SOURCE_FILES_PROPERTIES(
@@ -113,8 +115,7 @@ SET_SOURCE_FILES_PROPERTIES(
   vtkLinkedListWrapper.cxx
   vtkLinkedListWrapperTree.cxx
   vtkFESurfaceList.cxx
-  vtkMRMLFiniteElementBuildingBlockNode.cxx
-  vtkMRMLFiniteElementBuildingBlockDisplayNode.cxx
+
   vtkFiniteElementBuildingBlockList.cxx
   vtkMimxSurfacePolyDataActor.cxx
   vtkMimxUnstructuredGridActor.cxx
