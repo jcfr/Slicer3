@@ -1,5 +1,4 @@
 /*==========================================================================
-
   Portions (c) Copyright 2008-2009 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
   See Doc/copyright/copyright.txt
@@ -59,9 +58,10 @@ vtkMRMLNode* vtkIGTLToMRMLPosition::CreateNewNode(vtkMRMLScene* scene, const cha
   transformNode->ApplyTransform(transform);
   transform->Delete();
 
-  scene->AddNode(transformNode);  
+  vtkMRMLNode* n = scene->AddNode(transformNode);
+  transformNode->Delete();
 
-  return transformNode;
+  return n;
 }
 
 
