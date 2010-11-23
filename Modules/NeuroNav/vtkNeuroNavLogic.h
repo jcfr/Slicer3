@@ -152,7 +152,6 @@ private:
                        float ux, float uy, float uz);
 
   void CheckSliceNodes();
-  void ApplyTransform(float *position, float *norm, float *transnorm);
   void UpdateLocatorTransform();
 
   //----------------------------------------------------------------
