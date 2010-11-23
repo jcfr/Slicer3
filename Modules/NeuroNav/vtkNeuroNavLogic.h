@@ -148,7 +148,8 @@ private:
   void UpdateSliceNode(int sliceNo1, int sliceNo2, int sliceNo3,
                        float nx, float ny, float nz,
                        float tx, float ty, float tz,
-                       float px, float py, float pz);
+                       float px, float py, float pz,
+                       float ux, float uy, float uz);
 
   void CheckSliceNodes();
   void ApplyTransform(float *position, float *norm, float *transnorm);

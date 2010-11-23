@@ -300,16 +300,18 @@ void vtkNeuroNavLogic::UpdateFiducialSeeding(const char *name, double offset)
 
 void vtkNeuroNavLogic::UpdateDisplay(int sliceNo1, int sliceNo2, int sliceNo3)
 {
-  if (! this->OriginalTrackerNode)
+  if ((! this->OriginalTrackerNode) || (! this->UpdatedTrackerNode))
     {
     return;
     }
 
   vtkMatrix4x4* transform;
+  vtkMatrix4x4* updated_transform;
   //transform = transformNode->GetMatrixTransformToParent();
   transform = this->OriginalTrackerNode->GetMatrixTransformToParent();
+  updated_transform = this->UpdatedTrackerNode->GetMatrixTransformToParent();
 
-  if (transform)
+  if (transform && updated_transform)
     {
     // set volume orientation
     float tx = transform->GetElement(0, 0);
@@ -321,11 +323,15 @@ void vtkNeuroNavLogic::UpdateDisplay(int sliceNo1, int sliceNo2, int sliceNo3)
     float px = transform->GetElement(0, 3);
     float py = transform->GetElement(1, 3);
     float pz = transform->GetElement(2, 3);
+    float ux = updated_transform->GetElement(0, 3);
+    float uy = updated_transform->GetElement(1, 3);
+    float uz = updated_transform->GetElement(2, 3);
 
     UpdateSliceNode(sliceNo1, sliceNo2, sliceNo3, 
                     nx, ny, nz, 
                     tx, ty, tz, 
-                    px, py, pz);
+                    px, py, pz,
+                    ux, uy, uz);
     }
 }
 
@@ -333,7 +339,8 @@ void vtkNeuroNavLogic::UpdateDisplay(int sliceNo1, int sliceNo2, int sliceNo3)
 void vtkNeuroNavLogic::UpdateSliceNode(int sliceNo1, int sliceNo2, int sliceNo3,
                                        float nx, float ny, float nz,
                                        float tx, float ty, float tz,
-                                       float px, float py, float pz)
+                                       float px, float py, float pz,
+                                       float ux, float uy, float uz)
 {
   CheckSliceNodes();
 
@@ -358,7 +365,7 @@ void vtkNeuroNavLogic::UpdateSliceNode(int sliceNo1, int sliceNo2, int sliceNo3,
     else
       {
       this->SliceNode[0]->SetOrientationToAxial();
-      this->SliceNode[0]->JumpSlice(px, py, pz);
+      this->SliceNode[0]->JumpSlice(ux, uy, uz);
       this->SliceNode[0]->UpdateMatrices();
       }
     }
@@ -384,7 +391,7 @@ void vtkNeuroNavLogic::UpdateSliceNode(int sliceNo1, int sliceNo2, int sliceNo3,
     else
       {
       this->SliceNode[1]->SetOrientationToSagittal();
-      this->SliceNode[1]->JumpSlice(px, py, pz);
+      this->SliceNode[1]->JumpSlice(ux, uy, uz);
       this->SliceNode[1]->UpdateMatrices();
       }
     }
@@ -411,7 +418,7 @@ void vtkNeuroNavLogic::UpdateSliceNode(int sliceNo1, int sliceNo2, int sliceNo3,
     else
       {
       this->SliceNode[2]->SetOrientationToCoronal();
-      this->SliceNode[2]->JumpSlice(px, py, pz);
+      this->SliceNode[2]->JumpSlice(ux, uy, uz);
       this->SliceNode[2]->UpdateMatrices();
       }
     }
