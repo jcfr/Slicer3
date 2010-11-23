@@ -1235,14 +1235,12 @@ namespace eval EMSegmenterPreProcessingTcl {
        set mrmlScene [vtkMRMLScene New]
        set num [$SCENE GetNumberOfRegisteredNodeClasses]
        for { set i 0 } { $i < $num } { incr i } {
-       set node [$SCENE GetNthRegisteredNodeClass $i]
-       if { ($node != "" ) } {
-          set name [$node GetClassName ]
-          if {[ string first "vtkMRMLFiniteElement" $name  ] < 0 } {
-           $mrmlScene RegisterNodeClass $node
-           }
+          set node [$SCENE GetNthRegisteredNodeClass $i]
+          if { ($node != "" ) } {
+            set name [$node GetClassName ]
+            $mrmlScene RegisterNodeClass $node
+          }
        }
-    }
     
        set parser [vtkMRMLParser New ] 
        $parser SetMRMLScene $mrmlScene
