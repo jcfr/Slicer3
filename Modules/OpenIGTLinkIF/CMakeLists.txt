@@ -24,9 +24,9 @@ endif(NOT Slicer3_SOURCE_DIR)
 # if the OpenIGTLink library is compiled with OpenIGTLink_PROTOCOL_VERSION_2
 # option.
 
-if (OpenIGTLink_PROTOCOL_VERSION_2)
+if (OpenIGTLink_PROTOCOL_VERSION EQUAL 2)
   ADD_DEFINITIONS(-DOpenIGTLinkIF_USE_VERSION_2)
-endif (OpenIGTLink_PROTOCOL_VERSION_2)
+endif (OpenIGTLink_PROTOCOL_VERSION EQUAL 2)
 
 
 # --------------------------------------------------------------------------
@@ -74,8 +74,9 @@ set(OpenIGTLinkIF_SRCS
   vtkMRMLIGTLConnectorNode.cxx
 )
 
-if (OpenIGTLink_PROTOCOL_VERSION_2)
+if (OpenIGTLink_PROTOCOL_VERSION EQUAL 2)
   set(OpenIGTLinkIF_SRCS 
+    ${OpenIGTLinkIF_SRCS}
     vtkIGTLRemoteDataListWindow.cxx
     vtkMRMLIGTLQueryNode.cxx
     vtkMRMLImageMetaListNode.cxx
@@ -85,7 +86,7 @@ if (OpenIGTLink_PROTOCOL_VERSION_2)
     vtkMRMLIGTLTrackingDataBundleNode.cxx
     vtkIGTLTrackingDataControllerWindow.cxx
     )
-endif (OpenIGTLink_PROTOCOL_VERSION_2)
+endif (OpenIGTLink_PROTOCOL_VERSION EQUAL 2)
 
 
 # --------------------------------------------------------------------------

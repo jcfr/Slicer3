@@ -96,7 +96,8 @@ set ::SCIPY_TAG "http://svn.scipy.org/svn/scipy/branches/0.7.x"
 #set ::BatchMake_TAG "BatchMake-1-2"
 set ::BatchMake_TAG "HEAD"
 set ::SLICERLIBCURL_TAG "HEAD"
-set ::OpenIGTLink_TAG "http://svn.na-mic.org/NAMICSandBox/branches/OpenIGTLink-1-0"
+#set ::OpenIGTLink_TAG "http://svn.na-mic.org/NAMICSandBox/branches/OpenIGTLink-1-0"
+set ::OpenIGTLink_TAG "http://svn.na-mic.org/NAMICSandBox/trunk/OpenIGTLink"
 set ::OpenCV_TAG https://code.ros.org/svn/opencv/tags/2.1/opencv
 
 # set TCL_VERSION to "tcl" to get 8.4, otherwise use tcl85 to get 8.5
