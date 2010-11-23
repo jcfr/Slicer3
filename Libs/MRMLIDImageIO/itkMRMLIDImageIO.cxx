@@ -814,12 +814,13 @@ MRMLIDImageIO
         }
       sum = sqrt(sum);
       bvalues.push_back( sum * maxBValue );
-
-      for (unsigned int i=0; i < 3; ++i)
+      if( sum > .00000001 )//Checks that the sum is not 0 to avoid dividing by 0 
         {
-        gradient[i] /= sum;
+        for (unsigned int i=0; i < 3; ++i)
+          {
+          gradient[i] /= sum;
+          }
         }
-
       gradients.push_back(gradient);
       }
     }
