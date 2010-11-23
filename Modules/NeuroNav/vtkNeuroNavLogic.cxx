@@ -14,7 +14,7 @@ Version:   $Revision: $
 
 #include "vtkObjectFactory.h"
 #include "vtkCallbackCommand.h"
-
+#include "vtkTransformPolyDataFilter.h"
 #include "vtkNeuroNavLogic.h"
 
 #include "vtkMRMLModelDisplayNode.h"
@@ -174,8 +174,18 @@ vtkMRMLModelNode* vtkNeuroNavLogic::AddLocatorModel(const char* nodeName, double
   vtkCylinderSource *cylinder = vtkCylinderSource::New();
   cylinder->SetRadius(1.5);
   cylinder->SetHeight(100);
-  cylinder->SetCenter(0, 50, 0);
+  cylinder->SetCenter(0, 0, 0);
   cylinder->Update();
+
+  // Rotate cylinder
+  vtkTransformPolyDataFilter *tfilter = vtkTransformPolyDataFilter::New();
+  vtkTransform* trans =   vtkTransform::New();
+  trans->RotateX(-90.0);
+  trans->Translate(0.0, -50.0, 0.0);
+  trans->Update();
+  tfilter->SetInput(cylinder->GetOutput());
+  tfilter->SetTransform(trans);
+  tfilter->Update();
 
   // Sphere represents the locator tip 
   vtkSphereSource *sphere = vtkSphereSource::New();
@@ -185,7 +195,8 @@ vtkMRMLModelNode* vtkNeuroNavLogic::AddLocatorModel(const char* nodeName, double
 
   vtkAppendPolyData *apd = vtkAppendPolyData::New();
   apd->AddInput(sphere->GetOutput());
-  apd->AddInput(cylinder->GetOutput());
+  //apd->AddInput(cylinder->GetOutput());
+  apd->AddInput(tfilter->GetOutput());
   apd->Update();
 
   locatorModel->SetAndObservePolyData(apd->GetOutput());
@@ -197,6 +208,8 @@ vtkMRMLModelNode* vtkNeuroNavLogic::AddLocatorModel(const char* nodeName, double
   locatorDisp->SetPolyData(locatorModel->GetPolyData());
   locatorDisp->SetColor(color);
 
+  trans->Delete();
+  tfilter->Delete();
   cylinder->Delete();
   sphere->Delete();
   apd->Delete();
