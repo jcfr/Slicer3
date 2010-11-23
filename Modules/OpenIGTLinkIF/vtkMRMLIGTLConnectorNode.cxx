@@ -93,6 +93,11 @@ vtkMRMLIGTLConnectorNode::vtkMRMLIGTLConnectorNode()
 
   this->CheckCRC = 1;
 
+#ifdef OpenIGTLinkIF_USE_VERSION_2
+  this->QueryWaitingQueue.clear();
+  this->QueryQueueMutex = vtkMutexLock::New();
+#endif //OpenIGTLinkIF_USE_VERSION_2
+
 }
 
 //----------------------------------------------------------------------------
@@ -128,6 +133,14 @@ vtkMRMLIGTLConnectorNode::~vtkMRMLIGTLConnectorNode()
     {
     this->EventQueueMutex->Delete();
     }
+
+#ifdef OpenIGTLinkIF_USE_VERSION_2
+  if (this->QueryQueueMutex)
+    {
+    this->QueryQueueMutex->Delete();
+    }
+#endif //OpenIGTLinkIF_USE_VERSION_2
+
 }
 
 
@@ -286,6 +299,7 @@ void vtkMRMLIGTLConnectorNode::ProcessMRMLEvents( vtkObject *caller, unsigned lo
         }
       }
     }
+
 }
 
 
@@ -437,7 +451,8 @@ void* vtkMRMLIGTLConnectorNode::ThreadFunction(void* ptr)
     if (igtlcon->Socket.IsNotNull())
       {
       igtlcon->State = STATE_CONNECTED;
-      igtlcon->RequestInvokeEvent(vtkMRMLIGTLConnectorNode::ConnectedEvent); // need to Request the InvokeEvent, because we are not on the main thread now
+      // need to Request the InvokeEvent, because we are not on the main thread now
+      igtlcon->RequestInvokeEvent(vtkMRMLIGTLConnectorNode::ConnectedEvent);
       //vtkErrorMacro("vtkOpenIGTLinkIFLogic::ThreadFunction(): Client Connected.");
       igtlcon->ReceiveController();
       igtlcon->State = STATE_WAIT_CONNECTION;
@@ -602,7 +617,7 @@ int vtkMRMLIGTLConnectorNode::ReceiveController()
         continue; //  while (!this->ServerStopFlag)
         }
       }
-    
+
     //----------------------------------------------------------------
     // Search Circular Buffer
 
@@ -824,6 +839,28 @@ void vtkMRMLIGTLConnectorNode::ImportDataFromCircularBuffer()
         }
       }
 
+#ifdef OpenIGTLinkIF_USE_VERSION_2
+    // If the message is a responce to one of the querys in the list
+    // TODO: Should QueryWaitingQueue be a std::map ?
+    if (this->QueryWaitingQueue.size() > 0)
+      {
+      std::list<vtkMRMLIGTLQueryNode*>::iterator iter;
+      for (iter = this->QueryWaitingQueue.begin(); iter != this->QueryWaitingQueue.end(); iter ++)
+        {
+        if (strncmp((*iter)->GetIGTLName(), buffer->GetDeviceType(), 12) == 0 &&
+            strncmp((*iter)->GetName(), buffer->GetDeviceName(), 20) == 0)
+          {
+          //this->QueryQueueMutex->Lock();
+          (*iter)->SetQueryStatus(vtkMRMLIGTLQueryNode::STATUS_SUCCESS);
+          //this->QueryQueueMutex->Unlock();
+          (*iter)->SetResponseDataNodeID(updatedNode->GetID());
+          (*iter)->InvokeEvent(vtkMRMLIGTLQueryNode::ResponseEvent);
+          this->QueryWaitingQueue.remove((*iter));
+          iter = this->QueryWaitingQueue.end();
+          }
+        }
+      }
+#endif //OpenIGTLinkIF_USE_VERSION_2
 
     circBuffer->EndPull();
     }
@@ -981,7 +1018,6 @@ int vtkMRMLIGTLConnectorNode::RegisterOutgoingMRMLNode(vtkMRMLNode* node, const 
     {
     converter = GetConverterByIGTLDeviceType(devType);
     }
-
   if (!converter)
     {
     return 0;
@@ -1246,3 +1282,28 @@ void vtkMRMLIGTLConnectorNode::PushNode(vtkMRMLNode* node)
     }
 }
 
+
+#ifdef OpenIGTLinkIF_USE_VERSION_2
+//---------------------------------------------------------------------------
+void vtkMRMLIGTLConnectorNode::PushQuery(vtkMRMLIGTLQueryNode* node)
+{
+  if (node)
+    {
+    vtkIGTLToMRMLBase* converter = this->GetConverterByIGTLDeviceType(node->GetIGTLName());
+    if (converter)
+      {
+      int size;
+      void* igtlMsg;
+      converter->MRMLToIGTL(0, node, &size, &igtlMsg);
+      if (size > 0)
+        {
+        this->SendData(size, (unsigned char*)igtlMsg);
+        this->QueryQueueMutex->Lock();
+        node->SetQueryStatus(vtkMRMLIGTLQueryNode::STATUS_WAITING);
+        this->QueryWaitingQueue.push_back(node);
+        this->QueryQueueMutex->Unlock();
+        }
+      }
+    }
+}
+#endif //OpenIGTLinkIF_USE_VERSION_2

@@ -19,6 +19,17 @@ endif(NOT Slicer3_SOURCE_DIR)
 
 
 # --------------------------------------------------------------------------
+# Check if version 2 protocol is available
+# Features that depnd on OpenIGTLink Protocol 2 are only available 
+# if the OpenIGTLink library is compiled with OpenIGTLink_PROTOCOL_VERSION_2
+# option.
+
+if (OpenIGTLink_PROTOCOL_VERSION_2)
+  ADD_DEFINITIONS(-DOpenIGTLinkIF_USE_VERSION_2)
+endif (OpenIGTLink_PROTOCOL_VERSION_2)
+
+
+# --------------------------------------------------------------------------
 # Include dirs
 
 include_directories(
@@ -62,6 +73,20 @@ set(OpenIGTLinkIF_SRCS
   vtkIGTLToMRMLPosition.cxx
   vtkMRMLIGTLConnectorNode.cxx
 )
+
+if (OpenIGTLink_PROTOCOL_VERSION_2)
+  set(OpenIGTLinkIF_SRCS 
+    vtkIGTLRemoteDataListWindow.cxx
+    vtkMRMLIGTLQueryNode.cxx
+    vtkMRMLImageMetaListNode.cxx
+    vtkIGTLToMRMLImageMetaList.cxx
+    #vtkMRMLIGTLImageMetaListQueryNode.cxx
+    vtkIGTLToMRMLTrackingData.cxx
+    vtkMRMLIGTLTrackingDataBundleNode.cxx
+    vtkIGTLTrackingDataControllerWindow.cxx
+    )
+endif (OpenIGTLink_PROTOCOL_VERSION_2)
+
 
 # --------------------------------------------------------------------------
 # Wrapping

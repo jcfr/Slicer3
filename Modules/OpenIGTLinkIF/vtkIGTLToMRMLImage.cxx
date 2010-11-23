@@ -23,6 +23,11 @@
 #include "vtkMRMLScalarVolumeNode.h"
 #include "igtlImageMessage.h"
 
+#ifdef OpenIGTLinkIF_USE_VERSION_2
+  #include "vtkMRMLIGTLQueryNode.h"
+#endif //OpenIGTLinkIF_USE_VERSION_2
+
+
 vtkStandardNewMacro(vtkIGTLToMRMLImage);
 vtkCxxRevisionMacro(vtkIGTLToMRMLImage, "$Revision$");
 
@@ -48,6 +53,7 @@ void vtkIGTLToMRMLImage::PrintSelf(ostream& os, vtkIndent indent)
 //---------------------------------------------------------------------------
 vtkMRMLNode* vtkIGTLToMRMLImage::CreateNewNode(vtkMRMLScene* scene, const char* name)
 {
+
   vtkMRMLScalarVolumeDisplayNode *displayNode = NULL;
   vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
   vtkImageData* image = vtkImageData::New();
@@ -125,7 +131,6 @@ vtkMRMLNode* vtkIGTLToMRMLImage::CreateNewNode(vtkMRMLScene* scene, const char* 
   image->Delete();
 
   return n;
-
 }
 
 
@@ -339,18 +344,18 @@ int vtkIGTLToMRMLImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLNod
   // set volume orientation
   vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
   rtimgTransform->Identity();
-  rtimgTransform->SetElement(0, 0, ntx*spacing[0]);
-  rtimgTransform->SetElement(1, 0, nty*spacing[0]);
-  rtimgTransform->SetElement(2, 0, ntz*spacing[0]);
-  rtimgTransform->SetElement(0, 1, nsx*spacing[1]);
-  rtimgTransform->SetElement(1, 1, nsy*spacing[1]);
-  rtimgTransform->SetElement(2, 1, nsz*spacing[1]);
-  rtimgTransform->SetElement(0, 2, nnx*spacing[2]);
-  rtimgTransform->SetElement(1, 2, nny*spacing[2]);
-  rtimgTransform->SetElement(2, 2, nnz*spacing[2]);
-  rtimgTransform->SetElement(0, 3, px);
-  rtimgTransform->SetElement(1, 3, py);
-  rtimgTransform->SetElement(2, 3, pz);
+  rtimgTransform->Element[0][0] = ntx*spacing[0];
+  rtimgTransform->Element[1][0] = nty*spacing[0];
+  rtimgTransform->Element[2][0] = ntz*spacing[0];
+  rtimgTransform->Element[0][1] = nsx*spacing[1];
+  rtimgTransform->Element[1][1] = nsy*spacing[1];
+  rtimgTransform->Element[2][1] = nsz*spacing[1];
+  rtimgTransform->Element[0][2] = nnx*spacing[2];
+  rtimgTransform->Element[1][2] = nny*spacing[2];
+  rtimgTransform->Element[2][2] = nnz*spacing[2];
+  rtimgTransform->Element[0][3] = px;
+  rtimgTransform->Element[1][3] = py;
+  rtimgTransform->Element[2][3] = pz;
 
   //rtimgTransform->Invert();
   //volumeNode->SetRASToIJKMatrix(rtimgTransform);
@@ -487,6 +492,44 @@ int vtkIGTLToMRMLImage::MRMLToIGTL(unsigned long event, vtkMRMLNode* mrmlNode, i
     *igtlMsg = (void*)this->OutImageMessage->GetPackPointer();
 
     return 1;
+    }
+#ifdef OpenIGTLinkIF_USE_VERSION_2
+  else if (strcmp(mrmlNode->GetNodeTagName(), "IGTLQuery") == 0)   // If mrmlNode is query node
+    {
+    vtkMRMLIGTLQueryNode* qnode = vtkMRMLIGTLQueryNode::SafeDownCast(mrmlNode);
+    if (qnode)
+      {
+      if (qnode->GetQueryType() == vtkMRMLIGTLQueryNode::TYPE_GET)
+        {
+        if (this->GetImageMessage.IsNull())
+          {
+          this->GetImageMessage = igtl::GetImageMessage::New();
+          }
+        this->GetImageMessage->SetDeviceName(mrmlNode->GetName());
+        this->GetImageMessage->Pack();
+        *size = this->GetImageMessage->GetPackSize();
+        *igtlMsg = this->GetImageMessage->GetPackPointer();
+        return 1;
+        }
+      /*
+      else if (qnode->GetQueryType() == vtkMRMLIGTLQueryNode::TYPE_START)
+        {
+        *size = 0;
+        return 0;
+        }
+      else if (qnode->GetQueryType() == vtkMRMLIGTLQueryNode::TYPE_STOP)
+        {
+        *size = 0;
+        return 0;
+        }
+      */
+      return 0;
+      }
+    }
+#endif //OpenIGTLinkIF_USE_VERSION_2
+  else
+    {
+    return 0;
     }
 
   return 0;
