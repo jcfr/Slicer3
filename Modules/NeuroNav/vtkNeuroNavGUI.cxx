@@ -689,7 +689,7 @@ void vtkNeuroNavGUI::Enter ( )
   if (this->TimerFlag == 0)
     {
     this->TimerFlag = 1;
-    this->TimerInterval = 100;  // 100 ms
+    this->TimerInterval = 25;  // 25 ms
     ProcessTimerEvents();
     }
 
