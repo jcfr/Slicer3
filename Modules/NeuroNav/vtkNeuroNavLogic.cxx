@@ -447,38 +447,6 @@ void vtkNeuroNavLogic::CheckSliceNodes()
 
 
 
-void vtkNeuroNavLogic::ApplyTransform(float *position, float *norm, float *transnorm)
-{
-    // Transform position, norm and transnorm
-    // ---------------------------------------------------------
-    float p[4];
-    float n[4];
-    float tn[4];
-
-    for (int i = 0; i < 3; i++)
-    {
-        p[i] = position[i];
-        n[i] = norm[i];
-        tn[i] = transnorm[i];
-    }
-    p[3] = 1;     // translation affects a poistion
-    n[3] = 0;     // translation doesn't affect an orientation
-    tn[3] = 0;    // translation doesn't affect an orientation
-
-    this->Pat2ImgReg->GetLandmarkTransformMatrix()->MultiplyPoint(p, p);    // transform a position
-    this->Pat2ImgReg->GetLandmarkTransformMatrix()->MultiplyPoint(n, n);    // transform an orientation
-    this->Pat2ImgReg->GetLandmarkTransformMatrix()->MultiplyPoint(tn, tn);  // transform an orientation
-
-    for (int i = 0; i < 3; i++)
-    {
-        position[i] = p[i];
-        norm[i] = n[i];
-        transnorm[i] = tn[i];
-    }
-}
-
-
-
 void vtkNeuroNavLogic::UpdateLocatorTransform()
 {
 
@@ -487,149 +455,27 @@ void vtkNeuroNavLogic::UpdateLocatorTransform()
     return;
     }
 
+  vtkMatrix4x4* original_tfm = vtkMatrix4x4::New();
+  original_tfm->DeepCopy(this->OriginalTrackerNode->GetMatrixTransformToParent());
+  vtkMatrix4x4 *updated_tfm = vtkMatrix4x4::New();
 
-  vtkMatrix4x4* transform;
-  transform = this->OriginalTrackerNode->GetMatrixTransformToParent();
-  if (transform)
+  // apply transform (updated_transform = registration_transform * original_transform)
+  vtkMatrix4x4::Multiply4x4(this->Pat2ImgReg->GetLandmarkTransformMatrix(), original_tfm, updated_tfm);
+
+  if (! this->UpdatedTrackerNode)
     {
-    // Get locator matrix
-    vnl_float_3 p, n, t, c;
-    float tt[3], nn[3], pp[3];
-
-    // set volume orientation
-    tt[0] = transform->GetElement(0, 0);
-    tt[1] = transform->GetElement(1, 0);
-    tt[2] = transform->GetElement(2, 0);
-    nn[0] = transform->GetElement(0, 2);
-    nn[1] = transform->GetElement(1, 2);
-    nn[2] = transform->GetElement(2, 2);
-    pp[0] = transform->GetElement(0, 3);
-    pp[1] = transform->GetElement(1, 3);
-    pp[2] = transform->GetElement(2, 3);
-
-    this->ApplyTransform(pp, nn, tt);
-    for (int i = 0; i < 3; i++)
-      {
-      t[i] = tt[i];
-      n[i] = nn[i];
-      p[i] = pp[i];
-      }
-
-    // Ensure N, T orthogonal:
-    //    C = N x T
-    //    T = C x N
-    c = vnl_cross_3d(n, t);
-    t = vnl_cross_3d(c, n);
-
-    // Ensure vectors are normalized
-    n.normalize();
-    t.normalize();
-    c.normalize(); 
-
-    /*
-# Find transform, N, that brings the locator coordinate frame 
-# into the scanner frame.  Then invert N to M and set it to the locator's
-# userMatrix to position the locator within the world space.
-#
-# 1.) Concatenate a translation, T, TO the origin which is (-x,-y,-z)
-#     where the locator's position is (x,y,z).
-# 2.) Concatenate the R matrix.  If the locator's reference frame has
-#     axis Ux, Uy, Uz, then Ux is the TOP ROW of R, Uy is the second, etc.
-# 3.) Translate the cylinder so its tip is at the origin instead
-#     of the center of its tube.  Call this matrix C.
-# Then: N = C*R*T, M = Inv(N)
-#
-# (See page 419 and 429 of "Computer Graphics", Hearn & Baker, 1997,
-#  ISBN 0-13-530924-7)
-# 
-# The alternative approach used here is to find the transform, M, that
-# moves the scanner coordinate frame to the locator's.  
-# 
-# 1.) Translate the cylinder so its tip is at the origin instead
-#     of the center of its tube.  Call this matrix C.
-# 2.) Concatenate the R matrix.  If the locator's reference frame has
-#     axis Ux, Uy, Uz, then Ux is the LEFT COL of R, Uy is the second,etc.
-# 3.) Concatenate a translation, T, FROM the origin which is (x,y,z)
-#     where the locator's position is (x,y,z).
-# Then: M = T*R*C
-*/
-    vtkMatrix4x4 *locator_matrix = vtkMatrix4x4::New();
-    vtkTransform *locator_transform = vtkTransform::New();
-
-    // Locator's offset: p[0], p[1], p[2]
-    float x0 = p[0];
-    float y0 = p[1];
-    float z0 = p[2];
-
-
-    // Locator's coordinate axis:
-    // Ux = T
-    float Uxx = t[0];
-    float Uxy = t[1];
-    float Uxz = t[2];
-
-    // Uy = -N
-    float Uyx = -n[0];
-    float Uyy = -n[1];
-    float Uyz = -n[2];
-
-    // Uz = Ux x Uy
-    float Uzx = Uxy*Uyz - Uyy*Uxz;
-    float Uzy = Uyx*Uxz - Uxx*Uyz;
-    float Uzz = Uxx*Uyy - Uyx*Uxy;
-
-    // Ux
-    locator_matrix->SetElement(0, 0, Uxx);
-    locator_matrix->SetElement(1, 0, Uxy);
-    locator_matrix->SetElement(2, 0, Uxz);
-    locator_matrix->SetElement(3, 0, 0);
-    // Uy
-    locator_matrix->SetElement(0, 1, Uyx);
-    locator_matrix->SetElement(1, 1, Uyy);
-    locator_matrix->SetElement(2, 1, Uyz);
-    locator_matrix->SetElement(3, 1, 0);
-    // Uz
-    locator_matrix->SetElement(0, 2, Uzx);
-    locator_matrix->SetElement(1, 2, Uzy);
-    locator_matrix->SetElement(2, 2, Uzz);
-    locator_matrix->SetElement(3, 2, 0);
-    // Bottom row
-    locator_matrix->SetElement(0, 3, 0);
-    locator_matrix->SetElement(1, 3, 0);
-    locator_matrix->SetElement(2, 3, 0);
-    locator_matrix->SetElement(3, 3, 1);
-
-    // Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-    // is multiplied by the existing matrix, M: C*M (not M*C)
-    locator_transform->PostMultiply();
-    // M = T*R*C
-
-
-    // NORMAL PART
-
-    locator_transform->Identity();
-    // C:
-    locator_transform->Translate(0, 0, 0);
-    // R:
-    locator_transform->Concatenate(locator_matrix);
-    // T:
-    locator_transform->Translate(x0, y0, z0);
-
-    if (! this->UpdatedTrackerNode)
-      {
-      this->UpdatedTrackerNode = vtkMRMLLinearTransformNode::New();
-      this->UpdatedTrackerNode->SetName("NeuroNavTracker");
-      this->UpdatedTrackerNode->SetDescription("Tracker after patient to image registration.");
-      GetMRMLScene()->AddNode(this->UpdatedTrackerNode);
-      }
-
-    vtkMatrix4x4 *matrix = this->UpdatedTrackerNode->GetMatrixTransformToParent();
-    matrix->DeepCopy(locator_transform->GetMatrix());
-    this->UpdatedTrackerNode->Modified();
-
-    locator_matrix->Delete();
-    locator_transform->Delete();
+    this->UpdatedTrackerNode = vtkMRMLLinearTransformNode::New();
+    this->UpdatedTrackerNode->SetName("NeuroNavTracker");
+    this->UpdatedTrackerNode->SetDescription("Tracker after patient to image registration.");
+    GetMRMLScene()->AddNode(this->UpdatedTrackerNode);
     }
+
+  vtkMatrix4x4 *matrix = this->UpdatedTrackerNode->GetMatrixTransformToParent();
+  matrix->DeepCopy(updated_tfm);
+  this->UpdatedTrackerNode->Modified();
+
+  original_tfm->Delete();
+  updated_tfm->Delete();
 }
 
 int vtkNeuroNavLogic::PerformPatientToImageRegistration()
