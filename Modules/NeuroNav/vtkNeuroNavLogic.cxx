@@ -93,6 +93,31 @@ void vtkNeuroNavLogic::PrintSelf(ostream& os, vtkIndent indent)
 
 
 //---------------------------------------------------------------------------
+int vtkNeuroNavLogic::EnableLocatorDriver(int sw)
+{
+  if (sw == 1)  // turn on
+    {
+    vtkMRMLModelNode* mnode = SetVisibilityOfLocatorModel("NeuroNavLocator", 1);
+    if (!UpdatedTrackerNode || UpdatedTrackerNode == NULL)
+      {
+      mnode->Delete();
+      return 0;
+      }
+    mnode->SetAndObserveTransformNodeID(UpdatedTrackerNode->GetID());
+    mnode->InvokeEvent(vtkMRMLTransformableNode::TransformModifiedEvent);
+    mnode->Delete();
+    }
+  else  // turn off
+    {
+    vtkMRMLModelNode* mnode = SetVisibilityOfLocatorModel("NeuroNavLocator", 0);
+    mnode->Delete();
+    }
+  this->GetMRMLScene()->Modified();
+  return 1;
+}
+
+
+//---------------------------------------------------------------------------
 vtkMRMLModelNode* vtkNeuroNavLogic::SetVisibilityOfLocatorModel(const char* nodeName, int v)
 {
   vtkMRMLModelNode*   locatorModel;

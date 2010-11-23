@@ -586,11 +586,11 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         {
         if (checked)
           {
-          this->GetLogic()->SetVisibilityOfLocatorModel("IGTLocator", 1);
+          this->GetLogic()->EnableLocatorDriver(1);
           }
         else
           {
-          this->GetLogic()->SetVisibilityOfLocatorModel("IGTLocator", 0);
+          this->GetLogic()->EnableLocatorDriver(0);
           }
         }
       else

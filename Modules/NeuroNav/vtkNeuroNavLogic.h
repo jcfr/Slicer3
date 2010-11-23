@@ -116,7 +116,7 @@ public:
   void PrintSelf(ostream&, vtkIndent);
   //void AddRealtimeVolumeNode(const char* name);
 
-
+  int EnableLocatorDriver(int sw);
   vtkMRMLModelNode* SetVisibilityOfLocatorModel(const char* nodeName, int v);
   vtkMRMLModelNode* AddLocatorModel(const char* nodeName, double r, double g, double b);
 
