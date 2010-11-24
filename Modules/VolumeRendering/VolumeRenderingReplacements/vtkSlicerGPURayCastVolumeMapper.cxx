@@ -1099,9 +1099,9 @@ void vtkSlicerGPURayCastVolumeMapper::LoadFragmentShaders()
     fp_oss <<
       "vec4 edgeColoring(vec3 coord, vec4 diffuse, vec4 normalIn)                               \n"
       "{                                                                                        \n"
-      "  if (normalIn.w <= 0.001)                                                              \n"
-      "    return gl_FrontMaterial.ambient * color;                                            \n" 
-      "  vec3    normal = normalize(normalIn.xyz);                                             \n"
+      "  if (normalIn.w <= 0.001)                                                               \n"
+      "    return gl_FrontMaterial.ambient * diffuse;                                           \n" 
+      "  vec3    normal = normalize(normalIn.xyz);                                              \n"
       "  float   NdotV = abs(dot(normal, normalize(-ViewDir)));                                 \n"
       "  return diffuse*NdotV;                                                                  \n"
       "}                                                                                        \n";
@@ -1110,9 +1110,9 @@ void vtkSlicerGPURayCastVolumeMapper::LoadFragmentShaders()
   if (this->Technique == 5)
   {
     fp_oss <<
-      "float ICPE(vec3 coord, float shading, float alpha, float dist)                           \n"
+      "float ICPE(vec3 coord, float gradMag, float shading, float alpha, float dist)            \n"
       "{                                                                                        \n"
-      "   float gradMag = texture3D(TextureVol, coord).w;                                       \n"
+      "//   float gradMag = texture3D(TextureVol, coord).w;                                       \n"
       "   float base = shading*ParaMatrix[3][3]*(1.0-dist)*(1.0-alpha);                         \n"
       "   if (base > 0.0)                                                                       \n"
       "     return pow(gradMag, pow(base, ParaMatrix[3][0]));                                   \n"
@@ -1281,7 +1281,7 @@ void vtkSlicerGPURayCastVolumeMapper::LoadFragmentShaders()
         "      vec4 normal = voxelNormal(nextRayOrigin);                                     \n"
         "      nextColor = directionalLight(nextRayOrigin, lightDir, nextColor, normal);     \n"
         "                                                                                    \n"
-        "      tempAlpha = (1.0-alpha)*tempAlpha*texture3D(TextureVol, nextRayOrigin).w;     \n"
+        "      tempAlpha = (1.0-alpha)*tempAlpha*normal.w;                                   \n"
         "      pixelColor += nextColor*tempAlpha;                                            \n"
         "      alpha += tempAlpha;                                                           \n"
         "    }                                                                               \n"
@@ -1306,7 +1306,7 @@ void vtkSlicerGPURayCastVolumeMapper::LoadFragmentShaders()
         "      vec4 normal = voxelNormal(nextRayOrigin);                                     \n"
         "      nextColor = directionalLight(nextRayOrigin, lightDir, nextColor, normal);     \n"
         "      float toEyeDist = (length(nextRayOrigin - eyePos) - ParaMatrix[2][2])/ParaMatrix[3][2];\n"
-        "      float icpe = ICPE(nextRayOrigin, length(nextColor), alpha, toEyeDist);        \n"
+        "      float icpe = ICPE(nextRayOrigin, normal.w, length(nextColor), alpha, toEyeDist);       \n"
         "                                                                                    \n"
         "      tempAlpha = (1.0-alpha)*tempAlpha*icpe;                                       \n"
         "      pixelColor += nextColor*tempAlpha;                                            \n"
