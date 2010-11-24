@@ -46,7 +46,7 @@
  <EMSTreeParametersLeaf
   id="vtkMRMLEMSTreeParametersLeafNode4"  name="vtkMRMLEMSTreeParametersLeafNode4"  hideFromEditors="false"  selectable="true"  selected="false" PrintQuality="0"  IntensityLabel="1018"  LogMean="0 "  LogMeanCorrection="0 "  LogCovariance="0 "  LogCovarianceCorrection="0 "  DistributionSpecificationMethod="0"  DistributionSamplePointsRAS=""  ></EMSTreeParametersLeaf>
  <EMSTree
-  id="vtkMRMLEMSTreeNode5"  name="SubcorticalGM"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode4"  TreeParametersNodeID="vtkMRMLEMSTreeParametersNode5"  Label="NULL"  ChildNodeIDs="vtkMRMLEMSTreeNode6 vtkMRMLEMSTreeNode8 vtkMRMLEMSTreeNode15"  ></EMSTree>
+  id="vtkMRMLEMSTreeNode5"  name="GM"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode4"  TreeParametersNodeID="vtkMRMLEMSTreeParametersNode5"  Label="NULL"  ChildNodeIDs="vtkMRMLEMSTreeNode6 vtkMRMLEMSTreeNode8 vtkMRMLEMSTreeNode15"  ></EMSTree>
  <EMSTreeParameters
   id="vtkMRMLEMSTreeParametersNode5"  name="vtkMRMLEMSTreeParametersNode5"  hideFromEditors="false"  selectable="true"  selected="false"  ParentParametersNodeID="vtkMRMLEMSTreeParametersParentNode5"  LeafParametersNodeID="vtkMRMLEMSTreeParametersLeafNode5"  ColorRGB="1 0 0"  InputChannelWeights="1 "  SpatialPriorVolumeName=""  SpatialPriorWeight="0.8"  ClassProbability="0.3"  ExcludeFromIncompleteEStep="0"  PrintWeights="0"  ></EMSTreeParameters>
  <EMSTreeParametersParent
@@ -136,7 +136,7 @@
  <EMSTreeParametersLeaf
   id="vtkMRMLEMSTreeParametersLeafNode14"  name="vtkMRMLEMSTreeParametersLeafNode14"  hideFromEditors="false"  selectable="true"  selected="false" PrintQuality="0"  IntensityLabel="8"  LogMean="3.49363 "  LogMeanCorrection="2.96844e-06 "  LogCovariance="0.00320518 "  LogCovarianceCorrection="0 "  DistributionSpecificationMethod="0"  DistributionSamplePointsRAS=""  ></EMSTreeParametersLeaf>
  <EMSTree
-  id="vtkMRMLEMSTreeNode15"  name="GM"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode5"  TreeParametersNodeID="vtkMRMLEMSTreeParametersNode15"  Label="NULL"  ChildNodeIDs=""  ></EMSTree>
+  id="vtkMRMLEMSTreeNode15"  name="CGM"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode5"  TreeParametersNodeID="vtkMRMLEMSTreeParametersNode15"  Label="NULL"  ChildNodeIDs=""  ></EMSTree>
  <EMSTreeParameters
   id="vtkMRMLEMSTreeParametersNode15"  name="vtkMRMLEMSTreeParametersNode15"  hideFromEditors="false"  selectable="true"  selected="false"  ParentParametersNodeID="vtkMRMLEMSTreeParametersParentNode15"  LeafParametersNodeID="vtkMRMLEMSTreeParametersLeafNode15"  ColorRGB="1 0 0"  InputChannelWeights="1 "  SpatialPriorVolumeName="vtkMRMLEMSTreeNode15"  SpatialPriorWeight="0.9"  ClassProbability="0.5"  ExcludeFromIncompleteEStep="0"  PrintWeights="0"  ></EMSTreeParameters>
  <EMSTreeParametersParent
