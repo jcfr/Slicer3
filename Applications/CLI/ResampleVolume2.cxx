@@ -969,7 +969,15 @@ int TransformGradients( itk::MetaDataDictionary &dico ,
                }
                //We transform the gradient vector with the measurement frame and then apply the inverse transform
                transformedVector = inverseTransform->TransformVector( measurementFrame * vec ) ;
-               if( transformedVector.GetNorm() > .00001 ) //gradient not null
+               /*Checks that the sum is not 0 to avoid dividing by 0
+               The value 1.0e-12 is used in
+               ../Slicer3-lib/Insight/Code/BasicFilters/itkImplicitManifoldNormalVectorFilter.h
+               line 58:
+                  * The MinVectorNorm parameter determines the minumum vector norm allowed
+                  * (to avoid divide by 0). The default for MinVectorNorm is 10^-6 which is designed
+                  * to work with an input image of floats. This value can be lowered to 10^-12
+                  * if the input image is doubles.*/
+               if( transformedVector.GetNorm() > 1.0e-12 ) //gradient not null
                {
                   transformedVector.Normalize() ;
                }
