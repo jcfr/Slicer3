@@ -11,6 +11,7 @@ class EndoscopyGUI(ScriptedModuleGUI):
         self.vtkScriptedModuleGUI.SetCategory("Endoscopy")
         self.FiducialsNodeSelector = slicer.vtkSlicerNodeSelectorWidget()
         self.CameraNodeSelector = slicer.vtkSlicerNodeSelectorWidget()
+        self.StepEntry = slicer.vtkKWEntryWithLabel()
         self.ApplyButton = slicer.vtkKWPushButton()
     
     def Destructor(self):
@@ -58,9 +59,14 @@ class EndoscopyGUI(ScriptedModuleGUI):
           self.ErrorDialog("No fiducials selected")
           return
 
+        stepSize = self.StepEntry.GetWidget().GetValue()
+        if stepSize <= 0:
+          self.ErrorDialog("Step size must be positive")
+          return
+
         self.Status("Calculating Path...")
 
-        p = path(0.5, fidListName=inputSeeds.GetName(), cameraName = inputCamera.GetName())
+        p = path(stepSize, fidListName=inputSeeds.GetName(), cameraName = inputCamera.GetName())
         p.pathModel()
         p.gui()
 
@@ -102,6 +108,15 @@ class EndoscopyGUI(ScriptedModuleGUI):
         self.FiducialsNodeSelector.SetLabelText("Input Fiducials: ")
         self.FiducialsNodeSelector.SetBalloonHelpString("select a fiducial list to define control points for the path.")
         slicer.TkCall("pack %s -side top -anchor e -padx 20 -pady 4 -expand true -fill x" % self.FiducialsNodeSelector.GetWidgetName())
+
+        self.StepEntry.SetParent(moduleFrame.GetFrame())
+        self.StepEntry.Create()
+        self.StepEntry.SetBorderWidth(2)
+        self.StepEntry.SetLabelText("Step Size: ")
+        self.StepEntry.GetWidget().SetRestrictValueToDouble()
+        self.StepEntry.GetWidget().SetValueAsDouble(0.5)
+        self.StepEntry.SetBalloonHelpString("Select the step size in mm between interpolated camera positions.")
+        slicer.TkCall("pack %s -side top -anchor e -padx 20 -pady 4 -expand true -fill x" % self.StepEntry.GetWidgetName())
     
         self.ApplyButton.SetParent(moduleFrame.GetFrame())
         self.ApplyButton.Create()
