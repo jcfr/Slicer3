@@ -2408,7 +2408,7 @@ vtksys_stl::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication*
       // copy not always, only new files
       if (!vtksys::SystemTools::CopyADirectory(orig_task_dir.c_str(), copied_task_dir.c_str(), false, true) )
       {
-          vtkErrorMacro("GetTclTaskDirectory:: Couldn't copy task directory");
+    vtkErrorMacro("GetTclTaskDirectory:: Couldn't copy task directory " << orig_task_dir.c_str() << " to " << copied_task_dir.c_str());
           return vtksys::SystemTools::ConvertToOutputPath("");
       }
       return vtksys::SystemTools::ConvertToOutputPath(copied_task_dir.c_str());

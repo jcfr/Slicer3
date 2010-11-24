@@ -186,12 +186,10 @@ vtkEMSegmentPreProcessingStep::SetTaskPreprocessingSetting()
       return;
     }
 
-  if (! mrmlManager->GetNode()->GetTaskPreprocessingSetting()) 
+  if (! mrmlManager->GetNode())
     {
       return;
     }
-
-  std::string oldText = mrmlManager->GetNode()->GetTaskPreprocessingSetting();
 
   vtksys_stl::stringstream defText;
 
