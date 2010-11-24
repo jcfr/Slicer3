@@ -46,6 +46,14 @@ This work is part of the National Alliance for Medical Image Computing (NAMIC), 
       <description>Output filename (.nhdr or .nrrd)</description>
     </string>
 
+    <double>
+      <name>smallGradientThreshold</name>
+      <longflag>--smallGradientThreshold</longflag> 
+      <label>Small Gradient Threshold</label>
+      <description>If a gradient magnitude is greater than 0 and less than smallGradientThreshold, then DicomToNrrdConverter will display an error message and quit, unless the useBMatrixGradientDirections option is set.</description>
+      <default>0.2</default>
+    </double>
+    
   </parameters>
 
   <parameters advanced="true">
@@ -63,6 +71,12 @@ This work is part of the National Alliance for Medical Image Computing (NAMIC), 
       <longflag>--useIdentityMeaseurementFrame</longflag>
       <description>Adjust all the gradients so that the measurement frame is an identity matrix.</description>
       <default>false</default>
+    </boolean>
+    <boolean>
+       <name>useBMatrixGradientDirections</name>
+       <longflag>--useBMatrixGradientDirections</longflag>
+       <description>Fill the nhdr header with the gradient directions and bvalues computed out of the BMatrix. Only changes behavior for Siemens data.</description>
+       <default>false</default> <!-- This does nothing as the default for booleans is always false -->
     </boolean>
   </parameters>
 

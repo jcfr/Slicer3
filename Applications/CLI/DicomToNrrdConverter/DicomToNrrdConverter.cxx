@@ -17,7 +17,7 @@ See License.txt or http://www.slicer.org/copyright/copyright.txt for details.
 
 Assumptions:
 
-1) Uses left-posterior-superior (Dicom default) as default space for philips and siemens.  
+1) Uses left-posterior-superior (Dicom default) as default space for philips and siemens.
 This is the default space for NRRD header.
 2) For GE data, Dicom data are arranged in volume interleaving order.
 3) For Siemens data, images are arranged in mosaic form.
@@ -37,11 +37,12 @@ gradient directions is the same as the ImageOrientationPatient
 #include <fstream>
 #include <string>
 #include <iomanip>
+#include <algorithm> //Needed for trasforom to convert string tolower
 
 #include "itkXMLFilterWatcher.h"
 
 #include "itkNrrdImageIO.h"
-#include "itkOrientedImage.h"
+#include "itkImage.h"
 #include "itkImageSeriesReader.h"
 #include "itkMetaDataDictionary.h"
 #include "itkSmoothingRecursiveGaussianImageFilter.h"
@@ -99,6 +100,7 @@ gradient directions is the same as the ImageOrientationPatient
 
 #include "DicomToNrrdConverterCLP.h"
 
+
 // Use an anonymous namespace to keep class types and function names
 // from colliding when module is used as shared object module.  Every
 // thing should be in an anonymous namespace except for the module
@@ -127,9 +129,9 @@ namespace {
   const gdcm::DictEntry PhilipsDictDiffusionDirectionAP( 0x2005, 0x10b1, "FL", "4", "Diffusion Direction A/P" );
   const gdcm::DictEntry PhilipsDictDiffusionDirectionFH( 0x2005, 0x10b2, "FL", "4", "Diffusion Direction F/H" );
 
-#if 0 
+#if 0
   //Defined in gdcm dicomV3.dic
-  // Tags defined in Supplement 49 
+  // Tags defined in Supplement 49
   // 0018 9075 CS 1 Diffusion Directionality
   // 0018 9076 SQ 1 Diffusion Gradient Direction Sequence
   // 0018 9087 FD 1 Diffusion b-value
@@ -150,37 +152,38 @@ namespace {
   typedef itk::Vector<float, 3> OutputVectorType;
 
   typedef short PixelValueType;
-  typedef itk::OrientedImage< PixelValueType, 3 > VolumeType;
+  typedef itk::Image< PixelValueType, 3 > VolumeType;
   typedef itk::ImageSeriesReader< VolumeType > ReaderType;
   typedef itk::GDCMImageIO ImageIOType;
   typedef itk::GDCMSeriesFileNames InputNamesGeneratorType;
 
 
-  bool ExtractBinValEntry( gdcm::File * header, uint16_t group, uint16_t elem, std::string& tag )
-  {
+  static bool ExtractBinValEntry( gdcm::File * const header, const uint16_t group, const uint16_t elem, std::string& tag )
+    {
     tag.clear();
+     
     if ( header->GetBinEntry(group, elem) )
-    {
-      gdcm::BinEntry* binEntry = header->GetBinEntry(group, elem);
-      int binLength = binEntry->GetFullLength();
-      tag.resize( binLength );
-      uint8_t * tagString = binEntry->GetBinArea();
-
-      for (int n = 0; n < binLength; n++)
       {
+      gdcm::BinEntry* binEntry = header->GetBinEntry(group, elem);
+      const unsigned int binLength = binEntry->GetFullLength();
+      tag.resize( binLength );
+      uint8_t const * const tagString = binEntry->GetBinArea();
+
+      for (unsigned int n = 0; n < binLength; n++)
+        {
         tag[n] = *(tagString+n);
-      }
+        }
       return true;
-    }
+      }
     else if ( header->GetValEntry(group, elem) )
-    {
+      {
       tag = header->GetValEntry(group, elem)->GetValue();
       return true;
-    }
+      }
     return false;
-  }
+    }
 
-  int ExtractSiemensDiffusionInformation( std::string tagString, std::string nameString, std::vector<double>& valueArray )
+  static unsigned int ExtractSiemensDiffusionInformation( const std::string tagString, const std::string nameString, std::vector<double>& valueArray )
     {
     ::size_t atPosition = tagString.find( nameString );
     if ( atPosition == std::string::npos)
@@ -192,7 +195,7 @@ namespace {
       std::string infoAsString = tagString.substr( atPosition, tagString.size()-atPosition+1 );
       const char * infoAsCharPtr = infoAsString.c_str();
 
-      int vm = *(infoAsCharPtr+64);
+      unsigned int vm = *(infoAsCharPtr+64);
         {
         std::string vr = infoAsString.substr( 68, 2 );
         int syngodt = *(infoAsCharPtr+72);
@@ -237,12 +240,12 @@ namespace {
         //std::cout << "\tArray Length: " << vm << std::endl;
         }
 
-      int offset = 84;
-      for (int k = 0; k < vm; k++)
+      unsigned int offset = 84;
+      for (unsigned int k = 0; k < vm; k++)
         {
-        int itemLength = *(infoAsCharPtr+offset+4);
-        int strideSize = static_cast<int> (ceil(static_cast<double>(itemLength)/4) * 4);
-        std::string valueString = infoAsString.substr( offset+16, itemLength );
+        const int itemLength = *(infoAsCharPtr+offset+4);
+        const int strideSize = static_cast<int> (ceil(static_cast<double>(itemLength)/4) * 4);
+        const std::string valueString = infoAsString.substr( offset+16, itemLength );
         valueArray.push_back( atof(valueString.c_str()) );
         offset += 16+strideSize;
         }
@@ -250,24 +253,51 @@ namespace {
       }
     }
 
+  int isSystemBigEndian(void)
+    {
+    union {
+      uint32_t i;
+      char c[4];
+    } bint = {0x01020304};
+
+    return bint.c[0] == 1; 
+    }
+
+  std::string endianAwareSwap(const std::string toBeSwapped, const bool swapByteOrder)
+    {
+    // If system and files agree we're done.
+    // Otherwise memcpy and reverse the bytes
+    if (swapByteOrder)
+      {
+      // Swap bytes
+      std::string tmp = toBeSwapped; 
+      reverse(tmp.begin(),tmp.end());
+      return tmp;
+      }
+    else
+      {
+      return toBeSwapped;
+      }
+    }
+
 } // end of anonymous namespace
 
 
-int WriteVolume( VolumeType::Pointer img, std::string fname )
+static int WriteVolume( VolumeType::Pointer img, const std::string fname )
 {
   itk::ImageFileWriter< VolumeType >::Pointer imgWriter = itk::ImageFileWriter< VolumeType >::New();
 
   imgWriter->SetInput( img );
   imgWriter->SetFileName( fname.c_str() );
-  try 
+  try
     {
-      imgWriter->Update();
+    imgWriter->Update();
     }
   catch (itk::ExceptionObject &excp)
     {
-      std::cerr << "Exception thrown while reading the series" << std::endl;
-      std::cerr << excp << std::endl;
-      return EXIT_FAILURE;
+    std::cerr << "Exception thrown while reading the series" << std::endl;
+    std::cerr << excp << std::endl;
+    return EXIT_FAILURE;
     }
   return EXIT_SUCCESS;
 }
@@ -299,43 +329,43 @@ int main(int argc, char* argv[])
   // check if the file name is valid
   ::size_t slashpos = outputVolume.find( "/" );
   if (slashpos == std::string::npos)
-  {
+    {
     slashpos = outputVolume.find( "\\" );    // for windows
-  }
+    }
 
   std::string nhdrname;
   if (slashpos != std::string::npos)
-  {
+    {
     nhdrname = outputVolume;
-  }
-  else 
-  {
+    }
+  else
+    {
     nhdrname = outputDirectory + "/" + outputVolume;
-  }
+    }
 
   std::cout << nhdrname << std::endl;
   std::string dataname;
     {
-    ::size_t i = nhdrname.find(".nhdr");
-    ::size_t j = nhdrname.find(".nrrd");
+    const ::size_t i = nhdrname.find(".nhdr");
+    const ::size_t j = nhdrname.find(".nrrd");
     if (i == std::string::npos && j == std::string::npos)
       {
-        // not a valid nrrd extension
-        std::cerr << "Warning: Output file does not have extension .nhdr or .nrrd.\n";
-        std::cerr << "         Extension .nrrd added." << std::endl;
-        nhdrname = nhdrname + ".nrrd";
-        NrrdFormat = true;
+      // not a valid nrrd extension
+      std::cerr << "Warning: Output file does not have extension .nhdr or .nrrd." << std::endl;
+      std::cerr << "         Extension .nrrd added." << std::endl;
+      nhdrname = nhdrname + ".nrrd";
+      NrrdFormat = true;
       }
     else if( i != std::string::npos )
       {
-        // user specified .nhdr
-        dataname = nhdrname.substr(0, i) + ".raw";
-        NrrdFormat = false;
+      // user specified .nhdr
+      dataname = nhdrname.substr(0, i) + ".raw";
+      NrrdFormat = false;
       }
     else
       {
-        // user specified .nrrd
-        NrrdFormat = true;
+      // user specified .nrrd
+      NrrdFormat = true;
       }
     }
 
@@ -357,7 +387,7 @@ int main(int argc, char* argv[])
   // of diffusion weighted image.
   if ( filenamesInSeries.size() > 1 )
     {
-    ::size_t nFiles = filenamesInSeries.size();
+    const ::size_t nFiles = filenamesInSeries.size();
     filenames.resize( 0 );
     for (::size_t k = 0; k < nFiles; k++)
       {
@@ -366,7 +396,7 @@ int main(int argc, char* argv[])
     }
   else
     {
-    std::cout << "gdcm returned just one file. \n";
+    std::cout << "gdcm returned just one file. " << std::endl;
     SingleSeries = false;
     filenames.resize( 0 );
     itksys::Directory directory;
@@ -379,7 +409,7 @@ int main(int argc, char* argv[])
       std::string subdirectory( inputDicomDirectory.c_str() );
       subdirectory = subdirectory + "/" + directory.GetFile(k);
 
-      std::string sqDir( directory.GetFile(k) );
+      const std::string sqDir( directory.GetFile(k) );
       if (sqDir.length() == 1 && directory.GetFile(k)[0] == '.')   // skip self
         {
         continue;
@@ -408,53 +438,56 @@ int main(int argc, char* argv[])
   headerLite->SetLoadMode( gdcm::LD_NOSEQ );
   headerLite->Load();
 
-  // 
+  //
   std::vector<int> ignorePhilipsSliceMultiFrame;
 
   // check the tag 0008|0070 for vendor information
   std::string vendor;
   ExtractBinValEntry( headerLite, 0x0008, 0x0070, vendor );
   for (unsigned int k = 0; k < vendor.size(); k++)
-  {
+    {
     vendor[k] =  toupper( vendor[k] );
-  }
+    }
 
   // check the tag 0008|0060 for modlity information
   std::string modality;
   ExtractBinValEntry( headerLite, 0x0008, 0x0060, modality );
   for (unsigned int k = 0; k < modality.size(); k++)
-  {
-    modality[k] =  toupper( modality[k] );
-  }
-  if (  modality.find("PT") != std::string::npos 
-        || modality.find("ST") != std::string::npos )
     {
-      typedef itk::Image<float, 3> USVolumeType;
-      itk::ImageSeriesReader<USVolumeType>::Pointer seriesReader = 
-        itk::ImageSeriesReader<USVolumeType>::New();
-      seriesReader->SetFileNames( filenamesInSeries );
+    modality[k] =  toupper( modality[k] );
+    }
+  if (  modality.find("PT") != std::string::npos
+    || modality.find("ST") != std::string::npos )
+    {
+    typedef itk::Image<float, 3> USVolumeType;
+    itk::ImageSeriesReader<USVolumeType>::Pointer seriesReader =
+      itk::ImageSeriesReader<USVolumeType>::New();
+    seriesReader->SetFileNames( filenamesInSeries );
 
-      itk::ImageFileWriter<USVolumeType>::Pointer nrrdImageWriter = 
-        itk::ImageFileWriter<USVolumeType>::New();
+    itk::ImageFileWriter<USVolumeType>::Pointer nrrdImageWriter =
+      itk::ImageFileWriter<USVolumeType>::New();
 
-      nrrdImageWriter->SetFileName( nhdrname );
-      nrrdImageWriter->SetInput( seriesReader->GetOutput() );
-      try 
-        { 
-          nrrdImageWriter->Update(); 
-        } 
-      catch( itk::ExceptionObject & err ) 
-        { 
-          std::cerr << "ExceptionObject caught !" << std::endl; 
-          std::cerr << err << std::endl; 
-          return EXIT_FAILURE;
-        } 
-      return EXIT_SUCCESS;
+    nrrdImageWriter->SetFileName( nhdrname );
+    nrrdImageWriter->SetInput( seriesReader->GetOutput() );
+    try
+      {
+      nrrdImageWriter->Update();
+      }
+    catch( itk::ExceptionObject & err )
+      {
+      std::cerr << "ExceptionObject caught !" << std::endl;
+      std::cerr << err << std::endl;
+      return EXIT_FAILURE;
+      }
+    return EXIT_SUCCESS;
     }
 
-  
+
   std::string ImageType;
   ExtractBinValEntry( headerLite, 0x0008, 0x0008, ImageType );
+
+  delete(headerLite);
+
   std::cout << ImageType << std::endl;
 
   //////////////////////////////////////////////////////////////////
@@ -466,7 +499,7 @@ int main(int argc, char* argv[])
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(GEDictXGradient);
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(GEDictYGradient);
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(GEDictZGradient);
-    std::cout << "Image acquired using a GE scanner\n";
+    std::cout << "Image acquired using a GE scanner" << std::endl;
     }
   else if( vendor.find("SIEMENS") != std::string::npos )
     {
@@ -477,23 +510,23 @@ int main(int argc, char* argv[])
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(SiemensDictDiffusionDirection);
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(SiemensDictDiffusionMatrix);
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(SiemensDictShadowInfo);
-    std::cout << "Image acquired using a Siemens scanner\n";
+    std::cout << "Image acquired using a Siemens scanner" << std::endl;
 
     if ( ImageType.find("MOSAIC") != std::string::npos )
       {
-      std::cout << "Siemens Mosaic format\n";
+      std::cout << "Siemens Mosaic format" << std::endl;
       SliceMosaic = true;
       }
     else
       {
-      std::cout << "Siemens split format\n";
+      std::cout << "Siemens split format" << std::endl;
       SliceMosaic = false;
       }
     }
   else if ( ( vendor.find("PHILIPS") != std::string::npos ) )
     {
     // for philips data
-    std::cout << "Image acquired using a Philips scanner\n";
+    std::cout << "Image acquired using a Philips scanner" << std::endl;
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(PhilipsDictBValue);
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(PhilipsDictDiffusionDirection);
     gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(PhilipsDictDiffusionDirectionRL);
@@ -502,7 +535,7 @@ int main(int argc, char* argv[])
     }
   else
     {
-    std::cerr << "Unrecognized vendor.\n" << std::endl;
+    std::cerr << "Unrecognized vendor." << std::endl;
     }
 
 
@@ -529,13 +562,13 @@ int main(int argc, char* argv[])
   // 1-A) Read the input dicom headers
   std::vector<gdcm::File *> allHeaders( filenames.size() );
   for (unsigned int k = 0; k < filenames.size(); k ++)
-  {
+    {
     allHeaders[k] = new gdcm::File;
     allHeaders[k]->SetFileName( filenames[k] );
     allHeaders[k]->SetMaxSizeLoadEntry( 65535 );
     allHeaders[k]->SetLoadMode( gdcm::LD_NOSEQ );
     allHeaders[k]->Load();
-  }
+    }
 
   /////////////////////////////////////////////////////
   // 2) Analyze the DICOM header to determine the
@@ -545,6 +578,38 @@ int main(int argc, char* argv[])
 
   // load in all public tags
   std::string tag;
+
+  // Get the transfer syntax telling us how binary data is encoded
+  // in the image
+  std::string transferSyntaxName = allHeaders[0]->GetTransferSyntaxName();
+  std::transform(transferSyntaxName.begin(), transferSyntaxName.end(), transferSyntaxName.begin(), ::tolower);
+  bool swapByteOrder = false;
+
+  if ( transferSyntaxName.find("acr-nema") != std::string::npos ) 
+    {
+    std::cout << "WARNING: Unknown transfer syntax, assuming little endian.  This may cause strange results, " <<
+      "such as bizarre b-values and directions." << std::endl;
+    transferSyntaxName = "little";
+    }
+  if ( ( ( transferSyntaxName.find("little") != std::string::npos ) && isSystemBigEndian() ) ||
+    ( ( transferSyntaxName.find("big") != std::string::npos ) && !isSystemBigEndian() ) )
+    {
+    // Need to swap binary byte order
+    swapByteOrder = true;
+    }
+  else if ( ( ( transferSyntaxName.find("big") != std::string::npos ) && isSystemBigEndian() )
+    || ( ( transferSyntaxName.find("little") != std::string::npos ) && !isSystemBigEndian()) )
+    {
+    // File and system match, do nothing.
+    swapByteOrder = false;
+    }
+  else
+    {
+    // Something is screwed up, error out
+    std::cout << "ERROR: Unknown transfer syntax found " << transferSyntaxName << std::endl;
+    std::cout << "isSystemBigEndian=" << isSystemBigEndian() << std::endl;
+    return EXIT_FAILURE;
+    }
 
   // number of rows is the number of pixels in the second dimension
   ExtractBinValEntry( allHeaders[0], 0x0028, 0x0010, tag );
@@ -573,16 +638,16 @@ int main(int argc, char* argv[])
   sliceLocationIndicator.resize( nSlice );
   for (unsigned int k = 0; k < nSlice; k++)
     {
-      ExtractBinValEntry( allHeaders[k], 0x0020, 0x0032, tag );
-      sliceLocationStrings.push_back( tag );
-      sliceLocations[tag]++;
+    ExtractBinValEntry( allHeaders[k], 0x0020, 0x0032, tag );
+    sliceLocationStrings.push_back( tag );
+    sliceLocations[tag]++;
     }
 
   for (unsigned int k = 0; k < nSlice; k++)
     {
-      std::map<std::string,int>::iterator it = sliceLocations.find( sliceLocationStrings[k] );
-      sliceLocationIndicator[k] = distance( sliceLocations.begin(), it );
-      // std::cout << k << ": " << filenames[k] << " -- " << sliceLocationStrings[k] << " -- " << sliceLocationIndicator[k] << std::endl;
+    std::map<std::string,int>::iterator it = sliceLocations.find( sliceLocationStrings[k] );
+    sliceLocationIndicator[k] = distance( sliceLocations.begin(), it );
+    // std::cout << k << ": " << filenames[k] << " -- " << sliceLocationStrings[k] << " -- " << sliceLocationIndicator[k] << std::endl;
     }
 
   unsigned int numberOfSlicesPerVolume=sliceLocations.size();
@@ -590,51 +655,51 @@ int main(int argc, char* argv[])
 
   if ( nSlice >= 2)
     {
-      if (sliceLocationIndicator[0] == sliceLocationIndicator[1])
-        {
-          std::cout << "Dicom images are ordered in a slice interleaving way.\n";
-          // reorder slices into a volume interleaving manner
-          int Ns = numberOfSlicesPerVolume;
-          int Nv = nSlice / Ns; // do we need to do error check here
+    if (sliceLocationIndicator[0] == sliceLocationIndicator[1])
+      {
+      std::cout << "Dicom images are ordered in a slice interleaving way." << std::endl;
+      // reorder slices into a volume interleaving manner
+      int Ns = numberOfSlicesPerVolume;
+      int Nv = nSlice / Ns; // do we need to do error check here
 
-          VolumeType::RegionType R = reader->GetOutput()->GetLargestPossibleRegion();
-          R.SetSize(2,1);
-          std::vector<VolumeType::PixelType> v(nSlice);
-          std::vector<VolumeType::PixelType> w(nSlice);
-          
-          itk::ImageRegionIteratorWithIndex<VolumeType> I( reader->GetOutput(), R );
-          for (I.GoToBegin(); !I.IsAtEnd(); ++I)
+      VolumeType::RegionType R = reader->GetOutput()->GetLargestPossibleRegion();
+      R.SetSize(2,1);
+      std::vector<VolumeType::PixelType> v(nSlice);
+      std::vector<VolumeType::PixelType> w(nSlice);
+
+      itk::ImageRegionIteratorWithIndex<VolumeType> I( reader->GetOutput(), R );
+      for (I.GoToBegin(); !I.IsAtEnd(); ++I)
+        {
+        VolumeType::IndexType idx = I.GetIndex();
+
+        // extract all values in one "column"
+        for (unsigned int k = 0; k < nSlice; k++)
+          {
+          idx[2] = k;
+          v[k] = reader->GetOutput()->GetPixel( idx );
+          }
+
+        // permute
+        for (int k = 0; k < Nv; k++)
+          {
+          for (int m = 0; m < Ns; m++)
             {
-              VolumeType::IndexType idx = I.GetIndex();
-              
-              // extract all values in one "column"
-              for (unsigned int k = 0; k < nSlice; k++)
-                {
-                  idx[2] = k;
-                  v[k] = reader->GetOutput()->GetPixel( idx );
-                }
-
-              // permute
-              for (int k = 0; k < Nv; k++)
-                {
-                  for (int m = 0; m < Ns; m++)
-                    {
-                      w[k*Ns+m] = v[m*Nv+k];
-                    }
-                }
-
-              // put things back in order
-              for (unsigned int k = 0; k < nSlice; k++)
-                {
-                  idx[2] = k;
-                  reader->GetOutput()->SetPixel( idx, w[k] );
-                }              
+            w[k*Ns+m] = v[m*Nv+k];
             }
+          }
+
+        // put things back in order
+        for (unsigned int k = 0; k < nSlice; k++)
+          {
+          idx[2] = k;
+          reader->GetOutput()->SetPixel( idx, w[k] );
+          }
         }
-      else
-        {
-          std::cout << "Dicom images are ordered in a volume interleaving way.\n";
-        }
+      }
+    else
+      {
+      std::cout << "Dicom images are ordered in a volume interleaving way." << std::endl;
+      }
     }
 
   itk::Matrix<double,3,3> MeasurementFrame;
@@ -694,14 +759,14 @@ int main(int argc, char* argv[])
       MeasurementFrame.SetIdentity();
       }
     // has the measurement frame represented as an identity matrix.
-      ExtractBinValEntry( allHeaders[0], 0x0020, 0x0032, tag );
-      float x0, y0, z0;
+    ExtractBinValEntry( allHeaders[0], 0x0020, 0x0032, tag );
+    float x0, y0, z0;
     sscanf( tag.c_str(), "%f\\%f\\%f", &x0, &y0, &z0 );
     std::cout << "Slice 0: " << tag << std::endl;
 
     // assume volume interleaving, i.e. the second dicom file stores
     // the second slice in the same volume as the first dicom file
-      ExtractBinValEntry( allHeaders[1], 0x0020, 0x0032, tag );
+    ExtractBinValEntry( allHeaders[1], 0x0020, 0x0032, tag );
     float x1, y1, z1;
     sscanf( tag.c_str(), "%f\\%f\\%f", &x1, &y1, &z1 );
     std::cout << "Slice 1: " << tag << std::endl;
@@ -729,8 +794,8 @@ int main(int argc, char* argv[])
     int nItems = ExtractSiemensDiffusionInformation(tag, "SliceNormalVector", valueArray);
     if (nItems != 3)  // did not find enough information
       {
-      std::cout << "Warning: Cannot find complete information on SliceNormalVector in 0029|1010\n";
-      std::cout << "         Slice order may be wrong.\n";
+      std::cout << "Warning: Cannot find complete information on SliceNormalVector in 0029|1010" << std::endl;
+      std::cout << "         Slice order may be wrong." << std::endl;
       }
     else if (valueArray[2] > 0)
       {
@@ -742,8 +807,8 @@ int main(int argc, char* argv[])
     nItems = ExtractSiemensDiffusionInformation(tag, "NumberOfImagesInMosaic", valueArray);
     if (nItems == 0)  // did not find enough information
       {
-      std::cout << "Warning: Cannot find complete information on NumberOfImagesInMosaic in 0029|1010\n";
-      std::cout << "         Resulting image may contain empty slices.\n";
+      std::cout << "Warning: Cannot find complete information on NumberOfImagesInMosaic in 0029|1010" << std:: endl;
+      std::cout << "         Resulting image may contain empty slices." << std::endl;
       }
     else
       {
@@ -751,9 +816,9 @@ int main(int argc, char* argv[])
       mMosaic = static_cast<int> (ceil(sqrt(valueArray[0])));
       nMosaic = mMosaic;
       }
-    std::cout << "Mosaic in " << mMosaic << " X " << nMosaic << " blocks (total number of blocks = " << valueArray[0] << ").\n";
+    std::cout << "Mosaic in " << mMosaic << " X " << nMosaic << " blocks (total number of blocks = " << valueArray[0] << ")." << std::endl;
     }
-  else if ( vendor.find("PHILIPS") != std::string::npos 
+  else if ( vendor.find("PHILIPS") != std::string::npos
     && nSlice > 1) // so this is not a philips multi-frame single dicom file
     {
     MeasurementFrame=LPSDirCos; //Philips oblique scans list the gradients with respect to the ImagePatientOrientation.
@@ -782,11 +847,11 @@ int main(int argc, char* argv[])
       SliceOrderIS = false;
       }
     }
-  else if ( vendor.find("PHILIPS") != std::string::npos 
+  else if ( vendor.find("PHILIPS") != std::string::npos
     && nSlice == 1)
-  {
-    // special handling for philips multi-frame dicom later. 
-  }
+    {
+    // special handling for philips multi-frame dicom later.
+    }
   else
     {
     std::cout << " Warning: vendor type not valid" << std::endl;
@@ -797,11 +862,11 @@ int main(int argc, char* argv[])
 
   if ( SliceOrderIS )
     {
-    std::cout << "Slice order is IS\n";
+    std::cout << "Slice order is IS" << std::endl;
     }
   else
     {
-    std::cout << "Slice order is SI\n";
+    std::cout << "Slice order is SI" << std::endl;
     (NRRDSpaceDirection[0][2]) = -(NRRDSpaceDirection[0][2]);
     (NRRDSpaceDirection[1][2]) = -(NRRDSpaceDirection[1][2]);
     (NRRDSpaceDirection[2][2]) = -(NRRDSpaceDirection[2][2]);
@@ -823,6 +888,7 @@ int main(int argc, char* argv[])
   // UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem is only of debug purposes.
   std::vector< vnl_vector_fixed<double, 3> > DiffusionVectors;
   std::vector< vnl_vector_fixed<double, 3> > UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem;
+  std::vector< unsigned int>  bad_gradient_indices;
   ////////////////////////////////////////////////////////////
   // vendor dependent tags.
   // read in gradient vectors and determin nBaseline and nMeasurement
@@ -870,7 +936,7 @@ int main(int argc, char* argv[])
         DiffusionVectors.push_back(vect3d);
         }
 
-      std::cout << "B-value: " << b << 
+      std::cout << "B-value: " << b <<
         "; diffusion direction: " << vect3d[0] << ", " << vect3d[1] << ", " << vect3d[2] << std::endl;
       }
     }
@@ -881,6 +947,7 @@ int main(int argc, char* argv[])
     std::cout << "Number of Volumes: " << nVolume << std::endl;
     std::cout << "Number of Slices in each volume: " << nSliceInVolume << std::endl;
 
+    std::string tmpString = "";
     //NOTE:  Philips interleaves the directions, so the all gradient directions can be
     //determined in the first "nVolume" slices which represents the first slice from each
     //of the gradient volumes.
@@ -892,30 +959,40 @@ int main(int argc, char* argv[])
       bool B0FieldFound = false;
       float b=0.0;
       if (useSuppplement49Definitions == true )
-      {
+        {
         B0FieldFound=ExtractBinValEntry( allHeaders[k], 0x0018, 0x9087, tag );;
         double temp_b=0.0;
-        memcpy(&temp_b,tag.c_str(),8);//This seems very strange to me, it should have been a binary value.
+        tmpString = endianAwareSwap(tag,swapByteOrder);
+        //memcpy(&temp_b,tag.c_str(),8);//This seems very strange to me, it should have been a binary value.
+        memcpy(&temp_b,tmpString.c_str(),8);//Since we did the endianAwareSwap memcpy is endian safe
         b=temp_b;
-      }
+        }
       else
-      {
+        {
         B0FieldFound=ExtractBinValEntry( allHeaders[k], 0x2001, 0x1003, tag );
         //HJJ -- VAM -- HACK:  This indicates that this field is store in binaryj format.
         //it seems that this would not work consistently across differnt endedness machines.
-        memcpy(&b, tag.c_str(), 4);
+        //std::cout << "tag=" << tag << std::endl;
+        tmpString = endianAwareSwap(tag,swapByteOrder);
+        //memcpy(&b, tag.c_str(), 4);
+        memcpy(&b, tmpString.c_str(), 4);
+        //endianAwareMemCpy(&b, tag.c_str(), 4,swapByteOrder);
+        //std::cout << "b=" << b << std::endl;
+
         ExtractBinValEntry( allHeaders[k], 0x2001, 0x1004, tag );
+
         if((tag.find("I") != std::string::npos) && (b != 0) )
-        {
+          {
           DiffusionDirectionality="ISOTROPIC";
-        }
+          }
         // char const * const temp=tag.c_str();
-      }
+        }
 
       vnl_vector_fixed<double, 3> vect3d;
       vect3d.fill( 0 );
-      //std::cout << "HACK: " << DiffusionDirectionality << "  " <<  k << std::endl;
-      //std::cout << "HACK: " << B0FieldFound << " " << b << " " << DiffusionDirectionality << std::endl;
+      //std::cout << "HACK: " << "DiffusionDirectionality=" << DiffusionDirectionality << ", k= " <<  k << std::endl;
+      //std::cout << "HACK: " << "B0FieldFound=" << B0FieldFound << ", b=" << b << ", DiffusionDirectionality=" << DiffusionDirectionality << std::endl;
+      
       if ( DiffusionDirectionality.find("ISOTROPIC") != std::string::npos )
         { //Deal with images that are to be ignored
         //std::cout << " SKIPPING ISOTROPIC Diffusion. " << std::endl;
@@ -925,7 +1002,7 @@ int main(int argc, char* argv[])
         useVolume.push_back(0);
         continue;
         }
-      else if (( !B0FieldFound || b == 0 ) || ( DiffusionDirectionality.find("NONE") != std::string::npos )   )
+      else if (( !B0FieldFound || b == 0 ) || ( DiffusionDirectionality.find("NONE") != std::string::npos ) || ( DiffusionDirectionality == ""  )  )
         { //Deal with b0 images
         bValues.push_back(b);
         UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
@@ -933,10 +1010,9 @@ int main(int argc, char* argv[])
         useVolume.push_back(1);
         continue;
         }
-      else
+      else if (DiffusionDirectionality.find("DIRECTIONAL") != std::string::npos)
         { //Deal with gradient direction images
         bValues.push_back(b);
-        assert(DiffusionDirectionality.find("DIRECTIONAL") != std::string::npos);
         //std::cout << "HACK: GRADIENT IMAGEFILE: " << k << " of " << filenames.size() << " " << filenames[k] << std::endl;
         useVolume.push_back(1);
         tag.clear();
@@ -952,7 +1028,7 @@ int main(int argc, char* argv[])
             if(DiffusionSeqEntry == NULL)
               {
               std::cout << "ERROR:  0018|9089 could not be found in Seq Entry 0018|9076" << std::endl;
-              exit(-1);
+              return EXIT_FAILURE;
               }
             else
               {
@@ -960,7 +1036,7 @@ int main(int argc, char* argv[])
               if( n == 0 )
                 {
                 std::cout << "ERROR:  Sequence entry 0018|9076 has no items." << std::endl;
-                exit(-1);
+                return EXIT_FAILURE;
                 }
               else
                 {
@@ -971,7 +1047,7 @@ int main(int argc, char* argv[])
                   if( item1 == NULL )
                     {
                     std::cout << "ERROR:  First item not found for 0018|9076." << std::endl;
-                    exit(-1);
+                    return EXIT_FAILURE;
                     }
                   else
                     {
@@ -987,7 +1063,7 @@ int main(int argc, char* argv[])
                       if(entry ==NULL)
                         {
                         std::cout << "ERROR:  DocEntry for 0018|9089 is not the correct type." << std::endl;
-                        exit(-1);
+                        return EXIT_FAILURE;
                         }
                       else
                         {
@@ -1005,7 +1081,7 @@ int main(int argc, char* argv[])
                 if(found0018_9089 == false)
                   {
                   std::cout << "ERROR:  0018|9076 sequence not found." << std::endl;
-                  exit(-1);
+                  return EXIT_FAILURE;
                   }
                 }
               }
@@ -1021,19 +1097,25 @@ int main(int argc, char* argv[])
           float value;
           /*const bool b0exist =*/
           ExtractBinValEntry( allHeaders[k], 0x2005, 0x10b0, tag );
-          memcpy(&value, tag.c_str(), 4); //HACK:  VAM -- this does not seem to be endedness compliant.
+          tmpString = endianAwareSwap(tag,swapByteOrder);
+          //memcpy(&value, tag.c_str(), 4); //HACK:  VAM -- this does not seem to be endedness compliant.
+          memcpy(&value, tmpString.c_str(), 4); //Since we used endianAwareSwap this is endian compliant
           vect3d[0] = value;
           tag.clear();
 
           /*const bool b1exist =*/
           ExtractBinValEntry( allHeaders[k], 0x2005, 0x10b1, tag );
-          memcpy(&value, tag.c_str(), 4); //HACK:  VAM -- this does not seem to be endedness compliant.
+          tmpString = endianAwareSwap(tag,swapByteOrder);
+          //memcpy(&value, tag.c_str(), 4); //HACK:  VAM -- this does not seem to be endedness compliant.
+          memcpy(&value, tmpString.c_str(), 4); //Since we used endianAwareSwap this is endian complian
           vect3d[1] = value;
           tag.clear();
 
           /*const bool b2exist =*/
           ExtractBinValEntry( allHeaders[k], 0x2005, 0x10b2, tag );
-          memcpy(&value, tag.c_str(), 4); //HACK:  VAM -- this does not seem to be endedness compliant.
+          tmpString = endianAwareSwap(tag,swapByteOrder);
+          //memcpy(&value, tag.c_str(), 4); //HACK:  VAM -- this does not seem to be endedness compliant.
+          memcpy(&value, tmpString.c_str(), 4); //Since we used endianAwareSwap this is endian complian
           vect3d[2] = value;
           }
 
@@ -1041,8 +1123,13 @@ int main(int argc, char* argv[])
         // vect3d.normalize();
         DiffusionVectors.push_back(vect3d);
         }
+      else // Have no idea why we'd be here so error out
+        {
+        std::cout << "ERROR: DiffusionDirectionality was " << DiffusionDirectionality << "  Don't know what to do with that..." << std::endl;
+        return EXIT_FAILURE;
+        }
 
-      std::cout << "DiffusionDirectionality: " << DiffusionDirectionality  << " :B-Value " << b << " :DiffusionOrientation " << vect3d << " :Filename " << filenames[k] << std::endl;
+      std::cout << "ERROR: DiffusionDirectionality: " << DiffusionDirectionality  << " :B-Value " << b << " :DiffusionOrientation " << vect3d << " :Filename " << filenames[k] << std::endl;
       }
     }
   else if ( vendor.find("SIEMENS") != std::string::npos )
@@ -1061,28 +1148,28 @@ int main(int argc, char* argv[])
       }
     else
       {
-      std::cout << "Data in Siemens Mosaic Format\n";
+      std::cout << "Data in Siemens Mosaic Format" << std::endl;
       nVolume = nSlice;
       std::cout << "Number of Volume: " << nVolume << std::endl;
       std::cout << "Number of Slices in each volume: " << nSliceInVolume << std::endl;
       nStride = 1;
       }
 
+    // JTM - Determine bvalues from all gradients
+    double max_bValue = 0.0;
+    vnl_vector_fixed<double, 3> vect3d;
+
     for (unsigned int k = 0; k < nSlice; k += nStride )
       {
-
       ExtractBinValEntry( allHeaders[k], 0x0029, 0x1010, tag );
 
       // parse B_value from 0029,1010 tag
       std::vector<double> valueArray(0);
-      vnl_vector_fixed<double, 3> vect3d;
       int nItems = ExtractSiemensDiffusionInformation(tag, "B_value", valueArray);
-      std::cout << "Number of Items for Bvalue : " << nItems << std::endl;
-      std::cout << "Bvalue : " << valueArray[0] << std::endl;
 
       if (nItems != 1)   // did not find enough information
         {
-        std::cout << "Warning: Cannot find complete information on B_value in 0029|1010\n";
+        std::cout << "Warning: Cannot find complete information on B_value in 0029|1010" << std::endl;
         bValues.push_back( 0.0 );
         vect3d.fill( 0.0 );
         UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
@@ -1091,38 +1178,166 @@ int main(int argc, char* argv[])
         }
       else
         {
+        // JTM - Patch from UNC: fill the nhdr header with the gradient directions and 
+        // bvalues computed out of the BMatrix
+        valueArray.resize(0);
+        int nItems = ExtractSiemensDiffusionInformation(tag, "B_matrix", valueArray);
+        vnl_matrix_fixed<double, 3, 3> bMatrix;
+
+        if ((useBMatrixGradientDirections) && (nItems == 6))
+          {
+          std::cout << "=============================================" << std::endl;
+          std::cout << "BMatrix calculations..." << std::endl;
+          // UNC comments: We get the value of the b-value tag in the header. 
+          // We won't use it as is, but just to locate the B0 images.
+          // This check must be added, otherwise the bmatrix of the B0 is not
+          // read properly (it's not an actual field in the DICOM header of the B0).
+          std::vector<double> bval_tmp(0);
+          bool b0_image = false;
+
+          // UNC comments: Get the bvalue
+          nItems = ExtractSiemensDiffusionInformation(tag, "B_value", bval_tmp);
+          if (bval_tmp[0] == 0)
+            {
+            b0_image = true;
+            }
+
+          // UNC comments: The principal eigenvector of the bmatrix is to be extracted as
+          // it's the gradient direction and trace of the matrix is the b-value
+
+          double bvalue = 0;
+
+          // UNC comments: Fill out the 3x3 bmatrix with the 6 components read from the 
+          // DICOM header.
+          bMatrix[0][0] = valueArray[0];
+          bMatrix[0][1] = valueArray[1];
+          bMatrix[0][2] = valueArray[2];
+          bMatrix[1][1] = valueArray[3];
+          bMatrix[1][2] = valueArray[4];
+          bMatrix[2][2] = valueArray[5];
+          bMatrix[1][0] = bMatrix[0][1];
+          bMatrix[2][0] = bMatrix[0][2];
+          bMatrix[2][1] = bMatrix[1][2];
+
+          // UNC comments: Computing the decomposition
+          vnl_svd<double> svd(bMatrix);
+
+          // UNC comments: Extracting the principal eigenvector i.e. the gradient direction
+          vect3d[0] = svd.U(0,0);
+          vect3d[1] = svd.U(1,0);
+          vect3d[2] = svd.U(2,0);
+
+          std::cout << "BMatrix: " << std::endl;
+          std::cout << bMatrix[0][0] << std::endl;
+          std::cout << bMatrix[0][1] << "\t" << bMatrix[1][1] << std::endl;
+          std::cout << bMatrix[0][2] << "\t" << bMatrix[1][2] << "\t" << bMatrix[2][2] << std::endl;
+
+          // UNC comments: The b-value si the trace of the bmatrix
+          bvalue = bMatrix[0][0] + bMatrix[1][1] + bMatrix[2][2];
+          std::cout << bvalue << std::endl;
+          // UNC comments: Even if the bmatrix is null, the svd decomposition set the 1st eigenvector
+          // to (1,0,0). So we force the gradient direction to 0 if the bvalue is null
+          if((b0_image == true) || (bvalue == 0))
+            {
+            std::cout << "B0 image detected: gradient direction and bvalue forced to 0" << std::endl;
+            vect3d[0] = 0;
+            vect3d[1] = 0;
+            vect3d[2] = 0;
+            std::cout << "Gradient coordinates: " << vect3d[0] << " " << vect3d[1] << " " << vect3d[2] << std::endl;
+            bValues.push_back(0);
+            }
+          else
+            {
+            std::cout << "Gradient coordinates: " << vect3d[0] << " " << vect3d[1] << " " << vect3d[2] << std::endl;
+            bValues.push_back(bvalue);
+            }
+          DiffusionVectors.push_back(vect3d);
+          }
+        valueArray.resize(0);
+        ExtractSiemensDiffusionInformation(tag, "B_value", valueArray);
         bValues.push_back( valueArray[0] );
         }
 
-      // parse DiffusionGradientDirection from 0029,1010 tag
-      valueArray.resize(0);
-      nItems = ExtractSiemensDiffusionInformation(tag, "DiffusionGradientDirection", valueArray);
-      std::cout << "Number of Directions : " << nItems << std::endl;
-      std::cout << "   Directions 0: " << valueArray[0] << std::endl;
-      std::cout << "   Directions 1: " << valueArray[1] << std::endl;
-      std::cout << "   Directions 2: " << valueArray[2] << std::endl;
-      if (nItems != 3)  // did not find enough information
+      if (bValues[k] > max_bValue)
         {
-        std::cout << "Warning: Cannot find complete information on DiffusionGradientDirection in 0029|1010\n";
-        vect3d.fill( 0 );
-        UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
-        DiffusionVectors.push_back(vect3d);
+        max_bValue = bValues[k];
         }
-      else
+      }
+
+
+    // JTM - Create gradient scaling factor, which is determined by the largest b 
+    // value in the scan
+    std::vector<double> gradient_scaling_factor;
+
+    if(useBMatrixGradientDirections == false)
+      {
+      for (unsigned int k = 0; k < nSlice; k+=nStride)
+        {    
+        double scaling_factor = bValues[k] / max_bValue;
+        gradient_scaling_factor.push_back(scaling_factor); 
+        }
+
+      for (unsigned int k = 0; k < nSlice; k += nStride )
         {
-        vect3d[0] = valueArray[0];
-        vect3d[1] = valueArray[1];
-        vect3d[2] = valueArray[2];
-        UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
-        // vect3d.normalize();
-        DiffusionVectors.push_back(vect3d);
-        int p = bValues.size();
-        std::cout << "Image#: " << k << " BV: " << bValues[p-1] << " GD: " << DiffusionVectors[p-1] << std::endl;
+        std::cout << "=======================================" << std::endl << std::endl;
+
+        ExtractBinValEntry( allHeaders[k], 0x0029, 0x1010, tag );
+
+        std::vector<double> valueArray;
+        vnl_vector_fixed<double, 3> vect3d;
+
+        // parse DiffusionGradientDirection from 0029,1010 tag
+        valueArray.resize(0);
+        int nItems = ExtractSiemensDiffusionInformation(tag, "DiffusionGradientDirection", valueArray);
+        std::cout << "Number of Directions : " << nItems << std::endl;
+        std::cout << "   Directions 0: " << valueArray[0] << std::endl;
+        std::cout << "   Directions 1: " << valueArray[1] << std::endl;
+        std::cout << "   Directions 2: " << valueArray[2] << std::endl;
+        if (nItems != 3)  // did not find enough information
+          {
+          std::cout << "Warning: Cannot find complete information on DiffusionGradientDirection in 0029|1010" << std::endl;
+          vect3d.fill( 0 );
+          UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
+          DiffusionVectors.push_back(vect3d);
+          }
+        else
+          {
+          double DiffusionVector_magnitude;
+          double DiffusionVector_magnitude_difference = 0.0;
+
+          vect3d[0] = valueArray[0];
+          vect3d[1] = valueArray[1];
+          vect3d[2] = valueArray[2];
+
+          DiffusionVector_magnitude = sqrt((vect3d[0]*vect3d[0]) + (vect3d[1]*vect3d[1]) + (vect3d[2]*vect3d[2]));
+
+          if (gradient_scaling_factor[k] != 0.0)
+            {          
+            DiffusionVector_magnitude_difference = fabs(1.0 - (DiffusionVector_magnitude / gradient_scaling_factor[k]));
+            std::cout << "DiffusionVector_magnitude_difference " << DiffusionVector_magnitude_difference << std::endl;
+            std::cout << "gradient_scaling_factor " << gradient_scaling_factor[k] << std::endl;
+            std::cout << "DiffusionVector_magnitude " << DiffusionVector_magnitude << std::endl;    
+            if ((DiffusionVector_magnitude > 0.0) && (DiffusionVector_magnitude_difference > smallGradientThreshold) && (!useBMatrixGradientDirections))
+              {
+              std::cout << "ERROR: Gradient vector with unreasonably small magnitude exists." << std::endl;
+              std::cout << "Gradient #" << k << " with magnitude " << DiffusionVector_magnitude << std::endl;
+              //std::cout << "Please set smallGradientFix flag to either Rescale and/or Remove (please separate with comma) OR useBMatrixGradientDirections to calculate gradient directions from the scanner B Matrix to alleviate this problem." << std::endl;
+              std::cout << "Please set useBMatrixGradientDirections to calculate gradient directions from the scanner B Matrix to alleviate this problem." << std::endl;
+              return EXIT_FAILURE;
+              }  
+            }  
+
+          UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
+          // vect3d.normalize();
+          DiffusionVectors.push_back(vect3d);
+          int p = bValues.size();
+          std::cout << "Image#: " << k << " BV: " << bValues[p-1] << " GD: " << DiffusionVectors[k] << std::endl;
+          }
         }
       }
     }
   else if (vendor.find("PHILIPS") != std::string::npos && nSlice == 1) // multi-frame file, everything is inside
-  {
+    {
 
     std::map<std::vector<double>, double> gradientDirectionAndBValue;
     ignorePhilipsSliceMultiFrame.clear();
@@ -1142,41 +1357,41 @@ int main(int argc, char* argv[])
     bool visited00280011 = false;
     bool visited00180088 = false;
     while(d)
-    {
-      if (d->GetKey() == "0028|0010")
       {
+      if (d->GetKey() == "0028|0010")
+        {
         visited00280010 = true;
         gdcm::ValEntry* v = dynamic_cast<gdcm::ValEntry*> (d);
         d->Print( std::cout );
         nRows = atoi(v->GetValue().c_str());
-      }
+        }
       else if (d->GetKey() == "0028|0011")
-      {
+        {
         visited00280011 = true;
         gdcm::ValEntry* v = dynamic_cast<gdcm::ValEntry*> (d);
         d->Print( std::cout );
         nCols = atoi(v->GetValue().c_str());
-      }
+        }
       else if (d->GetKey() == "0018|0088")
-      {
+        {
         visited00180088 = true;
         gdcm::ValEntry* v = dynamic_cast<gdcm::ValEntry*> (d);
         d->Print( std::cout );
         sliceSpacing = atof(v->GetValue().c_str());
-      }
+        }
       else if (d->GetKey() == "5200|9230" && visited00180088 && visited00280011 && visited00280010)
-      {
+        {
         break;
-      }
+        }
       d = header->GetNextEntry();
-    }
+      }
 
     gdcm::SeqEntry* sq = dynamic_cast<gdcm::SeqEntry*> (d);
     int nItems = sq->GetNumberOfSQItems();
     std::cout << "Total number of slices: " << nItems << std::endl;
     gdcm::SQItem * sqi = sq->GetFirstSQItem();
 
-    // figure out 
+    // figure out
     // 1. size
     // 2. space directions
     // 3. space origin
@@ -1184,14 +1399,14 @@ int main(int argc, char* argv[])
     // 5. slice order (SI or IS)
     int k = 0;
     while (sqi)
-    {
+      {
 
       gdcm::SeqEntry* volEntry;
       gdcm::SQItem * innerSqi;
-      gdcm::ValEntry* valEntry; 
+      gdcm::ValEntry* valEntry;
 
       if ( k == 0 )
-      {
+        {
         volEntry = dynamic_cast<gdcm::SeqEntry*>( sqi->GetDocEntry( 0x0020, 0x9116) );
         innerSqi = volEntry->GetFirstSQItem();
         valEntry = dynamic_cast<gdcm::ValEntry*>( innerSqi->GetDocEntry( 0x0020, 0x0037) );
@@ -1207,16 +1422,16 @@ int main(int argc, char* argv[])
         innerSqi = volEntry->GetFirstSQItem();
         valEntry = dynamic_cast<gdcm::ValEntry*>( innerSqi->GetDocEntry( 0x0028, 0x0030) );
         sscanf( valEntry->GetValue().c_str(), "%f\\%f", &xRes, &yRes );
-      }
+        }
 
       volEntry = dynamic_cast<gdcm::SeqEntry*>( sqi->GetDocEntry( 0x0020, 0x9113) );
       innerSqi = volEntry->GetFirstSQItem();
       valEntry = dynamic_cast<gdcm::ValEntry*>( innerSqi->GetDocEntry( 0x0020, 0x0032) );
       sliceLocations[valEntry->GetValue()] ++;
       if ( k == 0 )
-      {
+        {
         sscanf( valEntry->GetValue().c_str(), "%lf\\%lf\\%lf",  &(ImageOrigin[0]), &(ImageOrigin[1]), &(ImageOrigin[2]) );
-      }
+        }
 
       // figure out diffusion directions
       volEntry = dynamic_cast<gdcm::SeqEntry*>( sqi->GetDocEntry( 0x0018, 0x9117) );
@@ -1225,12 +1440,12 @@ int main(int argc, char* argv[])
       std::string dirValue = valEntry->GetValue();
 
       if ( dirValue.find("ISO") != std::string::npos )
-      {
+        {
         useVolume.push_back(0);
         ignorePhilipsSliceMultiFrame.push_back( k );
-      }
+        }
       else if (dirValue.find("NONE") != std::string::npos)
-      {
+        {
         useVolume.push_back(1);
         std::vector<double> v(3);
         v[0] = 0; v[1] = 0; v[2] = 0;
@@ -1239,17 +1454,17 @@ int main(int argc, char* argv[])
         unsigned int nNew = gradientDirectionAndBValue.size();
 
         if (nOld != nNew)
-        {
+          {
           vnl_vector_fixed<double, 3> vect3d;
           vect3d.fill( 0 );
           DiffusionVectors.push_back( vect3d );
           UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
           bValues.push_back( 0 );
 
+          }
         }
-      }
       else
-      {
+        {
         useVolume.push_back(1);
         valEntry = dynamic_cast<gdcm::ValEntry*>( innerSqi->GetDocEntry( 0x0018, 0x9087) );
         std::string dwbValue = valEntry->GetValue();
@@ -1267,7 +1482,7 @@ int main(int argc, char* argv[])
         unsigned int nNew = gradientDirectionAndBValue.size();
 
         if (nOld != nNew)
-        {
+          {
           vnl_vector_fixed<double, 3> vect3d;
           vect3d[0] = v[0]; vect3d[1] = v[1]; vect3d[2] = v[2];
           UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
@@ -1275,15 +1490,15 @@ int main(int argc, char* argv[])
           DiffusionVectors.push_back( vect3d );
 
           bValues.push_back( *(double*)(dwbValue.c_str()) );
+          }
         }
-      }
 
       sqi = sq->GetNextSQItem();
       k ++;
-    }
+      }
     numberOfSlicesPerVolume=sliceLocations.size();
-    std::cout << "LPS Matrix: \n" << LPSDirCos << std::endl;
-    std::cout << "Volume Origin: \n" << ImageOrigin[0] << "," << ImageOrigin[1] << ","  << ImageOrigin[2] << "," << std::endl;
+    std::cout << "LPS Matrix: " << std::endl << LPSDirCos << std::endl;
+    std::cout << "Volume Origin: " << std::endl << ImageOrigin[0] << "," << ImageOrigin[1] << ","  << ImageOrigin[2] << "," << std::endl;
     std::cout << "Number of slices per volume: " << numberOfSlicesPerVolume << std::endl;
     std::cout << "Slice matrix size: " << nRows << " X " << nCols << std::endl;
     std::cout << "Image resolution: " << xRes << ", " << yRes << ", " << sliceSpacing << std::endl;
@@ -1300,19 +1515,25 @@ int main(int argc, char* argv[])
     nVolume = nItems/nSliceInVolume;
     nIgnoreVolume = ignorePhilipsSliceMultiFrame.size()/nSliceInVolume;
 
-    for( unsigned int k2 = 0; k2 < bValues.size(); k2++ ) 
-    {
+    for( unsigned int k2 = 0; k2 < bValues.size(); k2++ )
+      {
       std::cout << k2 << ": direction: " <<  DiffusionVectors[k2][0] << ", " << DiffusionVectors[k2][1] << ", " << DiffusionVectors[k2][2] << ", b-value: " << bValues[k2] << std::endl;
-    }
+      }
 
-  }
+    delete(header);
+    }
   else
     {
     std::cout << "ERROR: Unknown scanner vendor " << vendor << std::endl;
     std::cout << "       this dti file format is properly handled." << std::endl;
-    exit(-1);
+    return EXIT_FAILURE;
     }
 
+  // Delete allHeaders here?
+  for (unsigned int k = 0; k < filenames.size(); k ++)
+    {
+    delete (allHeaders[k]);
+    }
 
   ///////////////////////////////////////////////
   // write volumes in raw format
@@ -1320,19 +1541,19 @@ int main(int argc, char* argv[])
   itk::RawImageIO<PixelValueType, 3>::Pointer rawIO = itk::RawImageIO<PixelValueType, 3>::New();
   //std::string rawFileName = outputDir + "/" + dataname;
   if ( !NrrdFormat )
-    { 
-      rawWriter->SetFileName( dataname.c_str() );
-      rawWriter->SetImageIO( rawIO );
-      rawIO->SetByteOrderToLittleEndian();
+    {
+    rawWriter->SetFileName( dataname.c_str() );
+    rawWriter->SetImageIO( rawIO );
+    rawIO->SetByteOrderToLittleEndian();
     }
 
   // imgWriter is used to write out image in case it is not a dicom DWI image
   itk::ImageFileWriter< VolumeType >::Pointer imgWriter = itk::ImageFileWriter< VolumeType >::New();
-  
+
   ///////////////////////////////////////////////
   // Update the number of volumes based on the
   // number to ignore from the header information
-  const unsigned int nUsableVolumes = nVolume-nIgnoreVolume;
+  const unsigned int nUsableVolumes = nVolume-nIgnoreVolume-bad_gradient_indices.size();
   std::cout << "Number of usable volumes: " << nUsableVolumes << std::endl;
 
   if ( vendor.find("GE") != std::string::npos ||
@@ -1356,20 +1577,20 @@ int main(int argc, char* argv[])
       }
     else
       {
-        if ( !NrrdFormat )
-          { 
-            rawWriter->SetInput( reader->GetOutput() );
-            try
-              {
-                rawWriter->Update();
-              }
-            catch (itk::ExceptionObject &excp)
-              {
-                std::cerr << "Exception thrown while reading the series" << std::endl;
-                std::cerr << excp << std::endl;
-                return EXIT_FAILURE;
-              }
+      if ( !NrrdFormat )
+        {
+        rawWriter->SetInput( reader->GetOutput() );
+        try
+          {
+          rawWriter->Update();
           }
+        catch (itk::ExceptionObject &excp)
+          {
+          std::cerr << "Exception thrown while reading the series" << std::endl;
+          std::cerr << excp << std::endl;
+          return EXIT_FAILURE;
+          }
+        }
       }
     }
   else if ( vendor.find("SIEMENS") != std::string::npos && SliceMosaic)
@@ -1390,9 +1611,10 @@ int main(int argc, char* argv[])
     VolumeType::SizeType size = region.GetSize();
 
     VolumeType::SizeType dmSize = size;
+    unsigned int original_slice_number = dmSize[2] * nSliceInVolume;
     dmSize[0] /= mMosaic;
     dmSize[1] /= nMosaic;
-    dmSize[2] *= nSliceInVolume;
+    dmSize[2] = nUsableVolumes * nSliceInVolume;
 
     region.SetSize( dmSize );
     dmImage->CopyInformation( img );
@@ -1408,30 +1630,54 @@ int main(int argc, char* argv[])
     //    int rawMosaic = 0;
     //    int colMosaic = 0;
 
-    for (unsigned int k = 0; k < dmSize[2]; k++)
+    bool bad_slice = false;
+    unsigned int bad_slice_counter = 0;
+    for (unsigned int k = 0; k < original_slice_number; k++)
       {
-      dmRegion.SetIndex(2, k);
-      itk::ImageRegionIteratorWithIndex<VolumeType> dmIt( dmImage, dmRegion );
-
-      // figure out the mosaic region for this slice
-      int sliceIndex = k;
-
-      //int nBlockPerSlice = mMosaic*nMosaic;
-      int slcMosaic = sliceIndex/(nSliceInVolume);
-      sliceIndex -= slcMosaic*nSliceInVolume;
-      int colMosaic = sliceIndex/mMosaic;
-      int rawMosaic = sliceIndex - mMosaic*colMosaic;
-      region.SetIndex( 0, rawMosaic*dmSize[0] );
-      region.SetIndex( 1, colMosaic*dmSize[1] );
-      region.SetIndex( 2, slcMosaic );
-
-      itk::ImageRegionConstIteratorWithIndex<VolumeType> imIt( img, region );
-      for ( dmIt.GoToBegin(), imIt.GoToBegin(); !dmIt.IsAtEnd(); ++dmIt, ++imIt)
+      for ( unsigned int j = 0; j < bad_gradient_indices.size(); j++)
         {
-        dmIt.Set( imIt.Get() );
+        unsigned int start_bad_slice_number = bad_gradient_indices[j] * nSliceInVolume;
+        unsigned int end_bad_slice_number = start_bad_slice_number + (nSliceInVolume - 1);
+
+        if (k >= start_bad_slice_number && k <= end_bad_slice_number)
+          {
+          bad_slice = true;
+          bad_slice_counter++;
+          break;
+          }
+        else
+          {
+          bad_slice = false;
+          }
         }
-      
+
+      if (bad_slice == false)
+        {
+        unsigned int new_k = k - bad_slice_counter;
+
+        dmRegion.SetIndex(2, new_k);
+        itk::ImageRegionIteratorWithIndex<VolumeType> dmIt( dmImage, dmRegion );
+
+        // figure out the mosaic region for this slice
+        int sliceIndex = k;
+
+        //int nBlockPerSlice = mMosaic*nMosaic;
+        int slcMosaic = sliceIndex/(nSliceInVolume);
+        sliceIndex -= slcMosaic*nSliceInVolume;
+        int colMosaic = sliceIndex/mMosaic;
+        int rawMosaic = sliceIndex - mMosaic*colMosaic;
+        region.SetIndex( 0, rawMosaic*dmSize[0] );
+        region.SetIndex( 1, colMosaic*dmSize[1] );
+        region.SetIndex( 2, slcMosaic );
+
+        itk::ImageRegionConstIteratorWithIndex<VolumeType> imIt( img, region );
+        for ( dmIt.GoToBegin(), imIt.GoToBegin(); !dmIt.IsAtEnd(); ++dmIt, ++imIt)
+          {
+          dmIt.Set( imIt.Get() );
+          }
+        }
       }
+
     if (nUsableVolumes == 1)
       {
       imgWriter->SetInput( dmImage );
@@ -1450,20 +1696,20 @@ int main(int argc, char* argv[])
       }
     else
       {
-        if ( !NrrdFormat )
-          { 
-            rawWriter->SetInput( dmImage );
-            try
-              {
-                rawWriter->Update();
-              }
-            catch (itk::ExceptionObject &excp)
-              {
-                std::cerr << "Exception thrown while reading the series" << std::endl;
-                std::cerr << excp << std::endl;
-                return EXIT_FAILURE;
-              }
+      if ( !NrrdFormat )
+        {
+        rawWriter->SetInput( dmImage );
+        try
+          {
+          rawWriter->Update();
           }
+        catch (itk::ExceptionObject &excp)
+          {
+          std::cerr << "Exception thrown while reading the series" << std::endl;
+          std::cerr << excp << std::endl;
+          return EXIT_FAILURE;
+          }
+        }
       }
     }
   else if (vendor.find("PHILIPS") != std::string::npos)
@@ -1533,36 +1779,36 @@ int main(int argc, char* argv[])
       }
     else
       {
-        if ( !NrrdFormat )
-          { 
-            rawWriter->SetInput( reader->GetOutput() );
-            try
-              {
-                rawWriter->Update();
-              }
-            catch (itk::ExceptionObject &excp)
-              {
-                std::cerr << "Exception thrown while reading the series" << std::endl;
-                std::cerr << excp << std::endl;
-                return EXIT_FAILURE;
-              }
+      if ( !NrrdFormat )
+        {
+        rawWriter->SetInput( reader->GetOutput() );
+        try
+          {
+          rawWriter->Update();
           }
+        catch (itk::ExceptionObject &excp)
+          {
+          std::cerr << "Exception thrown while reading the series" << std::endl;
+          std::cerr << excp << std::endl;
+          return EXIT_FAILURE;
+          }
+        }
       }
     //Verify sizes
     if( count != bValues.size() )
       {
       std::cout << "ERROR:  bValues are the wrong size." <<  count << " != " << bValues.size() << std::endl;
-      exit(-1);
+      return EXIT_FAILURE;
       }
     if( count != DiffusionVectors.size() )
       {
       std::cout << "ERROR:  DiffusionVectors are the wrong size." <<  count << " != " << DiffusionVectors.size() << std::endl;
-      exit(-1);
+      return EXIT_FAILURE;
       }
     if( count != UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.size() )
       {
       std::cout << "ERROR:  UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem are the wrong size." <<  count << " != " << UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.size() << std::endl;
-      exit(-1);
+      return EXIT_FAILURE;
       }
     }
   else
@@ -1574,7 +1820,7 @@ int main(int argc, char* argv[])
 
 
   const vnl_matrix_fixed<double,3,3> InverseMeasurementFrame= MeasurementFrame.GetInverse();
-  {
+    {
     //////////////////////////////////////////////
     // write header file
     // This part follows a DWI NRRD file in NRRD format 5.
@@ -1585,10 +1831,10 @@ int main(int argc, char* argv[])
 
     header.open (nhdrname.c_str(), std::ios::out | std::ios::binary);
     header << "NRRD0005" << std::endl;
-    
+
     if (!NrrdFormat)
       {
-        header << "content: exists(" << itksys::SystemTools::GetFilenameName(dataname) << ",0)" << std::endl;
+      header << "content: exists(" << itksys::SystemTools::GetFilenameName(dataname) << ",0)" << std::endl;
       }
     header << "type: short" << std::endl;
     header << "dimension: 4" << std::endl;
@@ -1603,7 +1849,7 @@ int main(int argc, char* argv[])
     header << "space directions: "
       << "(" << (NRRDSpaceDirection[0][0]) << ","<< (NRRDSpaceDirection[1][0]) << ","<< (NRRDSpaceDirection[2][0]) << ") "
       << "(" << (NRRDSpaceDirection[0][1]) << ","<< (NRRDSpaceDirection[1][1]) << ","<< (NRRDSpaceDirection[2][1]) << ") "
-      << "(" << (NRRDSpaceDirection[0][2]) << ","<< (NRRDSpaceDirection[1][2]) << ","<< (NRRDSpaceDirection[2][2]) 
+      << "(" << (NRRDSpaceDirection[0][2]) << ","<< (NRRDSpaceDirection[1][2]) << ","<< (NRRDSpaceDirection[2][2])
       << ") none" << std::endl;
     header << "centerings: cell cell cell ???" << std::endl;
     header << "kinds: space space space list" << std::endl;
@@ -1615,10 +1861,10 @@ int main(int argc, char* argv[])
       <<"(" << ImageOrigin[0] << ","<< ImageOrigin[1] << ","<< ImageOrigin[2] << ") " << std::endl;
     if (!NrrdFormat)
       {
-        header << "data file: " << itksys::SystemTools::GetFilenameName(dataname) << std::endl;
+      header << "data file: " << itksys::SystemTools::GetFilenameName(dataname) << std::endl;
       }
 
-    // For scanners, the measurement frame for the gradient directions is the same as the 
+    // For scanners, the measurement frame for the gradient directions is the same as the
     // Excerpt from http://teem.sourceforge.net/nrrd/format.html definition of "measurement frame:"
     // There is also the possibility that a measurement frame
     // should be recorded for an image even though it is storing
@@ -1668,28 +1914,64 @@ int main(int argc, char* argv[])
     //  header << "DWMRI_gradient_0000:=0  0  0" << std::endl;
     //  header << "DWMRI_NEX_0000:=" << nBaseline << std::endl;
     //  need to check
-    for (unsigned int k = 0; k < nUsableVolumes; k++)
+
+    unsigned int shift_index = 0;
+    unsigned int original_volume_number = nUsableVolumes + bad_gradient_indices.size();
+
+    for (unsigned int k = 0; k < original_volume_number; k++)
       {
       float scaleFactor = 0;
+      bool print_gradient = true;
+
+      for (unsigned int j = 0; j < bad_gradient_indices.size(); j++)
+        {
+        if (k == bad_gradient_indices[j])
+          {
+          shift_index++;
+          print_gradient = false;
+          continue;
+          }
+        }
+
       if (maxBvalue > 0)
         {
         scaleFactor = sqrt( bValues[k]/maxBvalue );
         }
       std::cout << "For Multiple BValues: " << k << " -- " << bValues[k] << " / " << maxBvalue << " = " << scaleFactor << std::endl;
-      if(useIdentityMeaseurementFrame)
+
+      if (print_gradient == true)
         {
-        vnl_vector_fixed<double,3> RotatedDiffusionVectors=InverseMeasurementFrame*(DiffusionVectors[k-nBaseline]);
-        header << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << k << ":="
-          << RotatedDiffusionVectors[0] * scaleFactor << "   "
-          << RotatedDiffusionVectors[1] * scaleFactor << "   "
-          << RotatedDiffusionVectors[2] * scaleFactor << std::endl;
+        if(useIdentityMeaseurementFrame)
+          {
+          vnl_vector_fixed<double,3> RotatedDiffusionVectors=InverseMeasurementFrame*(DiffusionVectors[k-nBaseline]);
+          header << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << k << ":="
+            << RotatedDiffusionVectors[0] * scaleFactor << "   "
+            << RotatedDiffusionVectors[1] * scaleFactor << "   "
+            << RotatedDiffusionVectors[2] * scaleFactor << std::endl;
+          }
+        else
+          {
+          if(useBMatrixGradientDirections)
+            {
+            header << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << k << ":="
+              << DiffusionVectors[k][0] << "   "
+              << DiffusionVectors[k][1] << "   "
+              << DiffusionVectors[k][2] << std::endl;
+            }
+          else
+            {
+            unsigned int printed_gradient_number = k - shift_index;
+
+            header << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << printed_gradient_number << ":="
+              << DiffusionVectors[k-nBaseline][0] * scaleFactor << "   "
+              << DiffusionVectors[k-nBaseline][1] * scaleFactor << "   "
+              << DiffusionVectors[k-nBaseline][2] * scaleFactor << std::endl;
+            }
+          }
         }
       else
         {
-        header << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << k << ":="
-          << DiffusionVectors[k-nBaseline][0] * scaleFactor << "   "
-          << DiffusionVectors[k-nBaseline][1] * scaleFactor << "   "
-          << DiffusionVectors[k-nBaseline][2] * scaleFactor << std::endl;
+        std::cout << "Gradient " << k << " was removed and will not be printed in the NRRD header file." << std::endl;
         }
 
       //std::cout << "Consistent Orientation Checks." << std::endl;
@@ -1701,15 +1983,15 @@ int main(int argc, char* argv[])
     header << std::endl;;
     if (NrrdFormat && SliceMosaic)
       {
-        unsigned long nVoxels = dmImage->GetBufferedRegion().GetNumberOfPixels();
-        header.write( reinterpret_cast<char *>(dmImage->GetBufferPointer()),
-                      nVoxels*sizeof(short) );
+      unsigned long nVoxels = dmImage->GetBufferedRegion().GetNumberOfPixels();
+      header.write( reinterpret_cast<char *>(dmImage->GetBufferPointer()),
+        nVoxels*sizeof(short) );
       }
     else if (NrrdFormat)
       {
-        unsigned long nVoxels = reader->GetOutput()->GetBufferedRegion().GetNumberOfPixels();
-        header.write( reinterpret_cast<char *>(reader->GetOutput()->GetBufferPointer()),
-                      nVoxels*sizeof(short) );
+      unsigned long nVoxels = reader->GetOutput()->GetBufferedRegion().GetNumberOfPixels();
+      header.write( reinterpret_cast<char *>(reader->GetOutput()->GetBufferPointer()),
+        nVoxels*sizeof(short) );
       }
 
     header.close();
@@ -1729,13 +2011,13 @@ int main(int argc, char* argv[])
     protocolGradientsFile.open ( protocolGradientsFileName.c_str() );
     protocolGradientsFile << "ImageOrientationPatient (0020|0032): "
       << LPSDirCos[0][0] << "\\" << LPSDirCos[1][0] << "\\" << LPSDirCos[2][0] << "\\"
-      << LPSDirCos[0][1] << "\\" << LPSDirCos[1][1] << "\\" << LPSDirCos[2][1] << "\\"
-      << std::endl;
-    protocolGradientsFile << "==================================" << std::endl; 
-    protocolGradientsFile << "Direction Cosines: \n" << LPSDirCos << std::endl;
-    protocolGradientsFile << "==================================" << std::endl; 
-    protocolGradientsFile << "MeasurementFrame: \n" << MeasurementFrame << std::endl;
-    protocolGradientsFile << "==================================" << std::endl; 
+         << LPSDirCos[0][1] << "\\" << LPSDirCos[1][1] << "\\" << LPSDirCos[2][1] << "\\"
+         << std::endl;
+    protocolGradientsFile << "==================================" << std::endl;
+    protocolGradientsFile << "Direction Cosines: " << std::endl << LPSDirCos << std::endl;
+    protocolGradientsFile << "==================================" << std::endl;
+    protocolGradientsFile << "MeasurementFrame: " << std::endl << MeasurementFrame << std::endl;
+    protocolGradientsFile << "==================================" << std::endl;
     for (unsigned int k = 0; k < nUsableVolumes; k++)
       {
       float scaleFactor = 0;
@@ -1748,7 +2030,7 @@ int main(int argc, char* argv[])
         << DiffusionVectors[k-nBaseline][1] * scaleFactor << ";"
         << DiffusionVectors[k-nBaseline][2] * scaleFactor << "]" <<std::endl;
       }
-    protocolGradientsFile << "==================================" << std::endl; 
+    protocolGradientsFile << "==================================" << std::endl;
     for (unsigned int k = 0; k < nUsableVolumes; k++)
       {
       float scaleFactor = 0;
@@ -1762,7 +2044,7 @@ int main(int argc, char* argv[])
         << ProtocolGradient[1] * scaleFactor << ";"
         << ProtocolGradient[2] * scaleFactor << "]" <<std::endl;
       }
-    protocolGradientsFile << "==================================" << std::endl; 
+    protocolGradientsFile << "==================================" << std::endl;
     protocolGradientsFile.close();
     }
   return EXIT_SUCCESS;
