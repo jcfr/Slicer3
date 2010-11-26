@@ -35,6 +35,7 @@ vtkSlicerFiducialsGUI::vtkSlicerFiducialsGUI ( )
     this->Logic = NULL;
     this->FiducialListSelectorWidget = NULL;
     this->FiducialListNodeID = NULL;
+    this->FiducialListNode = NULL;
 
     this->MeasurementLabel = NULL;
     this->ListMeasurementLabel = NULL;
@@ -94,6 +95,8 @@ vtkSlicerFiducialsGUI::vtkSlicerFiducialsGUI ( )
 //---------------------------------------------------------------------------
 vtkSlicerFiducialsGUI::~vtkSlicerFiducialsGUI ( )
 {
+  vtkSetAndObserveMRMLNodeMacro(FiducialListNode, NULL);
+
   this->RemoveMRMLObservers();
 
   this->SetModuleLogic (static_cast<vtkSlicerFiducialsLogic*>(0));
@@ -3248,8 +3251,7 @@ void vtkSlicerFiducialsGUI::SetFiducialListNodeID (char * id)
     this->SetGUIFromList(NULL);
     if (oldFidList != NULL)
       {
-      vtkDebugMacro("SetFiducialListNodeID: null input id, but oldFidList is not null, removing all observers");
-      this->MRMLObserverManager->SetObject( vtkObjectPointer( &oldFidList), NULL);
+      vtkSetAndObserveMRMLNodeMacro(this->FiducialListNode, NULL);
       }
     return;
     }
@@ -3270,7 +3272,8 @@ void vtkSlicerFiducialsGUI::SetFiducialListNodeID (char * id)
     events->InsertNextValue(vtkMRMLFiducialListNode::FiducialIndexModifiedEvent);
     events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
     events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-    vtkSetAndObserveMRMLNodeEventsMacro(oldFidList, newFidList, events);
+    vtkSetAndObserveMRMLNodeEventsMacro(this->FiducialListNode, newFidList, events);
+    //vtkSetAndObserveMRMLNodeEventsMacro(oldFidList, newFidList, events);
     events->Delete();
 
     // set up the GUI

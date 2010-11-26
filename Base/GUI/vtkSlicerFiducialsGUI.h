@@ -272,6 +272,8 @@ protected:
     /// The ID of the fiducial list node that is currently displayed in the GUI
     char *FiducialListNodeID;
 
+    vtkMRMLFiducialListNode *FiducialListNode;
+
     /// Widgets for the Fiducials module
 
     /// 
