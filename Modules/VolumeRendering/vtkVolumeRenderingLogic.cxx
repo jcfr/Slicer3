@@ -1157,7 +1157,26 @@ void vtkVolumeRenderingLogic::SetROI(vtkMRMLVolumeRenderingParametersNode* vspNo
   if (vspNode->GetCroppingEnabled())
   {
     vtkPlanes *planes = vtkPlanes::New();
+    double zero[3] = {0,0,0};
+    double translation[3];
     vspNode->GetROINode()->GetTransformedPlanes(planes);
+    if ( planes->GetTransform() )
+      {
+      planes->GetTransform()->TransformPoint(zero, translation);
+
+      // apply the translation to the planes
+      vtkPlane *plane;
+
+      int numPlanes = planes->GetNumberOfPlanes();
+      vtkPoints *points = planes->GetPoints();
+      for (int i=0; i<numPlanes && i<6; i++)
+        {
+        double origin[3];
+        plane = planes->GetPlane(i);
+        plane->GetOrigin(origin);
+        points->GetData()->SetTuple3(i, origin[0]-translation[0], origin[1]-translation[1], origin[2]-translation[2] );
+        }
+      }
     
     this->MapperTexture->SetClippingPlanes(planes);
     this->MapperRaycast->SetClippingPlanes(planes);
