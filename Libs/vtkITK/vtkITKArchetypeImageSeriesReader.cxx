@@ -17,6 +17,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
+#include "vtkMath.h"
 
 #include "itkExceptionObject.h"
 #include "itkTimeProbe.h"
@@ -854,6 +855,7 @@ void vtkITKArchetypeImageSeriesReader::AnalyzeDicomHeaders()
   this->IndexDiffusionGradientOrientation.resize( nFiles );
   this->IndexSliceLocation.resize( nFiles );
   this->IndexImageOrientationPatient.resize( nFiles );
+  this->IndexImagePositionPatient.resize( nFiles );
 
   this->SeriesInstanceUIDs.resize( 0 );
   this->ContentTime.resize( 0 );
@@ -862,6 +864,7 @@ void vtkITKArchetypeImageSeriesReader::AnalyzeDicomHeaders()
   this->DiffusionGradientOrientation.resize( 0 );
   this->SliceLocation.resize( 0 );
   this->ImageOrientationPatient.resize( 0 );
+  this->ImagePositionPatient.resize( 0 );
 
 
   itk::GDCMImageIO::Pointer gdcmIO = itk::GDCMImageIO::New();
@@ -1014,6 +1017,19 @@ void vtkITKArchetypeImageSeriesReader::AnalyzeDicomHeaders()
     {
       this->IndexImageOrientationPatient[f] = -1;
     }
+    // image position patient
+    tagValue.clear(); itk::ExposeMetaData<std::string>( dict, "0020|0032", tagValue );
+    if( tagValue.length() > 0 )
+    {
+        float a[3];
+        sscanf( tagValue.c_str(), "%f\\%f\\%f", a, a+1, a+2 );
+        int idx = InsertImagePositionPatient( a );
+        this->IndexImagePositionPatient[f] = idx;
+  }
+    else
+    {
+      this->IndexImagePositionPatient[f] = -1;
+    }
   }
 
   AnalyzeTime.Stop();
@@ -1156,8 +1172,11 @@ int vtkITKArchetypeImageSeriesReader::AssembleVolumeContainingArchetype( )
   long int iArchetypeOrientation =  this->IndexImageOrientationPatient[this->IndexArchetype];
 
   // keep track of the locations for the selected files
-  std::vector<double> fileNameLocations;
+  std::vector<std::pair <double, int> > fileNameSortKey;
+  bool originSet = false;
 
+  // Sort good files based on distance from Origin to ImagePositionPatient along ScanAxis
+  // Follows logic originally in LoadVolume.tcl
   for (unsigned int k = 0; k < this->AllFileNames.size(); k++)
   {
   if ( (this->IndexSeriesInstanceUIDs[k] != iArchetypeSeriesUID &&
@@ -1172,28 +1191,34 @@ int vtkITKArchetypeImageSeriesReader::AssembleVolumeContainingArchetype( )
     }
     else
     {
-      // do a simple insertion sort so filenames are ordered by slice location
-      std::vector<std::string>::iterator nameiter = this->FileNames.begin();
-      std::vector<double>::iterator lociter = fileNameLocations.begin();
-      unsigned int kk;
-      for (kk = 0; kk < this->FileNames.size(); kk++)
+      if (!originSet)
         {
-        if ( this->SliceLocation[k] < fileNameLocations[kk] )
-          {
-          this->FileNames.insert(nameiter, this->AllFileNames[k] );
-          fileNameLocations.insert(lociter, this->SliceLocation[k] );
-          break;
-          }
-        ++nameiter;
-        ++lociter;
-        }
-      if ( kk == this->FileNames.size() )
-        {
-        this->FileNames.insert( this->FileNames.end(), this->AllFileNames[k] );
-        fileNameLocations.insert( fileNameLocations.end(), this->SliceLocation[k] );
-        }
-    }
-  }
+        std::vector<float> iopv = this->ImageOrientationPatient[k];
+        float iopf1[] = {iopv[0], iopv[1], iopv[2]};
+        float iopf2[] = {iopv[3], iopv[4], iopv[5]};
 
+        vtkMath::Cross( iopf1, iopf2, this->ScanAxis );
+        this->ScanOrigin[0] = ImagePositionPatient[k][0];
+        this->ScanOrigin[1] = ImagePositionPatient[k][1];
+        this->ScanOrigin[2] = ImagePositionPatient[k][2];
+        originSet = true;
+        }
+      float tempiop[3], diff[3];
+      tempiop[0] = ImagePositionPatient[k][0];
+      tempiop[1] = ImagePositionPatient[k][1];
+      tempiop[2] = ImagePositionPatient[k][2];
+
+      vtkMath::Subtract( tempiop, this->ScanOrigin, diff );
+      float dist = vtkMath::Dot( diff, ScanAxis );
+
+      fileNameSortKey.push_back( std::make_pair(dist, k) );
+      }
+  }
+  std::sort(fileNameSortKey.begin(), fileNameSortKey.end());
+  std::vector<std::pair <double, int> >::iterator keyiter;
+  for (keyiter = fileNameSortKey.begin(); keyiter != fileNameSortKey.end(); ++keyiter)
+        {
+    FileNames.push_back(AllFileNames[keyiter->second]);
+        }
   return this->FileNames.size();
 }
