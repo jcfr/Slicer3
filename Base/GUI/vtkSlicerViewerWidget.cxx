@@ -2249,7 +2249,14 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
             {
             if (mdnode->GetColorNode()->GetLookupTable() != NULL)
               {
-              actor->GetMapper()->SetLookupTable(mdnode->GetColorNode()->GetLookupTable());
+              // copy lut so that they are not shared between the mappers
+              // vtk sets scalar range on lut while rendering 
+              // that may cause performance problem if lut's are shared
+              vtkLookupTable *lut = vtkLookupTable::New();
+              lut->DeepCopy( mdnode->GetColorNode()->GetLookupTable());
+
+              actor->GetMapper()->SetLookupTable(lut);
+              lut->Delete();
               }
             else if (mdnode->GetColorNode()->IsA("vtkMRMLProceduralColorNode") &&
                      vtkMRMLProceduralColorNode::SafeDownCast(mdnode->GetColorNode())->GetColorTransferFunction() != NULL)
