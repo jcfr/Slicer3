@@ -539,6 +539,7 @@ void vtkMRMLROINode::GetTransformedPlanes(vtkPlanes *planes)
    
     transform->Inverse();
     planes->SetTransform(transform);
+    transform->Delete();
   }
   planes->Modified();
 
