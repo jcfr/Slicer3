@@ -107,6 +107,9 @@ itcl::body ModelSWidget::destructor {} {
 # when told what model to observe...
 #
 itcl::configbody ModelSWidget::modelID {
+  if { $modelID == "" } {
+    return
+  }
   # find the model node
   set modelNode [$::slicer3::MRMLScene GetNodeByID $modelID]
   if { $modelNode == "" } {
@@ -164,9 +167,18 @@ itcl::body ModelSWidget::positionActors { } {
 
 itcl::body ModelSWidget::highlight { } {
 
-  set property [$o(actor) GetProperty]
+  if { $modelID == "" } {
+    $o(actor) SetVisibility 0
+    return
+  }
 
   $o(actor) SetVisibility $visibility
+
+  if { !$visibility } {
+    return
+  }
+
+  set property [$o(actor) GetProperty]
 
   #
   # set color (extracted from the display node)
@@ -232,6 +244,10 @@ itcl::body ModelSWidget::highlight { } {
 
 itcl::body ModelSWidget::processEvent { {caller ""} {event ""} } {
 
+  if { $enabled != "true" } {
+    return
+  }
+
   if { [info command $sliceGUI] == "" || [$sliceGUI GetLogic] == "" } {
     # the sliceGUI was deleted behind our back, so we need to 
     # self destruct
@@ -239,8 +255,20 @@ itcl::body ModelSWidget::processEvent { {caller ""} {event ""} } {
     return
   }
 
-  if { [info command $_modelNode] == "" } {
-    # the model was deleted behind our back, do nothing
+  if { [info command $_modelNode] == "" || [$_modelNode GetPolyData] == "" } {
+    # the model was deleted behind our back, 
+    # or if there is no poly data, turn off our display and do nothing
+    $this configure -visibility 0
+    return
+  }
+
+  set displayNode [$_modelNode GetDisplayNode]
+  if { $displayNode != "" } {
+    $this configure -visibility [$displayNode GetSliceIntersectionVisibility]
+  }
+
+  if { !$visibility } {
+    # we're not visible, there's no reason to do the calculations...
     return
   }
 
@@ -249,9 +277,8 @@ itcl::body ModelSWidget::processEvent { {caller ""} {event ""} } {
 
   # control visibility based on ModelDisplayNode and 
   # transform based on transform node
-  if { $_modelNode != "" } { 
+  if { $_modelNode != "" && [$_modelNode GetPolyData] != "" } { 
     $o(cutter) SetInput [$_modelNode GetPolyData]
-    set displayNode [$_modelNode GetDisplayNode]
 
     # handle model transform to world space
     set tnode [$_modelNode GetParentTransformNode]
@@ -259,9 +286,6 @@ itcl::body ModelSWidget::processEvent { {caller ""} {event ""} } {
         $tnode GetMatrixTransformToWorld $transformToWorld
     }
 
-    if { $displayNode != "" } {
-      $this configure -visibility [$displayNode GetSliceIntersectionVisibility]
-    }
   }
 
 

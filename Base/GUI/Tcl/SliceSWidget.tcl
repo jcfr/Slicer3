@@ -26,6 +26,15 @@ if { [itcl::find class SliceSWidget] == "" } {
     destructor {}
 
     public variable sliceStep 1  ;# the size of the slice increment/decrement
+    public variable calculateAnnotations 1  ;# include annotation calculation (turned off for slicer4)
+    #
+    # These are widgets that track the state of a node in the MRML Scene
+    # - for each of these we update things each time a node or scene is added
+    #
+    public variable swidgetTypes {
+      { ModelSWidget -modelID vtkMRMLModelNode }
+      { RulerSWidget -rulerID vtkMRMLMeasurementsRulerNode }
+    }
 
     variable _actionStartRAS "0 0 0"
     variable _actionStartXY "0 0"
@@ -174,16 +183,7 @@ itcl::body SliceSWidget::destructor {} {
 #
 itcl::body SliceSWidget::updateSWidgets {} {
 
-  #
-  # These are widgets that track the state of a node in the MRML Scene
-  # - for each of these we update things each time a node or scene is added
-  #
-  set swidgetTypes {
-    { ModelSWidget -modelID vtkMRMLModelNode }
-    { RulerSWidget -rulerID vtkMRMLMeasurementsRulerNode }
-  }
-
-  # this part is generic, based on the types listed above
+  # this part is generic, based on the types configured for this class to manage
   foreach swidgetType $swidgetTypes {
     foreach {swidgetClass configVar nodeClass} $swidgetType {}
     array set sws ""
@@ -305,9 +305,7 @@ itcl::body SliceSWidget::resizeSliceNode {} {
           $w == $nodeW && $h == $nodeH && [expr abs($sliceStep - ($nodefovz / (1. * $nodeD)))] < $epsilon} {
       return
     }
-    #puts "node parameters changed"
     set disabled [$_sliceNode GetDisableModifiedEvent]
-    #puts "$_sliceNode $disabled"
     $_sliceNode DisableModifiedEventOn
     $_sliceNode SetDimensions $w $h $nodeD
     $_sliceNode SetFieldOfView $fovx $fovy $fovz
@@ -324,6 +322,10 @@ itcl::body SliceSWidget::resizeSliceNode {} {
 # handle interactor events
 #
 itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
+
+  if { $enabled != "true" } {
+    return
+  }
 
   if { [info command $sliceGUI] == "" || [$sliceGUI GetLogic] == "" } {
     # the sliceGUI was deleted behind our back, so we need to 
@@ -612,15 +614,16 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
       $sliceGUI SetGUICommandAbortFlag 1
     }
     "LeftButtonPressEvent" {
-      set interactionNode [$::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode]
-      if { $interactionNode != "" } {
-        set mode [$interactionNode GetCurrentInteractionMode]
-        set modeString [$interactionNode GetInteractionModeAsString $mode]
+      if { [info command SeedSWidget] != "" } {
+        set interactionNode [$::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode]
+        set modeString ""
+        if { $interactionNode != "" } {
+          set mode [$interactionNode GetCurrentInteractionMode]
+          set modeString [$interactionNode GetInteractionModeAsString $mode]
+        }
         if { $modeString == "Place" } {
           # AND PLACE FIDUCIAL.
-          if { [info command SeedSWidget] != "" } {
-            FiducialsSWidget::AddFiducial $r $a $s
-          }
+          FiducialsSWidget::AddFiducial $r $a $s
         } else {
           if { [$_interactor GetShiftKey] || [$_interactor GetControlKey] } {
             # shift-left-button is alias for middle mouse button to support 
@@ -909,14 +912,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     }
     "ExitEvent" { }
   }
-
-
-#  if { $annotationsUpdated == false && [$this getInWidget] } {
-#      set xyToRAS [$_sliceNode GetXYToRAS]
-#      set ras [$xyToRAS MultiplyPoint $x $y $z 1]
-#      foreach {r a s t} $ras {}
-#      $this updateAnnotation $r $a $s
-#  }
 }
 
 
@@ -928,6 +923,9 @@ itcl::body SliceSWidget::updateAnnotations {r a s} {
   $this queryLayers $x $y $z
 
   set ssgui [[$::slicer3::ApplicationGUI GetApplication] GetModuleGUIByName "Slices"]
+  if { $ssgui == "" } {
+    return
+  }
   set numsgui [$ssgui GetNumberOfSliceGUI]
   for { set i 0 } { $i < $numsgui } { incr i } {
     if { $i == 0} {
@@ -1079,6 +1077,7 @@ itcl::body SliceSWidget::updateAnnotation {r a s} {
     # need a composite node to be able to do anything
     return
   }
+
 
   set foregroundname "None"
   set backgroundname "None"
@@ -1461,7 +1460,6 @@ itcl::body SliceSWidget::getLinkedSliceGUIs { } {
     } else {
         lappend guis $sliceGUI
     }
-
   return $guis
 }
 
