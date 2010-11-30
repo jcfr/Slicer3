@@ -3687,13 +3687,13 @@ void vtkSlicerApplicationGUI::PackTriple3DEndoscopyView ()
       vtkSlicerViewerWidget *viewer_widget = this->Internals->ViewerWidgets[i];
       if (viewer_widget)
         {
-        if ( i == 0 )
+        if ( i == 2 )
           {
           viewer_widget->GridWidget(this->GridFrame1, 0, 0);
           }
-        else if ( i == 1 || i == 2 )
+        else if ( i == 1 || i == 0 )
           {
-          viewer_widget->GridWidget(this->GridFrame2, 0, i-1);
+          viewer_widget->GridWidget(this->GridFrame2, 0, i);
           }
         }
       }
