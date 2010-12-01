@@ -176,7 +176,8 @@ int vtkIGTLToMRMLTrackingData::MRMLToIGTL(unsigned long event, vtkMRMLNode* mrml
           {
           this->StopTrackingDataMessage = igtl::StopTrackingDataMessage::New();
           }
-        this->StopTrackingDataMessage->SetDeviceName(mrmlNode->GetName());
+        //this->StopTrackingDataMessage->SetDeviceName(mrmlNode->GetName());
+        this->StopTrackingDataMessage->SetDeviceName("");
         this->StopTrackingDataMessage->Pack();
         *size = this->StopTrackingDataMessage->GetPackSize();
         *igtlMsg = this->StopTrackingDataMessage->GetPackPointer();
