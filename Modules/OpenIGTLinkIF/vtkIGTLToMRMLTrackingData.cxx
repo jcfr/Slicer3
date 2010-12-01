@@ -161,7 +161,8 @@ int vtkIGTLToMRMLTrackingData::MRMLToIGTL(unsigned long event, vtkMRMLNode* mrml
           {
           this->StartTrackingDataMessage = igtl::StartTrackingDataMessage::New();
           }
-        this->StartTrackingDataMessage->SetDeviceName(mrmlNode->GetName());
+        //this->StartTrackingDataMessage->SetDeviceName(mrmlNode->GetName());
+        this->StartTrackingDataMessage->SetDeviceName("");
         this->StartTrackingDataMessage->SetResolution(50);
         this->StartTrackingDataMessage->SetCoordinateName("");
         this->StartTrackingDataMessage->Pack();

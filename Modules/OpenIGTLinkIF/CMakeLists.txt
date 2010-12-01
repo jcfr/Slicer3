@@ -26,7 +26,24 @@ endif(NOT Slicer3_SOURCE_DIR)
 
 if (OpenIGTLink_PROTOCOL_VERSION EQUAL 2)
   ADD_DEFINITIONS(-DOpenIGTLinkIF_USE_VERSION_2)
+  ADD_DEFINITIONS(-DOpenIGTLinkIF_LIBRARY_VERSION="${OpenIGTLink_VERSION_MAJOR}-${OpenIGTLink_VERSION_MINOR}-${OpenIGTLink_VERSION_PATCH} for protocol ver. 2")
+else (OpenIGTLink_PROTOCOL_VERSION EQUAL 2)
+  ADD_DEFINITIONS(-DOpenIGTLinkIF_LIBRARY_VERSION="${OpenIGTLink_VERSION_MAJOR}-${OpenIGTLink_VERSION_MINOR}-${OpenIGTLink_VERSION_PATCH} for protocol ver. 1")
 endif (OpenIGTLink_PROTOCOL_VERSION EQUAL 2)
+
+
+
+
+# --------------------------------------------------------------------------
+# Module Revision Number (for development purpose)
+find_package(Subversion)
+if (Subversion_FOUND)
+  Subversion_WC_INFO(${CMAKE_HOME_DIRECTORY} OpenIGTLinkIF)
+  #set(OpenIGTLinkIF_REVISION "${OpenIGTLinkIF_WC_REVISION}")
+  ADD_DEFINITIONS(-DOpenIGTLinkIF_REVISION=${OpenIGTLinkIF_WC_REVISION})
+else (Subversion_FOUND)
+  ADD_DEFINITIONS(-DOpenIGTLinkIF_REVISION="Unknown")
+endif (Subversion_FOUND)
 
 
 # --------------------------------------------------------------------------

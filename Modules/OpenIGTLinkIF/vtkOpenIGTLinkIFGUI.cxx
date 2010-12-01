@@ -1575,12 +1575,16 @@ void vtkOpenIGTLinkIFGUI::BuildGUIForHelpFrame ()
     "OpenIGTLink is an open network protocol for device communication for image-guided therapy. "
     " See <a>http://www.slicer.org/slicerWiki/index.php/Modules:OpenIGTLinkIF-Documentation-3.6</a> for details about the module."
     " Information about OpenIGTLink is also availble at <a>http://www.na-mic.org/Wiki/index.php/OpenIGTLink</a>";
-  const char *about =
-    "The module is designed and implemented by Junichi Tokuda from Brigham and Women's Hospital."
-    "This work is supported by NCIGT, NA-MIC and BRP \"Enabling Technologies for MRI-Guided Prostate Intervention\" project, funded by NIH.";
+
+  std::stringstream aboutss;
+  aboutss << "Module Revision: " << OpenIGTLinkIF_REVISION << std::endl;
+  aboutss << "OpenIGTLink Library: " << OpenIGTLinkIF_LIBRARY_VERSION << std::endl;
+  aboutss << "The module is developed by Junichi Tokuda, Brigham and Women's Hospital.";
+  aboutss << "This project is supported by NCIGT, NA-MIC and R01CA111288 from NIH.";
+  aboutss << "The project is also supported by Intelligent Surgical Instrument Project from MITI, Japan." << std::endl;
 
   vtkKWWidget *page = this->UIPanel->GetPageWidget ( "OpenIGTLinkIF" );
-  this->BuildHelpAndAboutFrame (page, help, about);
+  this->BuildHelpAndAboutFrame (page, help, aboutss.str().c_str());
 
 }
 
