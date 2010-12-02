@@ -492,12 +492,14 @@ class Plugin(object):
         for key in keywords.keys():
             parameterTag = None
             parameterLabel = None
+            parameterName = None
             tagFound = False
             for group in range(self.module.GetNumberOfParameterGroups()):
                 for arg in range(self.module.GetNumberOfParametersInGroup(group)):
                     if key == self.module.GetParameterLongFlag(group,arg):
                         parameterTag = self.module.GetParameterTag(group,arg)
                         parameterLabel = self.module.GetParameterLabel(group,arg)
+                        parameterName = self.module.GetParameterName(group,arg)
                         tagFound = True
                         break
                 if tagFound:
@@ -530,14 +532,14 @@ class Plugin(object):
                         for parameterValueElem in parameterValue:
                             parameterValueString = ','.join([str(el) for el in parameterValueElem])
                             print 'Setting: ' + str(key) + ' = ' + parameterValueString
-                            self.module.SetParameterAsString(parameterLabel,parameterValueString)
+                            self.module.SetParameterAsString(parameterName,parameterValueString)
                     else:
                         parameterValueString = ','.join([str(el) for el in parameterValue])
                         print 'Setting: ' + str(key) + ' = ' + parameterValueString
-                        self.module.SetParameterAsString(parameterLabel,parameterValueString)
+                        self.module.SetParameterAsString(parameterName,parameterValueString)
                 else:
                     print 'Setting: ' + str(key) + ' = ' + str(parameterValue)
-                    self.module.SetParameterAsString(parameterLabel,str(parameterValue))
+                    self.module.SetParameterAsString(parameterName,str(parameterValue))
 
         # And finally, execute the plugin
         logic = slicer.vtkCommandLineModuleLogic()
