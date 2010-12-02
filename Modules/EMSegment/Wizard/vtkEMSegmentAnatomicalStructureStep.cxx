@@ -30,6 +30,7 @@
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkKWLabelWithLabel.h"
 #include "vtkSlicerNodeSelectorWidget.h"
+#include "vtkSlicerApplication.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentAnatomicalStructureStep);
@@ -52,7 +53,7 @@ vtkEMSegmentAnatomicalStructureStep::vtkEMSegmentAnatomicalStructureStep()
   this->AnatomicalNodeAttributesFrame        = NULL;
   this->AnatomicalNodeAttributeNameEntry     = NULL;
   this->AnatomicalNodeIntensityLabelEntry    = NULL;
-  this->AnatomicalNodeAttributeColorFrame    = NULL;
+  this->AnatomicalNodeAttributeColorButton    = NULL;
   this->AnatomicalNodeAttributeColorLabel    = NULL;
   this->ShowOnlyNamedColorsCheckButton       = NULL;
   this->ColorMultiColumnList                 = NULL;
@@ -71,7 +72,11 @@ vtkEMSegmentAnatomicalStructureStep::vtkEMSegmentAnatomicalStructureStep()
   this->SelectedColorChangedCallbackCommand->SetCallback( 
     vtkEMSegmentAnatomicalStructureStep::SelectedColorChangedCallback );
 
-  LockSelectedColorChangedMessage = false;
+  this->LockSelectedColorChangedMessage = false;
+  this->LabelTopLevel = NULL;
+  this->LabelApply = NULL;
+  this->LabelTopLevelFrame = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -110,10 +115,10 @@ vtkEMSegmentAnatomicalStructureStep::~vtkEMSegmentAnatomicalStructureStep()
     this->AnatomicalNodeAttributeColorLabel = NULL;
     }
 
-  if (this->AnatomicalNodeAttributeColorFrame)
+  if (this->AnatomicalNodeAttributeColorButton)
     {
-    this->AnatomicalNodeAttributeColorFrame->Delete();
-    this->AnatomicalNodeAttributeColorFrame = NULL;
+    this->AnatomicalNodeAttributeColorButton->Delete();
+    this->AnatomicalNodeAttributeColorButton = NULL;
     }
 
   if (this->ShowOnlyNamedColorsCheckButton)
@@ -145,6 +150,25 @@ vtkEMSegmentAnatomicalStructureStep::~vtkEMSegmentAnatomicalStructureStep()
     this->SelectedColorChangedCallbackCommand->Delete();
     this->SelectedColorChangedCallbackCommand = NULL;
     }
+
+  if (this->LabelTopLevel)
+    {
+      this->LabelTopLevel->Delete();
+      this->LabelTopLevel = NULL;
+    }
+
+  if (  this->LabelApply )
+    {
+      this->LabelApply->Delete();
+      this->LabelApply = NULL;
+    }
+
+  if (this->LabelTopLevelFrame )
+    {
+      this->LabelTopLevelFrame->Delete();
+      this->LabelTopLevelFrame = NULL;
+    }
+
   this->RemoveAnatomicalStructureTree();
 }
 
@@ -279,7 +303,6 @@ void vtkEMSegmentAnatomicalStructureStep::ShowAnatomicalStructureTree(vtkKWFrame
       }
     }
 }
-
 //----------------------------------------------------------------------------
 void vtkEMSegmentAnatomicalStructureStep::ShowUserInterface()
 {
@@ -381,19 +404,48 @@ void vtkEMSegmentAnatomicalStructureStep::ShowUserInterface()
     this->AnatomicalNodeAttributeColorLabel->SetLabelPositionToRight();
     }
 
+   if ( !this->LabelTopLevel )
+     {
+       this->LabelTopLevel = vtkKWTopLevel::New ( );
+     }
+   if(!this->LabelTopLevel->IsCreated())
+     {
+      vtkSlicerApplication *app = vtkSlicerApplication::GetInstance();
+      this->LabelTopLevel->SetApplication ( app );
+      this->LabelTopLevel->ModalOn();
+      this->LabelTopLevel->Create ( );
+      this->LabelTopLevel->SetMasterWindow ( app->GetApplicationGUI()->GetMainSlicerWindow() );
+      this->LabelTopLevel->HideDecorationOn ( );
+      this->LabelTopLevel->Withdraw ( );
+      this->LabelTopLevel->SetBorderWidth ( 2 );
+      this->LabelTopLevel->SetReliefToGroove ( );
+     }
+ 
+    if (!this->LabelTopLevelFrame) {
+       this->LabelTopLevelFrame = vtkKWFrame::New ( );
+    } 
+    if (!this->LabelTopLevelFrame->IsCreated())
+      {
+      this->LabelTopLevelFrame->SetParent ( this->LabelTopLevel );
+      this->LabelTopLevelFrame->Create ( );
+      }
+    this->Script ( "pack %s -side left -anchor w -padx 2 -pady 2 -fill x -fill y -expand n", this->LabelTopLevelFrame->GetWidgetName ( ) );
+
   // Create the node color frame
 
-  if (!this->AnatomicalNodeAttributeColorFrame)
+  if (!this->AnatomicalNodeAttributeColorButton)
     {
-    this->AnatomicalNodeAttributeColorFrame = vtkKWFrame::New();  
+    this->AnatomicalNodeAttributeColorButton = vtkKWPushButton::New ();  
     }
-  if (!this->AnatomicalNodeAttributeColorFrame->IsCreated())
+  if (!this->AnatomicalNodeAttributeColorButton->IsCreated())
     {
-    this->AnatomicalNodeAttributeColorFrame->SetParent(
+      this->AnatomicalNodeAttributeColorButton->SetParent(
       this->AnatomicalNodeAttributesFrame->GetFrame());
-    this->AnatomicalNodeAttributeColorFrame->Create();
-    this->AnatomicalNodeAttributeColorFrame->SetWidth(100);
-    this->AnatomicalNodeAttributeColorFrame->SetHeight(20);
+      this->AnatomicalNodeAttributeColorButton->Create();
+      this->AnatomicalNodeAttributeColorButton->SetWidth(2);
+      this->AnatomicalNodeAttributeColorButton->SetHeight(1);
+      this->AnatomicalNodeAttributeColorButton->Raise();
+      this->AnatomicalNodeAttributeColorButton->SetCommand (this, "PopUpLabelColorSelect");
     }
 
   // Create a MultiColumnList for displaying the color lookup table
@@ -404,7 +456,7 @@ void vtkEMSegmentAnatomicalStructureStep::ShowUserInterface()
     }
   if(!this->ColorMultiColumnList->IsCreated())
     {
-     this->ColorMultiColumnList->SetParent ( wizard_widget->GetClientArea());
+     this->ColorMultiColumnList->SetParent (this->LabelTopLevelFrame);
     this->ColorMultiColumnList->Create ( );
     this->ColorMultiColumnList->SetHeight(4);
     this->ColorMultiColumnList->GetWidget()->SetSelectionTypeToRow();
@@ -450,7 +502,7 @@ void vtkEMSegmentAnatomicalStructureStep::ShowUserInterface()
     }
   if (!this->ShowOnlyNamedColorsCheckButton->IsCreated())
     {
-      this->ShowOnlyNamedColorsCheckButton->SetParent( wizard_widget->GetClientArea());
+      this->ShowOnlyNamedColorsCheckButton->SetParent(this->LabelTopLevelFrame);
       //      this->AnatomicalNodeAttributesFrame->GetFrame() );
     this->ShowOnlyNamedColorsCheckButton->Create();
     this->ShowOnlyNamedColorsCheckButton->SelectedStateOff();
@@ -465,7 +517,7 @@ void vtkEMSegmentAnatomicalStructureStep::ShowUserInterface()
   if (!this->ColorSelectorWidget->IsCreated())
     {
       // this->ColorSelectorWidget->SetParent( this->AnatomicalNodeAttributesFrame->GetFrame());
-      this->ColorSelectorWidget->SetParent( wizard_widget->GetClientArea() );
+      this->ColorSelectorWidget->SetParent(this->LabelTopLevelFrame );
       this->ColorSelectorWidget->Create();
       this->ColorSelectorWidget->SetNodeClass("vtkMRMLColorNode", NULL, NULL, NULL);
       this->ColorSelectorWidget->AddExcludedChildClass("vtkMRMLDiffusionTensorDisplayPropertiesNode");
@@ -502,8 +554,21 @@ void vtkEMSegmentAnatomicalStructureStep::ShowUserInterface()
   this->AddSelectedColorChangedObserver();
   vtkEMSegmentAnatomicalStructureStep::SelectedColormapChangedCallback(this, 0, this, NULL);  
 
-  // Update the UI with the proper value, if there is a selection
+    if (!this->LabelApply)
+       { 
+      this->LabelApply = vtkKWPushButton::New ();
+       }
+    if (!this->LabelApply->IsCreated())
+       {
+         this->LabelApply->SetParent (this->LabelTopLevelFrame);
+         this->LabelApply->Create ( );
+         this->LabelApply->SetText ("Apply");
+         this->LabelApply->SetCommand (this, "LabelWindowCollapseCallback");
+     }
+     this->Script ( "pack %s -side top -padx 4 -anchor c", LabelApply->GetWidgetName());
 
+
+  // Update the UI with the proper value, if there is a selection
   this->SelectedAnatomicalNodeChangedCallback();
 }
 
@@ -602,21 +667,23 @@ void vtkEMSegmentAnatomicalStructureStep::SelectedAnatomicalNodeChangedCallback(
 
   // Update the node color frame
  
-  if (this->AnatomicalNodeAttributeColorFrame)
+  if (this->AnatomicalNodeAttributeColorButton)
     {
     if (has_valid_selection && sel_is_leaf_node)
       {
-      this->AnatomicalNodeAttributeColorFrame->SetEnabled(enabled);
+      this->AnatomicalNodeAttributeColorButton->SetEnabled(enabled);
       this->Script("grid %s -column 2 -row 1 -sticky ne -padx 2 -pady 2",  
-                   this->AnatomicalNodeAttributeColorFrame->GetWidgetName());
+                   this->AnatomicalNodeAttributeColorButton->GetWidgetName());
+      this->UpdateAnatomicalNodeAttributeColorButton();
+
       //this->Script("grid columnconfigure .t 0 -weight 1",  
-      //             this->AnatomicalNodeAttributeColorFrame->GetWidgetName());
+      //             this->AnatomicalNodeAttributeColorButton->GetWidgetName());
      }
     else 
       {
-      this->AnatomicalNodeAttributeColorFrame->SetEnabled(0);
+      this->AnatomicalNodeAttributeColorButton->SetEnabled(0);
       this->Script("grid forget %s", 
-                   this->AnatomicalNodeAttributeColorFrame->GetWidgetName());
+                   this->AnatomicalNodeAttributeColorButton->GetWidgetName());
       }
     }
 
@@ -758,7 +825,7 @@ void vtkEMSegmentAnatomicalStructureStep::SelectedColormapChangedCallback(vtkObj
       // what's the colour?
       if (colour != NULL)
         {
-        self->ColorMultiColumnList->GetWidget()->SetCellBackgroundColor(thisRow, ColourColumn, colour);
+          self->ColorMultiColumnList->GetWidget()->SetCellBackgroundColor(thisRow, ColourColumn, colour);
         }
       else
         {
@@ -787,7 +854,7 @@ void vtkEMSegmentAnatomicalStructureStep::SelectedColormapChangedCallback(vtkObj
     self->SelectRowByIntensityLabelEntryValue(labelIndex);
     }
   
-  self->UpdateAnatomicalNodeAttributeColorFrame();
+  self->UpdateAnatomicalNodeAttributeColorButton();
  
 }
  
@@ -879,7 +946,7 @@ void vtkEMSegmentAnatomicalStructureStep::SelectedColorChangedCallback(vtkObject
       }
     mrmlManager->SetTreeNodeIntensityLabel(sel_vol_id, rowInLabelEntry);
     self->SelectRowByIntensityLabelEntryValue(rowInLabelEntry);
-    self->UpdateAnatomicalNodeAttributeColorFrame();
+    self->UpdateAnatomicalNodeAttributeColorButton();
     }
 
 
@@ -906,7 +973,7 @@ void vtkEMSegmentAnatomicalStructureStep::SelectedColorChangedCallback(vtkObject
       self->AnatomicalNodeIntensityLabelEntry->GetWidget()->SetValueAsInt(rowInColumnList);
       }
 
-    self->UpdateAnatomicalNodeAttributeColorFrame();
+    self->UpdateAnatomicalNodeAttributeColorButton();
     }
  
   //leave critical section.
@@ -1371,17 +1438,44 @@ GetIntensityLabelEntryValueOfFirstSelectedRow(int columnIndex)
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentAnatomicalStructureStep::UpdateAnatomicalNodeAttributeColorFrame()
+void vtkEMSegmentAnatomicalStructureStep::UpdateAnatomicalNodeAttributeColorButton()
 {
   int rowIndex = this->ColorMultiColumnList->GetWidget()->GetIndexOfFirstSelectedRow();
   if( rowIndex < 0) 
     {
-    this->AnatomicalNodeAttributeColorFrame->SetBackgroundColor(0.0, 0.0, 0.0);
+    this->AnatomicalNodeAttributeColorButton->SetBackgroundColor(0.0, 0.0, 0.0);
     }
   else
     {
     double* colour = this->ColorMultiColumnList->GetWidget()->GetCellBackgroundColor(rowIndex, ColourColumn);
-    this->AnatomicalNodeAttributeColorFrame->SetBackgroundColor(colour);
+    this->AnatomicalNodeAttributeColorButton->SetBackgroundColor(colour);
     }
 }
+
+
+//---------------------------------------------------------------------------
+void vtkEMSegmentAnatomicalStructureStep::PopUpLabelColorSelect()
+{
+ 
+  // Get the position of the mouse, position the popup
+  //int x, y;
+  //vtkKWTkUtilities::GetMousePointerCoordinates(this->ParameterSetMenuButton->GetWidget()->GetMenu(), &x, &y);
+  //this->LabelTopLevel->SetPosition(x, y);
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
+  app->ProcessPendingEvents();
+  this->LabelTopLevel->DeIconify();
+  this->LabelTopLevel->Raise();
+}
+
+//---------------------------------------------------------------------------
+void vtkEMSegmentAnatomicalStructureStep::LabelWindowCollapseCallback()
+{
+  if ( !this->LabelTopLevel )
+    {
+    return;
+    }
+  this->LabelTopLevel->Withdraw();
+}
+
+
 

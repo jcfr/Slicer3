@@ -231,8 +231,7 @@ public:
   virtual double   GetTreeNodeChildrenSumClassProbability(vtkIdType nodeID);
 
   virtual double   GetTreeNodeSpatialPriorWeight(vtkIdType nodeID);
-  virtual void     SetTreeNodeSpatialPriorWeight(vtkIdType nodeID, 
-                                                 double value);
+  virtual void     SetTreeNodeSpatialPriorWeight(vtkIdType nodeID, double value);
 
   virtual double   GetTreeNodeInputChannelWeight(vtkIdType nodeID, 
                                                  int volumeNumber);
@@ -292,6 +291,10 @@ public:
   virtual vtkIdType GetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID);
   virtual void      SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID, 
                                                     vtkIdType volumeID);
+
+  virtual vtkIdType GetTreeNodeParcellationVolumeID(vtkIdType nodeID);
+  virtual void      SetTreeNodeParcellationVolumeID(vtkIdType nodeID, vtkIdType volumeID);
+
 
   vtkMRMLVolumeNode* GetAlignedSpatialPriorFromTreeNodeID(vtkIdType nodeID);
 

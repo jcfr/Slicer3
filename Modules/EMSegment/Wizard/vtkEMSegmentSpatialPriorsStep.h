@@ -21,6 +21,8 @@ public:
   // Description:
   // Callbacks.
   virtual void SpatialPriorsVolumeCallback(vtkIdType, vtkIdType volumeId);
+  virtual void ParcellationVolumeCallback(vtkIdType sel_vol_id, vtkIdType vol_id);
+
   virtual void DisplaySelectedNodeSpatialPriorsCallback();
 
 protected:
@@ -34,6 +36,8 @@ protected:
 
   vtkKWFrameWithLabel      *SpatialPriorsVolumeFrame;
   vtkKWMenuButtonWithLabel *SpatialPriorsVolumeMenuButton;
+  vtkKWMenuButtonWithLabel *ParcellationVolumeMenuButton;
+
 
 private:
   vtkEMSegmentSpatialPriorsStep(const vtkEMSegmentSpatialPriorsStep&);

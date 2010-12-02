@@ -1915,6 +1915,106 @@ SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID,
  this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
 }
 
+
+//----------------------------------------------------------------------------
+vtkIdType
+vtkEMSegmentMRMLManager::
+GetTreeNodeParcellationVolumeID(vtkIdType nodeID)
+{
+  vtkMRMLEMSTreeParametersLeafNode* n = this->GetTreeParametersLeafNode(nodeID) ;
+  if (n == NULL)
+    {
+    vtkErrorMacro("Leaf node  is null for nodeID: " << nodeID);
+    return ERROR_NODE_VTKID;
+    }
+
+  // get name of atlas volume from tree node
+  char* atlasVolumeName = n->GetParcellationVolumeName();
+  if (atlasVolumeName == NULL || strlen(atlasVolumeName) == 0)
+    {
+    return ERROR_NODE_VTKID;
+    }
+
+  // get MRML volume ID from atas node
+  const char* mrmlVolumeNodeID = 
+    this->GetAtlasInputNode()->GetVolumeNodeIDByKey(atlasVolumeName);
+  
+  if (mrmlVolumeNodeID == NULL || strlen(atlasVolumeName) == 0)
+    {
+    vtkErrorMacro("MRMLID for prior volume is null; nodeID=" << nodeID);
+    return ERROR_NODE_VTKID;
+    }
+  else if (this->IDMapContainsMRMLNodeID(mrmlVolumeNodeID))
+    {
+    // convert mrml id to vtk id
+    return this->MapMRMLNodeIDToVTKNodeID(mrmlVolumeNodeID);
+    }
+  else
+    {
+    vtkErrorMacro("Volume MRML ID was not in map! atlasVolumeName = " 
+                  << atlasVolumeName << " mrmlID = " << mrmlVolumeNodeID);
+    return ERROR_NODE_VTKID;
+    }
+}
+
+//----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
+SetTreeNodeParcellationVolumeID(vtkIdType nodeID, 
+                                vtkIdType volumeID)
+{
+  vtkMRMLEMSTreeParametersLeafNode* n = this->GetTreeParametersLeafNode(nodeID) ;
+  if (n == NULL)
+    {
+    vtkErrorMacro("Parameter Leaf node is null for nodeID: " << nodeID);
+    return;
+    }
+
+  if (volumeID == -1)
+    {
+      if (n->GetParcellationVolumeName())
+    {
+      n->SetParcellationVolumeName(NULL);
+      // do not return here bc we have to set   this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
+    }
+      else 
+    {
+      // Did not change anything
+      return;
+    }
+    }
+  else
+    {
+    // map volume id to MRML ID
+    const char* volumeMRMLID = MapVTKNodeIDToMRMLNodeID(volumeID);
+    if (volumeMRMLID == NULL || strlen(volumeMRMLID) == 0)
+      {
+      vtkErrorMacro("Could not map volume ID: " << volumeID);
+      return;
+      }
+    
+    // use tree node label (or mrml id if label is not specified)
+    vtksys_stl::string priorVolumeName;
+    priorVolumeName = n->GetID();
+    
+    // add key value pair to atlas
+    int modifiedFlag = this->GetAtlasInputNode()->AddVolume(priorVolumeName.c_str(), volumeMRMLID);
+
+    if (!n->GetParcellationVolumeName() || strcmp(n->GetParcellationVolumeName(),priorVolumeName.c_str()))
+      {
+    // set name of atlas volume in tree node
+    n->SetParcellationVolumeName(priorVolumeName.c_str());
+    modifiedFlag = 1;
+      }
+    // Nothing has changed so do not change status of ValidFlag 
+    if (!modifiedFlag) {return;} 
+    }
+
+  // aligned atlas is no longer valid
+  // 
+ this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
+}
+
 //----------------------------------------------------------------------------
 int
 vtkEMSegmentMRMLManager::
@@ -4896,7 +4996,7 @@ void vtkEMSegmentMRMLManager::ResetTreeNodeDistributionLogCovarianceCorrection(v
   vtkMRMLEMSTreeParametersLeafNode* node = this->GetTreeParametersLeafNode(nodeID) ;
    if (node == NULL)
     {
-    vtkErrorMacro("Leaf parameters node is null for nodeID: " << nodeID);
+    vtkErrorMacro("Leaf node is null for nodeID: " << nodeID);
     return;
     }
 

@@ -14,6 +14,8 @@ class vtkKWMultiColumnListWithScrollbars;
 class vtkKWCheckButton;
 class vtkKWFrame;
 class vtkKWLabelWithLabel;
+class vtkKWTopLevel;
+class vtkKWPushButton;
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentAnatomicalStructureStep : public vtkEMSegmentStep
 {
@@ -53,8 +55,8 @@ public:
   virtual void OpenTreeCallback();
   virtual void CloseTreeCallback();
   void  RemoveAnatomicalStructureTree();
-
-
+  void PopUpLabelColorSelect();
+  void LabelWindowCollapseCallback();
 
 protected:
   vtkEMSegmentAnatomicalStructureStep();
@@ -69,18 +71,21 @@ protected:
   vtkKWFrameWithLabel                *AnatomicalNodeAttributesFrame;
   vtkKWEntryWithLabel                *AnatomicalNodeAttributeNameEntry;
   vtkKWEntryWithLabel                *AnatomicalNodeIntensityLabelEntry;
-  vtkKWFrame                         *AnatomicalNodeAttributeColorFrame;
+  vtkKWPushButton                    *AnatomicalNodeAttributeColorButton;
   vtkKWLabelWithLabel                *AnatomicalNodeAttributeColorLabel;
   vtkKWCheckButton                   *ShowOnlyNamedColorsCheckButton;
   vtkKWMultiColumnListWithScrollbars *ColorMultiColumnList;
   int NumberOfColumns;
   bool MultiSelectMode;
-
   vtkKWFrameWithLabel                *ColormapFrame;
   vtkSlicerNodeSelectorWidget        *ColorSelectorWidget;
 
   vtkCallbackCommand      *SelectedColorChangedCallbackCommand;
   vtkCallbackCommand      *SelectedColormapChangedCallbackCommand;
+
+  vtkKWTopLevel* LabelTopLevel;
+  vtkKWPushButton* LabelApply;
+  vtkKWFrame* LabelTopLevelFrame; 
 
   //BTX
   enum
@@ -104,7 +109,7 @@ private:
   vtkEMSegmentAnatomicalStructureStep(const vtkEMSegmentAnatomicalStructureStep&);
   void operator=(const vtkEMSegmentAnatomicalStructureStep&);
 
-  void UpdateAnatomicalNodeAttributeColorFrame();
+  void UpdateAnatomicalNodeAttributeColorButton();
   void AddSelectedColorChangedObserver();
   void RemoveSelectedColorChangedObserver();
 

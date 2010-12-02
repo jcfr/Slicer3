@@ -30,7 +30,7 @@ vtkEMSegmentSpatialPriorsStep::vtkEMSegmentSpatialPriorsStep()
   this->SpatialPriorsFrame      = NULL;
   this->SpatialPriorsVolumeFrame      = NULL;
   this->SpatialPriorsVolumeMenuButton = NULL;
-
+  this->ParcellationVolumeMenuButton = NULL;
   this->NodeParametersLabel = NULL;
 }
 
@@ -63,6 +63,12 @@ vtkEMSegmentSpatialPriorsStep::~vtkEMSegmentSpatialPriorsStep()
     {
     this->SpatialPriorsFrame->Delete();
     this->SpatialPriorsFrame = NULL;
+    }
+
+  if (this->ParcellationVolumeMenuButton)
+    {
+      this->ParcellationVolumeMenuButton->Delete();
+      this->ParcellationVolumeMenuButton = NULL;
     }
 }
 
@@ -106,7 +112,7 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
     {
     this->SpatialPriorsVolumeFrame->SetParent(wizard_widget->GetClientArea());
     this->SpatialPriorsVolumeFrame->Create();
-    this->SpatialPriorsVolumeFrame->SetLabelText("Probability Map");
+    this->SpatialPriorsVolumeFrame->SetLabelText("Atlas Map");
     }
 
   this->Script(
@@ -141,16 +147,40 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
     this->SpatialPriorsVolumeMenuButton->Create();
     this->SpatialPriorsVolumeMenuButton->GetLabel()->
       SetWidth(EMSEG_WIDGETS_LABEL_WIDTH);
-    this->SpatialPriorsVolumeMenuButton->SetLabelText("Select Volume:");
+    this->SpatialPriorsVolumeMenuButton->SetLabelText("Select Probability Map:");
     this->SpatialPriorsVolumeMenuButton->GetWidget()->
       SetWidth(EMSEG_MENU_BUTTON_WIDTH);
     this->SpatialPriorsVolumeMenuButton->SetBalloonHelpString(
-      "Select volume for the selected node.");
+      "Select spatial prior volume for the selected node.");
     }
 
   this->Script(
     "pack %s -side top -anchor nw -padx 2 -pady 2",
     this->SpatialPriorsVolumeMenuButton->GetWidgetName());
+
+ // Create the spatial prior volume selector
+
+  if (!this->ParcellationVolumeMenuButton)
+    {
+    this->ParcellationVolumeMenuButton = vtkKWMenuButtonWithLabel::New();
+    }
+  if (!this->ParcellationVolumeMenuButton->IsCreated())
+    {
+    this->ParcellationVolumeMenuButton->SetParent(this->SpatialPriorsVolumeFrame->GetFrame());
+    this->ParcellationVolumeMenuButton->Create();
+    this->ParcellationVolumeMenuButton->GetLabel()->
+      SetWidth(EMSEG_WIDGETS_LABEL_WIDTH);
+    this->ParcellationVolumeMenuButton->SetLabelText("Select Parcellation Map:");
+    this->ParcellationVolumeMenuButton->GetWidget()->
+      SetWidth(EMSEG_MENU_BUTTON_WIDTH);
+    this->ParcellationVolumeMenuButton->SetBalloonHelpString(
+      "Select volume for further parcellating area the selected node.");
+    }
+
+  this->Script(
+    "pack %s -side top -anchor nw -padx 2 -pady 2",
+    this->ParcellationVolumeMenuButton->GetWidgetName());
+
 
   this->DisplaySelectedNodeSpatialPriorsCallback();
 }
@@ -224,6 +254,30 @@ void vtkEMSegmentSpatialPriorsStep::DisplaySelectedNodeSpatialPriorsCallback()
       this->SpatialPriorsVolumeMenuButton->SetEnabled(0);
       }
     }
+
+   if (this->ParcellationVolumeMenuButton)
+    {
+      vtkKWMenu *menu =  this->ParcellationVolumeMenuButton->GetWidget()->GetMenu();
+      menu->DeleteAllItems();
+      if (has_valid_selection)
+      {
+        this->ParcellationVolumeMenuButton->SetEnabled(tree->GetEnabled());
+        sprintf(buffer, "ParcellationVolumeCallback %d", 
+              static_cast<int>(sel_vol_id));
+        this->PopulateMenuWithLoadedVolumes(menu, this, buffer);
+        vtkIdType vol_id  = mrmlManager->GetTreeNodeParcellationVolumeID(sel_vol_id);
+        if(!this->SetMenuButtonSelectedItem(menu, vol_id))
+         {
+          this->ParcellationVolumeMenuButton->GetWidget()->SetValue("");
+         }
+      }
+    else
+      {
+      this->ParcellationVolumeMenuButton->GetWidget()->SetValue("");
+      this->ParcellationVolumeMenuButton->SetEnabled(0);
+      }
+    }
+
 }
 
 //----------------------------------------------------------------------------
@@ -239,6 +293,22 @@ void vtkEMSegmentSpatialPriorsStep::SpatialPriorsVolumeCallback(
     }
   mrmlManager->SetTreeNodeSpatialPriorVolumeID(sel_vol_id, vol_id);
 }
+
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentSpatialPriorsStep::ParcellationVolumeCallback(
+  vtkIdType sel_vol_id, vtkIdType vol_id)
+{
+  // The spatial prior volume has changed because of user interaction
+
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+  if (!mrmlManager)
+    {
+    return;
+    }
+  mrmlManager->SetTreeNodeParcellationVolumeID(sel_vol_id, vol_id);
+}
+
 
 //----------------------------------------------------------------------------
 void vtkEMSegmentSpatialPriorsStep::PrintSelf(ostream& os, vtkIndent indent)
