@@ -1025,7 +1025,7 @@ void vtkITKArchetypeImageSeriesReader::AnalyzeDicomHeaders()
         sscanf( tagValue.c_str(), "%f\\%f\\%f", a, a+1, a+2 );
         int idx = InsertImagePositionPatient( a );
         this->IndexImagePositionPatient[f] = idx;
-  }
+    }
     else
     {
       this->IndexImagePositionPatient[f] = -1;
@@ -1151,6 +1151,10 @@ void vtkITKArchetypeImageSeriesReader::ResetFileNames( )
 
 int vtkITKArchetypeImageSeriesReader::AssembleVolumeContainingArchetype( )
 {
+  // we will set FileNames to have only volumes that match the archetype
+  // and we will return the size of the list.
+  // - if the files have ImagePositionPatient tags, we will sort
+  //   the files based on this information
   this->FileNames.resize(0);
 
   // Note: Since IndexArchetype is unsigned int, it's always postive 
@@ -1159,14 +1163,13 @@ int vtkITKArchetypeImageSeriesReader::AssembleVolumeContainingArchetype( )
       || this->IndexArchetype >= this->IndexDiffusionGradientOrientation.size()
       || this->IndexArchetype >= this->IndexImageOrientationPatient.size())
     {
-      vtkErrorMacro("AssembleVolumeContainingArchetype: index archetype " << this->IndexArchetype << " is out of bounds 0-" << this->IndexSeriesInstanceUIDs.size());
+      vtkErrorMacro("AssembleVolumeContainingArchetype: index archetype " 
+        << this->IndexArchetype << " is out of bounds 0-" << this->IndexSeriesInstanceUIDs.size());
       return 0;
     }
       
 
   long int iArchetypeSeriesUID = this->IndexSeriesInstanceUIDs[this->IndexArchetype];
-  //long int iArchetypeContentTime =
-  //this->IndexContentTime[this->IndexArchetype];
   long int iArchetypeEchoNumbers = this->IndexEchoNumbers[this->IndexArchetype];
   long int iArchetypeDiffusion = this->IndexDiffusionGradientOrientation[this->IndexArchetype];
   long int iArchetypeOrientation =  this->IndexImageOrientationPatient[this->IndexArchetype];
@@ -1178,47 +1181,67 @@ int vtkITKArchetypeImageSeriesReader::AssembleVolumeContainingArchetype( )
   // Sort good files based on distance from Origin to ImagePositionPatient along ScanAxis
   // Follows logic originally in LoadVolume.tcl
   for (unsigned int k = 0; k < this->AllFileNames.size(); k++)
-  {
-  if ( (this->IndexSeriesInstanceUIDs[k] != iArchetypeSeriesUID &&
-        this->IndexSeriesInstanceUIDs[k] >= 0 && iArchetypeSeriesUID >= 0) ||
-      //(this->IndexContentTime[k] != iArchetypeContentTime && this->IndexContentTime[k] >= 0 && iArchetypeContentTime >= 0) ||
-      //(this->IndexTriggerTime[k] != iArchetypeTriggerTime && this->IndexTriggerTime[k] >= 0 && iArchetypeTriggerTime >= 0) ||
-      (this->IndexEchoNumbers[k] != iArchetypeEchoNumbers && this->IndexEchoNumbers[k] >= 0 && iArchetypeEchoNumbers >= 0) ||
-      (this->IndexDiffusionGradientOrientation[k] != iArchetypeDiffusion  && this->IndexDiffusionGradientOrientation[k] >= 0 && iArchetypeDiffusion >= 0) ||
-      (this->IndexImageOrientationPatient[k] != iArchetypeOrientation && this->IndexImageOrientationPatient[k] >= 0 && iArchetypeOrientation >= 0) )
     {
+    if (  (this->IndexSeriesInstanceUIDs[k] != iArchetypeSeriesUID &&
+          this->IndexSeriesInstanceUIDs[k] >= 0 && iArchetypeSeriesUID >= 0) 
+         ||
+          (this->IndexEchoNumbers[k] != iArchetypeEchoNumbers && 
+           this->IndexEchoNumbers[k] >= 0 && iArchetypeEchoNumbers >= 0) 
+         ||
+          (this->IndexDiffusionGradientOrientation[k] != iArchetypeDiffusion  && 
+           this->IndexDiffusionGradientOrientation[k] >= 0 && iArchetypeDiffusion >= 0) 
+         ||
+          (this->IndexImageOrientationPatient[k] != iArchetypeOrientation && 
+           this->IndexImageOrientationPatient[k] >= 0 && iArchetypeOrientation >= 0) )
+      {
+      // file doesn't match our criteria
       continue;
-    }
-    else
-    {
-      if (!originSet)
-        {
-        std::vector<float> iopv = this->ImageOrientationPatient[k];
-        float iopf1[] = {iopv[0], iopv[1], iopv[2]};
-        float iopf2[] = {iopv[3], iopv[4], iopv[5]};
-
-        vtkMath::Cross( iopf1, iopf2, this->ScanAxis );
-        this->ScanOrigin[0] = ImagePositionPatient[k][0];
-        this->ScanOrigin[1] = ImagePositionPatient[k][1];
-        this->ScanOrigin[2] = ImagePositionPatient[k][2];
-        originSet = true;
-        }
-      float tempiop[3], diff[3];
-      tempiop[0] = ImagePositionPatient[k][0];
-      tempiop[1] = ImagePositionPatient[k][1];
-      tempiop[2] = ImagePositionPatient[k][2];
-
-      vtkMath::Subtract( tempiop, this->ScanOrigin, diff );
-      float dist = vtkMath::Dot( diff, ScanAxis );
-
-      fileNameSortKey.push_back( std::make_pair(dist, k) );
       }
-  }
+    else
+      {
+      // find the position and orientation corresponding to this
+      // file - it could be that all files in the set have the same index
+      // (1) or that there is no position information
+      if ( ImagePositionPatient.size() != 0 )
+        {
+        unsigned int kth_orientation = this->IndexImageOrientationPatient[k];
+        unsigned int kth_position = this->IndexImagePositionPatient[k];
+        if (!originSet)
+          {
+          std::vector<float> iopv = this->ImageOrientationPatient[kth_orientation];
+          float iopf1[] = {iopv[0], iopv[1], iopv[2]};
+          float iopf2[] = {iopv[3], iopv[4], iopv[5]};
+
+          vtkMath::Cross( iopf1, iopf2, this->ScanAxis );
+          this->ScanOrigin[0] = ImagePositionPatient[kth_position][0];
+          this->ScanOrigin[1] = ImagePositionPatient[kth_position][1];
+          this->ScanOrigin[2] = ImagePositionPatient[kth_position][2];
+          originSet = true;
+          }
+        float tempiop[3], diff[3];
+        tempiop[0] = ImagePositionPatient[kth_position][0];
+        tempiop[1] = ImagePositionPatient[kth_position][1];
+        tempiop[2] = ImagePositionPatient[kth_position][2];
+
+        vtkMath::Subtract( tempiop, this->ScanOrigin, diff );
+        float dist = vtkMath::Dot( diff, ScanAxis );
+
+        fileNameSortKey.push_back( std::make_pair(dist, k) );
+        }
+      else
+        {
+        // no position info, so use the file index
+        fileNameSortKey.push_back( std::make_pair(k, k) );
+        }
+      }
+    }
+
   std::sort(fileNameSortKey.begin(), fileNameSortKey.end());
   std::vector<std::pair <double, int> >::iterator keyiter;
   for (keyiter = fileNameSortKey.begin(); keyiter != fileNameSortKey.end(); ++keyiter)
-        {
+    {
     FileNames.push_back(AllFileNames[keyiter->second]);
-        }
+    }
+
   return this->FileNames.size();
 }
