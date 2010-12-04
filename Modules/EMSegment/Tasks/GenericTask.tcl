@@ -793,7 +793,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "WriteImageDataToTemporaryDir: volume node to be warped is not correctly defined"
             return ""
         }
-        return  [WriteDataToTemporaryDir $inputVolumeNode Volume]
+        return  [WriteDataToTemporaryDir $Node Volume]
     }
 
     proc ReadDataFromDisk { Node FileName Type } {
@@ -1659,7 +1659,8 @@ namespace eval EMSegmenterPreProcessingTcl {
          }
  
          set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingAtlasVolumeNode]
- 
+         set transformDirName "" 
+         set transformNode "" 
          if { $UseBRAINS } {
              set transformNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
              if { $transformNode == "" } {
@@ -1683,9 +1684,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         # Spatial prior
         for { set i 0 } {$i < [$outputAtlasNode GetNumberOfVolumes] } { incr i } {
             if { $i == $atlasRegistrationVolumeIndex} { continue }
+            $LOGIC PrintText "TCL: Resampling atlas image $i ..."
             set movingVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
             set outputVolumeNode [$outputAtlasNode GetNthVolumeNode $i]
-
             set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
             $LOGIC PrintText "TCL: Guessed background level: $backgroundLevel"
 
@@ -1697,6 +1698,7 @@ namespace eval EMSegmenterPreProcessingTcl {
        # Sub parcelation
        for { set i 0 } {$i < [$outputSubParcellationNode GetNumberOfVolumes] } { incr i } {
             if { $i == $subParcellationRegistrationVolumeIndex} { continue }
+            $LOGIC PrintText "TCL: Resampling subparcallation map  $i ..."
             set movingVolumeNode [$inputSubParcellationNode GetNthVolumeNode $i]
             set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]
             if { [Resample $movingVolumeNode  $fixedTargetVolumeNode  $transformNode "$transformDirName" $UseBRAINS NearestNeighbor 0 $outputVolumeNode ] } {
@@ -1738,10 +1740,9 @@ namespace eval EMSegmenterPreProcessingTcl {
                 PrintError "RegisterAtlas: Registration output is null, skipping: $i"
                 return 1
             }
-            $LOGIC PrintText "TCL: Resampling atlas image $i ..."
 
             if { $UseBRAINS } {
-                $LOGIC PrintText "TCL: Resampling atlas image $i with BRAINSResample..."
+                $LOGIC PrintText "TCL: Resampling atlas image with BRAINSResample..."
                 if { [BRAINSResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType ] } {
                         return 1
                 }

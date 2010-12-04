@@ -3947,7 +3947,9 @@ CreateAndObserveNewParameterSet()
   
   // make connections
   workingNode->SetInputTargetNodeID(targetNode->GetID());
+
   workingNode->SetInputAtlasNodeID(atlasNode->GetID());
+
   workingNode->SetInputSubParcellationNodeID(subParcellationNode->GetID());
 
   // create global parameters node
@@ -4550,15 +4552,6 @@ CheckMRMLNodeStructure(int ignoreOutputFlag)
     return 0;
     }
 
-  // Does not have to be defined
-  //vtkMRMLEMSVolumeCollectionNode *subParcellationNode = this->GetSubParcellationInputNode();
-  //if (subParcellationNode == NULL)
-  //  {
-  //  vtkErrorMacro("SubParcellation node is NULL.");
-  //  return 0;
-  //  }
-
-
   // check working data node
   vtkMRMLEMSWorkingDataNode *workingNode = this->GetWorkingDataNode();
   if (workingNode == NULL)
@@ -4566,6 +4559,21 @@ CheckMRMLNodeStructure(int ignoreOutputFlag)
     vtkErrorMacro("Working data node is NULL.");
     return 0;
     }
+
+  vtkMRMLEMSVolumeCollectionNode *subParcellationNode = this->GetSubParcellationInputNode();
+  if (subParcellationNode == NULL)
+   {
+      vtkWarningMacro("SubParcellation node is NULL - we create one now so emsnode complies with new node structure.");
+      vtkMRMLEMSVolumeCollectionNode* subParcellationNode = vtkMRMLEMSVolumeCollectionNode::New();
+      subParcellationNode->SetHideFromEditors(this->HideNodesFromEditors);
+      this->GetMRMLScene()->AddNode(subParcellationNode);
+       workingNode->SetInputSubParcellationNodeID(subParcellationNode->GetID());
+       subParcellationNode->Delete();
+  
+   }
+
+
+
   
   // check output volume
   if (!ignoreOutputFlag) {
