@@ -44,6 +44,9 @@ namespace eval EMSegmenterPreProcessingTcl {
     # spatial priors aligned to subject node
     variable outputAtlasNode
 
+    variable inputSubParcellationNode
+    variable outputSubParcellationNode
+
     ## Task Specific GUI variables
     variable TextLabelSize 1
     variable CheckButtonSize 0
@@ -177,7 +180,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable subjectNode
         variable inputAtlasNode
         variable outputAtlasNode
-
+        variable inputSubParcellationNode
+        variable outputSubParcellationNode
         
         set GUI $::slicer3::Application
         if { $GUI == "" } {
@@ -257,6 +261,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         set subjectNode ""
         set inputAtlasNode ""
         set outputAtlasNode ""
+        set inputSubParcellationNode ""
+        set outputSubParcellationNode ""
 
         return 0
     }
@@ -376,7 +382,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                     set outputNodeID [$outputNode GetID]
                     $outputNode Delete
 
-                    if { [BRAINSResample $movingVolumeNode $fixedVolumeNode [$SCENE GetNodeByID $outputNodeID] $transformNode $backgroundLevel] } {
+                    if { [BRAINSResampleCLI $movingVolumeNode $fixedVolumeNode [$SCENE GetNodeByID $outputNodeID] $transformNode $backgroundLevel Linear] } {
                         return 1
                     }
                     ## $SCENE RemoveNode $transformNode
@@ -406,6 +412,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable subjectNode
         variable inputAtlasNode
         variable outputAtlasNode
+        variable inputSubParcellationNode
+        variable outputSubParcellationNode
          $LOGIC PrintText "TCL: =========================================="
          $LOGIC PrintText "TCL: == Skip Atlas Registration"
          $LOGIC PrintText "TCL: =========================================="
@@ -429,6 +437,17 @@ namespace eval EMSegmenterPreProcessingTcl {
             $mrmlManager SynchronizeAtlasNode $inputAtlasNode $outputAtlasNode AlignedAtlas
         }
 
+        if { $outputSubParcellationNode == "" } {
+             $LOGIC PrintText "TCL: SubParcellation was empty"
+             #  $LOGIC PrintText "set outputSubParcellationNode \[$mrmlManager CloneSubParcellationNode $inputSubParcellationNode \"AlignedSubParcellation\"\] "
+             set outputSubParcellationNode [$mrmlManager CloneSubParcellationNode $inputSubParcellationNode "Aligned"]
+             $workingDN SetAlignedSubParcellationNodeID [$outputSubParcellationNode GetID]
+        } else {
+             $LOGIC PrintText "TCL: SubParcellation was just synchronized"
+            $mrmlManager SynchronizeSubParcellationNode $inputSubParcellationNode $outputSubParcellationNode AlignedSubParcellation
+        }
+
+
         # ----------------------------------------------------------------
         # set the fixed target volume
         # ----------------------------------------------------------------
@@ -448,7 +467,14 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC StartPreprocessingResampleAndCastToTarget $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode
         }
 
-         $LOGIC PrintText "TCL: EMSEG: Atlas-to-target resampling complete."
+        for { set i 0 } {$i < [$outputSubParcellationNode GetNumberOfVolumes] } { incr i } {
+            set movingVolumeNode [$inputSubParcellationNode GetNthVolumeNode $i]
+            set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]
+            $LOGIC StartPreprocessingResampleAndCastToTarget $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode
+        }
+
+
+        $LOGIC PrintText "TCL: EMSEG: Atlas-to-target resampling complete."
         $workingDN SetAlignedAtlasNodeIsValid 1
         return 0
     }
@@ -467,6 +493,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable subjectNode
         variable inputAtlasNode
         variable outputAtlasNode
+        variable inputSubParcellationNode
+        variable outputSubParcellationNode
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == InitPreprocessing"
         $LOGIC PrintText "TCL: =========================================="
@@ -524,6 +552,15 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set outputAtlasNode [$workingDN GetAlignedAtlasNode]
 
+        set inputSubParcellationNode [$workingDN GetInputSubParcellationNode]
+        if {$inputSubParcellationNode == "" } {
+            PrintError "InitPreProcessing: InputSubParcellation not defined"
+            return 1
+        }
+
+        set outputSubParcellationNode [$workingDN GetAlignedSubParcellationNode]
+
+
 
         return 0
     }
@@ -532,90 +569,65 @@ namespace eval EMSegmenterPreProcessingTcl {
     # returns transformation when no error occurs
     # now call commandline directly
 
-    proc BRAINSResample { inputVolumeNode referenceVolumeNode outVolumeNode transformationNode backgroundLevel } {
+    proc BRAINSResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformationNode backgroundLevel interpolationType } {
         variable SCENE
         variable LOGIC
 
-        set  ValueList ""
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == Resample Image CLI"
+        $LOGIC PrintText "TCL: =========================================="
 
-        if { $inputVolumeNode == "" || [$inputVolumeNode GetImageData] == "" } {
-            PrintError "BRAINSResample: volume node to be warped is not correctly defined"
-            return 1
-        }
+        set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+        set CMD "${PLUGINS_DIR}/BRAINSResample "
 
-        if { $referenceVolumeNode == "" || [$referenceVolumeNode GetImageData] == "" } {
-            PrintError "BRAINSResample: reference image node is not correctly defined"
-            return 1
-        }
+        set tmpFileName [WriteImageDataToTemporaryDir  $inputVolumeNode ]
+    if { $tmpFileName == "" } { return 1 }
+        set RemoveFiles "$tmpFileName"
+        set CMD "$CMD --inputVolume $tmpFileName"
+
+        set tmpFileName [WriteImageDataToTemporaryDir  $referenceVolumeNode ]
+        if { $tmpFileName == "" } { return 1 }
+        set RemoveFiles "$RemoveFiles $tmpFileName"
+        set CMD "$CMD --referenceVolume $tmpFileName"
 
         if { $transformationNode == "" } {
-            PrintError "BRAINSResample: transformation node not correctly defined"
+            PrintError "BRAINSResampleCLI: transformation node not correctly defined"
             return 1
         }
+        set tmpFileName [WriteDataToTemporaryDir $transformationNode Transform]
+        if { $tmpFileName == "" } { return 1 }
+        set RemoveFiles "$RemoveFiles $tmpFileName"
+        set CMD "$CMD --warpTransform $tmpFileName"
 
         if { $outVolumeNode == "" } {
-            PrintError "BRAINSResample: output volume node not correctly defined"
+            PrintError "BRAINSResampleCLI: output volume node not correctly defined"
             return 1
         }
+        set outVolumeFileName [CreateTemporaryFileName $outVolumeNode]
+        if { $outVolumeFileName == "" } { return 1 }
+        set CMD "$CMD --outputVolume $outVolumeFileName"
 
-        lappend ValueList "Float defaultValue $backgroundLevel"
+        set CMD "$CMD --defaultValue $backgroundLevel"
 
+        set CMD "$CMD --pixelType"
         set referenceVolume [$referenceVolumeNode GetImageData]
         set scalarType [$referenceVolume GetScalarTypeAsString]
         switch -exact "$scalarType" {
-            "bit" { lappend ValueList "String pixelType binary" }
-            "unsigned char" { lappend ValueList "String pixelType uchar" }
-            "unsigned short" { lappend ValueList "String pixelType ushort" }
-            "unsigned int" { lappend ValueList "String pixelType uint" }
+            "bit" { set CMD "$CMD binary" }
+            "unsigned char" { set CMD "$CMD uchar" }
+            "unsigned short" { set CMD "$CMD ushort" }
+            "unsigned int" { set CMD "$CMD uint" }
             "short" -
             "int" -
-            "float" { lappend ValueList "String pixelType $scalarType" }
+            "float" { set CMD "$CMD $scalarType" }
             default {
                 PrintError "BRAINSResample: cannot resample a volume of type $scalarType"
                 return 1
             }
         }
 
-        lappend ValueList "String interpolationMode Linear"
-
-        # Start calling function
-        return [BRAINSResampleCLI $inputVolumeNode $referenceVolumeNode $outVolumeNode $transformationNode "$ValueList"]
-    }
-
-    proc BRAINSResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformationNode  ValueList } {
-        variable SCENE
-        variable LOGIC
-         $LOGIC PrintText "TCL: =========================================="
-         $LOGIC PrintText "TCL: == Resample Image CLI"
-         $LOGIC PrintText "TCL: =========================================="
-
-        set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
-        set CMD "${PLUGINS_DIR}/BRAINSResample "
-
-        set tmpFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
-        set RemoveFiles "$tmpFileName"
-        if { $tmpFileName == "" } {
-            return 1
-        }
-        set CMD "$CMD --inputVolume $tmpFileName"
-
-        set tmpFileName [WriteDataToTemporaryDir $referenceVolumeNode Volume]
-        set RemoveFiles "$RemoveFiles $tmpFileName"
-        if { $tmpFileName == "" } { return 1 }
-        set CMD "$CMD --referenceVolume $tmpFileName"
-
-        set tmpFileName [WriteDataToTemporaryDir $transformationNode Transform]
-        set RemoveFiles "$RemoveFiles $tmpFileName"
-        if { $tmpFileName == "" } { return 1 }
-        set CMD "$CMD --warpTransform $tmpFileName"
-
-        set outVolumeFileName [CreateTemporaryFileName $outVolumeNode]
-        if { $outVolumeFileName == "" } { return 1 }
-        set CMD "$CMD --outputVolume $outVolumeFileName"
-
-        foreach ATT $ValueList {
-            set CMD "$CMD --[lindex $ATT 1] [lindex $ATT 2]"
-        }
+        # Linear
+        set CMD "$CMD --interpolationMode $interpolationType"
 
          $LOGIC PrintText "TCL: Executing $CMD"
         catch { eval exec $CMD } errmsg
@@ -774,6 +786,14 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         return "$tmpName"
+    }
+
+    proc WriteImageDataToTemporaryDir { Node } {
+         if { $Node == "" || [$Node GetImageData] == "" } {
+            PrintError "WriteImageDataToTemporaryDir: volume node to be warped is not correctly defined"
+            return ""
+        }
+        return  [WriteDataToTemporaryDir $inputVolumeNode Volume]
     }
 
     proc ReadDataFromDisk { Node FileName Type } {
@@ -1522,6 +1542,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable subjectNode
         variable inputAtlasNode
         variable outputAtlasNode
+        variable inputSubParcellationNode
+        variable outputSubParcellationNode
         variable UseBRAINS
 
 
@@ -1549,6 +1571,18 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Atlas was just synchronized"
             $mrmlManager SynchronizeAtlasNode $inputAtlasNode $outputAtlasNode "Aligned"
         }
+
+        if { $outputSubParcellationNode == "" } {
+            $LOGIC PrintText "TCL: Aligned SubParcellation was empty"
+            #  $LOGIC PrintText "TCL: set outputSubParcellationNode \[ $mrmlManager CloneSubParcellationNode $inputSubParcellationNode \"AlignedSubParcellation\"\] "
+            set outputSubParcellationNode [ $mrmlManager CloneSubParcellationNode $inputSubParcellationNode "Aligned"]
+            $workingDN SetAlignedSubParcellationNodeID [$outputSubParcellationNode GetID]
+        } else {
+            $LOGIC PrintText "TCL: SubParcellation was just synchronized"
+            $mrmlManager SynchronizeSubParcellationNode $inputSubParcellationNode $outputSubParcellationNode "Aligned"
+        }
+
+
 
         set fixedTargetChannel 0
         set fixedTargetVolumeNode [$subjectNode GetNthVolumeNode $fixedTargetChannel]
@@ -1602,91 +1636,100 @@ namespace eval EMSegmenterPreProcessingTcl {
          $LOGIC PrintText "TCL: ========================="
 
         # ----------------------------------------------------------------
-        # affine registration
-        # ----------------------------------------------------------------
-        # old Style
-        if { 0 } {
-            if { $affineType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationOff] } {
-                 $LOGIC PrintText "TCL: Skipping affine registration of atlas image."
-            } else {
-                 $LOGIC PrintText "TCL: Registering atlas image rigid..."
-                $LOGIC SlicerRigidRegister $fixedTargetVolumeNode $movingAtlasVolumeNode "" $fixedRASToMovingRASTransformAffine $affineType $interpolationType 0
-                 $LOGIC PrintText "TCL: Atlas-to-target transform (fixedRAS -->> movingRAS): "
-                for { set r 0 } { $r < 4 } { incr r } {
-                     $LOGIC PrintText -nonewline "    "
-                    for { set c 0 } { $c < 4 } { incr c } {
-                         $LOGIC PrintText -nonewline "[[$fixedRASToMovingRASTransformAffine GetMatrix] GetElement $r $c]   "
-                    }
-                     $LOGIC PrintText " "
-                }
-            }
-        }
-
-        # ----------------------------------------------------------------
-        # deformable registration
+        # registration
         # ----------------------------------------------------------------
 
-        if { 0 } {
-            # old Style
-            set OffType [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationOff]
-
-            $LOGIC PrintText "TCL: Deformable registration $deformableType Off: $OffType"
-            if { $deformableType == $OffType } {
-                 $LOGIC PrintText "TCL: Skipping deformable registration of atlas image"
-            } else {
-                 $LOGIC PrintText "TCL: Registering atlas image B-Spline..."
-                set fixedRASToMovingRASTransformDeformable [vtkGridTransform New]
-                $fixedRASToMovingRASTransformDeformable SetInterpolationModeToCubic
-                $LOGIC SlicerBSplineRegister $fixedTargetVolumeNode $movingAtlasVolumeNode "" $fixedRASToMovingRASTransformDeformable $fixedRASToMovingRASTransformAffine $deformableType $interpolationType 0
-            }
-        } else {
-            # New type
-            set registrationType "Rigid  ScaleVersor3D ScaleSkewVersor3D Affine"
-            set fastFlag 0
-            if { $affineFlag } {
-                if { $affineType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationRigidMMIFast] } {
-                    set fastFlag 1
-                } else {
-                    set fastFlag 0
-                }
-            }
-
-            if { $bSplineFlag } {
-                set registrationType "${registrationType} BSpline"
-                if { $deformableType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationBSplineMMIFast] } {
-                    set fastFlag 1
-                } else {
-                    set fastFlag 0
-                }
-            }
-
-            set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingAtlasVolumeNode]
-
-            if { $UseBRAINS } {
-                set transformNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
-                if { $transformNode == "" } {
-                    PrintError "RegisterAtlas: Transform node is null"
-                    return 1
-                }
-            } else {
-                set bSplineFlag 1
-                set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $bSplineFlag $fastFlag]
-                if { $transformDirName == "" } {
-                    PrintError "RegisterAtlas: Transform node is null"
-                    return 1
-                }
-            }
-        }
+         set registrationType "Rigid  ScaleVersor3D ScaleSkewVersor3D Affine"
+         set fastFlag 0
+         if { $affineFlag } {
+             if { $affineType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationRigidMMIFast] } {
+                 set fastFlag 1
+             } else {
+                 set fastFlag 0
+             }
+         }
+ 
+         if { $bSplineFlag } {
+             set registrationType "${registrationType} BSpline"
+             if { $deformableType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationBSplineMMIFast] } {
+                 set fastFlag 1
+             } else {
+                 set fastFlag 0
+             }
+         }
+ 
+         set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingAtlasVolumeNode]
+ 
+         if { $UseBRAINS } {
+             set transformNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
+             if { $transformNode == "" } {
+                 PrintError "RegisterAtlas: Transform node is null"
+                 return 1
+             }
+         } else {
+             set bSplineFlag 1
+             set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $bSplineFlag $fastFlag]
+             if { $transformDirName == "" } {
+                 PrintError "RegisterAtlas: Transform node is null"
+                 return 1
+             }
+         }
+       
 
         # ----------------------------------------------------------------
         # resample
         # ----------------------------------------------------------------
 
+        # Spatial prior
         for { set i 0 } {$i < [$outputAtlasNode GetNumberOfVolumes] } { incr i } {
             if { $i == $atlasRegistrationVolumeIndex} { continue }
             set movingVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
             set outputVolumeNode [$outputAtlasNode GetNthVolumeNode $i]
 
+            set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
+            $LOGIC PrintText "TCL: Guessed background level: $backgroundLevel"
+
+            if { [Resample $movingVolumeNode  $fixedTargetVolumeNode  $transformNode $transformDirName $UseBRAINS Linear $backgroundLevel $outputVolumeNode ] } {
+               return 1
+        }
+        }
+
+       # Sub parcelation
+       for { set i 0 } {$i < [$outputSubParcellationNode GetNumberOfVolumes] } { incr i } {
+            if { $i == $subParcellationRegistrationVolumeIndex} { continue }
+            set movingVolumeNode [$inputSubParcellationNode GetNthVolumeNode $i]
+            set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]
+            if { [Resample $movingVolumeNode  $fixedTargetVolumeNode  $transformNode "$transformDirName" $UseBRAINS NearestNeighbor 0 $outputVolumeNode ] } {
+               return 1
+           }
+
+           # Create Vernoi diagram with correct scalar type from aligned subparcellation 
+           set output [vtkImageData New]
+           $output DeepCopy [$outputVolumeNode GetImageData]
+
+           set vernoi [vtkImageLabelPropagation New]
+           $vernoi SetInput $output 
+           $vernoi Update 
+
+           set vernoiCast [vtkImageCast New]
+           $vernoiCast SetInput [$vernoi GetPropagatedMap] 
+           $vernoiCast SetOutputScalarType  [$output GetScalarType]
+           $vernoiCast Update
+
+           [$outputVolumeNode GetImageData] DeepCopy [$vernoiCast GetOutput]
+           $vernoiCast Delete
+           $vernoi Delete
+           $output Delete 
+ 
+        }
+
+        $LOGIC PrintText "TCL: Atlas-to-target registration complete."
+        $workingDN SetAlignedAtlasNodeIsValid 1
+        return 0
+    }
+
+    proc Resample { movingVolumeNode fixedTargetVolumeNode  transformNode transformDirName UseBRAINS interpolationType backgroundLevel outputVolumeNode } {
+            variable LOGIC
             if {[$movingVolumeNode GetImageData] == ""} {
                 PrintError "RegisterAtlas: Moving image is null, skipping: $i"
                 return 1
@@ -1695,46 +1738,20 @@ namespace eval EMSegmenterPreProcessingTcl {
                 PrintError "RegisterAtlas: Registration output is null, skipping: $i"
                 return 1
             }
-             $LOGIC PrintText "TCL: Resampling atlas image $i ..."
+            $LOGIC PrintText "TCL: Resampling atlas image $i ..."
 
             if { $UseBRAINS } {
                 $LOGIC PrintText "TCL: Resampling atlas image $i with BRAINSResample..."
-
-                set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
-                $LOGIC PrintText "TCL: Guessed background level: $backgroundLevel"
-
-                if { 0 } {
-                    # resample moving image
-                    # old style
-                    if {$fixedRASToMovingRASTransformDeformable != "" } {
-                        $LOGIC SlicerImageResliceWithGrid $movingVolumeNode $outputVolumeNode $fixedTargetVolumeNode $fixedRASToMovingRASTransformDeformable $interpolationType $backgroundLevel
-                    } else {
-                        $LOGIC SlicerImageReslice $movingVolumeNode $outputVolumeNode $fixedTargetVolumeNode $fixedRASToMovingRASTransformAffine $interpolationType $backgroundLevel
-                    }
-                } else {
-                    if { [BRAINSResample $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel] } {
+                if { [BRAINSResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType ] } {
                         return 1
-                    }
                 }
             } else {
                 if { [CMTKResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformDirName] } {
                     return 1
                 }
             }
-        }
-
-        if { 0 } {
-            $fixedRASToMovingRASTransformAffine Delete
-            if { $fixedRASToMovingRASTransformDeformable != "" } {
-                $fixedRASToMovingRASTransformDeformable Delete
-            }
-        }
-
-        $LOGIC PrintText "TCL: Atlas-to-target registration complete."
-        $workingDN SetAlignedAtlasNodeIsValid 1
-        return 0
+    return 0 
     }
-
     proc PrintError { TEXT } {
         variable LOGIC
         $LOGIC PrintText "TCL: ERROR: EMSegmenterPreProcessingTcl::${TEXT}"

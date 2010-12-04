@@ -32,15 +32,7 @@ public:
   //
   virtual bool      SaveIntermediateResults(vtkSlicerApplication* app, vtkSlicerApplicationLogic *appLogic);
 
-  // Old Pipeline
-  virtual bool      StartPreprocessing();
   virtual bool      StartPreprocessingInitializeInputData();
-  virtual bool      StartPreprocessingTargetIntensityNormalization();
-  virtual bool      StartPreprocessingTargetToTargetRegistration();
-  virtual bool      StartPreprocessingAtlasToTargetRegistration();
-  virtual void      StartSegmentation(vtkSlicerApplication* app,vtkSlicerApplicationLogic *appLogic);
-
-  // New Pipeline
   virtual int       SourceTclFile(vtkSlicerApplication*app,const char *tclFile);
   virtual int       SourceTaskFiles(vtkSlicerApplication* app);
   virtual int       SourcePreprocessingTclFiles(vtkSlicerApplication* app); 
@@ -117,16 +109,6 @@ public:
                                   int imageMatchType,
                                   int iterpolationType,
                                   double backgroundLevel);
-
-  static void 
-  SlicerBSplineRegister(vtkMRMLVolumeNode* fixedVolumeNode,
-                        vtkMRMLVolumeNode* movingVolumeNode,
-                        vtkMRMLVolumeNode* outputVolumeNode,
-                        vtkGridTransform* fixedRASToMovingRASTransform,
-                        vtkTransform* fixedRASToMovingRASAffineTransform,
-                        int imageMatchType,
-                        int iterpolationType,
-                        double backgroundLevel);
 
   static void 
   SlicerImageResliceWithGrid(vtkMRMLVolumeNode* inputVolumeNode,

@@ -840,11 +840,6 @@ UpdateIntensityDistributionFromSample(vtkIdType nodeID)
   // get working node @@@
   vtkMRMLEMSTargetNode* workingTarget = 
     this->GetWorkingDataNode()->GetInputTargetNode();
-  if (this->GetWorkingDataNode()->GetNormalizedTargetNode() &&
-      this->GetWorkingDataNode()->GetNormalizedTargetNodeIsValid())
-    {
-    workingTarget = this->GetWorkingDataNode()->GetNormalizedTargetNode();
-    }
   if (this->GetWorkingDataNode()->GetAlignedTargetNode() &&
       this->GetWorkingDataNode()->GetAlignedTargetNodeIsValid())
     {
@@ -1875,7 +1870,6 @@ SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID,
       if (n->GetParametersNode()->GetSpatialPriorVolumeName())
     {
       n->GetParametersNode()->SetSpatialPriorVolumeName(NULL);
-      // do not return here bc we have to set   this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
     }
       else 
     {
@@ -1912,14 +1906,14 @@ SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID,
 
   // aligned atlas is no longer valid
   // 
- this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
+  this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
 }
 
 
 //----------------------------------------------------------------------------
 vtkIdType
 vtkEMSegmentMRMLManager::
-GetTreeNodeParcellationVolumeID(vtkIdType nodeID)
+GetTreeNodeSubParcellationVolumeID(vtkIdType nodeID)
 {
   vtkMRMLEMSTreeParametersLeafNode* n = this->GetTreeParametersLeafNode(nodeID) ;
   if (n == NULL)
@@ -1928,18 +1922,18 @@ GetTreeNodeParcellationVolumeID(vtkIdType nodeID)
     return ERROR_NODE_VTKID;
     }
 
-  // get name of atlas volume from tree node
-  char* atlasVolumeName = n->GetParcellationVolumeName();
-  if (atlasVolumeName == NULL || strlen(atlasVolumeName) == 0)
+  // get name of subParcellation volume from tree node
+  char* subParcellationVolumeName = n->GetSubParcellationVolumeName();
+  if (subParcellationVolumeName == NULL || strlen(subParcellationVolumeName) == 0)
     {
     return ERROR_NODE_VTKID;
     }
 
   // get MRML volume ID from atas node
   const char* mrmlVolumeNodeID = 
-    this->GetAtlasInputNode()->GetVolumeNodeIDByKey(atlasVolumeName);
+    this->GetSubParcellationInputNode()->GetVolumeNodeIDByKey(subParcellationVolumeName);
   
-  if (mrmlVolumeNodeID == NULL || strlen(atlasVolumeName) == 0)
+  if (mrmlVolumeNodeID == NULL || strlen(subParcellationVolumeName) == 0)
     {
     vtkErrorMacro("MRMLID for prior volume is null; nodeID=" << nodeID);
     return ERROR_NODE_VTKID;
@@ -1951,8 +1945,8 @@ GetTreeNodeParcellationVolumeID(vtkIdType nodeID)
     }
   else
     {
-    vtkErrorMacro("Volume MRML ID was not in map! atlasVolumeName = " 
-                  << atlasVolumeName << " mrmlID = " << mrmlVolumeNodeID);
+    vtkErrorMacro("Volume MRML ID was not in map! subParcellationVolumeName = " 
+                  << subParcellationVolumeName << " mrmlID = " << mrmlVolumeNodeID);
     return ERROR_NODE_VTKID;
     }
 }
@@ -1960,7 +1954,7 @@ GetTreeNodeParcellationVolumeID(vtkIdType nodeID)
 //----------------------------------------------------------------------------
 void
 vtkEMSegmentMRMLManager::
-SetTreeNodeParcellationVolumeID(vtkIdType nodeID, 
+SetTreeNodeSubParcellationVolumeID(vtkIdType nodeID, 
                                 vtkIdType volumeID)
 {
   vtkMRMLEMSTreeParametersLeafNode* n = this->GetTreeParametersLeafNode(nodeID) ;
@@ -1972,10 +1966,9 @@ SetTreeNodeParcellationVolumeID(vtkIdType nodeID,
 
   if (volumeID == -1)
     {
-      if (n->GetParcellationVolumeName())
+      if (n->GetSubParcellationVolumeName())
     {
-      n->SetParcellationVolumeName(NULL);
-      // do not return here bc we have to set   this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
+      n->SetSubParcellationVolumeName(NULL);
     }
       else 
     {
@@ -1997,20 +1990,20 @@ SetTreeNodeParcellationVolumeID(vtkIdType nodeID,
     vtksys_stl::string priorVolumeName;
     priorVolumeName = n->GetID();
     
-    // add key value pair to atlas
-    int modifiedFlag = this->GetAtlasInputNode()->AddVolume(priorVolumeName.c_str(), volumeMRMLID);
+    // add key value pair to subParcellation
+    int modifiedFlag = this->GetSubParcellationInputNode()->AddVolume(priorVolumeName.c_str(), volumeMRMLID);
 
-    if (!n->GetParcellationVolumeName() || strcmp(n->GetParcellationVolumeName(),priorVolumeName.c_str()))
+    if (!n->GetSubParcellationVolumeName() || strcmp(n->GetSubParcellationVolumeName(),priorVolumeName.c_str()))
       {
-    // set name of atlas volume in tree node
-    n->SetParcellationVolumeName(priorVolumeName.c_str());
+    // set name of subParcellation volume in tree node
+    n->SetSubParcellationVolumeName(priorVolumeName.c_str());
     modifiedFlag = 1;
       }
     // Nothing has changed so do not change status of ValidFlag 
     if (!modifiedFlag) {return;} 
     }
 
-  // aligned atlas is no longer valid
+  // aligned subParcellation is no longer valid
   // 
  this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
 }
@@ -2126,8 +2119,7 @@ ResetTargetSelectedVolumes(const std::vector<vtkIdType>& volumeIDs)
       }
     }
 
-  // normalized and aligned targets are no longer valid
-  this->GetWorkingDataNode()->SetNormalizedTargetNodeIsValid(0);
+  // aligned targets are no longer valid
   this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
 
   // if someting was added or removed, or even if the order may have
@@ -2165,8 +2157,7 @@ AddTargetSelectedVolume(vtkIdType volumeID)
   // set volume name and ID in map
   this->GetTargetInputNode()->AddVolume(name.c_str(), mrmlID);
 
-  // normalized and aligned targets are no longer valid
-  this->GetWorkingDataNode()->SetNormalizedTargetNodeIsValid(0);
+  // aligned targets are no longer valid
   this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
 
   // propogate change to parameters nodes
@@ -2205,8 +2196,7 @@ void  vtkEMSegmentMRMLManager::RemoveTargetSelectedVolumeIndex(vtkIdType imageIn
   // remove from target
   this->GetTargetInputNode()->RemoveNthVolume(imageIndex);
 
-  // normalized and aligned targets are no longer valid
-  this->GetWorkingDataNode()->SetNormalizedTargetNodeIsValid(0);
+  // aligned targets are no longer valid
   this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
 
   // propogate change to parameters nodes
@@ -2233,8 +2223,7 @@ MoveNthTargetSelectedVolume(int fromIndex, int toIndex)
   // move inside target node
   this->GetTargetInputNode()->MoveNthVolume(fromIndex, toIndex);
 
-  // normalized and aligned targets are no longer valid
-  this->GetWorkingDataNode()->SetNormalizedTargetNodeIsValid(0);
+  // aligned targets are no longer valid
   this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
 
   // propogate change to parameters nodes
@@ -3528,9 +3517,26 @@ GetAtlasInputNode()
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLEMSWorkingDataNode*
-vtkEMSegmentMRMLManager::
-GetWorkingDataNode()
+vtkMRMLEMSVolumeCollectionNode* vtkEMSegmentMRMLManager::GetSubParcellationInputNode()
+{
+  vtkMRMLEMSWorkingDataNode* workingDataNode = this->GetWorkingDataNode();
+  if (workingDataNode == NULL)
+    {
+    if (this->Node)
+      {
+      vtkWarningMacro("Null WorkingDataNode with nonnull EMSNode.");
+      }
+    return NULL;
+    }
+  else
+    {
+    return workingDataNode->GetInputSubParcellationNode();
+    }
+}
+
+
+//----------------------------------------------------------------------------
+vtkMRMLEMSWorkingDataNode* vtkEMSegmentMRMLManager::GetWorkingDataNode()
 {
   vtkMRMLEMSSegmenterNode* segmenterNode = this->GetSegmenterNode();
   if (segmenterNode == NULL)
@@ -3682,9 +3688,7 @@ SynchronizeTargetNode(const vtkMRMLEMSTargetNode* templateNode,
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLEMSAtlasNode*
-vtkEMSegmentMRMLManager::
-CloneAtlasNode(vtkMRMLEMSAtlasNode* atlasNode, const char* name)
+vtkMRMLEMSAtlasNode* vtkEMSegmentMRMLManager::CloneAtlasNode(vtkMRMLEMSAtlasNode* atlasNode, const char* name)
 {
   if (atlasNode == NULL)
     {
@@ -3713,6 +3717,38 @@ CloneAtlasNode(vtkMRMLEMSAtlasNode* atlasNode, const char* name)
   clonedAtlas->Delete();
 
   return clonedAtlas;
+}
+
+//----------------------------------------------------------------------------
+vtkMRMLEMSVolumeCollectionNode* vtkEMSegmentMRMLManager::CloneSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* subParcellationNode, const char* name)
+{
+  if (subParcellationNode == NULL)
+    {
+    return NULL;
+    }
+
+  // clone the atlas node
+  vtkMRMLEMSVolumeCollectionNode* clonedSubParcellation = vtkMRMLEMSVolumeCollectionNode::New();
+  clonedSubParcellation->CopyWithScene(subParcellationNode);
+  clonedSubParcellation->SetName(name);
+  clonedSubParcellation->CloneVolumes(subParcellationNode);
+
+  // replace names
+  for (int i = 0; i < clonedSubParcellation->GetNumberOfVolumes(); ++i)
+  {
+    vtksys_stl::stringstream volumeName;
+    volumeName << subParcellationNode->GetNthVolumeNode(i)->GetName()
+               << " (" << name << ")";
+    clonedSubParcellation->GetNthVolumeNode(i)->SetName(volumeName.str().c_str());
+  }
+
+  // add the subParcellation node to the scene
+  this->MRMLScene->AddNode(clonedSubParcellation);
+
+  // clean up
+  clonedSubParcellation->Delete();
+
+  return clonedSubParcellation;
 }
 
 //----------------------------------------------------------------------------
@@ -3755,6 +3791,40 @@ SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode,
   changingNode->SetNumberOfTrainingSamples
     (const_cast<vtkMRMLEMSAtlasNode*>(templateNode)->
      GetNumberOfTrainingSamples());
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentMRMLManager::SynchronizeSubParcellationNode(const vtkMRMLEMSVolumeCollectionNode* templateNode,  vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name)
+{
+  if (templateNode == NULL || changingNode == NULL)
+    {
+      vtkWarningMacro("Attempt to synchronize subParcellation with null node!");
+      return;
+    }
+
+  int numActualImages  = changingNode->GetNumberOfVolumes();
+  
+  // delete images from the current node
+  for (int i = 0; i < numActualImages; ++i)
+    {
+    vtkMRMLVolumeNode* volumeNode = changingNode->GetNthVolumeNode(0);
+    // NB: this will notify this node to remove the volume from the list
+    this->GetMRMLScene()->RemoveNode(volumeNode);
+    }
+
+  // replace each image with a cloned image
+  changingNode->SetName(name);
+  changingNode->CloneVolumes(templateNode);
+
+  // replace image names
+  for (int i = 0; i < changingNode->GetNumberOfVolumes(); ++i)
+  {    
+    vtksys_stl::stringstream volumeName;
+    volumeName << templateNode->GetNthVolumeNode(i)->GetName()
+               << " (" << name << ")";
+    changingNode->GetNthVolumeNode(i)->SetName(volumeName.str().c_str());
+  }
+
 }
 
 //----------------------------------------------------------------------------
@@ -3860,6 +3930,11 @@ CreateAndObserveNewParameterSet()
   atlasNode->SetHideFromEditors(this->HideNodesFromEditors);
   this->GetMRMLScene()->AddNode(atlasNode);
 
+  // create subparcellation node
+  vtkMRMLEMSVolumeCollectionNode* subParcellationNode = vtkMRMLEMSVolumeCollectionNode::New();
+  subParcellationNode->SetHideFromEditors(this->HideNodesFromEditors);
+  this->GetMRMLScene()->AddNode(subParcellationNode);
+
   // create target node
   vtkMRMLEMSTargetNode* targetNode = vtkMRMLEMSTargetNode::New();
   targetNode->SetHideFromEditors(this->HideNodesFromEditors);
@@ -3873,6 +3948,7 @@ CreateAndObserveNewParameterSet()
   // make connections
   workingNode->SetInputTargetNodeID(targetNode->GetID());
   workingNode->SetInputAtlasNodeID(atlasNode->GetID());
+  workingNode->SetInputSubParcellationNodeID(subParcellationNode->GetID());
 
   // create global parameters node
   vtkMRMLEMSGlobalParametersNode* globalParametersNode = 
@@ -3955,6 +4031,7 @@ CreateAndObserveNewParameterSet()
 
   // delete nodes
   atlasNode->Delete();
+  subParcellationNode->Delete();
   targetNode->Delete();
   workingNode->Delete();
   globalParametersNode->Delete();
@@ -4473,6 +4550,15 @@ CheckMRMLNodeStructure(int ignoreOutputFlag)
     return 0;
     }
 
+  // Does not have to be defined
+  //vtkMRMLEMSVolumeCollectionNode *subParcellationNode = this->GetSubParcellationInputNode();
+  //if (subParcellationNode == NULL)
+  //  {
+  //  vtkErrorMacro("SubParcellation node is NULL.");
+  //  return 0;
+  //  }
+
+
   // check working data node
   vtkMRMLEMSWorkingDataNode *workingNode = this->GetWorkingDataNode();
   if (workingNode == NULL)
@@ -4682,7 +4768,6 @@ void vtkEMSegmentMRMLManager::CreateTemplateFile()
   if (workingNode)
     {
       workingNode->SetInputTargetNodeIsValid(0);
-      workingNode->SetNormalizedTargetNodeIsValid(0);  
       workingNode->SetAlignedTargetNodeIsValid(0);  
       workingNode->SetInputAtlasNodeIsValid(0);  
       workingNode->SetAlignedAtlasNodeIsValid(0);
@@ -4695,9 +4780,9 @@ void vtkEMSegmentMRMLManager::CreateTemplateFile()
     // Still is re
          inputTargetNode->RemoveAllVolumes();
       }
-      workingNode->SetNormalizedTargetNodeID("");
       workingNode->SetAlignedTargetNodeID("");
       workingNode->SetAlignedAtlasNodeID("");
+      workingNode->SetAlignedSubParcellationNodeID("");
     }
 
 
@@ -4891,8 +4976,7 @@ vtkEMSegmentMRMLManager::SetTargetSelectedVolumeNthID(int n, vtkIdType newVolume
   // set volume name and ID in map
   this->GetTargetInputNode()->SetNthVolumeNodeID(n, mrmlID);
 
-  // normalized and aligned targets are no longer valid
-  this->GetWorkingDataNode()->SetNormalizedTargetNodeIsValid(0);
+  // aligned targets are no longer valid
   this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
 
   // propogate change to parameters nodes

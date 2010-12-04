@@ -88,8 +88,8 @@ public:
   vtkSetMacro(DistributionSpecificationMethod, int);
 
   // name of the parcellation volume in the atlas
-  vtkGetStringMacro(ParcellationVolumeName);
-  vtkSetStringMacro(ParcellationVolumeName);
+  vtkGetStringMacro(SubParcellationVolumeName);
+  vtkSetStringMacro(SubParcellationVolumeName);
 
   virtual int GetNumberOfSamplePoints() const;
   virtual void AddSamplePoint(double xyz[3]);
@@ -106,7 +106,7 @@ protected:
   int                                 PrintQuality;
   int                                 IntensityLabel;
   int                                 DistributionSpecificationMethod;
-  char*                               ParcellationVolumeName;
+  char*                               SubParcellationVolumeName;
 
   //BTX
   typedef vtkstd::vector<double>                PointType;

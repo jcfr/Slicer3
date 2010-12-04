@@ -18,6 +18,7 @@ class vtkMRMLEMSTreeParametersParentNode;
 class vtkMRMLEMSWorkingDataNode;
 class vtkMRMLScalarVolumeNode;
 class vtkMRMLVolumeNode;
+class vtkMRMLEMSVolumeCollectionNode;
 // need enum values
 #include "MRML/vtkMRMLEMSTreeParametersLeafNode.h"
 #include "MRML/vtkMRMLEMSClassInteractionMatrixNode.h"
@@ -292,8 +293,8 @@ public:
   virtual void      SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID, 
                                                     vtkIdType volumeID);
 
-  virtual vtkIdType GetTreeNodeParcellationVolumeID(vtkIdType nodeID);
-  virtual void      SetTreeNodeParcellationVolumeID(vtkIdType nodeID, vtkIdType volumeID);
+  virtual vtkIdType GetTreeNodeSubParcellationVolumeID(vtkIdType nodeID);
+  virtual void      SetTreeNodeSubParcellationVolumeID(vtkIdType nodeID, vtkIdType volumeID);
 
 
   vtkMRMLVolumeNode* GetAlignedSpatialPriorFromTreeNodeID(vtkIdType nodeID);
@@ -536,6 +537,8 @@ public:
   virtual vtkMRMLEMSTemplateNode*         GetTemplateNode();
   virtual vtkMRMLEMSTargetNode*           GetTargetInputNode();
   virtual vtkMRMLEMSAtlasNode*            GetAtlasInputNode();
+  virtual vtkMRMLEMSVolumeCollectionNode*  GetSubParcellationInputNode();
+
   virtual vtkMRMLScalarVolumeNode*        GetOutputVolumeNode();
   virtual void                            CreateOutputVolumeNode();
 
@@ -552,19 +555,20 @@ public:
   virtual vtkMRMLEMSNode*                 GetEMSNode();
   virtual vtkMRMLEMSSegmenterNode*        GetSegmenterNode();
   virtual vtkMRMLVolumeNode*              GetVolumeNode(vtkIdType);
-  virtual vtkMRMLEMSWorkingDataNode*      GetWorkingDataNode();
+  virtual vtkMRMLEMSWorkingDataNode*       GetWorkingDataNode();
 
   virtual vtkMRMLEMSTargetNode* CloneTargetNode(vtkMRMLEMSTargetNode* target,
                                                 const char* name);
-  virtual vtkMRMLEMSAtlasNode*  CloneAtlasNode(vtkMRMLEMSAtlasNode* target,
-                                               const char* name);
+
+  virtual vtkMRMLEMSAtlasNode*  CloneAtlasNode(vtkMRMLEMSAtlasNode* target, const char* name);
+  virtual vtkMRMLEMSVolumeCollectionNode*  CloneSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* target, const char* name);
 
   virtual void SynchronizeTargetNode(const vtkMRMLEMSTargetNode* templateNode,
                                      vtkMRMLEMSTargetNode* changingNode,
                                      const char* name);
-  virtual void SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode,
-                                    vtkMRMLEMSAtlasNode* changingNode,
-                                    const char* name);
+  virtual void SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode, vtkMRMLEMSAtlasNode* changingNode, const char* name);
+  virtual void SynchronizeSubParcellationNode(const vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name);
+
 
   virtual vtkIdType    MapMRMLNodeIDToVTKNodeID(const char* MRMLNodeID);
 

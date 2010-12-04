@@ -265,7 +265,7 @@ void vtkEMSegmentSpatialPriorsStep::DisplaySelectedNodeSpatialPriorsCallback()
         sprintf(buffer, "ParcellationVolumeCallback %d", 
               static_cast<int>(sel_vol_id));
         this->PopulateMenuWithLoadedVolumes(menu, this, buffer);
-        vtkIdType vol_id  = mrmlManager->GetTreeNodeParcellationVolumeID(sel_vol_id);
+        vtkIdType vol_id  = mrmlManager->GetTreeNodeSubParcellationVolumeID(sel_vol_id);
         if(!this->SetMenuButtonSelectedItem(menu, vol_id))
          {
           this->ParcellationVolumeMenuButton->GetWidget()->SetValue("");
@@ -306,7 +306,7 @@ void vtkEMSegmentSpatialPriorsStep::ParcellationVolumeCallback(
     {
     return;
     }
-  mrmlManager->SetTreeNodeParcellationVolumeID(sel_vol_id, vol_id);
+  mrmlManager->SetTreeNodeSubParcellationVolumeID(sel_vol_id, vol_id);
 }
 
 

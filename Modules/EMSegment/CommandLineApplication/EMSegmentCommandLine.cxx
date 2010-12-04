@@ -1044,9 +1044,8 @@ int main(int argc, char** argv)
     // 
     // Setting up everything for new semgnetation mode with sourcing tcl file 
     //
-    int newVersionFlag =  1;
-    if (  newVersionFlag  ) 
-       {
+
+      
        // =======================================================================
        //
        //  NEW VERSION
@@ -1133,22 +1132,6 @@ int main(int argc, char** argv)
          throw std::runtime_error("ERROR: failed to run preprocessing/segmentation.");
        }
        
-       }
-    else 
-      {
-    //
-    // OLD Version run the segmentation
-    try
-      {
-        if (verbose) std::cerr << "Starting segmentation..." << std::endl;
-        emLogic->StartSegmentation(app,appLogic);
-        if (verbose) std::cerr << "Segmentation complete." << std::endl;
-      }
-    catch (...)
-      {
-        throw std::runtime_error("ERROR: failed to run segmentation.");
-      }
-      }
     }
   catch (std::runtime_error& e)
     {

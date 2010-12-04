@@ -148,7 +148,8 @@ int main(int argc, char** argv)
   try
   {
     std::cerr << "Starting segmentation..." << std::endl;
-    emLogic->StartSegmentation(NULL,NULL);
+    std::cerr << "has to be updated to new type" << std::endl;
+    // emLogic->StartSegmentation(NULL,NULL);
   }
   catch (...)
   {

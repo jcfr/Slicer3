@@ -48,10 +48,6 @@ public:
   void SetInputTargetNodeID(const char *input);
   vtkMRMLEMSTargetNode* GetInputTargetNode();
 
-  vtkGetStringMacro(NormalizedTargetNodeID);
-  void SetNormalizedTargetNodeID(const char *input);
-  vtkMRMLEMSTargetNode* GetNormalizedTargetNode();
-
   vtkGetStringMacro(AlignedTargetNodeID);
   void SetAlignedTargetNodeID(const char *input);
   vtkMRMLEMSTargetNode* GetAlignedTargetNode();
@@ -64,14 +60,16 @@ public:
   void SetAlignedAtlasNodeID(const char *input);
   vtkMRMLEMSAtlasNode* GetAlignedAtlasNode();
 
-  //  vtkMRMLEMSAtlasNode*  GetWorkingAtlasNode();
-  //vtkMRMLEMSTargetNode* GetWorkingTargetNode();
+  vtkGetStringMacro(InputSubParcellationNodeID);
+  void SetInputSubParcellationNodeID(const char *input);
+  vtkMRMLEMSVolumeCollectionNode* GetInputSubParcellationNode();
+
+  vtkGetStringMacro(AlignedSubParcellationNodeID);
+  void SetAlignedSubParcellationNodeID(const char *input);
+  vtkMRMLEMSVolumeCollectionNode* GetAlignedSubParcellationNode();
 
   vtkGetMacro(InputTargetNodeIsValid, int);
   vtkSetMacro(InputTargetNodeIsValid, int);
-
-  vtkGetMacro(NormalizedTargetNodeIsValid, int);
-  vtkSetMacro(NormalizedTargetNodeIsValid, int);
 
   vtkGetMacro(AlignedTargetNodeIsValid, int);
   vtkSetMacro(AlignedTargetNodeIsValid, int);
@@ -89,13 +87,13 @@ protected:
   void operator=(const vtkMRMLEMSWorkingDataNode&);
 
   char*                InputTargetNodeID;
-  char*                NormalizedTargetNodeID;
   char*                AlignedTargetNodeID;
   char*                InputAtlasNodeID;
   char*                AlignedAtlasNodeID;
+  char*                InputSubParcellationNodeID;
+  char*                AlignedSubParcellationNodeID;
 
   int                  InputTargetNodeIsValid;
-  int                  NormalizedTargetNodeIsValid;  
   int                  AlignedTargetNodeIsValid;  
   int                  InputAtlasNodeIsValid;  
   int                  AlignedAtlasNodeIsValid;  

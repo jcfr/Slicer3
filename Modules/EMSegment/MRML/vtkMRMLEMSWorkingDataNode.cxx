@@ -36,11 +36,12 @@ void vtkMRMLEMSWorkingDataNode::Set##name (const char* _arg) \
     } \
   } 
 
-vtkSetReferenceStringMacroWDN(InputTargetNodeID)
-vtkSetReferenceStringMacroWDN(NormalizedTargetNodeID)
+vtkSetReferenceStringMacroWDN(InputTargetNodeID);
 vtkSetReferenceStringMacroWDN(AlignedTargetNodeID);
 vtkSetReferenceStringMacroWDN(InputAtlasNodeID);
 vtkSetReferenceStringMacroWDN(AlignedAtlasNodeID);
+vtkSetReferenceStringMacroWDN(InputSubParcellationNodeID);
+vtkSetReferenceStringMacroWDN(AlignedSubParcellationNodeID);
 
 //-----------------------------------------------------------------------------
 vtkMRMLEMSWorkingDataNode* 
@@ -78,13 +79,13 @@ CreateNodeInstance()
 vtkMRMLEMSWorkingDataNode::vtkMRMLEMSWorkingDataNode()
 {
   this->InputTargetNodeID                = NULL;
-  this->NormalizedTargetNodeID           = NULL;
   this->AlignedTargetNodeID              = NULL;
   this->InputAtlasNodeID                 = NULL;
   this->AlignedAtlasNodeID               = NULL;
+  this->InputSubParcellationNodeID       = NULL;
+  this->AlignedSubParcellationNodeID     = NULL;
 
   this->InputTargetNodeIsValid           = 0;
-  this->NormalizedTargetNodeIsValid      = 0;  
   this->AlignedTargetNodeIsValid         = 0;  
   this->InputAtlasNodeIsValid            = 0;  
   this->AlignedAtlasNodeIsValid          = 0;  
@@ -94,8 +95,9 @@ vtkMRMLEMSWorkingDataNode::vtkMRMLEMSWorkingDataNode()
 vtkMRMLEMSWorkingDataNode::~vtkMRMLEMSWorkingDataNode()
 {
   this->SetInputTargetNodeID(NULL);
-  this->SetNormalizedTargetNodeID(NULL);
   this->SetAlignedTargetNodeID(NULL);
+  this->SetInputAtlasNodeID(NULL);
+  this->SetAlignedAtlasNodeID(NULL);
   this->SetInputAtlasNodeID(NULL);
   this->SetAlignedAtlasNodeID(NULL);
 }
@@ -111,9 +113,6 @@ void vtkMRMLEMSWorkingDataNode::WriteXML(ostream& of, int nIndent)
      << "\" ";
   of << indent << " InputTargetNodeIsValid=\""   << this->InputTargetNodeIsValid << "\" ";
 
-  of << indent << "NormalizedTargetNodeID=\"" 
-     << (this->NormalizedTargetNodeID ? this->NormalizedTargetNodeID : "NULL")
-     << "\" ";
   of << indent << "AlignedTargetNodeID=\"" 
      << (this->AlignedTargetNodeID ? this->AlignedTargetNodeID : "NULL")
      << "\" ";
@@ -129,6 +128,14 @@ void vtkMRMLEMSWorkingDataNode::WriteXML(ostream& of, int nIndent)
      << "\" ";
   of << indent << " AlignedAtlasNodeIsValid=\"" <<  this->AlignedAtlasNodeIsValid  << "\" ";
 
+  of << indent << "InputSubParcellationNodeID=\"" 
+     << (this->InputSubParcellationNodeID ? this->InputSubParcellationNodeID : "NULL")
+     << "\" ";
+
+  of << indent << "AlignedSubParcellationNodeID=\"" 
+     << (this->AlignedSubParcellationNodeID ? this->AlignedSubParcellationNodeID : "NULL")
+     << "\" ";
+
 }
 
 //-----------------------------------------------------------------------------
@@ -140,11 +147,6 @@ UpdateReferenceID(const char* oldID, const char* newID)
       !strcmp(oldID, this->InputTargetNodeID))
     {
     this->SetInputTargetNodeID(newID);
-    }
-  if (this->NormalizedTargetNodeID && 
-      !strcmp(oldID, this->NormalizedTargetNodeID))
-    {
-    this->SetNormalizedTargetNodeID(newID);
     }
   if (this->AlignedTargetNodeID && 
       !strcmp(oldID, this->AlignedTargetNodeID))
@@ -161,6 +163,16 @@ UpdateReferenceID(const char* oldID, const char* newID)
     {
     this->SetAlignedAtlasNodeID(newID);
     }
+  if (this->InputSubParcellationNodeID && 
+      !strcmp(oldID, this->InputSubParcellationNodeID))
+    {
+    this->SetInputSubParcellationNodeID(newID);
+    }
+  if (this->AlignedSubParcellationNodeID && 
+      !strcmp(oldID, this->AlignedSubParcellationNodeID))
+    {
+    this->SetAlignedSubParcellationNodeID(newID);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -174,11 +186,6 @@ UpdateReferences()
       this->Scene->GetNodeByID(this->InputTargetNodeID) == NULL)
     {
     this->SetInputTargetNodeID(NULL);
-    }
-  if (this->NormalizedTargetNodeID != NULL && 
-      this->Scene->GetNodeByID(this->NormalizedTargetNodeID) == NULL)
-    {
-    this->SetNormalizedTargetNodeID(NULL);
     }
   if (this->AlignedTargetNodeID != NULL && 
       this->Scene->GetNodeByID(this->AlignedTargetNodeID) == NULL)
@@ -194,6 +201,16 @@ UpdateReferences()
       this->Scene->GetNodeByID(this->AlignedAtlasNodeID) == NULL)
     {
     this->SetAlignedAtlasNodeID(NULL);
+    }
+  if (this->InputSubParcellationNodeID != NULL && 
+      this->Scene->GetNodeByID(this->InputSubParcellationNodeID) == NULL)
+    {
+    this->SetInputSubParcellationNodeID(NULL);
+    }
+  if (this->AlignedSubParcellationNodeID != NULL && 
+      this->Scene->GetNodeByID(this->AlignedSubParcellationNodeID) == NULL)
+    {
+    this->SetAlignedSubParcellationNodeID(NULL);
     }
 }
 
@@ -215,7 +232,6 @@ void vtkMRMLEMSWorkingDataNode::ReadXMLAttributes(const char** attrs)
     if (!strcmp(key, "InputTargetNodeID"))
       {
       this->SetInputTargetNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->InputTargetNodeID, this);
       }
     else if (!strcmp(key, "InputTargetNodeIsValid"))
       {
@@ -223,15 +239,9 @@ void vtkMRMLEMSWorkingDataNode::ReadXMLAttributes(const char** attrs)
     ss << val;
     ss >> this->InputTargetNodeIsValid;
       }
-    else if (!strcmp(key, "NormalizedTargetNodeID"))
-      {
-      this->SetNormalizedTargetNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->NormalizedTargetNodeID, this);
-      }
     else if (!strcmp(key, "AlignedTargetNodeID"))
       {
       this->SetAlignedTargetNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->AlignedTargetNodeID, this);
       }
     else if (!strcmp(key, "AlignedTargetNodeIsValid"))
       {
@@ -239,27 +249,33 @@ void vtkMRMLEMSWorkingDataNode::ReadXMLAttributes(const char** attrs)
     ss << val;
     ss >> this->AlignedTargetNodeIsValid;
       }
-    else if (!strcmp(key, "InputAtlasNodeID"))
-      {
-      this->SetInputAtlasNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->InputAtlasNodeID, this);
-      }
     else if (!strcmp(key, "InputAtlasNodeIsValid"))
       {
     vtksys_stl::stringstream ss;
     ss << val;
     ss >> this->InputAtlasNodeIsValid;
       }
-    else if (!strcmp(key, "AlignedAtlasNodeID"))
-      {
-      this->SetAlignedAtlasNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->AlignedAtlasNodeID, this);
-      }
     else if (!strcmp(key, "AlignedAtlasNodeIsValid"))
       {
     vtksys_stl::stringstream ss;
     ss << val;
     ss >> this->AlignedAtlasNodeIsValid;
+      }
+    else if (!strcmp(key, "InputAtlasNodeID"))
+      {
+      this->SetInputAtlasNodeID(val);
+      }
+    else if (!strcmp(key, "AlignedAtlasNodeID"))
+      {
+      this->SetAlignedAtlasNodeID(val);
+      }
+    else if (!strcmp(key, "InputSubParcellationNodeID"))
+      {
+      this->SetInputSubParcellationNodeID(val);
+      }
+    else if (!strcmp(key, "AlignedSubParcellationNodeID"))
+      {
+      this->SetAlignedSubParcellationNodeID(val);
       }
     }
 }
@@ -271,10 +287,11 @@ void vtkMRMLEMSWorkingDataNode::Copy(vtkMRMLNode *rhs)
   vtkMRMLEMSWorkingDataNode* node = (vtkMRMLEMSWorkingDataNode*) rhs;
 
   this->SetInputTargetNodeID(node->InputTargetNodeID);
-  this->SetNormalizedTargetNodeID(node->NormalizedTargetNodeID);
   this->SetAlignedTargetNodeID(node->AlignedTargetNodeID);
   this->SetInputAtlasNodeID(node->InputAtlasNodeID);
   this->SetAlignedAtlasNodeID(node->AlignedAtlasNodeID);
+  this->SetInputSubParcellationNodeID(node->InputSubParcellationNodeID);
+  this->SetAlignedSubParcellationNodeID(node->AlignedSubParcellationNodeID);
   this->InputTargetNodeIsValid           = node->InputTargetNodeIsValid;
   this->AlignedTargetNodeIsValid         = node->AlignedTargetNodeIsValid;  
   this->InputAtlasNodeIsValid            = node->InputAtlasNodeIsValid;  
@@ -289,24 +306,29 @@ void vtkMRMLEMSWorkingDataNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "InputTargetNodeID: " <<
     (this->InputTargetNodeID ? this->InputTargetNodeID : "(none)") 
      << "\n";
-  os << indent << "InputTargetNodeIsValid: " << this->InputTargetNodeIsValid << "\n";
-
-  os << indent << "NormalizedTargetNodeID: " <<
-    (this->NormalizedTargetNodeID ? this->NormalizedTargetNodeID : "(none)") 
-     << "\n";
   os << indent << "AlignedTargetNodeID: " <<
     (this->AlignedTargetNodeID ? this->AlignedTargetNodeID : "(none)") 
      << "\n";
-  os << indent << "AlignedTargetNodeIsValid: " << this->AlignedTargetNodeIsValid << "\n";
 
   os << indent << "InputAtlasNodeID: " <<
     (this->InputAtlasNodeID ? this->InputAtlasNodeID : "(none)") 
      << "\n";
-  os << indent << "InputAtlasNodeIsValid: " << this->InputAtlasNodeIsValid  << "\n";
 
   os << indent << "AlignedAtlasNodeID: " <<
     (this->AlignedAtlasNodeID ? this->AlignedAtlasNodeID : "(none)") 
      << "\n";
+
+  os << indent << "InputSubParcellationNodeID: " <<
+    (this->InputSubParcellationNodeID ? this->InputSubParcellationNodeID : "(none)") 
+     << "\n";
+
+  os << indent << "AlignedSubParcellationNodeID: " <<
+    (this->AlignedSubParcellationNodeID ? this->AlignedSubParcellationNodeID : "(none)") 
+     << "\n";
+
+  os << indent << "InputTargetNodeIsValid: " << this->InputTargetNodeIsValid << "\n";
+  os << indent << "AlignedTargetNodeIsValid: " << this->AlignedTargetNodeIsValid << "\n";
+  os << indent << "InputAtlasNodeIsValid: " << this->InputAtlasNodeIsValid  << "\n";
   os << indent << "AlignedAtlasNodeIsValid: " << this->AlignedAtlasNodeIsValid << "\n";
 
 }
@@ -321,21 +343,6 @@ GetInputTargetNode()
     {
     vtkMRMLNode* snode = 
       this->GetScene()->GetNodeByID(this->InputTargetNodeID);
-    node = vtkMRMLEMSTargetNode::SafeDownCast(snode);
-    }
-  return node;
-}
-
-//-----------------------------------------------------------------------------
-vtkMRMLEMSTargetNode*
-vtkMRMLEMSWorkingDataNode::
-GetNormalizedTargetNode()
-{
-  vtkMRMLEMSTargetNode* node = NULL;
-  if (this->GetScene() && this->NormalizedTargetNodeID )
-    {
-    vtkMRMLNode* snode = 
-      this->GetScene()->GetNodeByID(this->NormalizedTargetNodeID);
     node = vtkMRMLEMSTargetNode::SafeDownCast(snode);
     }
   return node;
@@ -382,6 +389,36 @@ GetAlignedAtlasNode()
     vtkMRMLNode* snode = 
       this->GetScene()->GetNodeByID(this->AlignedAtlasNodeID);
     node = vtkMRMLEMSAtlasNode::SafeDownCast(snode);
+    }
+  return node;
+}
+
+//-----------------------------------------------------------------------------
+vtkMRMLEMSVolumeCollectionNode*
+vtkMRMLEMSWorkingDataNode::
+GetInputSubParcellationNode()
+{
+  vtkMRMLEMSVolumeCollectionNode* node = NULL;
+  if (this->GetScene() && this->InputSubParcellationNodeID )
+    {
+    vtkMRMLNode* snode = 
+      this->GetScene()->GetNodeByID(this->InputSubParcellationNodeID);
+    node = vtkMRMLEMSVolumeCollectionNode::SafeDownCast(snode);
+    }
+  return node;
+}
+
+//-----------------------------------------------------------------------------
+vtkMRMLEMSVolumeCollectionNode*
+vtkMRMLEMSWorkingDataNode::
+GetAlignedSubParcellationNode()
+{
+  vtkMRMLEMSVolumeCollectionNode* node = NULL;
+  if (this->GetScene() && this->AlignedSubParcellationNodeID )
+    {
+    vtkMRMLNode* snode = 
+      this->GetScene()->GetNodeByID(this->AlignedSubParcellationNodeID);
+    node = vtkMRMLEMSVolumeCollectionNode::SafeDownCast(snode);
     }
   return node;
 }
