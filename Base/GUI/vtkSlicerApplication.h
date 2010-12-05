@@ -81,6 +81,13 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
     void SetMRMLScene( vtkMRMLScene* scene);
     vtkMRMLScene* GetMRMLScene();
 
+    // Description:
+    // Display the exit dialog.
+    // Optionally provide a master window this dialog should be the slave of.
+    // Return 1 if the user wants to exit, 0 otherwise
+    virtual int DisplayExitDialog(vtkKWTopLevel *master);
+
+
 #ifdef Slicer3_USE_QT
     /// 
     /// Initialize qt core Modules

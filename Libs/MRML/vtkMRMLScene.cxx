@@ -2685,3 +2685,20 @@ GetReferencedSubScene(vtkMRMLNode *rnode, vtkMRMLScene* newScene)
   // clean up
   nodes->Delete();
 }
+
+int
+vtkMRMLScene::IsModifiedSinceRead()
+{
+  vtkMRMLNode *node;
+  this->InitTraversal();
+  node = this->GetNextNode();
+  while(node)
+    {
+    if (node->GetModifiedSinceRead() && node->GetSaveWithScene())
+      {
+      return 1;
+      }
+    node = this->GetNextNode();
+    }
+  return 0;
+}

@@ -2637,6 +2637,82 @@ vtkKWColorPickerDialog* vtkSlicerApplication::GetColorPickerDialog()
 }
 
 //----------------------------------------------------------------------------
+int vtkSlicerApplication::DisplayExitDialog(vtkKWTopLevel *master)
+{
+  int ret = 0;
+  vtkSlicerApplicationGUI *applicationGUI = this->GetApplicationGUI();
+
+  if (applicationGUI &&  applicationGUI->GetMRMLScene() &&
+      applicationGUI->GetMRMLScene()->IsModifiedSinceRead())
+    {
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent ( master);
+    dialog->SetStyleToOkOtherCancel();
+    dialog->SetText("Scene contains data that has not been saved");
+    dialog->SetOKButtonText("Save Data...");
+    dialog->SetOtherButtonText("Exit, Discard Changes");
+    dialog->SetCancelButtonText("Cancel Exit");
+    dialog->Create ( );
+    dialog->SetMasterWindow( master );
+    dialog->SetOptions(
+    vtkKWMessageDialog::QuestionIcon | 
+    vtkKWMessageDialog::Beep | 
+    vtkKWMessageDialog::YesDefault);
+
+    dialog->ModalOn();
+    ret = dialog->Invoke();
+    int status = dialog->GetStatus();
+    if (status == vtkKWMessageDialog::StatusOK)
+      {
+        //save      
+        applicationGUI->ProcessSaveSceneAsCommand();
+      }
+    for (int i = 0; i < this->GetNumberOfWindows(); i++)
+      {
+      this->GetNthWindow(i)->Update();
+      }
+
+    dialog->Delete();
+    }
+  else
+  {
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetApplication(this);
+    dialog->SetStyleToYesNo();
+    dialog->SetMasterWindow(master);
+    dialog->SetOptions(
+      vtkKWMessageDialog::QuestionIcon | 
+      vtkKWMessageDialog::RememberYes |
+      vtkKWMessageDialog::Beep | 
+      vtkKWMessageDialog::YesDefault);
+    dialog->SetDialogName(vtkKWApplication::ExitDialogName);
+
+    char buffer[500];
+
+    sprintf(buffer, 
+            k_("Are you sure you want to exit %s?"), this->GetPrettyName());
+    dialog->SetText(buffer);
+
+    sprintf(buffer, ks_("Exit Dialog|Title|Exit %s"), this->GetPrettyName());
+    dialog->SetTitle(buffer);
+
+    ret = dialog->Invoke();
+    dialog->Delete();
+
+    // This UI interface usually displays a checkbox offering the choice
+    // to prompt for exit or not. Update that UI.
+
+    for (int i = 0; i < this->GetNumberOfWindows(); i++)
+      {
+      this->GetNthWindow(i)->Update();
+      }
+    }
+
+  return ret;
+}
+
+
+//----------------------------------------------------------------------------
 // Temporary test method
 // void vtkSlicerApplication::TestQtSlicerWebKit(const char *url)
 // {

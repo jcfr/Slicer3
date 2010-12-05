@@ -404,6 +404,37 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
     return;
     }
 
+  if (this->GetMRMLScene() && this->GetMRMLScene()->IsModifiedSinceRead())
+    {
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent ( this->MainSlicerWindow );
+    dialog->SetStyleToOkOtherCancel();
+    dialog->SetText("Scene contains data that has not been saved");
+    dialog->SetOKButtonText("Save Data...");
+    dialog->SetOtherButtonText("Load New Scene");
+    dialog->SetCancelButtonText("Cancel Load Scene");
+    dialog->Create ( );
+    dialog->SetMasterWindow( this->MainSlicerWindow );
+    dialog->SetOptions(
+    vtkKWMessageDialog::QuestionIcon | 
+    vtkKWMessageDialog::Beep | 
+    vtkKWMessageDialog::YesDefault);
+
+    dialog->ModalOn();
+    dialog->Invoke();
+    int status = dialog->GetStatus();
+    dialog->Delete();
+    if (status == vtkKWMessageDialog::StatusOK)
+      {
+        //save      
+        this->ProcessSaveSceneAsCommand();
+      }
+    else if (status == vtkKWMessageDialog::StatusCanceled)
+      {
+      return;
+      }
+    }
+
   if ( !this->LoadSceneDialog->IsCreated() )
     {
     this->LoadSceneDialog->SetParent ( this->MainSlicerWindow );
@@ -822,22 +853,60 @@ void vtkSlicerApplicationGUI::ProcessAddTransformCommand()
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessCloseSceneCommand()
 {
-  vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
-  dialog->SetParent ( this->MainSlicerWindow );
-  dialog->SetStyleToOkCancel();
-  dialog->SetText("Are you sure you want to close the scene?");
-  dialog->Create ( );
-  dialog->SetMasterWindow( this->MainSlicerWindow );
-  dialog->ModalOn();
-  if (dialog->Invoke())
+  if (this->GetMRMLScene() && this->GetMRMLScene()->IsModifiedSinceRead())
     {
-    if (this->GetMRMLScene())
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent ( this->MainSlicerWindow );
+    dialog->SetStyleToOkOtherCancel();
+    dialog->SetText("Scene contains data that has not been saved");
+    dialog->SetOKButtonText("Save Data...");
+    dialog->SetOtherButtonText("Close Scene");
+    dialog->SetCancelButtonText("Cancel Close Scene");
+    dialog->Create ( );
+    dialog->SetMasterWindow( this->MainSlicerWindow );
+    dialog->SetOptions(
+    vtkKWMessageDialog::QuestionIcon | 
+    vtkKWMessageDialog::Beep | 
+    vtkKWMessageDialog::YesDefault);
+
+    dialog->ModalOn();
+    dialog->Invoke();
+    int status = dialog->GetStatus();
+    if (status == vtkKWMessageDialog::StatusOK)
       {
-      this->MRMLScene->Clear(false);
-      this->OnViewNodeNeeded();
+        //save      
+        this->ProcessSaveSceneAsCommand();
       }
+    else if (status == vtkKWMessageDialog::StatusOther)
+      {
+      if (this->GetMRMLScene())
+        {
+        this->MRMLScene->Clear(false);
+        this->OnViewNodeNeeded();
+        }
+      }
+    dialog->Delete();
+
     }
-  dialog->Delete();
+  else 
+    {
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent ( this->MainSlicerWindow );
+    dialog->SetStyleToOkCancel();
+    dialog->SetText("Are you sure you want to close the scene?");
+    dialog->Create ( );
+    dialog->SetMasterWindow( this->MainSlicerWindow );
+    dialog->ModalOn();
+    if (dialog->Invoke())
+      {
+      if (this->GetMRMLScene())
+        {
+        this->MRMLScene->Clear(false);
+        this->OnViewNodeNeeded();
+        }
+      }
+    dialog->Delete();
+   }
 }
 
 //---------------------------------------------------------------------------

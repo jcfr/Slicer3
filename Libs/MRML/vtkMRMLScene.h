@@ -298,6 +298,9 @@ public:
   void SaveStateForUndo(std::vector<vtkMRMLNode *> nodes);
   //ETX
 
+  ///
+  /// add a reference node id from a refrencingNode
+  /// scene internally keeps references from/to nodes
   void AddReferencedNodeID(const char *id, vtkMRMLNode *refrencingNode)
   {
     if (id && refrencingNode && refrencingNode->GetScene() && refrencingNode->GetID()) 
@@ -307,6 +310,9 @@ public:
       }
   };
 
+  ///
+  /// clear all node references
+  /// scene internally keeps references from/to nodes
   void ClearReferencedNodeID()
   {
     this->ReferencedIDs.clear();
@@ -314,24 +320,52 @@ public:
     this->ReferencedIDChanges.clear();
   };
 
+  ///
+  /// remove a reference node id from a refrencingNode
+  /// scene internally keeps references from/to nodes 
   void RemoveReferencedNodeID(const char *id, vtkMRMLNode *refrencingNode);
 
+  ///
+  /// remove all references from a node 
+  /// scene internally keeps references from/to nodes
   void RemoveNodeReferences(vtkMRMLNode *node);
 
+  ///
+  /// remove all references to a node 
+  /// scene internally keeps references from/to nodes
   void RemoveReferencesToNode(vtkMRMLNode *node);
 
+  ///
+  /// update all references from/to nodes in the scene
+  /// scene internally keeps references from/to nodes
   void UpdateNodeReferences();
 
+  ///
+  /// update all references from/to nodes in the collection
+  /// scene internally keeps references from/to nodes
   void UpdateNodeReferences(vtkCollection* chekNodes);
 
+  ///
+  /// copy all references from/to nodes in the scene
+  /// scene internally keeps references from/to nodes
   void CopyNodeReferences(vtkMRMLScene *scene);
 
+  ///
+  /// update all references from/to nodes in the scene after loading a scene
+  /// scene internally keeps references from/to nodes
   void UpdateNodeChangedIDs();
 
+  ///
+  /// remove all references from/to non-existing nodes in the scene
+  /// scene internally keeps references from/to nodes
   void RemoveUnusedNodeReferences();
 
+  ///
+  /// add a reserved id that cannot be used when adding nodes
   void AddReservedID(const char *id);
 
+  ///
+  /// remove all reserved id that cannot be used when adding nodes
   void RemoveReservedIDs() {
     this->ReservedIDs.clear();
   };
@@ -358,7 +392,9 @@ public:
   static vtkMRMLScene *GetActiveScene();
 //ETX
 
-  //BTX
+//BTX
+  ///
+  /// Scene evenets
   enum
     {
       NodeAddedEvent = 66000,
@@ -379,49 +415,74 @@ public:
     };
 //ETX
 
+  ///
+  /// returns 1 if file path is relative
   int IsFilePathRelative(const char * filepath);
 
+  ///
+  /// get/set error code
   vtkSetMacro(ErrorCode,unsigned long);
   vtkGetMacro(ErrorCode,unsigned long);
 
+  ///
+  /// get/set load from XML string flag
   vtkSetMacro(LoadFromXMLString,int);
   vtkGetMacro(LoadFromXMLString,int);
 
+  ///
+  /// get/set save to XML string flag
   vtkSetMacro(SaveToXMLString,int);
   vtkGetMacro(SaveToXMLString,int);
 
-  vtkSetMacro(ReadDataOnLoad,int);
-  vtkGetMacro(ReadDataOnLoad,int);
-
 //BTX
-  void SetErrorMessage(const std::string &error) {
-    this->ErrorMessage = error;
-  };
-
-  std::string GetErrorMessage() {
-    return this->ErrorMessage;
-  };
-
+  ///
+  /// set the string in which to save XML
   void SetSceneXMLString(const std::string &xmlString) {
     this->SceneXMLString = xmlString;
   };
 
+  ///
+  /// get the string in which to save XML
   std::string GetSceneXMLString() {
     return this->SceneXMLString;
   };
-
 //ETX
 
+  ///
+  /// get/set read raw data on load flag
+  vtkSetMacro(ReadDataOnLoad,int);
+  vtkGetMacro(ReadDataOnLoad,int);
+
+//BTX
+  ///
+  /// set error message
+  void SetErrorMessage(const std::string &error) {
+    this->ErrorMessage = error;
+  };
+
+  ///
+  /// get error message
+  std::string GetErrorMessage() {
+    return this->ErrorMessage;
+  };
+//ETX
+
+  ///
+  /// set error message
   void SetErrorMessage(const char * message)
     {
     this->SetErrorMessage(std::string(message));
     }
 
+  ///
+  /// get error message
   const char *GetErrorMessagePointer()
     {
     return (this->GetErrorMessage().c_str());
     }
 
+  ///
+  /// get scene modified time
   unsigned long GetSceneModifiedTime()
     {
     if (this->CurrentScene && this->CurrentScene->GetMTime() > this->SceneModifiedTime)
@@ -431,23 +492,35 @@ public:
     return this->SceneModifiedTime;
     };
     
+  ///
+  /// increment scene modified time
   void IncrementSceneModifiedTime()
     {
     this->SceneModifiedTime ++;
     };
 
+  ///
+  /// invoke SceneEditedEvent event
   void Edited()
     {
     this->InvokeEvent( vtkMRMLScene::SceneEditedEvent );
     }
 
 
+  ///
+  /// get/set CacheManager
   vtkGetObjectMacro ( CacheManager, vtkCacheManager );
   vtkSetObjectMacro ( CacheManager, vtkCacheManager );
+  ///
+  /// get/set DataIOManager
   vtkGetObjectMacro ( DataIOManager, vtkDataIOManager );
   vtkSetObjectMacro ( DataIOManager, vtkDataIOManager );
+  ///
+  /// get/set URIHandlerCollection
   vtkGetObjectMacro ( URIHandlerCollection, vtkCollection );
   vtkSetObjectMacro ( URIHandlerCollection, vtkCollection );
+  ///
+  /// get/set UserTagTable
   vtkGetObjectMacro ( UserTagTable, vtkTagTable);
   vtkSetObjectMacro ( UserTagTable, vtkTagTable);  
 
@@ -479,7 +552,12 @@ public:
   vtkGetStringMacro(Version);
   vtkSetStringMacro(Version);
 
+  ///
+  /// returns 1 if any of the nodes has been modified since read
+  int IsModifiedSinceRead();
 
+  ///
+  /// copy registered nodes from this scene to the argument scene
   void CopyRegisteredNodesToScene(vtkMRMLScene *scene);
 
 protected:
