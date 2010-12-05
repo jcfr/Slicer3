@@ -903,8 +903,8 @@ void vtkSlicerModelHierarchyWidget::CreateWidget ( )
   this->ModelDisplaySelectorWidget->SetPadY(2);
   this->ModelDisplaySelectorWidget->GetWidget()->GetWidget()->IndicatorVisibilityOff();
   this->ModelDisplaySelectorWidget->GetWidget()->GetWidget()->SetWidth(24);
-  this->ModelDisplaySelectorWidget->SetLabelText( "Select Model or Hierarchy: ");
-  this->ModelDisplaySelectorWidget->SetBalloonHelpString("select a model hierarchy.");
+  this->ModelDisplaySelectorWidget->SetLabelText( "Set Model: ");
+  this->ModelDisplaySelectorWidget->SetBalloonHelpString("select a model or a hierarchy.");
   this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                  this->ModelDisplaySelectorWidget->GetWidgetName());
 

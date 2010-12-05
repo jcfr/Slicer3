@@ -647,6 +647,7 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->SelectedButton->SetParent ( modelDisplayFrame );
   this->SelectedButton->Create ( );
   this->SelectedButton->SetLabelText("Selected");
+  this->SelectedButton->SetLabelWidth(20);
   this->SelectedButton->SetBalloonHelpString("set model selected (very much under construction)");
   this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
                  this->SelectedButton->GetWidgetName() );
@@ -655,9 +656,59 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->VisibilityButton->SetParent ( modelDisplayFrame );
   this->VisibilityButton->Create ( );
   this->VisibilityButton->SetLabelText("Visibility");
+  this->VisibilityButton->SetLabelWidth(20);
   this->VisibilityButton->SetBalloonHelpString("set model visibility.");
   this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
                  this->VisibilityButton->GetWidgetName() );
+
+  this->OpacityScale = vtkKWScaleWithLabel::New();
+  this->OpacityScale->SetParent ( modelDisplayFrame );
+  this->OpacityScale->Create ( );
+  this->OpacityScale->SetLabelText("Opacity");
+  this->OpacityScale->GetWidget()->SetRange(0,1);
+  this->OpacityScale->GetWidget()->SetResolution(0.1);
+  this->OpacityScale->SetBalloonHelpString("set model opacity value.");
+  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+                 this->OpacityScale->GetWidgetName() );
+
+  this->ChangeColorButton = vtkKWChangeColorButton::New();
+  this->ChangeColorButton->SetParent ( modelDisplayFrame );
+  this->ChangeColorButton->Create ( );
+  this->ChangeColorButton->SetColor(0.0, 1.0, 0.0);
+  this->ChangeColorButton->LabelOutsideButtonOn();
+  this->ChangeColorButton->SetLabelPositionToLeft();
+  this->ChangeColorButton->SetBalloonHelpString("set model color.");
+  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+                 this->ChangeColorButton->GetWidgetName() );
+
+  this->SliceIntersectionVisibilityButton = vtkKWCheckButtonWithLabel::New();
+  this->SliceIntersectionVisibilityButton->SetParent ( modelDisplayFrame );
+  this->SliceIntersectionVisibilityButton->Create ( );
+  this->SliceIntersectionVisibilityButton->SetLabelText("Slice Intersections Visible");
+  this->SliceIntersectionVisibilityButton->SetLabelWidth(20);
+  this->SliceIntersectionVisibilityButton->SetBalloonHelpString("Show model intersection on slice planes.");
+  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+                 this->SliceIntersectionVisibilityButton->GetWidgetName() );
+
+  this->BackfaceCullingButton = vtkKWCheckButtonWithLabel::New();
+  this->BackfaceCullingButton->SetParent ( modelDisplayFrame );
+  this->BackfaceCullingButton->Create ( );
+  this->BackfaceCullingButton->SetLabelText("Backface Culling");
+  this->BackfaceCullingButton->SetLabelWidth(20);
+  this->BackfaceCullingButton->SetBalloonHelpString("set model back face culling.");
+  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+                 this->BackfaceCullingButton->GetWidgetName() );
+
+
+  this->ClippingButton = vtkKWCheckButtonWithLabel::New();
+  this->ClippingButton->SetParent ( modelDisplayFrame );
+  this->ClippingButton->Create ( );
+  this->ClippingButton->SetLabelText("Clipping");
+  this->ClippingButton->SetLabelWidth(20);  
+  this->ClippingButton->SetBalloonHelpString("set model clipping with RGB slice planes.");
+  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+                 this->ClippingButton->GetWidgetName() );
+
 
   // a frame to hold the scalar related widgets
   vtkKWFrameWithLabel *scalarFrame = vtkKWFrameWithLabel::New();
@@ -701,6 +752,7 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->AutoScalarRangeCheckButton->SetParent ( scalarFrame->GetFrame() );
   this->AutoScalarRangeCheckButton->Create ( );
   this->AutoScalarRangeCheckButton->SetLabelText("Auto Scalar Range");
+  this->AutoScalarRangeCheckButton->SetLabelWidth(20);
   this->AutoScalarRangeCheckButton->SetBalloonHelpString("Use automatic scalar range, resets min/max scalar range from the active scalar array. Currently, min/max scalar range is still used when checked, use this to reset the range to the full range.");
   this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                  this->AutoScalarRangeCheckButton->GetWidgetName());
@@ -744,51 +796,7 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->ColorSelectorWidget->SetBalloonHelpString("select a color node from the current mrml scene.");
   this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                  this->ColorSelectorWidget->GetWidgetName());
-  
-  this->ClippingButton = vtkKWCheckButtonWithLabel::New();
-  this->ClippingButton->SetParent ( modelDisplayFrame );
-  this->ClippingButton->Create ( );
-  this->ClippingButton->SetLabelText("Clipping");
-  this->ClippingButton->SetBalloonHelpString("set model clipping with RGB slice planes.");
-  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
-                 this->ClippingButton->GetWidgetName() );
-
-  this->SliceIntersectionVisibilityButton = vtkKWCheckButtonWithLabel::New();
-  this->SliceIntersectionVisibilityButton->SetParent ( modelDisplayFrame );
-  this->SliceIntersectionVisibilityButton->Create ( );
-  this->SliceIntersectionVisibilityButton->SetLabelText("Slice Intersections Visible");
-  this->SliceIntersectionVisibilityButton->SetBalloonHelpString("Show model intersection on slice planes.");
-  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
-                 this->SliceIntersectionVisibilityButton->GetWidgetName() );
-
-  this->BackfaceCullingButton = vtkKWCheckButtonWithLabel::New();
-  this->BackfaceCullingButton->SetParent ( modelDisplayFrame );
-  this->BackfaceCullingButton->Create ( );
-  this->BackfaceCullingButton->SetLabelText("Backface Culling");
-  this->BackfaceCullingButton->SetBalloonHelpString("set model back face culling.");
-  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
-                 this->BackfaceCullingButton->GetWidgetName() );
-  
-  this->OpacityScale = vtkKWScaleWithLabel::New();
-  this->OpacityScale->SetParent ( modelDisplayFrame );
-  this->OpacityScale->Create ( );
-  this->OpacityScale->SetLabelText("Opacity");
-  this->OpacityScale->GetWidget()->SetRange(0,1);
-  this->OpacityScale->GetWidget()->SetResolution(0.1);
-  this->OpacityScale->SetBalloonHelpString("set model opacity value.");
-  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
-                 this->OpacityScale->GetWidgetName() );
-
-  this->ChangeColorButton = vtkKWChangeColorButton::New();
-  this->ChangeColorButton->SetParent ( modelDisplayFrame );
-  this->ChangeColorButton->Create ( );
-  this->ChangeColorButton->SetColor(0.0, 1.0, 0.0);
-  this->ChangeColorButton->LabelOutsideButtonOn();
-  this->ChangeColorButton->SetLabelPositionToRight();
-  this->ChangeColorButton->SetBalloonHelpString("set model color.");
-  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
-                 this->ChangeColorButton->GetWidgetName() );
-
+    
   this->SurfaceMaterialPropertyWidget = vtkKWSurfaceMaterialPropertyWidget::New();
   this->SurfaceMaterialPropertyWidget->SetParent ( modelDisplayFrame );
   this->SurfaceMaterialPropertyWidget->Create ( );
