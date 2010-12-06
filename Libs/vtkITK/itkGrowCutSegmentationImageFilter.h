@@ -404,12 +404,7 @@ template<class TInputImage,
 
   void MaskSegmentedImageByWeight(float upperThresh);
   
-  
    
-  //NodeContainerPointer                       m_ForegroundPoints; 
-  //NodeContainerPointer                       m_BackgroundPoints;
-  //NodeContainerPointer                       m_PriorForegroundPoints;
-
   WeightPixelType                            m_ConfThresh;
 
   InputSizeType                              m_Radius; 
@@ -424,15 +419,7 @@ template<class TInputImage,
 
   unsigned int                               m_Saturated;
 
-  //  WeightImagePointer                         m_DistancesImage;
-  
-  //WeightImagePointer                         m_MaxSaturationImage;
-
-  //OutputImagePointer                         m_StateImage;
-
-  //WeightImagePointer                         m_PrevWeightImage;
-
-  OutputImageRegionType                      m_BufferedRegion;
+  //OutputImageRegionType                      m_BufferedRegion;
 
   double                                     m_SeedStrength;
 
@@ -449,18 +436,12 @@ template<class TInputImage,
 
   unsigned int                               m_ObjectRadius;
 
-  //unsigned int                               m_T1; // max number of enemies a cell can have to attack
-  //unsigned int                               m_T2; // min number of enemies a cell can have to be consumed
-  
-  //bool                                       m_UseSlow;
-
   OutputPixelType                        m_ObjectLabel;
   OutputPixelType                        m_BackgroundLabel;
   OutputPixelType                        m_UnknownLabel;
 
   OutputIndexType                            m_roiStart;
   OutputIndexType                            m_roiEnd;
-  //vcl_list< IndexType >                      m_AlivePoints;   
   
   
 
