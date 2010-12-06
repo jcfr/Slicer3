@@ -642,6 +642,90 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
+
+
+    proc SkullStripperCLI { subjectNode } {
+        variable SCENE
+        variable LOGIC
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == SkullStripperCLI"
+
+        set CMD "[$::slicer3::Application GetExtensionsInstallPath]"
+        set svnrevision [$::slicer3::Application GetSvnRevision]
+        if { $svnrevision == "" } {
+            set CMD "$CMD/15602"
+        } else {
+            set CMD "$CMD/$svnrevision"
+        }
+        set CMD "$CMD/SkullStripperModule/SkullStripper"
+
+
+        # initialize
+        set SkullStrippedSubjectVolumeNodeList ""
+
+        # Run the algorithm on each subject image
+        for { set i 0 } {$i < [$subjectNode GetNumberOfVolumes] } { incr i } {
+
+            set inputVolumeNode [$subjectNode GetNthVolumeNode $i]
+            set inputVolumeData [$inputVolumeNode GetImageData]
+            if { $inputVolumeData == "" } {
+                PrintError "SkullStrippederCLI: the ${i}th subject node has no input data defined!"
+                foreach VolumeNode $SkullStrippedSubjectVolumeNodeList {
+                    DeleteNode $VolumeNode
+                }
+                return ""
+            }
+
+            set tmpInputFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
+            set RemoveFiles "\"$tmpInputFileName\""
+            if { $tmpInputFileName == "" } {
+                return 1
+            }       
+
+            set CMD "$CMD --iteration 10 --division 12 --dilation 0"
+
+            set surfacefile /tmp/EBF_vtkMRMLModelNodeSurface.vtp
+            set maskfile /tmp/EBF_vtkMRMLScalarVolumeNodeMask.nrrd
+            set CMD "$CMD $tmpInputFileName $surfacefile  $maskfile"
+
+
+            $LOGIC PrintText "TCL: Executing $CMD"
+            catch { eval exec $CMD } errmsg
+            $LOGIC PrintText "TCL: $errmsg"
+            set outputVolumeFileName /tmp/output.nrrd
+
+
+            # The SkullStripper module is producing brain masks with two values: 0 and 255
+            set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+            set CMD2 "${PLUGINS_DIR}/Mask"
+            set CMD2 "$CMD2 --label 255 --replace 0 $tmpInputFileName $maskfile $outputVolumeFileName"
+
+            $LOGIC PrintText "TCL: Executing $CMD2"
+            catch { eval exec $CMD2 } errmsg
+            $LOGIC PrintText "TCL: $errmsg"
+
+
+
+            # create a new node for our output-list
+            set outputVolumeNode [CreateVolumeNode $inputVolumeNode "[$inputVolumeNode GetName]_stripped"]
+            set outputVolumeData [vtkImageData New]
+            $outputVolumeNode SetAndObserveImageData $outputVolumeData
+            $outputVolumeData Delete
+
+            # Read results back
+
+            ReadDataFromDisk $outputVolumeNode $outputVolumeFileName Volume
+            file delete -force $outputVolumeFileName
+
+            # still in for loop, create a list of Volumes
+            set SkullStrippedSubjectVolumeNodeList "${SkullStrippedSubjectVolumeNodeList}$outputVolumeNode "
+            $LOGIC PrintText "TCL: List of volume nodes: $SkullStrippedSubjectVolumeNodeList"
+        }
+        return "$SkullStrippedSubjectVolumeNodeList"
+    }
+
+
+
     proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformDirName } {
         variable SCENE
         variable LOGIC
@@ -1582,6 +1666,13 @@ namespace eval EMSegmenterPreProcessingTcl {
             $mrmlManager SynchronizeSubParcellationNode $inputSubParcellationNode $outputSubParcellationNode "Aligned"
         }
 
+        # TODO, don't activate it per default
+        set stripped 1
+
+        if { $stripped == 0 } {
+            set subjectSkullStrippedNodeList [SkullStripperCLI $subjectNode]
+            UpdateSubjectNode "$subjectSkullStrippedNodeList"
+        }
 
 
         set fixedTargetChannel 0
