@@ -16,8 +16,12 @@
 
 #include "itkImage.h"
 #include "itkImageRegionIterator.h"
+#include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkImageFileWriter.h"
+
+//#include "itkExtractImageFilter.h"
+#include "itkRegionOfInterestImageFilter.h"
 
 #include "vtkProcessObject.h"
 
@@ -93,6 +97,8 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   
   typename OutImageType::Pointer prevSegmentedImage = OutImageType::New();
 
+  typename OutImageType::Pointer outputImageROI = OutImageType::New();
+
   typename OutImageType::Pointer outputImage = OutImageType::New();
 
   typedef itk::Image<float, 3> WeightImageType;
@@ -142,7 +148,7 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   weightImage->FillBuffer( 0 );       
   
   itk::ImageRegionIterator< WeightImageType > weight(weightImage, weightImage->GetBufferedRegion() );
-  itk::ImageRegionIterator< OutImageType > label(labelImage, labelImage->GetBufferedRegion() );
+  itk::ImageRegionIteratorWithIndex< OutImageType > label(labelImage, labelImage->GetBufferedRegion() );
 
   itk::ImageRegionConstIterator< OutImageType > plabel(prevSegmentedImage, 
     prevSegmentedImage->GetBufferedRegion() );
@@ -173,9 +179,15 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
 
   typename OutImageType::IndexType roiStart;
   typename OutImageType::IndexType roiEnd;
-  roiStart[0] = roiStart[1] = roiStart[2] = 0;
-  roiEnd[0] = roiEnd[1] = roiEnd[2] = 0;
- 
+  
+  
+  roiStart[0] = 0; roiStart[1] = 0; roiStart[2] = 0;
+  roiEnd[0] = 0; roiEnd[1] = 0; roiEnd[2] = 0;
+  
+  unsigned int ndims = image->GetImageDimension();
+  
+  bool foundLabel = false;
+  
   for(weight.GoToBegin(), label.GoToBegin(); !weight.IsAtEnd(); 
       ++weight, ++label)
     {
@@ -186,6 +198,24 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
       }
       else{
         weight.Set( ContrastNoiseRatio );
+
+  typename OutImageType::IndexType idx = label.GetIndex();
+  for (unsigned i = 0; i < ndims; i++)
+    {
+      if(!foundLabel)
+        {
+    roiStart[i] = idx[i];
+    roiEnd[i] = idx[i];
+        }
+      else
+        {
+    if(idx[i] <= roiStart[i])
+      roiStart[i] = idx[i];
+    if(idx[i] >= roiEnd[i])
+      roiEnd[i] = idx[i];
+        }
+    }
+  foundLabel = true;
       }
     }
 
@@ -201,21 +231,126 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   }
     }
   
+  std::cout<<" Object radius "<<ObjectSize<<std::endl;
+  typename OutImageType::PixelType radius = static_cast< typename OutImageType::PixelType> (ObjectSize);
+
+  for (unsigned i = 0; i < ndims; i++)
+    {
+      roiStart[i] = (roiStart[i] - radius >= 0)? (roiStart[i] - radius) : 0;
+      roiEnd[i] = (static_cast<unsigned int>(roiEnd[i] + radius) < size[i]) ? 
+  (roiEnd[i] + radius) : size[i]-1;
+
+      std::cout<<" roi ["<<roiStart[i]<<" "<<roiEnd[i]<<"] ";
+    }
+  
+  std::cout<<" "<<std::endl;
+
+
   typedef itk::GrowCutSegmentationImageFilter<InImageType, OutImageType> FilterType;
   typename FilterType::Pointer filter = FilterType::New();
   
   filter->AddObserver(itk::ProgressEvent(), progressCommand );
 
-  filter->SetInput( image );
-  filter->SetLabelImage( labelImage );
+  typename InImageType::IndexType istart;
+  typename InImageType::SizeType isize;
+
+  typename OutImageType::IndexType ostart;
+  typename OutImageType::SizeType osize;
+
+  typename WeightImageType::IndexType wstart;
+  typename WeightImageType::SizeType wsize;
+  
+
+
+  
+  for (unsigned n = 0; n < ndims; n++)
+    {
+      istart[n] = roiStart[n];
+      isize[n] = roiEnd[n]-roiStart[n]+1;
+      
+      std::cout<<" istart "<<istart[n]<<" isize "<<isize[n]<<" ";
+      
+
+      ostart[n] = istart[n];
+      osize[n] = isize[n];
+      
+      wstart[n] = istart[n];
+      wsize[n] = isize[n];
+      
+    }
+  std::cout<<" "<<std::endl;
+  
+  typename InImageType::RegionType iRegion;
+  iRegion.SetSize( isize );
+  iRegion.SetIndex( istart );
+
+  typedef itk::RegionOfInterestImageFilter< InImageType, InImageType > iFilterType;
+  typename iFilterType::Pointer fInput = iFilterType::New();
+  fInput->SetRegionOfInterest( iRegion );
+
+  fInput->SetInput( image );
+  fInput->Update();
+
+  typename OutImageType::RegionType oRegion;
+  oRegion.SetSize(osize);
+  oRegion.SetIndex(ostart);
+  
+  typedef itk::RegionOfInterestImageFilter< OutImageType, OutImageType > oFilterType;
+  typename oFilterType::Pointer fOutput = oFilterType::New();
+  fOutput->SetRegionOfInterest( oRegion );
+
+  fOutput->SetInput( labelImage );
+  fOutput->Update();
+  
+  typename WeightImageType::RegionType wRegion;
+  wRegion.SetSize(wsize);
+  wRegion.SetIndex(wstart);
+  
+  typedef itk::RegionOfInterestImageFilter< WeightImageType, WeightImageType > wFilterType;
+  typename wFilterType::Pointer fWeight = wFilterType::New();
+  fWeight->SetRegionOfInterest( wRegion );
+
+  fWeight->SetInput( weightImage );
+  fWeight->Update();
+  
+  typename InImageType::Pointer inImage = InImageType::New();
+  inImage = fInput->GetOutput();
+  
+  typename OutImageType::Pointer labImage = OutImageType::New();
+  labImage = fOutput->GetOutput();
+  
+  typename WeightImageType::Pointer wtImage = WeightImageType::New();
+  wtImage = fWeight->GetOutput();
+  
+  filter->SetInput( inImage );
+  filter->SetLabelImage( labImage );
     
-  filter->SetStrengthImage( weightImage );
+  filter->SetStrengthImage( wtImage );
 
   filter->SetSeedStrength( ContrastNoiseRatio );
   filter->SetObjectRadius((unsigned int)ObjectSize);
   
+  std::cout<<" set filter parameters and inputs ... "<<std::endl;
+  
   filter->Update();
-  outputImage = filter->GetOutput();
+  outputImageROI = filter->GetOutput();
+  std::cout<<" done running filter... "<<std::endl;
+  
+  // allocate outputImage first
+  outputImage->CopyInformation( labelImage );
+  outputImage->SetBufferedRegion( labelImage->GetBufferedRegion() );
+  outputImage->Allocate();
+  outputImage->FillBuffer(0);   
+
+  itk::ImageRegionIterator< OutImageType > filterOut(outputImageROI, outputImageROI->GetBufferedRegion());
+  itk::ImageRegionIterator< OutImageType > out(outputImage, oRegion);
+
+  for (filterOut.GoToBegin(), out.GoToBegin(); !filterOut.IsAtEnd(); ++filterOut, ++out)
+    {
+      out.Set(filterOut.Get());
+   }
+
+  //outputImage = filter->GetOutput();
   
   /*writer->SetInput(filter->GetOutput());
   writer->Update();*/
