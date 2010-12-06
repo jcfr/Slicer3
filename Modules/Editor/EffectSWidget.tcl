@@ -444,8 +444,8 @@ itcl::body EffectSWidget::swapInputForegroundLabel { foregroundID  labelID} {
   set fID [$cnode GetForegroundVolumeID]
   set lID [$cnode GetLabelVolumeID]
   
-  if { $fID != "" && $fID == $foregroundID && $lID == $labelID } {
-     puts "swapping foreground $foregroundID and label $labelID"
+  if { $fID != "" && $lID != "" && $fID == $foregroundID && $lID == $labelID } {
+     #puts "swapping foreground $foregroundID and label $labelID"
       for { set j 0 } { $j < $numCnodes } { incr j } {
         set cnode [$::slicer3::MRMLScene GetNthNodeByClass $j "vtkMRMLSliceCompositeNode"]
         $cnode SetReferenceLabelVolumeID $foregroundID
