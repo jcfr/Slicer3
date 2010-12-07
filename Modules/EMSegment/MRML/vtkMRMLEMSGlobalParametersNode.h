@@ -110,6 +110,12 @@ public:
   vtkSetMacro(EnableTargetToTargetRegistration, int);
   vtkGetMacro(EnableTargetToTargetRegistration, int);
 
+  vtkSetMacro(EnableSubParcellation, int);
+  vtkGetMacro(EnableSubParcellation, int);
+
+  vtkSetMacro(MinimumIslandSize, int);
+  vtkGetMacro(MinimumIslandSize, int);
+
   vtkSetStringMacro(Colormap);
   vtkGetStringMacro(Colormap);
 
@@ -146,6 +152,10 @@ protected:
   int                                 EnableTargetToTargetRegistration;
 
   char*                               Colormap;
+
+  int                                 EnableSubParcellation;
+  int                                 MinimumIslandSize;
+
 
   //BTX
   typedef vtkstd::vector<std::string>  IntensityNormalizationParameterListType;

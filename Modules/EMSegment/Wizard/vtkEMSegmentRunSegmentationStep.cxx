@@ -65,11 +65,12 @@ this->RunSegmentationDirectoryLabel              = NULL;
   this->RunSegmentationSaveTemplateLabel = NULL;
   this->RunSegmentationSaveIntermediateCheckButton = NULL;
   this->RunSegmentationGenerateSurfaceCheckButton  = NULL;
-  this->RunSegmentationROIFrame                    = NULL;
-  this->RunSegmentationROIMaxMatrix                = NULL;
-  this->RunSegmentationROIMinMatrix                = NULL;
   this->RunSegmentationMiscFrame                   = NULL;
   this->RunSegmentationMultiThreadCheckButton      = NULL;
+  this->PostprocessingFrame = NULL;
+  this->PostprocessingMinimumIslandSize = NULL;
+  this->PostprocessingSubparcellationCheckButton = NULL;
+
   this->InitialROIWidget() ;
 }
 
@@ -150,23 +151,6 @@ vtkEMSegmentRunSegmentationStep::~vtkEMSegmentRunSegmentationStep()
 //     this->RunSegmentationOutputFrame = NULL;
 //     }
 
-  if (this->RunSegmentationROIMaxMatrix)
-    {
-    this->RunSegmentationROIMaxMatrix->Delete();
-    this->RunSegmentationROIMaxMatrix = NULL;
-    }
-
-  if (this->RunSegmentationROIMinMatrix)
-    {
-    this->RunSegmentationROIMinMatrix->Delete();
-    this->RunSegmentationROIMinMatrix = NULL;
-    }
-
-  if (this->RunSegmentationROIFrame)
-    {
-    this->RunSegmentationROIFrame->Delete();
-    this->RunSegmentationROIFrame = NULL;
-    }
 
   if (this->RunSegmentationMultiThreadCheckButton)
     {
@@ -179,6 +163,24 @@ vtkEMSegmentRunSegmentationStep::~vtkEMSegmentRunSegmentationStep()
     this->RunSegmentationMiscFrame->Delete();
     this->RunSegmentationMiscFrame = NULL;
     }
+
+  if (this->PostprocessingFrame)
+    {
+      this->PostprocessingFrame->Delete();
+      this->PostprocessingFrame = NULL;
+    } 
+
+  if (this->PostprocessingMinimumIslandSize)
+    {
+      this->PostprocessingMinimumIslandSize->Delete();
+       this->PostprocessingMinimumIslandSize = NULL;
+    } 
+ 
+  if (this->PostprocessingSubparcellationCheckButton)
+    {
+       this->PostprocessingSubparcellationCheckButton->Delete();
+       this->PostprocessingSubparcellationCheckButton = NULL;
+    } 
 
   this->ResetROIWidget() ;
 }
@@ -198,8 +200,6 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
   vtkKWWidget *parent = wizard_widget->GetClientArea();;
   int enabled = parent->GetEnabled();
   wizard_widget->GetCancelButton()->SetEnabled(enabled);
-
-  
 
   // Create the boundary frame
 
@@ -391,6 +391,61 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
 
   this->Script("pack %s -side left -anchor nw -fill x -padx 2 -pady 2", this->RunSegmentationDirectoryButton->GetWidgetName());
 
+  // Postprocessing 
+  if (!this->PostprocessingFrame)
+    {
+    this->PostprocessingFrame = vtkKWFrameWithLabel::New();
+    }
+  if (!this->PostprocessingFrame->IsCreated())
+    {
+    this->PostprocessingFrame->SetParent(parent);
+    this->PostprocessingFrame->Create();
+    this->PostprocessingFrame->SetLabelText("Postprocessing");
+    }
+
+   if (this->GetGUI()->IsSegmentationModeAdvanced())
+   { 
+      this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->PostprocessingFrame->GetWidgetName());
+   }
+
+  if (!this->PostprocessingSubparcellationCheckButton)
+    {
+    this->PostprocessingSubparcellationCheckButton = vtkKWCheckButtonWithLabel::New();
+    }
+  if (!this->PostprocessingSubparcellationCheckButton->IsCreated())
+    {
+    this->PostprocessingSubparcellationCheckButton->SetParent(this->PostprocessingFrame->GetFrame());
+    this->PostprocessingSubparcellationCheckButton->Create();
+    this->PostprocessingSubparcellationCheckButton->GetLabel()->SetWidth(EMSEG_WIDGETS_LABEL_WIDTH);
+    this->PostprocessingSubparcellationCheckButton->SetLabelText("Subparcellation enabled:");
+    this->PostprocessingSubparcellationCheckButton->GetWidget()->SetCommand(this, "PostprocessingSubparcellationCallback");
+    }
+  this->PostprocessingSubparcellationCheckButton->SetEnabled(mrmlManager->HasGlobalParametersNode() ? enabled : 0);
+  this->PostprocessingSubparcellationCheckButton->GetWidget()->SetSelectedState(mrmlManager->GetEnableSubParcellation());
+  this->Script("pack %s -side top -anchor nw -padx 2 -pady 2", this->PostprocessingSubparcellationCheckButton->GetWidgetName());
+
+  if (!this->PostprocessingMinimumIslandSize)
+    {
+    this->PostprocessingMinimumIslandSize = vtkKWScaleWithEntry::New();
+    }
+  if (!this->PostprocessingMinimumIslandSize->IsCreated())
+    {
+    this->PostprocessingMinimumIslandSize->SetParent(this->PostprocessingFrame->GetFrame());
+    this->PostprocessingMinimumIslandSize->PopupModeOn();
+    this->PostprocessingMinimumIslandSize->Create();
+    this->PostprocessingMinimumIslandSize->SetEntryWidth(4);
+    this->PostprocessingMinimumIslandSize->SetLabelText("Minimum island size:");
+    this->PostprocessingMinimumIslandSize->GetLabel()->SetWidth(EMSEG_WIDGETS_LABEL_WIDTH - 9);
+    this->PostprocessingMinimumIslandSize->SetRange(1, 200);
+    this->PostprocessingMinimumIslandSize->SetResolution(1);
+
+    this->PostprocessingMinimumIslandSize->SetEndCommand(this, "PostprocessingMinimumIslandSizeCallback");
+    this->PostprocessingMinimumIslandSize->SetEntryCommand(this, "PostprocessingMinimumIslandSizeCallback");
+    this->PostprocessingMinimumIslandSize->GetEntry()->SetCommandTriggerToAnyChange();
+    this->PostprocessingMinimumIslandSize->SetBalloonHelpString("Minimum island size in resulting label map");  
+    }
+  this->PostprocessingMinimumIslandSize->SetValue(mrmlManager->GetMinimumIslandSize());
+  this->Script("pack %s -side top -anchor nw -padx 2 -pady 2", this->PostprocessingMinimumIslandSize->GetWidgetName());
 
   // Create the run frame
   if (!this->RunSegmentationMiscFrame)
@@ -617,40 +672,25 @@ void vtkEMSegmentRunSegmentationStep::GenerateSurfaceModelsCallback(
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentRunSegmentationStep::RunSegmentationROIMaxChangedCallback(
-                                       int vtkNotUsed(row), int col, const char *value)
+void vtkEMSegmentRunSegmentationStep::PostprocessingSubparcellationCallback(int state)
 {
-  int ijk[3] = {0, 0, 0};
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (!mrmlManager)
+  if (mrmlManager)
     {
-    return;
-    }
-  mrmlManager->GetSegmentationBoundaryMax(ijk);
-  ijk[col] = atoi(value);
-  if (mrmlManager->HasGlobalParametersNode())
-    {
-    mrmlManager->SetSegmentationBoundaryMax(ijk);
+      mrmlManager->SetEnableSubParcellation(state);
     }
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentRunSegmentationStep::RunSegmentationROIMinChangedCallback(
-                                       int vtkNotUsed(row), int col, const char *value)
+void vtkEMSegmentRunSegmentationStep::PostprocessingMinimumIslandSizeCallback(float value)
 {
-  int ijk[3] = {0, 0, 0};
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (!mrmlManager)
+  if (mrmlManager)
     {
-    return;
-    }
-  mrmlManager->GetSegmentationBoundaryMin(ijk);
-  ijk[col] = atoi(value);
-  if (mrmlManager->HasGlobalParametersNode())
-    {
-    mrmlManager->SetSegmentationBoundaryMin(ijk);
+      mrmlManager->SetMinimumIslandSize(value);
     }
 }
+
 
 //----------------------------------------------------------------------------
 void vtkEMSegmentRunSegmentationStep::MultiThreadingCallback(int state)

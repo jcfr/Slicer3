@@ -149,6 +149,7 @@ set(EMSegment_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkTimeDef.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageMeanIntensityNormalization.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageLabelPropagation.cxx 
+  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageIslandFilter.cxx 
   # Registration
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkRigidRegistrator.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkBSplineRegistrator.cxx

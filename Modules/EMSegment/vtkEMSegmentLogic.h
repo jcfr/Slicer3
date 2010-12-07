@@ -188,6 +188,8 @@ private:
   virtual void CopyTreeLeafDataToSegmenter(vtkImageEMLocalClass* node,
                                            vtkIdType nodeID);  
 
+  void SubParcelateSegmentation(vtkImageData* segmentation, vtkIdType nodeID);
+
   //
   // convenience methods for translating enums between algorithm and
   // this module

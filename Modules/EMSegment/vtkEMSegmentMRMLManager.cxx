@@ -2009,6 +2009,65 @@ SetTreeNodeSubParcellationVolumeID(vtkIdType nodeID,
 }
 
 //----------------------------------------------------------------------------
+vtkMRMLVolumeNode*  vtkEMSegmentMRMLManager::GetAlignedSubParcellationFromTreeNodeID(vtkIdType nodeID)
+{
+  if (! this->GetTreeNodeIsLeaf(nodeID) || !this->GetTreeParametersLeafNode(nodeID)) 
+    {
+      return NULL;
+    }
+
+  vtkMRMLEMSVolumeCollectionNode* workingParcellation = this->GetWorkingDataNode()->GetAlignedSubParcellationNode();
+  if (!workingParcellation)
+    {
+      return NULL;
+    }
+
+   std::string parcellationVolumeKey = this->GetTreeParametersLeafNode(nodeID)->GetSubParcellationVolumeName() ? this->GetTreeParametersLeafNode(nodeID)->GetSubParcellationVolumeName() : "";
+   int parcellationVolumeIndex       = workingParcellation->GetIndexByKey(parcellationVolumeKey.c_str());
+    if (parcellationVolumeIndex >= 0 )
+    {
+      return workingParcellation->GetNthVolumeNode(parcellationVolumeIndex);   
+    }
+    return NULL;
+}
+
+
+//----------------------------------------------------------------------------  
+int vtkEMSegmentMRMLManager::GetEnableSubParcellation()
+{
+  return (this->GetGlobalParametersNode() ? this->GetGlobalParametersNode()->GetEnableSubParcellation() : 0);
+}
+
+//----------------------------------------------------------------------------  
+void
+vtkEMSegmentMRMLManager::SetEnableSubParcellation(int enable)
+{
+  if (this->GetGlobalParametersNode())
+    {
+    this->GetGlobalParametersNode()->SetEnableSubParcellation(enable);
+    }
+}
+
+
+//----------------------------------------------------------------------------  
+int vtkEMSegmentMRMLManager::GetMinimumIslandSize()
+{
+  return this->GetGlobalParametersNode() ? this->GetGlobalParametersNode()->GetMinimumIslandSize() : 0;
+}
+
+//----------------------------------------------------------------------------  
+void
+vtkEMSegmentMRMLManager::SetMinimumIslandSize(int value)
+{
+  if (this->GetGlobalParametersNode())
+    {
+    this->GetGlobalParametersNode()->SetMinimumIslandSize(value);
+    }
+}
+
+
+
+//----------------------------------------------------------------------------
 int
 vtkEMSegmentMRMLManager::
 GetTargetNumberOfSelectedVolumes()

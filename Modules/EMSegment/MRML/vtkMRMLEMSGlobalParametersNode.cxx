@@ -68,6 +68,9 @@ vtkMRMLEMSGlobalParametersNode::vtkMRMLEMSGlobalParametersNode()
   this->SegmentationBoundaryMax[2] = 0;  
 
   this->Colormap = NULL;          
+
+  this->EnableSubParcellation = 0;
+  this->MinimumIslandSize = 1;
          
   this->InputChannelNames.clear();
 }
@@ -189,8 +192,10 @@ void vtkMRMLEMSGlobalParametersNode::WriteXML(ostream& of, int nIndent)
                      ostream_iterator<vtksys_stl::string>(of, " "));
     of << "\" ";
 
-    of << indent << " Colormap=\"" 
-       << (this->Colormap ? this->Colormap : "NULL") << "\" ";
+    of << indent << " EnableSubParcellation=\"" << this->EnableSubParcellation << "\" ";
+    of << indent << " MinimumIslandSize=\"" << this->MinimumIslandSize << "\" ";
+
+    of << indent << " Colormap=\"" << (this->Colormap ? this->Colormap : "NULL") << "\" ";
 
     
 }
@@ -325,6 +330,22 @@ void vtkMRMLEMSGlobalParametersNode::ReadXMLAttributes(const char** attrs)
         ++index;
         }
       }
+    else if (!strcmp(key, "EnableSubParcellation")) 
+      {
+        vtksys_stl::stringstream ss;
+        ss << val;
+        int n ;
+        ss >> n;
+    this->SetEnableSubParcellation(n);
+      }
+    else if (!strcmp(key, "MinimumIslandSize"))
+      {
+        vtksys_stl::stringstream ss;
+        ss << val;
+        int n ;
+        ss >> n;
+        this->SetMinimumIslandSize(n);
+      } 
     else if (!strcmp(key, "Colormap"))
       {
       this->SetColormap(val);
@@ -376,6 +397,8 @@ void vtkMRMLEMSGlobalParametersNode::Copy(vtkMRMLNode *rhs)
     node->IntensityNormalizationParameterList;
   
   this->SetColormap(node->Colormap);
+  this->EnableSubParcellation = node->EnableSubParcellation;
+  this->MinimumIslandSize = node->MinimumIslandSize;
 
   this->InputChannelNames= node->InputChannelNames;
 }
@@ -443,6 +466,9 @@ void vtkMRMLEMSGlobalParametersNode::PrintSelf(ostream& os,
                    this->IntensityNormalizationParameterList.end(),
                    vtksys_stl::ostream_iterator<vtksys_stl::string>(os, " "));
   os << "\n";
+
+  os << indent << "EnableSubParcellation: " << this->EnableSubParcellation << "\n";
+  os << indent << "MinimumIslandSize:     " << this->MinimumIslandSize << "\n";
 
   os << indent << "Colormap: " 
      << (this->Colormap ? this->Colormap : "(none)") << "\n";

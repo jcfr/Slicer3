@@ -27,6 +27,8 @@ class vtkSlicerROIDisplayWidget;
 class vtkObserverManager;
 class vtkSlicerApplicationGUI;
 class vtkKWWidget;
+class vtkKWScaleWithEntry;
+
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentRunSegmentationStep : public vtkEMSegmentStep
 {
 public:
@@ -46,11 +48,10 @@ public:
   virtual void GenerateSurfaceModelsCallback(int state);
   virtual void SaveIntermediateCallback(int state);
   virtual void SaveAfterSegmentationCallback(int state);
-  virtual void RunSegmentationROIMaxChangedCallback(
-    int row, int col, const char *value);
-  virtual void RunSegmentationROIMinChangedCallback(
-    int row, int col, const char *value);
   virtual void MultiThreadingCallback(int state);
+  virtual void PostprocessingSubparcellationCallback(int state);
+  virtual void PostprocessingMinimumIslandSizeCallback(float value);
+
   virtual void StartSegmentationCallback();
   virtual void CancelSegmentationCallback();
 
@@ -79,14 +80,15 @@ protected:
 
   vtkKWFrame                 *RunSegmentationDirectorySubFrame;
   vtkKWLabel                 *RunSegmentationDirectoryLabel;
-  vtkKWLoadSaveButton         *RunSegmentationDirectoryButton;
+  vtkKWLoadSaveButton        *RunSegmentationDirectoryButton;
   vtkKWCheckButtonWithLabel  *RunSegmentationSaveIntermediateCheckButton;
   vtkKWCheckButtonWithLabel  *RunSegmentationGenerateSurfaceCheckButton;
-  vtkKWFrameWithLabel        *RunSegmentationROIFrame;
-  vtkKWMatrixWidgetWithLabel *RunSegmentationROIMinMatrix;
-  vtkKWMatrixWidgetWithLabel *RunSegmentationROIMaxMatrix;
-  vtkKWFrameWithLabel        *RunSegmentationMiscFrame;
+   vtkKWFrameWithLabel        *RunSegmentationMiscFrame;
   vtkKWCheckButtonWithLabel  *RunSegmentationMultiThreadCheckButton;
+
+  vtkKWFrameWithLabel        *PostprocessingFrame;
+  vtkKWScaleWithEntry        *PostprocessingMinimumIslandSize;
+  vtkKWCheckButtonWithLabel  *PostprocessingSubparcellationCheckButton;
 
   // Description:
   // Populate the run segmentation boundary matrix 

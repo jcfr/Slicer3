@@ -41,7 +41,7 @@
 #include "vtkHIDHandler.h"
 #include "vtkXNDHandler.h"
 #include "vtkSlicerXNATPermissionPrompterWidget.h"
-
+#include "vtkImageIslandFilter.h"
 
 // needed to translate between enums
 #include "EMLocalInterface.h"
@@ -991,7 +991,7 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
     ErrorMsg = "Exception thrown during segmentation: "  + std::string(e.what()) + "\n";
     vtkErrorMacro( << ErrorMsg );
     //return EXIT_FAILURE;
-    }
+    } 
 
   if (this->GetDebug())
   {
@@ -1004,15 +1004,41 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
     vtkstd::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << vtkstd::endl;
   }
 
+  // POST PROCESSING 
+  vtkstd::cout << "[Start] Postprocessing ..." << vtkstd::endl;
+  vtkImageData* postProcessing = vtkImageData::New(); 
+  postProcessing->ShallowCopy(segmenter->GetOutput());
+
+  // Subparcellation
+  if (this->MRMLManager->GetEnableSubParcellation()) {
+    vtkstd::cout << "=== Sub-Parcellation === " << vtkstd::endl;
+    this->SubParcelateSegmentation(postProcessing,this->MRMLManager->GetTreeRootNodeID()); 
+  }
+
+  // Island Removal
+  if (this->MRMLManager->GetMinimumIslandSize() > 1) {
+     vtkstd::cout << "=== Island removal === " << vtkstd::endl;
+     vtkImageData* input = vtkImageData::New();
+     input->DeepCopy(postProcessing);
+     vtkImageIslandFilter* islandFilter = vtkImageIslandFilter::New();
+     islandFilter->SetInput(input);
+     islandFilter->SetIslandMinSize(this->MRMLManager->GetMinimumIslandSize());
+     islandFilter->SetNeighborhoodDim3D();
+     islandFilter->SetPrintInformation(1);
+     islandFilter->Update();
+     postProcessing->DeepCopy(islandFilter->GetOutput());
+     islandFilter->Delete();
+     input->Delete();
+  }
+  vtkstd::cout << "[Done] Postprocessing" << vtkstd::endl;
   //
   // copy result to output volume
   //
   
   // set output of the filter to VolumeNode's ImageData
-  vtkImageData* image = vtkImageData::New(); 
-  image->ShallowCopy(segmenter->GetOutput());
-  outVolume->SetAndObserveImageData(image);
-  image->Delete();
+
+  outVolume->SetAndObserveImageData(postProcessing);
+  postProcessing->Delete();
   // make sure the output volume is a labelmap
   if (!outVolume->GetLabelMap())
   {
@@ -2458,4 +2484,71 @@ WritePackagedScene(vtkMRMLScene* scene)
     }  
 
   return allOK;
+}
+
+//-----------------------------------------------------------------------------
+void vtkEMSegmentLogic::SubParcelateSegmentation(vtkImageData* segmentation, vtkIdType nodeID)
+{
+  unsigned int numChildren =  this->MRMLManager->GetTreeNodeNumberOfChildren(nodeID);
+  for (unsigned int i = 0; i < numChildren; ++i)
+    {
+    vtkIdType childID = this->MRMLManager->GetTreeNodeChildNodeID(nodeID, i);
+    if (this->MRMLManager->GetTreeNodeIsLeaf(childID))
+      {
+    vtkMRMLVolumeNode*  parcellationNode =  this->MRMLManager->GetAlignedSubParcellationFromTreeNodeID(childID);
+        if ( ! parcellationNode || !parcellationNode->GetImageData() ) 
+      {
+            continue;
+      }
+        int childLabel =  this->MRMLManager->GetTreeNodeIntensityLabel(childID);
+        cout << "==> Subparcellate " <<  childLabel << endl;
+        vtkImageData* input = vtkImageData::New();
+    input->DeepCopy(segmentation);
+ 
+    vtkImageThreshold* roiMap =     vtkImageThreshold::New();
+        roiMap->SetInput(input);
+        roiMap->ThresholdBetween( childLabel,  childLabel);
+        roiMap->ReplaceOutOn();
+        roiMap->SetInValue(1);
+        roiMap->SetOutValue(0);
+        roiMap->Update();
+ 
+        vtkImageCast* castParcellation = vtkImageCast::New();
+        castParcellation->SetInput(parcellationNode->GetImageData());
+    castParcellation->SetOutputScalarType(roiMap->GetOutput()->GetScalarType());
+    castParcellation->Update();
+
+        vtkImageMathematics* roiParcellation = vtkImageMathematics::New();
+    roiParcellation->SetInput1(roiMap->GetOutput());
+    roiParcellation->SetInput2(castParcellation->GetOutput());
+        roiParcellation->SetOperationToMultiply();
+        roiParcellation->Update();
+
+    vtkImageThreshold* changedSeg =     vtkImageThreshold::New();
+        changedSeg->SetInput(input);
+        changedSeg->ThresholdBetween( childLabel,  childLabel);
+        changedSeg->ReplaceOutOff();
+        changedSeg->SetInValue(0);
+        changedSeg->Update();
+
+        vtkImageMathematics* parcellatedSeg = vtkImageMathematics::New();
+    parcellatedSeg->SetInput1(changedSeg->GetOutput());
+    parcellatedSeg->SetInput2(roiParcellation->GetOutput());
+        parcellatedSeg->SetOperationToAdd();
+        parcellatedSeg->Update();
+
+        segmentation->DeepCopy(parcellatedSeg->GetOutput());
+        parcellatedSeg->Delete();
+        changedSeg->Delete();
+        roiParcellation->Delete();
+        castParcellation->Delete();
+        roiMap->Delete();
+    input->Delete();
+      }
+    else
+      {
+        this->SubParcelateSegmentation(segmentation, childID); 
+      }
+
+    }
 }

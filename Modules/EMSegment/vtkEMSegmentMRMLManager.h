@@ -290,14 +290,18 @@ public:
 
   // spatial prior volumes
   virtual vtkIdType GetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID);
-  virtual void      SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID, 
-                                                    vtkIdType volumeID);
+  virtual void      SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID, vtkIdType volumeID);
+  vtkMRMLVolumeNode* GetAlignedSpatialPriorFromTreeNodeID(vtkIdType nodeID);
 
   virtual vtkIdType GetTreeNodeSubParcellationVolumeID(vtkIdType nodeID);
   virtual void      SetTreeNodeSubParcellationVolumeID(vtkIdType nodeID, vtkIdType volumeID);
+  vtkMRMLVolumeNode* GetAlignedSubParcellationFromTreeNodeID(vtkIdType nodeID);
 
+  virtual void      SetEnableSubParcellation(int state);
+  virtual int       GetEnableSubParcellation();
 
-  vtkMRMLVolumeNode* GetAlignedSpatialPriorFromTreeNodeID(vtkIdType nodeID);
+  virtual void      SetMinimumIslandSize(int value);
+  virtual int       GetMinimumIslandSize();
 
   // target volumes
   virtual int         GetTargetNumberOfSelectedVolumes();
