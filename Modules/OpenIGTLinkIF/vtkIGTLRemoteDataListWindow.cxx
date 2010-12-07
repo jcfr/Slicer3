@@ -27,6 +27,8 @@
 #include "vtkMRMLIGTLQueryNode.h"
 #include "vtkMRMLImageMetaListNode.h"
 
+#include <ctime>
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkIGTLRemoteDataListWindow);
 vtkCxxRevisionMacro(vtkIGTLRemoteDataListWindow, "$Revision: 1.0 $");
@@ -416,11 +418,11 @@ void vtkIGTLRemoteDataListWindow::CreateWidget()
   this->RemoteDataList->GetWidget()->MovableColumnsOff();
 
   const char* labels[] =
-    { "IGTL NAME", "Patient ID", "Patient Name", "Modality", "Date", "Status", "Description"};
+    { "IGTL NAME", "Patient ID", "Patient Name", "Modality", "Date", "Description"};
   const int widths[] = 
-    { 12, 20, 20, 20, 10, 10, 30};
+    { 12, 20, 20, 20, 10, 30};
 
-  for (int col = 0; col < 7; col ++)
+  for (int col = 0; col < 6; col ++)
     {
     this->RemoteDataList->GetWidget()->AddColumn(labels[col]);
     this->RemoteDataList->GetWidget()->SetColumnWidth(col, widths[col]);
@@ -527,12 +529,19 @@ void vtkIGTLRemoteDataListWindow::UpdateRemoteDataList()
     for (int i = 0; i < numImages; i ++)
       {
       vtkMRMLImageMetaListNode::ImageMetaElement element;
+
+      long timer = (long) element.TimeStamp;
+      struct tm *tst = localtime(&timer);
+      std::stringstream timess;
+      timess << tst->tm_year+1900 << "-" << tst->tm_mon+1 << "-" << tst->tm_mday << " "
+             << tst->tm_hour << ":" << tst->tm_min << ":" << tst->tm_sec;
+
       node->GetImageMetaElement(i, &element);
       this->RemoteDataList->GetWidget()->SetCellText(i, 0, element.DeviceName.c_str());
       this->RemoteDataList->GetWidget()->SetCellText(i, 1, element.PatientID.c_str());
-      this->RemoteDataList->GetWidget()->SetCellText(i, 2, element.Modality.c_str());
-      this->RemoteDataList->GetWidget()->SetCellText(i, 3, "--"); // Date
-      this->RemoteDataList->GetWidget()->SetCellText(i, 4, "--"); // Status
+      this->RemoteDataList->GetWidget()->SetCellText(i, 2, element.PatientName.c_str());
+      this->RemoteDataList->GetWidget()->SetCellText(i, 3, element.Modality.c_str());
+      this->RemoteDataList->GetWidget()->SetCellText(i, 4, timess.str().c_str());    // Date & Time
       this->RemoteDataList->GetWidget()->SetCellText(i, 5, "--"); // Description
       }
     }
