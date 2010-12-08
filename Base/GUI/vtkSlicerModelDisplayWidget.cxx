@@ -644,6 +644,8 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   //this->ModelSelectorWidget->ChildClassesEnabledOff();
 
   this->SelectedButton = vtkKWCheckButtonWithLabel::New();
+  //TODO enable selected when supported
+  /*
   this->SelectedButton->SetParent ( modelDisplayFrame );
   this->SelectedButton->Create ( );
   this->SelectedButton->SetLabelText("Selected");
@@ -651,7 +653,8 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->SelectedButton->SetBalloonHelpString("set model selected (very much under construction)");
   this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
                  this->SelectedButton->GetWidgetName() );
-  
+  */
+
   this->VisibilityButton = vtkKWCheckButtonWithLabel::New();
   this->VisibilityButton->SetParent ( modelDisplayFrame );
   this->VisibilityButton->Create ( );
@@ -684,7 +687,7 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->SliceIntersectionVisibilityButton = vtkKWCheckButtonWithLabel::New();
   this->SliceIntersectionVisibilityButton->SetParent ( modelDisplayFrame );
   this->SliceIntersectionVisibilityButton->Create ( );
-  this->SliceIntersectionVisibilityButton->SetLabelText("Slice Intersections Visible");
+  this->SliceIntersectionVisibilityButton->SetLabelText("Slice Intersections Visibility");
   this->SliceIntersectionVisibilityButton->SetLabelWidth(20);
   this->SliceIntersectionVisibilityButton->SetBalloonHelpString("Show model intersection on slice planes.");
   this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
@@ -715,6 +718,7 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   scalarFrame->SetParent( modelDisplayFrame );
   scalarFrame->Create();
   scalarFrame->SetLabelText("Scalars:");
+  scalarFrame->CollapseFrame();
   this->Script("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
                  scalarFrame->GetWidgetName(),
                  modelDisplayFrame->GetWidgetName());
@@ -798,10 +802,11 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
                  this->ColorSelectorWidget->GetWidgetName());
     
   this->SurfaceMaterialPropertyWidget = vtkKWSurfaceMaterialPropertyWidget::New();
-  this->SurfaceMaterialPropertyWidget->SetParent ( modelDisplayFrame );
-  this->SurfaceMaterialPropertyWidget->Create ( );
+  this->SurfaceMaterialPropertyWidget->SetParent ( modelDisplayFrame );  this->SurfaceMaterialPropertyWidget->Create ( );
   this->SurfaceMaterialPropertyWidget->SetBalloonHelpString("set model surface properties.");
-  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+  this->Script("pack forget %s", this->SurfaceMaterialPropertyWidget->GetWidgetName());
+  this->Script( "pack configure %s -expand n", this->SurfaceMaterialPropertyWidget->GetWidgetName());
+  this->Script ( "pack %s -expand n -side top -anchor nw -fill x -padx 2 -pady 2",
                  this->SurfaceMaterialPropertyWidget->GetWidgetName() );
 
   // add observers
