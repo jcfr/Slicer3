@@ -165,13 +165,13 @@ void vtkIGTLRemoteDataListWindow::ProcessGUIEvents(vtkObject *caller, unsigned l
   if (this->GetListButton == vtkKWPushButton::SafeDownCast(caller) 
       && event == vtkKWPushButton::InvokedEvent )
     {
-    std::cerr << "GetListButton is pressed. " << std::endl;
     if (this->MRMLScene && this->Connector)
       {
       if (this->ImageMetaListQueryNode == NULL)
         {
         this->ImageMetaListQueryNode = vtkMRMLIGTLQueryNode::New();
         this->ImageMetaListQueryNode->SetIGTLName("IMGMETA");
+        this->ImageMetaListQueryNode->SetNoNameQuery(1);
         //this->ImageMetaListQueryNode->SetIGTLName(igtl::ImageMetaMessage::GetDeviceType());
         this->MRMLScene->AddNode(this->ImageMetaListQueryNode);
         this->ImageMetaListQueryNode->AddObserver(vtkMRMLIGTLQueryNode::ResponseEvent,this->MRMLCallbackCommand);
@@ -184,7 +184,6 @@ void vtkIGTLRemoteDataListWindow::ProcessGUIEvents(vtkObject *caller, unsigned l
   else if (this->GetImageButton == vtkKWPushButton::SafeDownCast(caller) 
       && event == vtkKWPushButton::InvokedEvent )
     {
-    std::cerr << "GetImageButton is pressed. " << std::endl;
     if (this->RemoteDataList == NULL || this->ImageMetaListQueryNode ==NULL || this->MRMLScene ==NULL)
       {
       return;
@@ -216,7 +215,7 @@ void vtkIGTLRemoteDataListWindow::ProcessGUIEvents(vtkObject *caller, unsigned l
   else if (this->CloseButton == vtkKWPushButton::SafeDownCast(caller) 
       && event == vtkKWPushButton::InvokedEvent )
     {
-    std::cerr << "CloseButton is pressed. " << std::endl;
+    this->Withdraw();
     }
 
 }

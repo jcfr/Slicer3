@@ -582,14 +582,15 @@ int vtkMRMLIGTLConnectorNode::ReceiveController()
     const char* devName = headerMsg->GetDeviceName();
     if (devName[0] == '\0')
       {
-      // If no device name is defined, skip processing the message.
-      this->Skip(headerMsg->GetBodySizeToRead());
-      continue; //  while (!this->ServerStopFlag)
+      /// Dec 7, 2010: Removing the following code, since message without
+      /// device name should be handled in the MRML scene as well.
+      //// If no device name is defined, skip processing the message.
+      //this->Skip(headerMsg->GetBodySizeToRead());
+      //continue; //  while (!this->ServerStopFlag)
       }
-
     //----------------------------------------------------------------
     // If device name is restricted
-    if (this->RestrictDeviceName)
+    else if (this->RestrictDeviceName)
       {
       // Check if the node has already been registered.
       int registered = 0;
@@ -618,6 +619,7 @@ int vtkMRMLIGTLConnectorNode::ReceiveController()
         }
       }
 
+
     //----------------------------------------------------------------
     // Search Circular Buffer
 
@@ -626,6 +628,16 @@ int vtkMRMLIGTLConnectorNode::ReceiveController()
     // it should be selected by device name and device type.
 
     std::string key = headerMsg->GetDeviceName();
+    if (devName[0] == '\0')
+      {
+      // The following device name never conflicts with any
+      // device names comming from OpenIGTLink message, since
+      // the number of characters is beyond the limit.
+      std::stringstream ss;
+      ss << "OpenIGTLink_MESSAGE_" << headerMsg->GetDeviceType();
+      key = ss.str();
+      }
+
     CircularBufferMap::iterator iter = this->Buffer.find(key);
     if (iter == this->Buffer.end()) // First time to refer the device name
       {
@@ -847,8 +859,13 @@ void vtkMRMLIGTLConnectorNode::ImportDataFromCircularBuffer()
       std::list<vtkMRMLIGTLQueryNode*>::iterator iter;
       for (iter = this->QueryWaitingQueue.begin(); iter != this->QueryWaitingQueue.end(); iter ++)
         {
+        // If there is a query that has either the same device name as
+        // the incominig message or a NULL name.
+        // TODO: what happens if there are multiple queries that meet this condition?
+        // (Currently the first query that matches first takes the message.)
         if (strncmp((*iter)->GetIGTLName(), buffer->GetDeviceType(), 12) == 0 &&
-            strncmp((*iter)->GetName(), buffer->GetDeviceName(), 20) == 0)
+            ((*iter)->GetNoNameQuery() ||
+             strncmp((*iter)->GetName(), buffer->GetDeviceName(), 20) == 0))
           {
           //this->QueryQueueMutex->Lock();
           (*iter)->SetQueryStatus(vtkMRMLIGTLQueryNode::STATUS_SUCCESS);
