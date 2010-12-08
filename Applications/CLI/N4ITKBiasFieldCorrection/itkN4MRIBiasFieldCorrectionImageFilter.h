@@ -1,13 +1,14 @@
 /*=========================================================================
 
-  Program:   Insight Segmentation & Registration Toolkit
+  Program:   Advanced Normalization Tools
   Module:    $RCSfile: itkN4MRIBiasFieldCorrectionImageFilter.h,v $
   Language:  C++
   Date:      $Date: 2009/06/09 16:22:05 $
   Version:   $Revision: 1.6 $
 
-  Copyright (c) Insight Software Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
+  Copyright (c) ConsortiumOfANTS. All rights reserved.
+  See accompanying COPYING.txt or
+ http://sourceforge.net/projects/advants/files/ANTS/ANTSCopyright.txt for details.
 
      This software is distributed WITHOUT ANY WARRANTY; without even
      the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
@@ -22,7 +23,6 @@
 #include "itkArray.h"
 #include "itkBSplineScatteredDataPointSetToImageFilter.h"
 #include "itkPointSet.h"
-#include "itkSingleValuedCostFunction.h"
 #include "itkVector.h"
 
 #include "vnl/vnl_vector.h"
@@ -66,15 +66,14 @@ namespace itk {
  * in the Insight Journal paper:
  *
  * \par REFERENCE
- * J.G. Sled, P. Zijdenbos and A.C. Evans, "A comparison of retrospective
- * intensity non-uniformity correction methods for MRI".  Information
- * Processing Medical Imaging Proc, 15th Int. Conf. IMPI'97, vol.1230,
- * pp 459-464,1997.
  *
  * J.G. Sled, A.P. Zijdenbos and A.C. Evans.  "A Nonparametric Method for
  * Automatic Correction of Intensity Nonuniformity in MRI Data"
  * IEEE Transactions on Medical Imaging, Vol 17, No 1. Feb 1998.
  *
+ * N.J. Tustison, B.B. Avants, P.A. Cook, Y. Zheng, A. Egan, P.A. Yushkevich,
+ * and J.C. Gee. "N4ITK:  Improved N3 Bias Correction
+ * IEEE Transactions on Medical Imaging, 29(6):1310-1320, June 2010.
  */
 
 template<class TInputImage, class TMaskImage = Image<unsigned char,
@@ -212,13 +211,9 @@ private:
   N4MRIBiasFieldCorrectionImageFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
-  typename RealImageType::Pointer SharpenImage(
-    typename RealImageType::Pointer );
-  typename RealImageType::Pointer UpdateBiasFieldEstimate(
-    typename RealImageType::Pointer );
-  RealType CalculateConvergenceMeasurement(
-    typename RealImageType::Pointer,
-    typename RealImageType::Pointer );
+  typename RealImageType::Pointer SharpenImage( RealImageType * );
+  typename RealImageType::Pointer UpdateBiasFieldEstimate( RealImageType * );
+  RealType CalculateConvergenceMeasurement( RealImageType *, RealImageType * );
 
   MaskPixelType                               m_MaskLabel;
 
