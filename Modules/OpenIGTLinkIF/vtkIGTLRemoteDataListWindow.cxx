@@ -529,7 +529,7 @@ void vtkIGTLRemoteDataListWindow::UpdateRemoteDataList()
       {
       vtkMRMLImageMetaListNode::ImageMetaElement element;
 
-      long timer = (long) element.TimeStamp;
+      time_t timer = (time_t) element.TimeStamp;
       struct tm *tst = localtime(&timer);
       std::stringstream timess;
       timess << tst->tm_year+1900 << "-" << tst->tm_mon+1 << "-" << tst->tm_mday << " "
