@@ -116,7 +116,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         for { set i 0 } {$i < $inputNum } { incr i } {
             set newVolNode [lindex $newSubjectVolumeNodeList $i]
             if {$newVolNode == "" } {
-                PrintError "Run: Intensity corrected target node is incomplete !"
+                PrintError "Run: Processed target node is incomplete !"
                 return 1
             }
             set oldSubjectNode [$subjectNode GetNthVolumeNode $i]
@@ -844,7 +844,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         return "[$GUI GetTemporaryDirectory]/[expr int(rand()*10000)]_$NAME"
     }
 
-    proc WriteDataToTemporaryDir { Node Type} {
+    proc WriteDataToTemporaryDir { Node Type } {
         variable GUI
         variable SCENE
 
@@ -1515,25 +1515,25 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: =========================================="
 
         set PLUGINS_DIR "$::env(Slicer3_HOME)/lib/Slicer3/Plugins"
-        set CMD "${PLUGINS_DIR}/N4ITKBiasFieldCorrection "
+        set CMD "${PLUGINS_DIR}/N4ITKBiasFieldCorrection"
 
         # initialize
-        set result ""
+        set correctedSubjectVolumeNodeList ""
 
         # Run the algorithm on each subject image
-        for { set i 0 } {$i < [$subjectNode GetNumberOfVolumes] } { incr i } {
+        for { set i 0 } { $i < [$subjectNode GetNumberOfVolumes] } { incr i } {
 
-            set inputNode [$subjectNode GetNthVolumeNode $i]
-            set inputVolume [$inputNode GetImageData]
-            if { $inputVolume == "" } {
+            set inputVolumeNode [$subjectNode GetNthVolumeNode $i]
+            set inputVolumeData [$inputVolumeNode GetImageData]
+            if { $inputVolumeData == "" } {
                 PrintError "PerformIntensityCorrection: the ${i}th subject node has not input data defined!"
-                foreach NODE $result {
-                    DeleteNode $NODE
+                foreach VolumeNode $correctedSubjectVolumeNodeList {
+                    DeleteNode $VolumeNode
                 }
                 return ""
             }
 
-            set tmpFileName [WriteDataToTemporaryDir $inputNode Volume ]
+            set tmpFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
             set RemoveFiles "\"$tmpFileName\""
             if { $tmpFileName == "" } {
                 return 1
@@ -1547,19 +1547,19 @@ namespace eval EMSegmenterPreProcessingTcl {
             #     }
             # set CMD "$CMD --maskimag $tmpFileName"
 
-            # create a new node for our output-list 
-            set outVolumeNode [CreateVolumeNode $inputNode "[$inputNode GetName]_N4corrected"]
-            set outputVolume [vtkImageData New]
-            $outVolumeNode SetAndObserveImageData $outputVolume
-            $outputVolume Delete
+            # create a new node for our output-list
+            set outputVolumeNode [CreateVolumeNode $inputVolumeNode "[$inputVolumeNode GetName]_N4corrected"]
+            set outputVolumeData [vtkImageData New]
+            $outputVolumeNode SetAndObserveImageData $outputVolumeData
+            $outputVolumeData Delete
 
-            set outVolumeFileName [ CreateTemporaryFileName $outVolumeNode ]
-            $LOGIC PrintText "$outVolumeFileName"
-            if { $outVolumeFileName == "" } {
+            set outputVolumeFileName [ CreateTemporaryFileName $outputVolumeNode ]
+            $LOGIC PrintText "$outputVolumeFileName"
+            if { $outputVolumeFileName == "" } {
                 return 1
             }
-            set CMD "$CMD --outputimage \"$outVolumeFileName\""
-            set RemoveFiles "$RemoveFiles \"$outVolumeFileName\""
+            set CMD "$CMD --outputimage \"$outputVolumeFileName\""
+            set RemoveFiles "$RemoveFiles \"$outputVolumeFileName\""
 
             # for test purposes(reduces execution time)
             # set CMD "$CMD --iterations \"3,2,1\""
@@ -1577,18 +1577,17 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # Read results back, we have to read 2 results
 
-            ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume
-            file delete -force $outVolumeFileName
+            ReadDataFromDisk $outputVolumeNode $outputVolumeFileName Volume
+            file delete -force $outputVolumeFileName
 
             # ReadDataFromDisk $outbiasVolumeNode $outbiasVolumeFileName Volume  
             # file delete -force $outbiasVolumeFileName
 
             # still in for loop, create a list of Volumes
-            set result "${result}$outVolumeNode "
-            $LOGIC PrintText "TCL: List of volume nodes: $result"
+            set correctedSubjectVolumeNodeList "${correctedSubjectVolumeNodeList}$outputVolumeNode "
+            $LOGIC PrintText "TCL: List of volume nodes: $correctedSubjectVolumeNodeList"
         }
-        # return a newSubjectVolumeNodeList
-        return "$result"
+        return "$correctedSubjectVolumeNodeList"
     }
 
 
@@ -1677,9 +1676,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set fixedTargetChannel 0
         set fixedTargetVolumeNode [$subjectNode GetNthVolumeNode $fixedTargetChannel]
+        
         if { [$fixedTargetVolumeNode GetImageData] == "" } {
             PrintError "RegisterAtlas: Fixed image is null, skipping registration"
-            return 1;
+            return 1
         }
 
         set atlasRegistrationVolumeIndex -1;
@@ -1773,7 +1773,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # ----------------------------------------------------------------
 
         # Spatial prior
-        for { set i 0 } {$i < [$outputAtlasNode GetNumberOfVolumes] } { incr i } {
+        for { set i 0 } { $i < [$outputAtlasNode GetNumberOfVolumes] } { incr i } {
             if { $i == $atlasRegistrationVolumeIndex} { continue }
             $LOGIC PrintText "TCL: Resampling atlas image $i ..."
             set movingVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
@@ -1824,13 +1824,15 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc Resample { movingVolumeNode fixedTargetVolumeNode  transformNode transformDirName UseBRAINS interpolationType backgroundLevel outputVolumeNode } {
         variable LOGIC
         if {[$movingVolumeNode GetImageData] == ""} {
-            PrintError "RegisterAtlas: Moving image is null, skipping: $i"
+            PrintError "RegisterAtlas: Moving image is null, skipping: $movingVolumeNode"
             return 1
         }
         if { [$outputVolumeNode GetImageData] == ""} {
-            PrintError "RegisterAtlas: Registration output is null, skipping: $i"
+            PrintError "RegisterAtlas: Registration output is null, skipping: $outputVolumeNode"
             return 1
         }
+
+        $LOGIC PrintText "TCL: Resampling atlas image ..."
 
         if { $UseBRAINS } {
             $LOGIC PrintText "TCL: Resampling atlas image with BRAINSResample..."
