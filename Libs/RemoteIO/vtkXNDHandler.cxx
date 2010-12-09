@@ -180,7 +180,10 @@ void vtkXNDHandler::StageFileRead(const char * source,
     }
   this->CloseTransfer();
 
-  fclose(this->LocalFile);
+  if ( this->LocalFile )
+    {
+    fclose(this->LocalFile);
+    }
 }
 
 
@@ -511,7 +514,10 @@ int vtkXNDHandler::DeleteResource ( const char *uri, const char *temporaryRespon
       }
     }
   this->CloseTransfer();
-  fclose(this->LocalFile);
+  if ( this->LocalFile )
+    {
+    fclose(this->LocalFile);
+    }
   if (responseFile)
     {
     fclose(responseFile);
@@ -571,7 +577,10 @@ const char *vtkXNDHandler::QueryServer( const char *uri, const char *destination
       }
     }
   this->CloseTransfer();
-  fclose(this->LocalFile);
+  if ( this->LocalFile )
+    {
+    fclose(this->LocalFile);
+    }
   return ( returnString );
 }
 
