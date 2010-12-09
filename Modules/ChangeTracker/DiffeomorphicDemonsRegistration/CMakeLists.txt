@@ -20,12 +20,11 @@ set (CLP DemonsRegistration )
 set ( ${CLP}_SOURCE ${CLP}.cxx)
 generateclp(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
 
-add_library(${CLP}Lib SHARED ${${CLP}_SOURCE})
-set_target_properties (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
-target_link_libraries (${CLP}Lib ITKIO ITKStatistics)
-
-add_executable(${CLP} ${Slicer3_SOURCE_DIR}/Applications/CLI/Templates/CommandLineSharedLibraryWrapper.cxx)
-target_link_libraries (${CLP} ${CLP}Lib)
+#add_library(${CLP}Lib SHARED ${${CLP}_SOURCE})
+#set_target_properties (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
+add_executable(${CLP} ${${CLP}_SOURCE})
+target_link_libraries (${CLP} ITKIO ITKStatistics)
+install(TARGETS ${CLP_MODULE} RUNTIME DESTINATION bin COMPONENT Development)
 
 #the following line is an example of how to add a test to your project.
 #Testname is the title for this particular test.  ExecutableToRun is the
