@@ -374,15 +374,25 @@ void vtkEMSegmentInputChannelsStep::Validate()
    if (!failedTestNodes.empty())
      {
        std::stringstream errorMessage;
-       errorMessage <<  "EMSegmenter can currently only process non-negative input images. The following images have negative values:\n";
+       errorMessage <<  "The following images have negative values:\n";
        int size = failedTestNodes.size();
-       for (signed int i = 0 ; i < size; i++ ) errorMessage  << failedTestNodes[i] <<  " ";       
-       vtkKWMessageDialog::PopupMessage(this->GetApplication(),NULL,"Input Channel Error", errorMessage.str().c_str(),
-                       vtkKWMessageDialog::ErrorIcon | vtkKWMessageDialog::InvokeAtPointer);
-       wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
-       wizard_workflow->ProcessInputs();
-       return;
+       for (signed int i = 0 ; i < size; i++ ) errorMessage  << failedTestNodes[i] <<  " ";
+       errorMessage <<  "Negative values will be set to 0. Do you want to proceed?";
+
+       if (!vtkKWMessageDialog::PopupYesNo(
+                                           this->GetApplication(),
+                                           NULL,
+                                           "Intensity Image Error",
+                                           errorMessage.str().c_str(),
+                                           vtkKWMessageDialog::WarningIcon | vtkKWMessageDialog::InvokeAtPointer))
+         {
+           // don't change number of volumes; stay on this step
+           wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+           wizard_workflow->ProcessInputs();
+           return;
+         }
      } 
+
    //-----------------------------------------------
    // Check if names are defined for input channel
     for (int i=0;  i < this->GetNumberOfInputChannels(); i++)

@@ -318,20 +318,32 @@ void vtkEMSegmentIntensityImagesStep::Validate()
       if (!failedTestIDs.empty())
     {
       std::stringstream errorMessage;
-      errorMessage <<  "EMSegmenter can currently only process non-negative input images. The following images have negative values:\n";
+      errorMessage <<  "The following images have negative values:\n";
       int size = failedTestIDs.size();
       for (signed int i = 0 ; i < size; i++ ) errorMessage  << failedTestIDs[i] <<  " ";
-      
-      vtkKWMessageDialog::PopupMessage(this->GetApplication(),NULL,"Intensity Image Error", errorMessage.str().c_str(),
-                       vtkKWMessageDialog::ErrorIcon | vtkKWMessageDialog::InvokeAtPointer);
+      errorMessage <<  "Negative values will be set to 0. Do you want to proceed?";
+
+    if (vtkKWMessageDialog::PopupYesNo(
+          this->GetApplication(),
+          NULL,
+          "Intensity Image Error",
+          errorMessage.str().c_str(),
+          vtkKWMessageDialog::WarningIcon | vtkKWMessageDialog::InvokeAtPointer))
+      {
+      mrmlManager->ResetTargetSelectedVolumes(selectedIDs);
+      }
+    else
+      {
       // don't change number of volumes; stay on this step
       wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
       wizard_workflow->ProcessInputs();
+      }
     } 
       else
     {
       mrmlManager->ResetTargetSelectedVolumes(selectedIDs);
     }
+
       }
     }
   this->Superclass::Validate();

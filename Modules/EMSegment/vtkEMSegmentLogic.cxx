@@ -873,6 +873,19 @@ void vtkEMSegmentLogic::StartPreprocessingResampleAndCastToTarget(vtkMRMLVolumeN
       cast->Delete();
     }
 
+  double min = outputVolumeNode->GetImageData()->GetScalarRange()[0];
+  if (min < 0.0 )
+    {
+    vtkImageThreshold* thresh = vtkImageThreshold::New();
+    thresh->SetInput(outputVolumeNode->GetImageData());
+    thresh->ThresholdByLower(0.0);
+    thresh->SetInValue(0); // will it be ignored??
+    thresh->SetOutValue(0);
+    thresh->Update();
+    outputVolumeNode->GetImageData()->DeepCopy(thresh->GetOutput());
+    thresh->Delete();
+    }
+
   std::cout << "Resampling and casting output volume \"" << outputVolumeNode->GetName() << "\" to reference target \"" << fixedVolumeNode->GetName() <<  "\" DONE" << std::endl;
 }
 
