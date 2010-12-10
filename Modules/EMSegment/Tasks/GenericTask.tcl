@@ -1441,104 +1441,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 1
     }
 
-    # -------------------------------------
-    # Perform intensity correction
-    # if succesfull returns a list of intensity corrected subject volume nodes
-    # otherwise returns nothing
-    #     ./Slicer3 --launch N4ITKBiasFieldCorrection --inputimage ../Slicer3/Testing/Data/Input/MRMeningioma0.nrrd --maskimage /projects/birn/fedorov/Meningioma_anonymized/Cases/Case02/Case02_Scan1ICC.nrrd corrected_image.nrrd recovered_bias_field.nrrd
-    # -------------------------------------
-    proc PerformIntensityCorrection { subjectICCMaskNode } {
-        variable LOGIC
-        variable subjectNode
-        variable SCENE
-        $LOGIC PrintText "TCL: =========================================="
-        $LOGIC PrintText "TCL: == Intensity Correction "
-        $LOGIC PrintText "TCL: =========================================="
-        set n4Module ""
-        foreach gui [vtkCommandLineModuleGUI ListInstances] {
-            if { [$gui GetGUIName] == "N4ITK MRI Bias correction" } {
-                set n4Module $gui
-            }
-        }
-        # not in gui mode
-        if { $n4Module == "" } {
-            return [N4ITKBiasFieldCorrectionCLI $subjectNode $subjectICCMaskNode]
-        }
-
-        # in gui mode
-        $n4Module Enter
-
-        # create a new node and add information to this node
-        set n4Node [$::slicer3::MRMLScene CreateNodeByClass vtkMRMLCommandLineModuleNode]
-        $::slicer3::MRMLScene AddNode $n4Node
-        $n4Node SetModuleDescription "N4ITK MRI Bias correction"
-        $n4Module SetCommandLineModuleNode $n4Node
-        [$n4Module GetLogic] SetCommandLineModuleNode $n4Node
-        if { $subjectICCMaskNode != "" } {
-            $n4Node SetParameterAsString "maskImageName" [$subjectICCMaskNode GetID]
-        } else {
-            $n4Node SetParameterAsString "maskImageName" ""
-        }
-
-        # initialize
-        set result ""
-
-        # Run the algorithm on each subject image
-        for { set i 0 } {$i < [$subjectNode GetNumberOfVolumes] } { incr i } {
-            # Define input
-            set inputNode [$subjectNode GetNthVolumeNode $i]
-            if { $inputNode == "" } {
-                PrintError "PerformIntensityCorrection: the ${i}th subject node is not defined!"
-                foreach NODE $result { DeleteNode $NODE }
-                return ""
-            }
-
-            set inputVolume [$inputNode GetImageData]
-            if { $inputVolume == "" } {
-                PrintError "PerformIntensityCorrection: the ${i}th subject node has not input data defined!"
-                foreach NODE $result { DeleteNode $NODE }
-                return ""
-            }
-
-            # Define output
-            set outputVolume [vtkImageData New]
-            set outputNode [CreateVolumeNode $inputNode "[$inputNode GetName]_N4corrected"]
-            $outputNode SetAndObserveImageData $outputVolume
-            $outputVolume Delete
-
-            # Define parameters
-            $n4Node SetParameterAsString "inputImageName" [$inputNode GetID]
-            $n4Node SetParameterAsString "outputImageName" [$outputNode GetID]
-            # $n4Node SetParameterAsString "outputBiasFieldName" [$outputBiasVolume GetID]
-
-            # run algorithm
-            [$n4Module GetLogic] LazyEvaluateModuleTarget $n4Node
-            [$n4Module GetLogic] ApplyAndWait $n4Node
-
-            # Make sure that input and output are of the same type !
-            set outputVolume [$outputNode GetImageData]
-            if {[$inputVolume GetScalarType] != [$outputVolume GetScalarType] } {
-                set cast [vtkImageCast New]
-                $cast SetInput $outputVolume
-                $cast SetOutputScalarType [$inputVolume GetScalarType]
-                $cast Update
-                $outputVolume DeepCopy [$cast GetOutput]
-                $cast Delete
-            }
-
-            # still in for loop, create a list of outputNodes
-            set result "${result}$outputNode "
-        }
-
-        # delete command line node from mrml scene
-        $::slicer3::MRMLScene RemoveNode $n4Node
-
-        DeleteCommandLine $n4Node
-        $n4Module Exit
-
-        return "$result"
-    }
-
     proc RemoveNegativeValues { targetNode } {
         variable LOGIC
         variable SCENE
@@ -1601,7 +1503,21 @@ namespace eval EMSegmenterPreProcessingTcl {
         return "$result"
     }
 
+    # -------------------------------------
+    # Perform intensity correction
+    # if succesfull returns a list of intensity corrected subject volume nodes
+    # otherwise returns nothing
+    #     ./Slicer3 --launch N4ITKBiasFieldCorrection --inputimage ../Slicer3/Testing/Data/Input/MRMeningioma0.nrrd --maskimage /projects/birn/fedorov/Meningioma_anonymized/Cases/Case02/Case02_Scan1ICC.nrrd corrected_image.nrrd recovered_bias_field.nrrd
+    # -------------------------------------
+    proc PerformIntensityCorrection { subjectICCMaskNode } {
+        variable LOGIC
+        variable subjectNode
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == Intensity Correction "
+        $LOGIC PrintText "TCL: =========================================="
 
+        return [N4ITKBiasFieldCorrectionCLI $subjectNode $subjectICCMaskNode]
+    }
 
     proc N4ITKBiasFieldCorrectionCLI { subjectNode subjectICCMaskNode } {
         variable SCENE
@@ -1622,7 +1538,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set inputVolumeNode [$subjectNode GetNthVolumeNode $i]
             set inputVolumeData [$inputVolumeNode GetImageData]
             if { $inputVolumeData == "" } {
-                PrintError "PerformIntensityCorrection: the ${i}th subject node has not input data defined!"
+                PrintError "N4ITKBiasFieldCorrectionCLI: the ${i}th subject node has not input data defined!"
                 foreach VolumeNode $correctedSubjectVolumeNodeList {
                     DeleteNode $VolumeNode
                 }
