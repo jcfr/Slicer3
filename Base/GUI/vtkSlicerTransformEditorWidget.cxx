@@ -278,6 +278,10 @@ void vtkSlicerTransformEditorWidget::ProcessMRMLEvents(vtkObject *caller,
     {
     this->UpdateTranslationSliders();
     }
+  else 
+    {
+    this->UpdateMatrix();
+    }
 }
 
 //---------------------------------------------------------------------------
