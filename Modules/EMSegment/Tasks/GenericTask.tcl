@@ -1584,8 +1584,8 @@ namespace eval EMSegmenterPreProcessingTcl {
             $thresh SetInValue 0
 
             # keep positive values
-            $thresh SetReplaceOut 0
             $thresh SetOutValue 0
+            $thresh SetReplaceOut 0
 
             $thresh Update
             set outputVolume [$outputNode GetImageData]
