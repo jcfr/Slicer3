@@ -128,6 +128,28 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
+    # update targetNode with new volumes - and delete the old ones
+    proc UpdateNode { targetNode newTargetVolumeNodeList } {
+        variable LOGIC
+
+        # Update Aligned Target Nodes
+        set inputNum [$targetNode GetNumberOfVolumes]
+        $LOGIC PrintText "TCL: $inputNum targetNodes detected"
+        $LOGIC PrintText "TCL: replace by $newTargetVolumeNodeList"
+        for { set i 0 } {$i < $inputNum } { incr i } {
+            set newVolNode [lindex $newTargetVolumeNodeList $i]
+            if {$newVolNode == "" } {
+                PrintError "Run: Processed target node is incomplete !"
+                return 1
+            }
+            set oldTargetNode [$targetNode GetNthVolumeNode $i]
+            # Set up the new ones
+            $targetNode SetNthVolumeNodeID $i [$newVolNode GetID]
+            # Remove old volumes associated with targetNode - if you delete right away then targetNode is decrease
+            DeleteNode $oldTargetNode
+        }
+        return 0
+    }
 
     # ----------------------------------------------------------------------------
     # We have to create this function so that we can run it in command line mode
@@ -529,6 +551,17 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "InitPreProcessing: InputTarget not defined"
             return 1
         }
+
+        set subjectPositiveNodeList [RemoveNegativeValues $inputTarget]
+        if { $subjectPositiveNodeList == "" } {
+            PrintError "Run: RemoveNegativeValues failed !"
+            return 1
+        }
+        if { [UpdateNode $inputTarget "$subjectPositiveNodeList"] } {
+            PrintError "UpdateNode failed !"
+            return 1
+        }
+
 
         if {[RegisterInputImages $inputTarget 0] } {
             PrintError "InitPreProcessing: Target-to-Target failed!"
@@ -1505,6 +1538,69 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         return "$result"
     }
+
+    proc RemoveNegativeValues { targetNode } {
+        variable LOGIC
+        variable SCENE
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == Remove Negative Values "
+        $LOGIC PrintText "TCL: =========================================="
+
+        # initialize
+        set result ""
+
+        # Run the algorithm on each subject image
+        for { set i 0 } {$i < [$targetNode GetNumberOfVolumes] } { incr i } {
+            # Define input
+            set inputNode [$targetNode GetNthVolumeNode $i]
+            if { $inputNode == "" } {
+                PrintError "RemoveNegativeValues: the ${i}th target node is not defined!"
+                foreach NODE $result { DeleteNode $NODE }
+                return ""
+            }
+
+            set inputVolume [$inputNode GetImageData]
+            if { $inputVolume == "" } {
+                PrintError "RemoveNegativeValues: the ${i}th target node has no input data defined!"
+                foreach NODE $result { DeleteNode $NODE }
+                return ""
+            }
+
+            $LOGIC PrintText "TCL: Start thresholding target image - start"
+
+            # Define output
+            set outputNode [CreateVolumeNode $inputNode "[$inputNode GetName]_positive"]
+            set outputVolume [vtkImageData New]
+            $outputNode SetAndObserveImageData $outputVolume
+            $outputVolume Delete
+
+            # Thresholding
+            set thresh [vtkImageThreshold New]
+            $thresh SetInput $inputVolume
+
+            # replace negative values
+            $thresh ThresholdByLower 0
+            $thresh SetReplaceIn 1
+            $thresh SetInValue 0
+
+            # keep positive values
+            $thresh SetReplaceOut 0
+            $thresh SetOutValue 0
+
+            $thresh Update
+            set outputVolume [$outputNode GetImageData]
+            $outputVolume DeepCopy [$thresh GetOutput]
+            $thresh Delete
+            
+            $LOGIC PrintText "TCL: Start thresholding target image - stop"
+
+            # still in for loop, create a list of outputNodes
+            set result "${result}$outputNode "
+        }
+        $LOGIC PrintText "TCL: $result"
+        return "$result"
+    }
+
 
 
     proc N4ITKBiasFieldCorrectionCLI { subjectNode subjectICCMaskNode } {

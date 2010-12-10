@@ -1079,8 +1079,7 @@ int main(int argc, char** argv)
          }
        if (cNode->GetImageData()->GetScalarRange()[0] < 0 )
          {
-           cout << "Input Channel Error: Volume of " << i + 1 << "th is negative - we can only process non-negative volumes !" << endl;
-           return EXIT_FAILURE; 
+           cout << "WARNING: Input Channel warning: Volume " << i + 1 << " contains negative values - negative values will be set to 0 !" << endl;
          }
 
      }
