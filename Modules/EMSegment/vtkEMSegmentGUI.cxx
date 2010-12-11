@@ -33,6 +33,8 @@
 #include "vtkKWIcon.h"
 #include "vtkKWLabel.h"
 
+#include "Resources/UPenn_small.h"
+
 #include <vtksys/stl/string>
 #include <vtksys/SystemTools.hxx>
 
@@ -76,15 +78,17 @@ vtkEMSegmentGUI::vtkEMSegmentGUI()
   this->RegistrationParametersStep = NULL;
   this->RunSegmentationStep        = NULL;
 
-  //vtkKWIcon* logo = vtkKWIcon::New();
-  //logo->SetImage(image_CSAILLogo,
-  //                image_CSAILLogo_width, image_CSAILLogo_height,
-  //                image_CSAILLogo_pixel_size, image_CSAILLogo_length,
-  //                0);
-  // this->Logo = logo;
-  // logo->Delete();
+  vtkKWIcon* logo = vtkKWIcon::New();
+  logo->SetImage(image_UPenn_small,
+                 image_UPenn_small_width, image_UPenn_small_height,
+                 image_UPenn_small_pixel_size, image_UPenn_small_length,
+                 0);
+  this->Logo = logo;
+  logo->Delete();
 
   this->NACLabel = NULL;
+  this->UPennLabel = NULL;
+
   this->StartSegmentStep= NULL;
   this->SegmentationMode = SegmentationModeAdvanced;
 }
@@ -169,6 +173,11 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
     {
       this->NACLabel->Delete();
       this->NACLabel = NULL;
+    }
+  if (this->UPennLabel)
+    {
+      this->UPennLabel->Delete();
+      this->UPennLabel = NULL;
     }
 }
 
@@ -370,6 +379,12 @@ void vtkEMSegmentGUI::BuildGUI()
   this->NACLabel->Create();
   this->NACLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetNACLogo() );
   app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky w", this->NACLabel->GetWidgetName());
+
+  this->UPennLabel = vtkKWLabel::New();
+  this->UPennLabel->SetParent ( this->GetLogoFrame() );
+  this->UPennLabel->Create();
+  this->UPennLabel->SetImageToIcon ( this->Logo );
+  app->Script ( "grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w", this->UPennLabel->GetWidgetName());
 
 
   // -----------------------------------------------------------------------

@@ -182,6 +182,7 @@ private:
    /// 
   /// Acknowledgement icons
   vtkKWLabel *NACLabel;
+  vtkKWLabel *UPennLabel;
 
 
   // Description:
