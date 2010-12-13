@@ -54,10 +54,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Always has to be done initially so that variables are correctly defined
         if { [InitVariables] } {
-            puts stderr "ERROR: MRI-HumanBrain: ShowUserInterface: Not all variables are correctly defined!"
+            puts stderr "ERROR: MRI-Human Brain Parcellation: ShowUserInterface: Not all variables are correctly defined!"
             return 1
         }
-        $LOGIC PrintText  "TCLMRI: Preprocessing MRI Human Brain - ShowUserInterface"
+        $LOGIC PrintText  "TCLMRI: Preprocessing MRI Human Brain Parcellation - ShowUserInterface"
 
         $preGUI DefineTextLabel "This task only applies to skull stripped scans! \n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton "- register the atlas to the input scan ?" 0 $atlasAlignedFlagID
