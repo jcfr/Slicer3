@@ -611,26 +611,42 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: =========================================="
 
         set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
-        set CMD "${PLUGINS_DIR}/BRAINSResample "
+        set CMD "${PLUGINS_DIR}/BRAINSResample"
 
-        set tmpFileName [WriteImageDataToTemporaryDir  $inputVolumeNode ]
-        if { $tmpFileName == "" } { return 1 }
-        set RemoveFiles "$tmpFileName"
-        set CMD "$CMD --inputVolume $tmpFileName"
+        set tmpInputVolumeFileName [WriteImageDataToTemporaryDir  $inputVolumeNode ]
+        if { $tmpInputVolumeFileName == "" } { return 1 }
+        set RemoveFiles "$tmpInputVolumeFileName"
+        set CMD "$CMD --inputVolume $tmpInputVolumeFileName"
 
-        set tmpFileName [WriteImageDataToTemporaryDir  $referenceVolumeNode ]
-        if { $tmpFileName == "" } { return 1 }
-        set RemoveFiles "$RemoveFiles $tmpFileName"
-        set CMD "$CMD --referenceVolume $tmpFileName"
+        set tmpReferenceVolumeFileName [WriteImageDataToTemporaryDir  $referenceVolumeNode ]
+        if { $tmpReferenceVolumeFileName == "" } { return 1 }
+        set RemoveFiles "$RemoveFiles $tmpReferenceVolumeFileName"
+        set CMD "$CMD --referenceVolume $tmpReferenceVolumeFileName"
 
         if { $transformationNode == "" } {
             PrintError "BRAINSResampleCLI: transformation node not correctly defined"
             return 1
         }
-        set tmpFileName [WriteDataToTemporaryDir $transformationNode Transform]
-        if { $tmpFileName == "" } { return 1 }
-        set RemoveFiles "$RemoveFiles $tmpFileName"
-        set CMD "$CMD --warpTransform $tmpFileName"
+        set tmpTransformFileName [WriteDataToTemporaryDir $transformationNode Transform]
+        if { $tmpTransformFileName == "" } { return 1 }
+        set RemoveFiles "$RemoveFiles $tmpTransformFileName"
+
+        if { $deformationFieldFilename == "" } {      
+            # use a BSpline transformation
+            set CMD "$CMD --warpTransform $tmpTransformFileName"
+        }
+        else {
+            # use a deformation field
+            set CMDdeform "${PLUGINS_DIR}/BSplineToDeformationField"
+            set CMDdeform "$CMDdeform --refImage $tmpReferenceVolumeFileName" 
+            set CMDdeform "$CMDdeform --tfm $tmpTransformFileName"
+            set CMDdeform "$CMDdeform --defImage $deformationFieldFilename"
+            $LOGIC PrintText "TCL: Executing $CMDdeform"
+            catch { eval exec $CMDdeform } errmsg
+            $LOGIC PrintText "TCL: $errmsg"
+
+            set CMD "$CMD --deformationVolume $deformationFieldFilename"
+        }
 
         if { $outVolumeNode == "" } {
             PrintError "BRAINSResampleCLI: output volume node not correctly defined"
