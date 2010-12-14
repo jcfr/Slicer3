@@ -74,6 +74,10 @@
 #define _bg 0.945
 #define _bb 0.975
 
+#define _tr 0.645
+#define _tg 0.645
+#define _tb 0.675
+
 #define _fr 0.75
 #define _fg 0.75
 #define _fb 0.75
@@ -2463,7 +2467,9 @@ void vtkFetchMIGUI::BuildGUI ( )
   this->Notebook->Create();
   this->Notebook->UseFrameWithScrollbarsOn();
   this->Notebook->SetPageTabColor ( _br, _bg, _bb);
+  this->Notebook->SetPageTabTextColor ( _tr, _tg, _tb);
   this->Notebook->SetSelectedPageTabColor (1.0, 1.0, 1.0 );
+  this->Notebook->SetSelectedPageTabTextColor (0.0, 0.0, 0.0 );
 
   this->Notebook->AddPage ( "Search", "Query the server for resources that match selected metadata." );
   this->Notebook->AddPage ( "Download", "Browse resources and select a scene for download." );
