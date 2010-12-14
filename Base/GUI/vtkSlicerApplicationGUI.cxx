@@ -2942,6 +2942,28 @@ void vtkSlicerApplicationGUI::OnViewNodeAdded(vtkMRMLViewNode *view_node)
     view_node->SetActive(1);
     }
   this->UpdateMain3DViewers();
+
+  if (this->GUILayoutNode) 
+  {
+    int target = this->GUILayoutNode->GetViewArrangement();
+    char *whichSlice = NULL;
+    switch (target)
+    {
+      case vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView:
+        whichSlice = "Red";
+      break;
+      case vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView:
+        whichSlice = "Yellow";
+        break;
+      case vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView:
+        whichSlice = "Green";
+        break;
+      case vtkMRMLLayoutNode::SlicerLayoutOneUpSliceView:
+        whichSlice =  "Red";
+        break;
+    }
+    this->RepackMainViewer (target, whichSlice );
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -2997,21 +3019,6 @@ void vtkSlicerApplicationGUI::UpdateActiveViewerWidgetDependencies(
       active_viewer->GetViewNode()->GetName());
     }
 
-  vtkMRMLLayoutNode *layout = this->GetGUILayoutNode();
-  if (layout && this->Built)
-    {
-    // Since neither UpdateLayout or RepackMainViewer can be called
-    // correctly on their own...
-    int old_ar = layout->GetViewArrangement();
-    layout->SetViewArrangement(vtkMRMLLayoutNode::SlicerLayoutNone);
-    this->UpdateLayout();
-    layout->SetViewArrangement(
-      old_ar != vtkMRMLLayoutNode::SlicerLayoutNone
-      ? old_ar : vtkMRMLLayoutNode::SlicerLayoutInitialView);
-    // WHY THE HELL isn't *this* SetViewArrangement not triggering
-    // ProcessMRMLEvents!!! Forcing with UpdateLayout()!!
-    this->UpdateLayout();
-    }
 }
 
 //---------------------------------------------------------------------------
