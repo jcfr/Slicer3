@@ -4,6 +4,8 @@
 #include "vtkObject.h"
 #include "vtkMRML.h"
 #include "vtkPermissionPrompter.h"
+#include <vtksys/SystemTools.hxx>
+#include <vtksys/Directory.hxx>
 
 class VTK_MRML_EXPORT vtkURIHandler : public vtkObject 
 {
@@ -72,10 +74,17 @@ class VTK_MRML_EXPORT vtkURIHandler : public vtkObject
   vtkSetMacro ( RequiresPermission, int );
   vtkGetObjectMacro ( PermissionPrompter, vtkPermissionPrompter );
   vtkSetObjectMacro ( PermissionPrompter, vtkPermissionPrompter );
+  vtkGetStringMacro (FileBucket);
+  vtkSetStringMacro (FileBucket);
   vtkGetStringMacro ( Prefix );
   vtkSetStringMacro ( Prefix );
   vtkGetStringMacro ( Name );
   vtkSetStringMacro ( Name );
+  vtkGetStringMacro ( RemoteCacheDirectory );
+  vtkSetStringMacro ( RemoteCacheDirectory );
+
+  void CreateFileBucket();
+  void DeleteFileBucket();
 
  private:
 
@@ -106,6 +115,13 @@ class VTK_MRML_EXPORT vtkURIHandler : public vtkObject
   char *Prefix;
   char *Name;
   char *HostName;
+  char *RemoteCacheDirectory;
+
+  ///
+  /// This is the file into which downloads trickle
+  /// and once download succeeds, file is moved
+  /// to actual target path and filename.
+  char *FileBucket;
 
 };
 

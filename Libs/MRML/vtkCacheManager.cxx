@@ -165,6 +165,21 @@ void vtkCacheManager::SetRemoteCacheDirectory (const char *dir )
     vtkWarningMacro ( "Setting RemoteCacheDirectory to be a null string." );      
     this->RemoteCacheDirectory = "";
     }
+  
+    // update the cache dir on all uri handlers.
+    if ( this->MRMLScene && this->MRMLScene->GetURIHandlerCollection() )
+      {
+      int n = this->MRMLScene->GetURIHandlerCollection()->GetNumberOfItems();
+      for ( int i=0; i < n; i ++ )
+        {
+        vtkURIHandler *handler = vtkURIHandler::SafeDownCast(this->MRMLScene->GetURIHandlerCollection()->GetItemAsObject ( i ));
+        if ( handler )
+          {
+          handler->SetRemoteCacheDirectory ( this->GetRemoteCacheDirectory() );
+          }
+        }
+      }
+
   this->InvokeEvent ( vtkCacheManager::SettingsUpdateEvent );
 }
 

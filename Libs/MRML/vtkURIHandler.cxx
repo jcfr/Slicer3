@@ -10,9 +10,11 @@ vtkURIHandler::vtkURIHandler()
   this->LocalFile = NULL;
   this->RequiresPermission = 0;
   this->PermissionPrompter = NULL;
+  this->FileBucket = NULL;
   this->Prefix = NULL;
   this->Name = NULL;
   this->HostName = NULL;
+  this->RemoteCacheDirectory = NULL;
 }
 
 
@@ -25,6 +27,10 @@ vtkURIHandler::~vtkURIHandler()
     this->PermissionPrompter->Delete();
     this->PermissionPrompter = NULL;
     }
+  if ( this->FileBucket != NULL)
+    {
+    this->SetFileBucket ( NULL );
+    }
   if ( this->Prefix != NULL )
     {
     this->SetPrefix ( NULL );
@@ -36,6 +42,10 @@ vtkURIHandler::~vtkURIHandler()
   if ( this->HostName != NULL )
     {
     this->SetHostName (NULL );
+    }
+  if ( this->RemoteCacheDirectory != NULL )
+    {
+    this->SetRemoteCacheDirectory ( NULL );
     }
 }
 
@@ -52,6 +62,60 @@ void vtkURIHandler::SetLocalFile (FILE *localFile )
 {
   this->LocalFile = localFile;
 }
+
+
+//----------------------------------------------------------------------------
+void vtkURIHandler::CreateFileBucket ()
+{
+
+  //--- do some checking to see if directory is set and valid.
+  if ( this->GetRemoteCacheDirectory() == NULL )
+    {
+    vtkWarningMacro ("No path to cache found! Creating files in current dir");
+    this->SetFileBucket("SlicerTemporaryDownloadBuffer");
+    }
+  if ( !vtksys::SystemTools::FileIsDirectory ( this->GetRemoteCacheDirectory() ))
+    {
+    vtkWarningMacro ("No valid path to cache found! Creating files in current dir");
+    this->SetFileBucket("SlicerTemporaryDownloadBuffer");
+    }
+    
+    //--- for now, create temporary query response file in cache dir.
+    std::vector<std::string> pathComponents;
+    vtksys::SystemTools::SplitPath( this->GetRemoteCacheDirectory(), pathComponents);
+    // now add the new file name to the end of the path
+    pathComponents.push_back("SlicerTemporaryDownloadBuffer");
+
+  //-- create or update temporary staging area for downloads.
+    std::string bucket = vtksys::SystemTools::JoinPath(pathComponents);
+    this->SetFileBucket (bucket.c_str() );
+
+    vtkDebugMacro ( "FileBucket = " << this->GetFileBucket() );
+}
+    
+
+//----------------------------------------------------------------------------
+void vtkURIHandler::DeleteFileBucket()
+{
+  if ( this->FileBucket == NULL )
+    {
+    return;
+    }
+
+  // Be tidy. delete the file.
+  if ( vtksys::SystemTools::FileExists ( this->GetFileBucket() ) )
+    {
+    bool clean = vtksys::SystemTools::RemoveFile ( this->GetFileBucket() );
+    if (!clean )
+      {
+      vtkWarningMacro ( "Unable to clean up temporary download file " << this->GetFileBucket() );
+      }
+    }
+
+  // set the temporary staging area to null
+  this->SetFileBucket ( NULL );
+}
+
 
 
 //----------------------------------------------------------------------------

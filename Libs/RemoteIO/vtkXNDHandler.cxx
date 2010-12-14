@@ -1,5 +1,5 @@
 #include "itksys/Process.h"
-#include "itksys/SystemTools.hxx"
+#include "vtkDirectory.h"
 #include "vtkXNDHandler.h"
 #include <string>
 #include <iostream>
@@ -146,26 +146,70 @@ void vtkXNDHandler::StageFileRead(const char * source,
   const char *hostname = this->GetHostName();
   if ( hostname == NULL )
     {
-    vtkErrorMacro("StageFileWrite: null host name");
+    vtkErrorMacro("StageFileRead: null host name");
     return;    
     }
 
+
+  //---
+  //--- make sure destination directory is present
+  //---
+  std::string destination_dir = vtksys::SystemTools::GetFilenamePath ( destination );
+  if (!( vtksys::SystemTools::FileExists (destination_dir.c_str() ) &&
+         vtksys::SystemTools::FileIsDirectory (destination_dir.c_str() )))
+    {
+    //--- destination should be cache dir -- looks like it doesn't exist.
+    vtkDebugMacro ( "Creating destination directory for download." );
+    vtksys::SystemTools::MakeDirectory (destination_dir.c_str() );
+    }
+
+  //---
+  //--- if it's open already, close it up.
+  //---
+  if ( this->LocalFile )
+    {
+    fclose ( this->LocalFile );
+    this->LocalFile = NULL;
+    }
+
+  //---
+  //--- init and configure transfer
+  //---
   this->InitTransfer( );
+  if ( this->CurlHandle == NULL )
+    {
+    vtkErrorMacro ( "Got NULL curl handle." );
+    return;
+    }
 
   curl_easy_setopt(this->CurlHandle, CURLOPT_HTTPGET, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_URL, source);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_NOPROGRESS, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
-  this->LocalFile = fopen(destination, "wb");
-  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, this->LocalFile);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 5);
+  
+  //---
+  //--- write into temporary buffer before copying to destination file.
+  //--- once download is successful, move it to destination.
+  //---
+  int useBucket = 1;
+  if ( useBucket )
+    {
+    this->CreateFileBucket();
+    this->LocalFile = fopen (this->FileBucket, "wb");
+    }
+  if ( this->LocalFile == NULL )
+    {
+    vtkWarningMacro ( "Unable to open temporary download buffer. Writing directly to destination file.");
+    useBucket = 0;
+    this->LocalFile = fopen(destination, "wb");
+    }
+  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, this->LocalFile);    
+
   vtkDebugMacro("StageFileRead: about to do the curl download... source = " << source << ", dest = " << destination);
   CURLcode retval = curl_easy_perform(this->CurlHandle);
-
-  if (retval == CURLE_OK)
-    {
-    vtkDebugMacro("StageFileRead: successful return from curl");
-    }
-  else if (retval == CURLE_BAD_FUNCTION_ARGUMENT)
+  if (retval == CURLE_BAD_FUNCTION_ARGUMENT)
     {
     vtkErrorMacro("StageFileRead: bad function argument to curl, did you init CurlHandle?");
     }
@@ -173,18 +217,43 @@ void vtkXNDHandler::StageFileRead(const char * source,
     {
     vtkErrorMacro("StageFileRead: curl ran out of memory!");
     }
-  else
+  else if ( retval != CURLE_OK)
     {
     const char *stringError = curl_easy_strerror(retval);
     vtkErrorMacro("StageFileRead: error running curl: " << stringError);
     }
+
+  // close transfer and clean up.
   this->CloseTransfer();
 
-  if ( this->LocalFile )
+  if (this->LocalFile )
     {
     fclose(this->LocalFile);
+    this->LocalFile = NULL;
     }
-}
+
+  if (retval == CURLE_OK)
+    {
+    vtkDebugMacro("StageFileRead: successful return from curl.");
+    if ( useBucket )
+      {
+      //--- if the bucket exists and is not zero-length,
+      //--- move downloaded data from bucket to actual
+      //--- destination and clean up.
+      if ( (vtksys::SystemTools::FileExists ( this->GetFileBucket()) ) &&
+           (vtksys::SystemTools::FileLength ( this->GetFileBucket()) != 0 ) )
+        {
+        vtkDirectory::Rename (this->GetFileBucket(), destination );
+//        vtksys::SystemTools::CopyFileIfDifferent ( this->GetFileBucket(), destination, true );
+        }
+      }
+    }
+
+  if ( useBucket)
+    {    
+    this->DeleteFileBucket();
+    }
+ }
 
 
 //--- for uploading
@@ -207,6 +276,11 @@ void vtkXNDHandler::StageFileWrite(const char *source,
     }
 
   // Open file
+  if ( this->LocalFile != NULL )
+    {
+    fclose ( this->LocalFile );
+    this->LocalFile = NULL;
+    }
   this->LocalFile = fopen(source, "rb");
   if (this->LocalFile == NULL)
     {
@@ -221,8 +295,14 @@ void vtkXNDHandler::StageFileWrite(const char *source,
 
   unsigned char *post_data = NULL;
   this->InitTransfer( );
+  if ( this->CurlHandle == NULL )
+    {
+    vtkErrorMacro ( "Got NULL curl handle." );
+    return;
+    }
 
   curl_easy_setopt(this->CurlHandle, CURLOPT_PUT, 1);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_NOPROGRESS, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_URL, destination);
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_READFUNCTION, xnd_read_callback);
@@ -242,9 +322,16 @@ void vtkXNDHandler::StageFileWrite(const char *source,
     }
    
    this->CloseTransfer();
+
   if (post_data)
     {
     free(post_data);
+    }
+
+  if ( this->LocalFile )
+    {
+    fclose ( this->LocalFile );
+    this->LocalFile = NULL;
     }
 }
 
@@ -290,6 +377,12 @@ int vtkXNDHandler::PostTag ( const char *svr, const char *label,
   const char *pf = tmp2.c_str();
 
   this->InitTransfer();
+  if ( this->CurlHandle == NULL )
+    {
+    vtkErrorMacro ( "Got NULL curl handle." );
+    return 0;
+    }
+
   
   //-- configure the curl handle
   curl_easy_setopt(this->CurlHandle, CURLOPT_POST, 1);
@@ -384,6 +477,12 @@ int vtkXNDHandler::PostMetadata( const char *serverPath,
   
 
   this->InitTransfer();
+  if ( this->CurlHandle == NULL )
+    {
+    vtkErrorMacro ( "Got NULL curl handle." );
+    return 0;
+    }
+
 
   //-- add header
   std::string dataFileNameString = std::string(dataFileName);
@@ -466,14 +565,22 @@ int vtkXNDHandler::DeleteResource ( const char *uri, const char *temporaryRespon
     }
 
   this->InitTransfer( );
+  if ( this->CurlHandle == NULL )
+    {
+    vtkErrorMacro ( "Got NULL curl handle." );
+    return 0;
+    }
+
 
   //--- not sure what config options we need...
+  curl_easy_setopt(this->CurlHandle, CURLOPT_HTTPGET, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
   curl_easy_setopt(this->CurlHandle, CURLOPT_URL, uri);
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_NOPROGRESS, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_VERBOSE, true);
 
-  // then need to set up a local file for capturing any return xml
+
   const char *responseFileName = temporaryResponseFileName;
   FILE *responseFile = fopen(responseFileName, "wb");
   if (responseFile == NULL)
@@ -486,6 +593,7 @@ int vtkXNDHandler::DeleteResource ( const char *uri, const char *temporaryRespon
     curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
     curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, responseFile);
     }
+
   
   CURLcode retval = curl_easy_perform(this->CurlHandle);
 
@@ -513,16 +621,14 @@ int vtkXNDHandler::DeleteResource ( const char *uri, const char *temporaryRespon
       vtkErrorMacro("vtkXNDHandler::DeleteResource error running curl: " << returnString);
       }
     }
+
   this->CloseTransfer();
-  if ( this->LocalFile )
-    {
-    fclose(this->LocalFile);
-    }
+
   if (responseFile)
     {
     fclose(responseFile);
     }
-
+  
   //--- if result = 1, delete response went fine. Otherwise, problem with delete.
   return ( result );
 }
@@ -542,6 +648,12 @@ const char *vtkXNDHandler::QueryServer( const char *uri, const char *destination
     }
 
   this->InitTransfer( );
+  if ( this->CurlHandle == NULL )
+    {
+    vtkErrorMacro ( "Got NULL curl handle." );
+    return ("Could not init transfer." );
+    }
+
 
   //--- not sure what config options we need...
 
@@ -577,7 +689,7 @@ const char *vtkXNDHandler::QueryServer( const char *uri, const char *destination
       }
     }
   this->CloseTransfer();
-  if ( this->LocalFile )
+  if (this->LocalFile)
     {
     fclose(this->LocalFile);
     }
@@ -612,6 +724,12 @@ const char *vtkXNDHandler::CheckServerStatus ( const char *uri )
     }
 
   this->InitTransfer( );
+  if ( this->CurlHandle == NULL )
+    {
+    vtkErrorMacro ( "Got NULL curl handle." );
+    return ("Could not initialize check on server status.");
+    }
+
 
   //--- not sure what config options we need...
 
