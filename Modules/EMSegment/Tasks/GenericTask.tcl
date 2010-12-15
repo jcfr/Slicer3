@@ -404,7 +404,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                     set outputNodeID [$outputNode GetID]
                     $outputNode Delete
 
-                    if { [BRAINSResampleCLI $movingVolumeNode $fixedVolumeNode [$SCENE GetNodeByID $outputNodeID] $transformNode $backgroundLevel Linear] } {
+                    if { [Resample $movingVolumeNode $fixedVolumeNode $transformNode "NotUsedForBSpline" "BSplineTransform" Linear  $backgroundLevel [$SCENE GetNodeByID $outputNodeID]] } {
                         return 1
                     }
                     ## $SCENE RemoveNode $transformNode
@@ -599,10 +599,60 @@ namespace eval EMSegmenterPreProcessingTcl {
     }
 
 
+
+    proc calcDFVolumeNode { inputVolumeNode referenceVolumeNode transformationNode }   {
+        variable LOGIC
+
+        $LOGIC PrintText "TCL: Create deformation field"
+
+        # create a deformation field
+
+        if { $transformationNode == "" } {
+            PrintError "BRAINSResampleCLI: transformation node not correctly defined"
+            return 1
+        }
+        set tmpTransformFileName [WriteDataToTemporaryDir $transformationNode Transform]
+        if { $tmpTransformFileName == "" } { return 1 }
+
+        set tmpInputVolumeFileName [WriteImageDataToTemporaryDir $inputVolumeNode ]
+        if { $tmpInputVolumeFileName == "" } { return 1 }
+
+        set tmpReferenceVolumeFileName [WriteImageDataToTemporaryDir  $referenceVolumeNode ]
+        if { $tmpReferenceVolumeFileName == "" } { return 1 }
+
+        set DFNode [CreateVolumeNode $referenceVolumeNode "deformVolume"]
+        set outputVolume [vtkImageData New]
+
+        $DFNode SetAndObserveImageData $outputVolume
+        $outputVolume Delete
+
+        set deformationFieldFilename [ CreateTemporaryFileName $DFNode ]
+
+        set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+        set CMDdeform "${PLUGINS_DIR}/BSplineToDeformationField"
+        set CMDdeform "$CMDdeform --refImage $tmpReferenceVolumeFileName" 
+        set CMDdeform "$CMDdeform --tfm $tmpTransformFileName"
+        set CMDdeform "$CMDdeform --defImage $deformationFieldFilename"
+
+        $LOGIC PrintText "TCL: Executing $CMDdeform"
+        catch { eval exec $CMDdeform } errmsg
+        $LOGIC PrintText "TCL: $errmsg"
+
+        # store for later use, TODO: unable to read vector:
+        # ERROR: In /projects/sandbox/Slicer3/trunk/Slicer3/Libs/vtkITK/vtkITKArchetypeImageSeriesScalarReader.cxx, line 169
+        # vtkITKArchetypeImageSeriesScalarReader (0x8dbf5c0): UpdateFromFile: Unsupported number of components (only 1 allowed): 3
+        ###        ReadDataFromDisk $DFNode $deformationFieldFilename Volume
+
+        $LOGIC PrintText "TCL: Create deformation field...END"
+        ###        return $DFNode
+        return $deformationFieldFilename
+    }
+
+
     # returns transformation when no error occurs
     # now call commandline directly
 
-    proc BRAINSResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformationNode backgroundLevel interpolationType } {
+    proc BRAINSResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformationNode backgroundLevel interpolationType BRAINSBSpline} {
         variable SCENE
         variable LOGIC
 
@@ -627,25 +677,22 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "BRAINSResampleCLI: transformation node not correctly defined"
             return 1
         }
-        set tmpTransformFileName [WriteDataToTemporaryDir $transformationNode Transform]
-        if { $tmpTransformFileName == "" } { return 1 }
-        set RemoveFiles "$RemoveFiles $tmpTransformFileName"
 
-        if { $deformationFieldFilename == "" } {      
+        if { $BRAINSBSpline } {
             # use a BSpline transformation
+            set tmpTransformFileName [WriteDataToTemporaryDir $transformationNode Transform]
+            if { $tmpTransformFileName == "" } { return 1 }
+            set RemoveFiles "$RemoveFiles $tmpTransformFileName"
             set CMD "$CMD --warpTransform $tmpTransformFileName"
-        }
-        else {
-            # use a deformation field
-            set CMDdeform "${PLUGINS_DIR}/BSplineToDeformationField"
-            set CMDdeform "$CMDdeform --refImage $tmpReferenceVolumeFileName" 
-            set CMDdeform "$CMDdeform --tfm $tmpTransformFileName"
-            set CMDdeform "$CMDdeform --defImage $deformationFieldFilename"
-            $LOGIC PrintText "TCL: Executing $CMDdeform"
-            catch { eval exec $CMDdeform } errmsg
-            $LOGIC PrintText "TCL: $errmsg"
+        } else {
+            #            set DFVolumeFileName [WriteImageDataToTemporaryDir $transformationNode]
+            #            if { $DFVolumeFileName == "" } { return 1 }
+            #            set RemoveFiles "$RemoveFiles $DFVolumeFileName"
+            #            set CMD "$CMD --deformationVolume $DFVolumeFileName"
 
-            set CMD "$CMD --deformationVolume $deformationFieldFilename"
+            # it is a filename
+            set CMD "$CMD --deformationVolume $transformationNode"
+
         }
 
         if { $outVolumeNode == "" } {
@@ -962,7 +1009,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 1
     }
 
-    proc BRAINSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel RegistrationType fastFlag} {
+    # returns a transformation Node
+    proc BRAINSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel RegistrationType fastFlag } {
         variable SCENE
         variable LOGIC
         variable GUI
@@ -1395,7 +1443,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             }
         }
         
-        set parser [vtkMRMLParser New ] 
+        set parser [vtkMRMLParser New]
         $parser SetMRMLScene $mrmlScene
         $parser SetFileName $mrmlFileName
         
@@ -1779,13 +1827,20 @@ namespace eval EMSegmenterPreProcessingTcl {
         
         set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingAtlasVolumeNode]
         set transformDirName "" 
-        set transformNode "" 
+        set transformNode ""
+        set transformNodeType ""  
         if { $UseBRAINS } {
-            set transformNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
-            if { $transformNode == "" } {
-                PrintError "RegisterAtlas: Transform node is null"
+            set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
+            if { $BSplineNode == "" } {
+                PrintError "RegisterAtlas: BSpline Transform node is null"
                 return 1
             }
+            set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
+            if { $transformNode == "" } {
+                PrintError "RegisterAtlas: Deformation Field Transform node is null"
+                return 1
+            }
+            set transformNodeType "DeformVolumeTransform"  
         } else {
             set bSplineFlag 1
             set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $bSplineFlag $fastFlag]
@@ -1793,6 +1848,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 PrintError "RegisterAtlas: Transform node is null"
                 return 1
             }
+            set transformNodeType "CMTKTransform"  
         }
         
 
@@ -1809,7 +1865,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
             $LOGIC PrintText "TCL: Guessed background level: $backgroundLevel"
 
-            if { [Resample $movingVolumeNode  $fixedTargetVolumeNode  $transformNode $transformDirName $UseBRAINS Linear $backgroundLevel $outputVolumeNode ] } {
+            if { [Resample $movingVolumeNode $fixedTargetVolumeNode $transformNode $transformDirName $transformNodeType Linear $backgroundLevel $outputVolumeNode] } {
                 return 1
             }
         }
@@ -1820,7 +1876,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Resampling subparcallation map  $i ..."
             set movingVolumeNode [$inputSubParcellationNode GetNthVolumeNode $i]
             set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]
-            if { [Resample $movingVolumeNode  $fixedTargetVolumeNode  $transformNode "$transformDirName" $UseBRAINS NearestNeighbor 0 $outputVolumeNode ] } {
+            if { [Resample $movingVolumeNode  $fixedTargetVolumeNode  $transformNode "$transformDirName" $transformNodeType NearestNeighbor 0 $outputVolumeNode] } {
                 return 1
             }
 
@@ -1840,8 +1896,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             [$outputVolumeNode GetImageData] DeepCopy [$vernoiCast GetOutput]
             $vernoiCast Delete
             $vernoi Delete
-            $output Delete 
-            
+            $output Delete
         }
 
         $LOGIC PrintText "TCL: Atlas-to-target registration complete."
@@ -1849,7 +1904,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
-    proc Resample { movingVolumeNode fixedTargetVolumeNode  transformNode transformDirName UseBRAINS interpolationType backgroundLevel outputVolumeNode } {
+    proc Resample { movingVolumeNode fixedTargetVolumeNode transformNode transformDirName transformType interpolationType backgroundLevel outputVolumeNode } {
         variable LOGIC
         if {[$movingVolumeNode GetImageData] == ""} {
             PrintError "RegisterAtlas: Moving image is null, skipping: $movingVolumeNode"
@@ -1860,20 +1915,37 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
-        $LOGIC PrintText "TCL: Resampling atlas image ..."
+        $LOGIC PrintText "TCL: Resampling image ..."
 
-        if { $UseBRAINS } {
-            $LOGIC PrintText "TCL: Resampling atlas image with BRAINSResample..."
-            if { [BRAINSResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType ] } {
-                return 1
+        switch $transformType {
+            "CMTKTransform" {
+                $LOGIC PrintText "TCL: with CMTKResampleCLI..."
+                if { [CMTKResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformDirName] } {
+                    return 1
+                }
             }
-        } else {
-            if { [CMTKResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformDirName] } {
+            "BSplineTransform" {
+                $LOGIC PrintText "TCL: with BRAINSResample using the BSpline"
+                set BRAINSBSpline 1
+                if { [BRAINSResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType $BRAINSBSpline] } {
+                    return 1
+                }
+            }
+            "DeformVolumeTransform" {
+                $LOGIC PrintText "TCL: with BRAINSResample using the Deformation Field"
+                set BRAINSBSpline 0
+                if { [BRAINSResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType $BRAINSBSpline] } {
+                    return 1
+                }
+            }
+            default {
+                PrintError "Unknown transformType $transformType"
                 return 1
             }
         }
         return 0 
     }
+
     proc PrintError { TEXT } {
         variable LOGIC
         $LOGIC PrintText "TCL: ERROR: EMSegmenterPreProcessingTcl::${TEXT}"
