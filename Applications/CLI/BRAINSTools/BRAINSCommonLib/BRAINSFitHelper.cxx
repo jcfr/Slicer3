@@ -5,6 +5,18 @@
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkMeanSquaresImageToImageMetric.h"
 #include "itkMattesMutualInformationImageToImageMetric.h"
+#include "itkKullbackLeiblerCompareHistogramImageToImageMetric.h"
+#include "itkHistogramImageToImageMetric.h"
+#include "itkKappaStatisticImageToImageMetric.h"
+#include "itkMeanReciprocalSquareDifferenceImageToImageMetric.h"
+#include "itkMutualInformationHistogramImageToImageMetric.h"
+#include "itkGradientDifferenceImageToImageMetric.h"
+#include "itkCompareHistogramImageToImageMetric.h"
+#include "itkCorrelationCoefficientHistogramImageToImageMetric.h"
+#include "itkMatchCardinalityImageToImageMetric.h"
+#include "itkMeanSquaresHistogramImageToImageMetric.h"
+#include "itkBinaryThresholdImageFilter.h"
+#include "itkNormalizedMutualInformationHistogramImageToImageMetric.h"
 
 namespace itk
 {
@@ -172,6 +184,82 @@ BRAINSFitHelper::StartRegistration(void)
   else if(this->m_CostMetric == "NC")
     {
     typedef itk::NormalizedCorrelationImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }
+  // This requires additional machinery (training transform, etc) and hence isn't as easy to incorporate
+  // into the BRAINSFit framework.
+  /*else if(this->m_CostMetric == "KL")
+    {
+    typedef itk::KullbackLeiblerCompareHistogramImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }*/
+  else if(this->m_CostMetric == "KS")
+    {
+    // This metric only works with binary images that it knows the value of.
+    // It defaults to 255, so we threshold the inputs to 255.
+    typedef itk::BinaryThresholdImageFilter<FixedVolumeType,FixedVolumeType> BinaryThresholdFixedVolumeType;
+    BinaryThresholdFixedVolumeType::Pointer binaryThresholdFixedVolume = BinaryThresholdFixedVolumeType::New();
+    binaryThresholdFixedVolume->SetInput(this->m_FixedVolume);
+    binaryThresholdFixedVolume->SetOutsideValue(0);
+    binaryThresholdFixedVolume->SetInsideValue(255);
+    binaryThresholdFixedVolume->SetLowerThreshold(1);
+    binaryThresholdFixedVolume->Update();
+    this->m_FixedVolume = binaryThresholdFixedVolume->GetOutput();
+
+    typedef itk::BinaryThresholdImageFilter<MovingVolumeType,MovingVolumeType> BinaryThresholdMovingVolumeType;
+    BinaryThresholdMovingVolumeType::Pointer binaryThresholdMovingVolume = BinaryThresholdMovingVolumeType::New();
+    binaryThresholdMovingVolume->SetInput(this->m_MovingVolume);
+    binaryThresholdMovingVolume->SetOutsideValue(0);
+    binaryThresholdMovingVolume->SetInsideValue(255);
+    binaryThresholdMovingVolume->SetLowerThreshold(1);
+    binaryThresholdMovingVolume->Update();
+    this->m_MovingVolume = binaryThresholdMovingVolume->GetOutput();
+
+    typedef itk::KappaStatisticImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }
+  else if(this->m_CostMetric == "MRSD")
+    {
+    typedef itk::MeanReciprocalSquareDifferenceImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }
+  else if(this->m_CostMetric == "MIH")
+    {
+    typedef itk::MutualInformationHistogramImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }
+  else if(this->m_CostMetric == "GD")
+    {
+    typedef itk::GradientDifferenceImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }
+  else if(this->m_CostMetric == "CCH")
+    {
+    typedef itk::CorrelationCoefficientHistogramImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }
+  else if(this->m_CostMetric == "MC")
+    {
+    typedef itk::MatchCardinalityImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }
+  else if(this->m_CostMetric == "MSEH")
+    {
+    typedef itk::MeanSquaresHistogramImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
+    BRAINSFitCommonMetricSetupMacro();
+    BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
+    }
+  else if(this->m_CostMetric == "NMIH")
+    {
+    typedef itk::NormalizedMutualInformationHistogramImageToImageMetric<FixedVolumeType,MovingVolumeType> MetricType;
     BRAINSFitCommonMetricSetupMacro();
     BRAINSFitCommonTransferToFromTemplatedVersionMacro(localCostMetric,MetricType::FixedImageType,MetricType::MovingImageType);
     }
@@ -414,8 +502,7 @@ BRAINSFitHelper::PrintCommandLine(const bool dumpTempVolumes, const std::string 
     {
     oss << "--useCenterOfHeadAlign \\" << std::endl;
     }
-  // NO LONGER VALID BRAINSFit oss  << "--initializeTransformMode " <<
-  // this->m_InitializeTransformMode  << "  \\" << std::endl;
+  oss  << "--initializeTransformMode " << this->m_InitializeTransformMode  << "  \\" << std::endl;
   oss << "--maskInferiorCutOffFromCenter " << this->m_MaskInferiorCutOffFromCenter  << "  \\" << std::endl;
   oss << "--splineGridSize ";
   for ( unsigned int q = 0; q < this->m_SplineGridSize.size(); q++ )

@@ -496,6 +496,31 @@ endif()
     --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
     --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
   )
+  set(BRAINSFitTestName BRAINSFitTest_RigidRotationNoMasksRiginInPlaceInterp)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 7
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 777
+    BRAINSFitTest
+    --costMetric MMI
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid
+    --interpolationMode RigidInPlace 
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/Initializer_0.05_${BRAINSFitTestName}.mat
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
 
   set(BRAINSFitTestName BRAINSFitTest_ScaleRotationRescaleHeadMasksNoInit)
   add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
@@ -794,6 +819,604 @@ endif()
     --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/TEST_output.nii.gz
     )
   endif(Test_SignedDistanceData)
+  
+  set(BRAINSFitTestName BRAINSFitTest_BSplineScaleRotationHeadMasksUShort)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MMI
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500,2500,500
+    --splineGridSize 7,5,6
+    --numberOfSamples 144000
+    --translationScale 250
+    --minimumStepLength 0.01,0.003,0.01
+    --outputVolumePixelType short
+    --maskProcessingMode ROIAUTO
+    --initializeTransformMode useCenterOfHeadAlign
+    --transformType Rigid,ScaleVersor3D,BSpline
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotationUShort.rescale.rigid.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+    --maxBSplineDisplacement 7.3
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_BSplineScaleRotationHistogramHeadMasksUShort)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MMI
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500,2500,500
+    --numberOfHistogramBins 50
+    --numberOfMatchPoints 10
+    --histogramMatch
+    --splineGridSize 7,5,6
+    --numberOfSamples 144000
+    --translationScale 250
+    --minimumStepLength 0.01,0.003,0.01
+    --outputVolumePixelType short
+    --maskProcessingMode ROIAUTO
+    --initializeTransformMode useCenterOfHeadAlign
+    --transformType Rigid,ScaleVersor3D,BSpline
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotationUShort.rescale.rigid.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+    --maxBSplineDisplacement 7.3
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_NCMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric NC
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType ScaleVersor3D
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_NCAffineRotationMasks)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 7
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 777
+    BRAINSFitTest
+    --costMetric NC
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 131072
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Affine
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_Initializer_RigidRotationNoMasks.mat
+    --maskProcessingMode ROI
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/test.mask
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.mask
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+    --debugLevel 50
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_NCScaleSkewVersorRotationMasks)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 11
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric NC 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 131072
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType ScaleSkewVersor3D
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_Initializer_RigidRotationNoMasks.mat
+    --maskProcessingMode ROI
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/test.mask
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.mask
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+
+  set(BRAINSFitTestName BRAINSFitTest_MSEMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MSE 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType ScaleVersor3D
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_MSEAffineRotationMasks)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 7
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 777
+    BRAINSFitTest
+    --costMetric MSE 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 131072
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Affine
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_Initializer_RigidRotationNoMasks.mat
+    --maskProcessingMode ROI
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/test.mask
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.mask
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+    --debugLevel 50
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_MSEScaleSkewVersorRotationMasks)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 11
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MSE 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 131072
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType ScaleSkewVersor3D
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_Initializer_RigidRotationNoMasks.mat
+    --maskProcessingMode ROI
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/test.mask
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.mask
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_MCMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MC 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid --initializeTransformMode useMomentsAlign
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_MCMetricMaskBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/testMask.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.testMask.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MC 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid --initializeTransformMode useMomentsAlign 
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/testMask.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/testMask.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.testMask.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_MCAffineRotationMasks)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 7
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 777
+    BRAINSFitTest
+    --costMetric MC 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 131072
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Affine
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_Initializer_RigidRotationNoMasks.mat
+    --maskProcessingMode ROI
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/test.mask
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.mask
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+    --debugLevel 50
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_MCScaleSkewVersorRotationMasks)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 11
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MC 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 131072
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType ScaleSkewVersor3D
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_Initializer_RigidRotationNoMasks.mat
+    --maskProcessingMode ROI
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/test.mask
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.mask
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+
+# Start of broken metric tests
+# Add ", KS (Kappa Statistic for binary images with voxel value=255), MRSD (Mean Reciprocal Square Difference), MIH (Mutual Information Histogram), GD (Gradient Difference), CCH (Correlation Coefficient Histogram), MSEH (Mean Squared Error Histogram), NMIH (Normalized Mutual Information Histogram)" to the end of the description for costMetric in BRAINSFitPrimary.xml then add KS, MRSD, MIH, GD, CCH, MSEH, and NMIH as enumeration elements.
+SET(RUN_EXTRA_METRIC_TESTS OFF)
+IF(RUN_EXTRA_METRIC_TESTS)
+  # KullbackLeiblerCompareHistogramImageToImageMetric requires training images / infrastructure
+  # which is different from the other metrics, making it much harder to incorporate into the 
+  # BRAINSFIT framework.  This test and the relevant code has been commented out for now.
+  #set(BRAINSFitTestName BRAINSFitTest_KLMetricBrainToItself)
+  #add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+  #  --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+  #            ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+  #  --compareIntensityTolerance 9
+  #  --compareRadiusTolerance 0
+  #  --compareNumberOfPixelsTolerance 1000
+  #  BRAINSFitTest
+  #  --costMetric KL 
+  #  --failureExitCode -1 --writeTransformOnFailure
+  #  --numberOfIterations 25
+  #  --numberOfHistogramBins 200
+  #  --numberOfSamples 72000
+  #  --translationScale 250
+  #  --minimumStepLength 0.001
+  #  --outputVolumePixelType uchar
+  #  --transformType ScaleVersor3D
+  #  --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+  #  --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+  #  --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+  #  --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  #)
+
+  # The Kappa Statistic metric is meant for binary images which is why 
+  # the fixed and moving images are binarized before the tranfsorm is calculated
+  # then the transform is applied to the input image.  This produces somethign
+  # close for gray scale images but in the next test using binary images it fails
+  # to converge even when given many iterations (which it shouldn't need, since
+  # it's registering the same image to itself).
+  set(BRAINSFitTestName BRAINSFitTest_KSMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric KS 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid --initializeTransformMode useMomentsAlign 
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_KSMetricBrainMaskToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/testMask.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.testMask.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric KS 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid 
+    #--initializeTransformMode useMomentsAlign 
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/testMask.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/testMask.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.testMask.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+
+  set(BRAINSFitTestName BRAINSFitTest_KSAffineRotationMasks)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 7
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 777
+    BRAINSFitTest
+    --costMetric KS 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 131072
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Affine
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_Initializer_RigidRotationNoMasks.mat
+    --maskProcessingMode ROI
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+    --debugLevel 50
+  )
+
+  set(BRAINSFitTestName BRAINSFitTest_KSScaleSkewVersorRotationMasks)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/${BRAINSFitTestName}.result.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 11
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric KS 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 2500
+    --numberOfHistogramBins 200
+    --numberOfSamples 131072
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType ScaleSkewVersor3D
+    --initialTransform ${BRAINSCommonLib_DATA_DIRS}/BRAINSFitTest_Initializer_RigidRotationNoMasks.mat
+    --maskProcessingMode ROI
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --fixedBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --movingBinaryVolume ${BRAINSCommonLib_DATA_DIRS}/rotation.test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  # Fails to converge when registering a brain to itself.
+  set(BRAINSFitTestName BRAINSFitTest_MRSDMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MRSD 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  # Segfault when running this test
+  set(BRAINSFitTestName BRAINSFitTest_MIHMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MIH 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid --initializeTransformMode useMomentsAlign 
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  # Fails to converge when registering a brain to itself.
+  set(BRAINSFitTestName BRAINSFitTest_GDMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric GD 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid --initializeTransformMode useMomentsAlign 
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  # Segfault when running this test
+  set(BRAINSFitTestName BRAINSFitTest_CCHMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric CCH 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid --initializeTransformMode useMomentsAlign
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  # Segfault when running this test
+  set(BRAINSFitTestName BRAINSFitTest_MSEHMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric MSEH 
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid --initializeTransformMode useMomentsAlign
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+
+  # Segfault when running this test
+  set(BRAINSFitTestName BRAINSFitTest_NMIHMetricBrainToItself)
+  add_test(${BRAINSFitTestName} ${BRAINSFitTest_EXEC}
+    --compare ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+              ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --compareIntensityTolerance 9
+    --compareRadiusTolerance 0
+    --compareNumberOfPixelsTolerance 1000
+    BRAINSFitTest
+    --costMetric NMIH
+    --failureExitCode -1 --writeTransformOnFailure
+    --numberOfIterations 25
+    --numberOfHistogramBins 200
+    --numberOfSamples 72000
+    --translationScale 250
+    --minimumStepLength 0.001
+    --outputVolumePixelType uchar
+    --transformType Rigid --initializeTransformMode useMomentsAlign
+    --fixedVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --movingVolume ${BRAINSCommonLib_DATA_DIRS}/test.nii.gz
+    --outputVolume ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
+    --outputTransform ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.mat
+  )
+ENDIF(RUN_EXTRA_METRIC_TESTS)
 
   #  endif(NOT XXXNO_BRAINSFIT_TESTING)  #When BRAINSFit is a sub project, it should not be tested.
 

@@ -49,7 +49,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
-set(BRAINSCommonLib_SRCS GenericTransformImage.cxx BRAINSFitHelper.cxx)
+set(BRAINSCommonLib_SRCS GenericTransformImage.cxx BRAINSFitHelper.cxx Slicer3LandmarkIO.cxx)
 
 add_library(BRAINSCommonLib ${BRAINSCommonLib_SRCS})
 target_link_libraries(BRAINSCommonLib ITKAlgorithms ITKIO)
@@ -84,7 +84,7 @@ else (Slicer3_SOURCE_DIR)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/BRAINSCommonLibInstallConfig.cmake.in
                  ${CMAKE_CURRENT_BINARY_DIR}/BRAINSCommonLibInstallConfig.cmake
                  @ONLY)
-
+ 
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/BRAINSCommonLibInstallConfig.cmake
           DESTINATION lib/BRAINSCommonLib
           COMPONENT Development
