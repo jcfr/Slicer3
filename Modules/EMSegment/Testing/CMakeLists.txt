@@ -12,6 +12,8 @@ set(EMSegment_TUTORIAL_DIR
   ${EMSegment_SOURCE_DIR}/Testing/TestData/TutorialTest)
 set(EMSegment_TUTORIAL2_DIR
   ${EMSegment_SOURCE_DIR}/Testing/TestData/TutorialTest2)
+set(EMSegment_TESTDATA_DIR
+  ${EMSegment_SOURCE_DIR}/Testing/TestData)
 
 # Extra Tests:
 # Change these to 1 if you want to run the extra EMSegment tests.  They
@@ -471,6 +473,46 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "Error writing intermediate results"
     )
+
+  # Task test - small
+  add_test(
+    EMSegCL_TaskMRIHumanBrainParcellation_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/small_MRIHumanBrainParcellation_T1.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/small_MRIHumanBrainParcellation_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskMRIHumanBrainParcellation_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - very small
+  add_test(
+    EMSegCL_TaskMRIHumanBrainParcellation_very_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation_very_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/very_small_MRIHumanBrainParcellation_T1.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/very_small_MRIHumanBrainParcellation_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskMRIHumanBrainParcellation_very_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+
 
   # Does it fail elegently when a bogus result standard is specified?
   add_test(
