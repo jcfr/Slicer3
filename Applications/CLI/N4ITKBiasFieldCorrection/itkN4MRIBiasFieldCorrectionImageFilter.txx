@@ -31,6 +31,8 @@
 #include "itkSubtractImageFilter.h"
 #include "itkVectorIndexSelectionCastImageFilter.h"
 
+#include "itkProgressReporter.h"
+
 #include "vnl/algo/vnl_fft_1d.h"
 #include "vnl/vnl_complex_traits.h"
 #include "vxl/vcl/vcl_complex.h"
@@ -141,6 +143,11 @@ N4MRIBiasFieldCorrectionImageFilter<TInputImage, TMaskImage, TOutputImage>
       "Number of iteration levels is not equal to the max number of levels." );
     }
 
+  unsigned totalMaxNumberOfIterations = 0;
+  for(unsigned level=0;level<maximumNumberOfLevels;level++)
+    totalMaxNumberOfIterations += this->m_MaximumNumberOfIterations[level];  
+  ProgressReporter progress(this, 0, totalMaxNumberOfIterations);
+
   for( this->m_CurrentLevel = 0; this->m_CurrentLevel < maximumNumberOfLevels;
     this->m_CurrentLevel++ )
     {
@@ -182,6 +189,7 @@ N4MRIBiasFieldCorrectionImageFilter<TInputImage, TMaskImage, TOutputImage>
       logUncorrectedImage = subtracter2->GetOutput();
 
       reporter.CompletedStep();
+      progress.CompletedPixel();
       }
 
     typedef BSplineControlPointImageFilter<BiasFieldControlPointLatticeType,
