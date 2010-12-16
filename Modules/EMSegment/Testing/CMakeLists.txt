@@ -552,6 +552,45 @@ if(NOT DISABLE_CXX_TESTING)
     )
 
 
+  # Task test - small
+  add_test(
+    EMSegCL_TaskNonHumanPrimate_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/small_NonHumanPrimate_T1.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/small_NonHumanPrimate_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskNonHumanPrimate_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - very small
+  add_test(
+    EMSegCL_TaskNonHumanPrimate_very_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate_very_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/very_small_NonHumanPrimate_T1.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/very_small_NonHumanPrimate_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskNonHumanPrimate_very_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+
 
   # Does it fail elegently when a bogus result standard is specified?
   add_test(
