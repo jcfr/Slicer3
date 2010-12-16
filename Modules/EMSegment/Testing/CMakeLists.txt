@@ -476,6 +476,45 @@ if(NOT DISABLE_CXX_TESTING)
 
   # Task test - small
   add_test(
+    EMSegCL_TaskMRIHumanBrain_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/small_MRIHumanBrain_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskMRIHumanBrain_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - very small
+  add_test(
+    EMSegCL_TaskMRIHumanBrain_very_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain_very_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/very_small_MRIHumanBrain_T1_aligned.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/very_small_MRIHumanBrain_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskMRIHumanBrain_very_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+
+  # Task test - small
+  add_test(
     EMSegCL_TaskMRIHumanBrainParcellation_small
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
