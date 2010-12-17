@@ -42,7 +42,6 @@ proc FastMarchingSegmentationClone { moduleName {slicerSourceDir ""} {targetDir 
 
 proc FastMarchingSegmentationInitializeFilter {this} {
 
-  $::FastMarchingSegmentation($this,fastMarchingFilter) Delete
   set ::FastMarchingSegmentation($this,fastMarchingFilter) [vtkPichonFastMarching New]
   set ::FastMarchingSegmentation($this,fmOutputImage) [vtkImageData New]
   
@@ -71,11 +70,6 @@ proc FastMarchingSegmentationInitializeFilter {this} {
   $fmFilter init [expr [lindex $dim 1] + 1] [expr [lindex $dim 3] + 1] \
     [expr [lindex $dim 5] + 1] $depth $dx $dy $dz
 
-  $fmFilter Modified
-  $fmFilter Update
-
-  $fmFilter setActiveLabel 1
-  $fmFilter initNewExpansion
 }
 
 proc FastMarchingSegmentationExpand {this} {
@@ -246,22 +240,27 @@ proc FastMarchingSegmentationPrepareInput {this} {
   set inputImageData [$::FastMarchingSegmentation($this,inputVolume) GetImageData]
   
   # next we need to rescale the data, and then cast it to short
-  set cast $::FastMarchingSegmentation($this,cast)
-  set rescale $::FastMarchingSegmentation($this,rescale)
+  set cast [vtkImageCast New] 
+  # $::FastMarchingSegmentation($this,cast)
+  set rescale [vtkImageShiftScale New]
+  # $::FastMarchingSegmentation($this,rescale)
   scan [$inputImageData GetScalarRange] "%f%f" rangeLow rangeHigh
   set depth [expr $rangeHigh-$rangeLow]
+  puts "Depth is $depth"
   
   if { [expr $depth>300.] } {
     set scaleValue [expr 300./$depth]
   } else {
     set scaleValue 1.
   }
+  puts "Scale is $scaleValue"
 
   if { [expr $rangeLow <0.] } {
     set shiftValue [expr -1.*$rangeLow]
   } else {
     set shiftValue 0.
   }
+  puts "Shift is $shiftValue"
   
   $rescale SetInput $inputImageData
   $rescale SetScale $scaleValue
@@ -276,13 +275,15 @@ proc FastMarchingSegmentationPrepareInput {this} {
   puts "Scalar range of the prepared image is $rangeLow-$rangeHigh"
 
   set ::FastMarchingSegmentation($this,inputImage) [$cast GetOutput]
+
+#  $rescale Delete
+#  $cast Delete
 }
 
 proc FastMarchingSegmentationFinalize {this} {
   # deallocate the filter
   $::FastMarchingSegmentation($this,fastMarchingFilter) unInit
   $::FastMarchingSegmentation($this,fastMarchingFilter) Delete
-  set ::FastMarchingSegmentation($this,fastMarchingFilter) [vtkPichonFastMarching New]
   # disable the segmentation adjustment controls
 }
 

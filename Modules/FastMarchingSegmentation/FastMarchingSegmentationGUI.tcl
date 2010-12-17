@@ -30,10 +30,6 @@ proc FastMarchingSegmentationTearDownGUI {this} {
     $::FastMarchingSegmentation($this,$w) Delete
   }
 
-  set filters {
-    cast rescale fastMarchingFilter
-  }
-
   foreach f $filters {
     $::FastMarchingSegmentation($this,$f) Delete
   }
@@ -272,11 +268,6 @@ proc FastMarchingSegmentationBuildGUI {this} {
   $accept SetText "Accept Segmentation Result"
   $accept SetBalloonHelpString "Once accepted, segmentation cannot be adjusted with the slider. It is important to accept when you are happy with the result to free Slicer memory!!!"
   pack [$accept GetWidgetName] -side top -anchor e -padx 2 -pady 2 -fill x
-
-  # Fast marching filters
-  set ::FastMarchingSegmentation($this,cast) [vtkImageCast New]
-  set ::FastMarchingSegmentation($this,rescale) [vtkImageShiftScale New]
-  set ::FastMarchingSegmentation($this,fastMarchingFilter) [vtkPichonFastMarching New]
 
   # disable results adjustment frame to reduce confusion
   FastMarchingSegmentationDisableAdjustFrameGUI $this
