@@ -1615,6 +1615,24 @@ void vtkSlicerSlicesControlGUI::ProcessMRMLEvents ( vtkObject *caller,
       }
     }
 
+  // Update SliceFade slider based on Red layout node
+  int i, nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass("vtkMRMLSliceCompositeNode");
+  vtkMRMLSliceCompositeNode *cnode = NULL;
+  for (i = 0; i < nnodes; i++)
+    {
+    cnode = vtkMRMLSliceCompositeNode::SafeDownCast (
+      this->GetMRMLScene()->GetNthNodeByClass( i, "vtkMRMLSliceCompositeNode" ) );
+    if (!strcmp(cnode->GetLayoutName(), "Red"))
+      {
+      break;
+      }
+    }
+  if (cnode)
+    {
+    this->SliceFadeScale->SetValue(cnode->GetForegroundOpacity());
+    }
+
+
   this->ProcessingMRMLEvent = 0;
 }
 
