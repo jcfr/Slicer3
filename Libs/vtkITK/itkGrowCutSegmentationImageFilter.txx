@@ -79,7 +79,7 @@ template< class TInputImage, class TOutputImage, class TWeightPixelType>
 
   m_ConfThresh = 0.2;
   
-  m_MaxIterations = 1000;
+  m_MaxIterations = 500;
   m_ObjectRadius = 10;
   
   m_SeedStrength = 1.0;
@@ -539,7 +539,7 @@ MaskSegmentedImageByWeight( float confThresh)
     {
       label.Set(static_cast< OutputPixelType > (0));
       //  ++numOutPixels;
-    }
+  }
     //else 
     // {
     //  ++numInPixels;
@@ -670,13 +670,11 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
   singleIteration->SetMaxIterations( this->GetMaxIterations());
   singleIteration->SetObjectRadius(this->GetObjectRadius() );
 
-
   singleIteration->SetROIStart( this->GetROIStart() );
   singleIteration->SetROIEnd( this->GetROIEnd() );
   
   singleIteration->GetOutput()->SetBufferedRegion( 
   this->GetOutput()->GetBufferedRegion() );
-
   
   // Create Progress Accumulator for tracking the progress
   //ProgressAccumulator::Pointer progress = ProgressAccumulator::New();
@@ -686,8 +684,6 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
   // run until convergence
   
   unsigned int iter = 0;
-
-  
   //time_t startTime;
   //time_t endTime;
   time_t start;
@@ -695,12 +691,12 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
 
   unsigned int maxRadius = 0;
   
-  float totalROIVolume = 1.0;
+  unsigned totalROIVolume = 1;
 
   for (unsigned n = 0; n < ndims; n++)
     {
       //prevUnlabeledPix *= (m_roiEnd[n]-m_roiStart[n]);
-      totalROIVolume *= (m_roiEnd[n]-m_roiStart[n]+1);
+      totalROIVolume *= (m_roiEnd[n]-m_roiStart[n]);
       
       if(n == 0)
        {
@@ -715,16 +711,18 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
   maxRadius = static_cast< unsigned int>(vcl_ceil(maxRadius*0.5));
 
   
-  float threshSaturation = .96; //.999; // Determine the saturation according to the size of the object
-  float threshUnchanged = 0.05;
-  float threshUnlabeledLimit = 0;
+ // float threshSaturation = .96; //.999; // Determine the saturation according to the size of the object
+ // float threshUnchanged = 0.05;
+ // float threshUnlabeledLimit = 0;
+  
+  unsigned threshSaturation = 96; // .96*100
+  unsigned threshUnchanged = 5;
   
   time(&start);
 
   // set up the grow cut update filter here... 
   
   unsigned prevModifiedPix = 0;
-  
   while (iter < m_MaxIterations && !converged)
     {
       
@@ -747,34 +745,31 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
   (static_cast<unsigned > (totalROIVolume) -(currLocallySaturatedPix + 
                currSaturatedPix + changeablePix)) : 0;
       
-      unsigned currModified = changeablePix + currLocallySaturatedPix + currSaturatedPix;
+      unsigned currModified = currLocallySaturatedPix + currSaturatedPix;
+     
+      unsigned relUnlabeled = (unlabeled*100)/totalROIVolume;
+      unsigned relSaturated = ((currSaturatedPix+currLocallySaturatedPix)*100)/totalROIVolume;    
+      converged = (relUnlabeled < threshUnchanged && 
+       (relSaturated > threshSaturation || prevModifiedPix == currModified));
       
-      converged = (unlabeled/totalROIVolume < threshUnchanged && 
-       ((currSaturatedPix+currLocallySaturatedPix)/totalROIVolume > threshSaturation));
-      
-      if(!converged)
-  {
-    converged = (unlabeled <= threshUnlabeledLimit && 
-           prevModifiedPix - currModified == 0);
-  }
-      prevModifiedPix = currModified;
-      
-      if((iter % 40 == 0) || converged)
+      if((iter % 10 == 0) || converged)
   {
     std::cout<<" ITER "<<iter<<std::endl;
     std::cout<<" saturated Pixels "<<currSaturatedPix<<"( "<<
-      totalROIVolume<<") %"<<currSaturatedPix/totalROIVolume<<std::endl;
+      totalROIVolume<<") %"<<currSaturatedPix/(float)totalROIVolume<<std::endl;
     std::cout<<" locally saturated Pixels "<<currLocallySaturatedPix<<" %"<<
-      currLocallySaturatedPix/totalROIVolume<<std::endl;
+      currLocallySaturatedPix/(float)totalROIVolume<<std::endl;
     std::cout<<"Number of Labeled Pixels "<<changeablePix<<" %"<<
-      changeablePix/totalROIVolume<<std::endl;
-    
+      changeablePix/(float)totalROIVolume<<std::endl;
+    std::cout<<"Curr Saturated "<<relSaturated<<" %"<<std::endl;
+    std::cout<<" Prev Modified "<<prevModifiedPix<<" Curr Modified "<<currModified<<std::endl;
     std::cout<<"Unlabeled pixels "<<unlabeled<<" %"<<
-      unlabeled/totalROIVolume<<std::endl;
+      relUnlabeled<<std::endl;
     if(converged)
       std::cout<<" converged...."<<std::endl;
   }
       
+     prevModifiedPix = currModified; 
       ++iter;
       m_WeightImage = singleIteration->GetUpdatedStrengthImage();
 
@@ -790,7 +785,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
       SetBufferedRegion(output->GetBufferedRegion() );
   }
 
-      this->UpdateProgress((currSaturatedPix+currLocallySaturatedPix)/totalROIVolume);
+      this->UpdateProgress((currSaturatedPix+currLocallySaturatedPix)/(float)totalROIVolume);
     }
   
     
@@ -886,7 +881,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
     {
       unsigned long int x = m_roiEnd[d]-m_roiStart[d]+1; // > 0 ? m_roiEnd[d]-m_roiStart[d] : 0; 
       iIndex[d] = m_roiStart[d] > regionStart[d] ? m_roiStart[d] : regionStart[d];
-      iSize[d] = x < regionSize[d] ? (x > 0 ? x : 0) : regionSize[d];
+      iSize[d] = x < regionSize[d] ? (x > 0 ? x : 1) : regionSize[d];
       
     }
   
@@ -993,7 +988,6 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
       stateIt.OverrideBoundaryCondition( &cbcl ); 
       oldWeightIt.OverrideBoundaryCondition( &cbcw ); 
       maxSatIt.OverrideBoundaryCondition( &cbcw ); 
-      
       
       newLabelIt = IteratorOut(outputImage, *fitIn);
       newWeightIt = IteratorWeight(m_WeightImage, *fitIn);
