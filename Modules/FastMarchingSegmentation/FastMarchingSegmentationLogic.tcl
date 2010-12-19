@@ -240,27 +240,26 @@ proc FastMarchingSegmentationPrepareInput {this} {
   set inputImageData [$::FastMarchingSegmentation($this,inputVolume) GetImageData]
   
   # next we need to rescale the data, and then cast it to short
-  set cast [vtkImageCast New] 
-  # $::FastMarchingSegmentation($this,cast)
-  set rescale [vtkImageShiftScale New]
-  # $::FastMarchingSegmentation($this,rescale)
+  set ::FastMarchingSegmentation($this,cast) [vtkImageCast New]
+  set cast $::FastMarchingSegmentation($this,cast)
+
+  set ::FastMarchingSegmentation($this,rescale) [vtkImageShiftScale New]
+  set rescale $::FastMarchingSegmentation($this,rescale)
+
   scan [$inputImageData GetScalarRange] "%f%f" rangeLow rangeHigh
   set depth [expr $rangeHigh-$rangeLow]
-  puts "Depth is $depth"
   
   if { [expr $depth>300.] } {
     set scaleValue [expr 300./$depth]
   } else {
     set scaleValue 1.
   }
-  puts "Scale is $scaleValue"
 
   if { [expr $rangeLow <0.] } {
     set shiftValue [expr -1.*$rangeLow]
   } else {
     set shiftValue 0.
   }
-  puts "Shift is $shiftValue"
   
   $rescale SetInput $inputImageData
   $rescale SetScale $scaleValue
@@ -275,13 +274,12 @@ proc FastMarchingSegmentationPrepareInput {this} {
   puts "Scalar range of the prepared image is $rangeLow-$rangeHigh"
 
   set ::FastMarchingSegmentation($this,inputImage) [$cast GetOutput]
-
-#  $rescale Delete
-#  $cast Delete
 }
 
 proc FastMarchingSegmentationFinalize {this} {
   # deallocate the filter
+  $::FastMarchingSegmentation($this,cast) Delete
+  $::FastMarchingSegmentation($this,rescale) Delete
   $::FastMarchingSegmentation($this,fastMarchingFilter) unInit
   $::FastMarchingSegmentation($this,fastMarchingFilter) Delete
   # disable the segmentation adjustment controls

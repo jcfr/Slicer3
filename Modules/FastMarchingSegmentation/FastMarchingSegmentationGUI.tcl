@@ -30,10 +30,6 @@ proc FastMarchingSegmentationTearDownGUI {this} {
     $::FastMarchingSegmentation($this,$w) Delete
   }
 
-  foreach f $filters {
-    $::FastMarchingSegmentation($this,$f) Delete
-  }
-
   # volume rendering
   catch {$::FastMarchingSegmentation($this,renderMapper) Delete}
   catch {$::FastMarchingSegmentation($this,renderVolumeProperty) Delete}
