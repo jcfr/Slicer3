@@ -816,7 +816,7 @@ proc CropVolumeApply {this} {
   $outDisplayNode Delete
 
   set scene [[$this GetLogic] GetMRMLScene]
-  $scene InvokeEvent 66000
+  $scene Edited
 }
 
 proc CropVolumeErrorDialog {this errorText} {
