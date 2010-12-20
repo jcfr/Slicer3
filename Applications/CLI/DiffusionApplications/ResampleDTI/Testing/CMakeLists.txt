@@ -41,7 +41,7 @@ add_test(${CLP}RotationNNTest ${Launcher_Command} ${TestLocation}${ResampleTest}
   ModuleEntryPoint
     -f ${TransformFile}
     --interpolation nn
-    -c
+    --centered_transform
     ${OriginalImage}
     ${TransformedImage1}
     -n 8
@@ -59,7 +59,7 @@ add_test(${CLP}2RigidTransformsLinearTest ${Launcher_Command} ${TestLocation}${R
     -f ${RotationAndAffineFile}
     -T FS
     --interpolation linear
-    -c
+    --centered_transform
     ${OriginalImage}
     ${TransformedImage2}
     --correction abs
