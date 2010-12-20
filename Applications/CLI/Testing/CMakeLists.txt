@@ -928,7 +928,7 @@ add_test(ResampleVolume2RotationNNTest ${Launcher_Command} ${TestLocation}Resamp
   ModuleEntryPoint
     -f ${TransformFile}
     --interpolation nn
-    -c
+    --centered_transform
     ${TEST_DATA}/MRHeadResampled.nhdr
     ${TEMP}/ResampleVolume2Test2.nrrd
     -n 8
@@ -942,7 +942,7 @@ add_test(ResampleVolume2RotationAndAffineTest ${Launcher_Command} ${TestLocation
   ModuleEntryPoint
     -f ${RotationAndAffineFile}
     --interpolation linear
-    -c
+    --centered_transform
     ${TEST_DATA}/MRHeadResampled.nhdr
     ${TEMP}/ResampleVolume2Test3.nrrd
     --transform_order input-to-output
