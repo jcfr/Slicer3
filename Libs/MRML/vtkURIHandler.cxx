@@ -73,24 +73,26 @@ void vtkURIHandler::CreateFileBucket ()
     {
     vtkWarningMacro ("No path to cache found! Creating files in current dir");
     this->SetFileBucket("SlicerTemporaryDownloadBuffer");
+    return;
     }
   if ( !vtksys::SystemTools::FileIsDirectory ( this->GetRemoteCacheDirectory() ))
     {
     vtkWarningMacro ("No valid path to cache found! Creating files in current dir");
     this->SetFileBucket("SlicerTemporaryDownloadBuffer");
+    return;
     }
     
-    //--- for now, create temporary query response file in cache dir.
-    std::vector<std::string> pathComponents;
-    vtksys::SystemTools::SplitPath( this->GetRemoteCacheDirectory(), pathComponents);
-    // now add the new file name to the end of the path
-    pathComponents.push_back("SlicerTemporaryDownloadBuffer");
+  //--- for now, create temporary query response file in cache dir.
+  std::vector<std::string> pathComponents;
+  vtksys::SystemTools::SplitPath( this->GetRemoteCacheDirectory(), pathComponents);
+  // now add the new file name to the end of the path
+  pathComponents.push_back("SlicerTemporaryDownloadBuffer");
 
   //-- create or update temporary staging area for downloads.
-    std::string bucket = vtksys::SystemTools::JoinPath(pathComponents);
-    this->SetFileBucket (bucket.c_str() );
+  std::string bucket = vtksys::SystemTools::JoinPath(pathComponents);
+  this->SetFileBucket (bucket.c_str() );
 
-    vtkDebugMacro ( "FileBucket = " << this->GetFileBucket() );
+  vtkDebugMacro ( "FileBucket = " << this->GetFileBucket() );
 }
     
 
