@@ -1286,7 +1286,8 @@ void vtkSlicerApplicationGUI::UpdateLayout ( )
     this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView, "Red");
     this->SetCurrentLayout ( vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView );
     }
-  else if ( (target == vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView ) )
+  else if ( target == vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView &&
+      this->GetCurrentLayout()!= vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView)
     {
     // TO DO
 #ifndef TOOLBAR_DEBUG
@@ -1295,7 +1296,8 @@ void vtkSlicerApplicationGUI::UpdateLayout ( )
     this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView, NULL );
     this->SetCurrentLayout ( vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView);
     }
-  else if ( (target == vtkMRMLLayoutNode::SlicerLayoutCompareView) )
+  else if ( target == vtkMRMLLayoutNode::SlicerLayoutCompareView &&
+      this->GetCurrentLayout()!= vtkMRMLLayoutNode::SlicerLayoutCompareView)
     {
 #ifndef TOOLBAR_DEBUG
     mode = this->ApplicationToolbar->StopViewRockOrSpin();
@@ -1303,7 +1305,8 @@ void vtkSlicerApplicationGUI::UpdateLayout ( )
     this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutCompareView, NULL);
     this->SetCurrentLayout ( vtkMRMLLayoutNode::SlicerLayoutCompareView );
     }
-  else if ( (target == vtkMRMLLayoutNode::SlicerLayoutCompareWidescreenView) )
+  else if ( target == vtkMRMLLayoutNode::SlicerLayoutCompareWidescreenView &&
+      this->GetCurrentLayout()!= vtkMRMLLayoutNode::SlicerLayoutCompareWidescreenView )
     {
 #ifndef TOOLBAR_DEBUG
     mode = this->ApplicationToolbar->StopViewRockOrSpin();
@@ -2963,6 +2966,13 @@ void vtkSlicerApplicationGUI::OnViewNodeAdded(vtkMRMLViewNode *view_node)
         break;
     }
     this->RepackMainViewer (target, whichSlice );
+    this->CurrentLayout = target;
+#ifndef TOOLBAR_DEBUG
+    if(this->ApplicationToolbar)
+      {
+      this->ApplicationToolbar->UpdateLayoutMenu();
+      }
+#endif
   }
 }
 
