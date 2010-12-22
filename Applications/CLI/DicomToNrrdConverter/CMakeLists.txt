@@ -31,27 +31,27 @@ if (NOT ITK_USE_OPTIMIZED_REGISTRATION_METHODS)
   MESSAGE(FATAL_ERROR "ITK version was not built with ITK_USE_OPTIMIZED_REGISTRATION_METHODS true")
 endif (NOT ITK_USE_OPTIMIZED_REGISTRATION_METHODS)
 
-if (Slicer_SOURCE_DIR)
+if (Slicer3_SOURCE_DIR)
   ##There's limited testing from within Slicer3.  There's extensive testing when run 
   ##at UIowa but the testing data isn't publicly accessible yet.  Other packages that 
   ##use this tool will not run either set of tests
   ADD_SUBDIRECTORY(Testing)
-endif (Slicer_SOURCE_DIR)
+endif (Slicer3_SOURCE_DIR)
 
 set (CLP DicomToNrrdConverter)
 set ( ${CLP}_SOURCE ${CLP}.cxx)
 
-if (Slicer_SOURCE_DIR)
-  generateclp(${CLP}_SOURCE ${CLP}.xml ${Slicer_SOURCE_DIR}/Resources/NAMICLogo.h)
-else (Slicer_SOURCE_DIR)
+if (Slicer3_SOURCE_DIR)
+  generateclp(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
+else (Slicer3_SOURCE_DIR)
   find_package(GenerateCLP NO_MODULE REQUIRED)
   include(${GenerateCLP_USE_FILE})
   generateclp(${CLP}_SOURCE ${CLP}.xml)
-endif (Slicer_SOURCE_DIR)
+endif (Slicer3_SOURCE_DIR)
 add_executable(${CLP} ${${CLP}_SOURCE})
 target_link_libraries (${CLP} ITKIO ITKBasicFilters)
 
-if (Slicer_SOURCE_DIR)
+if (Slicer3_SOURCE_DIR)
   slicer3_set_plugins_output_path(${CLP})
 
   add_library(${CLP}Lib SHARED ${${CLP}_SOURCE})
@@ -61,7 +61,7 @@ if (Slicer_SOURCE_DIR)
 
   set(TARGETS ${CLP}Lib ${CLP})
   slicer3_install_plugins(${TARGETS})
-else (Slicer_SOURCE_DIR)
+else (Slicer3_SOURCE_DIR)
 
 install(TARGETS
   DicomToNrrdConverter
@@ -69,4 +69,4 @@ install(TARGETS
                  LIBRARY DESTINATION lib
                  ARCHIVE DESTINATION lib/static)
 
-endif (Slicer_SOURCE_DIR)
+endif (Slicer3_SOURCE_DIR)
