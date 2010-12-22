@@ -1704,17 +1704,21 @@ void vtkMeasurementsAngleWidget::Update3DWidget(vtkMRMLMeasurementsAngleNode *ac
           vtkWarningMacro("The " <<  model->GetName() << " model is not visible, you won't be able to move the end point");
           }
         }
-      vtkProp *prop = vtkProp::SafeDownCast(this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()));
-      // is it already set to constrain the point placer?
-      if (prop &&
-          !angleWidgetClass->GetModel1PointPlacer()->HasProp(prop))
+      if (this->GetViewerWidget() &&
+          this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()))
         {
-        // clear out any others
-        angleWidgetClass->GetModel1PointPlacer()->RemoveAllProps();
-        // add this one
-        angleWidgetClass->GetModel1PointPlacer()->AddProp(prop);
-        angleRepresentation->GetPoint1Representation()->ConstrainedOff();
-        angleRepresentation->GetPoint1Representation()->SetPointPlacer(angleWidgetClass->GetModel1PointPlacer());
+        vtkProp *prop = vtkProp::SafeDownCast(this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()));
+        // is it already set to constrain the point placer?
+        if (prop &&
+            !angleWidgetClass->GetModel1PointPlacer()->HasProp(prop))
+          {
+          // clear out any others
+          angleWidgetClass->GetModel1PointPlacer()->RemoveAllProps();
+          // add this one
+          angleWidgetClass->GetModel1PointPlacer()->AddProp(prop);
+          angleRepresentation->GetPoint1Representation()->ConstrainedOff();
+          angleRepresentation->GetPoint1Representation()->SetPointPlacer(angleWidgetClass->GetModel1PointPlacer());
+          }
         }
       }
     else
@@ -1754,7 +1758,9 @@ void vtkMeasurementsAngleWidget::Update3DWidget(vtkMRMLMeasurementsAngleNode *ac
       }
     // is it a valid model?
     if (model &&
-        model->GetDisplayNode())
+        model->GetDisplayNode() &&
+        this->GetViewerWidget() &&
+        this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()))
       {
       vtkProp *prop = vtkProp::SafeDownCast(this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()));
       // is it already set to constrain the point placer?
@@ -1822,7 +1828,9 @@ void vtkMeasurementsAngleWidget::Update3DWidget(vtkMRMLMeasurementsAngleNode *ac
       }
     // is it a valid model?
     if (model &&
-        model->GetDisplayNode())
+        model->GetDisplayNode() &&
+        this->GetViewerWidget() &&
+        this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()))
       {
       vtkProp *prop = vtkProp::SafeDownCast(this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()));
       // is it already set to constrain the point placer?

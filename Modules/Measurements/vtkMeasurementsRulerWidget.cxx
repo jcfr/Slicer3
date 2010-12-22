@@ -1481,17 +1481,21 @@ void vtkMeasurementsRulerWidget::Update3DWidget(vtkMRMLMeasurementsRulerNode *ac
           vtkWarningMacro("The " <<  model->GetName() << " model is not visible, you won't be able to move the end point");
           }
         }
-      vtkProp *prop = vtkProp::SafeDownCast(this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()));
-      // is it already set to constrain the point placer?
-      if (prop &&
-          !distanceWidget->GetModel1PointPlacer()->HasProp(prop))
+      if (this->GetViewerWidget() &&
+          this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()))
         {
-        // clear out any others
-        distanceWidget->GetModel1PointPlacer()->RemoveAllProps();
-        // add this one
-        distanceWidget->GetModel1PointPlacer()->AddProp(prop);
-        rep->GetPoint1Representation()->ConstrainedOff();
-        rep->GetPoint1Representation()->SetPointPlacer(distanceWidget->GetModel1PointPlacer());
+        vtkProp *prop = vtkProp::SafeDownCast(this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()));
+        // is it already set to constrain the point placer?
+        if (prop &&
+            !distanceWidget->GetModel1PointPlacer()->HasProp(prop))
+          {
+          // clear out any others
+          distanceWidget->GetModel1PointPlacer()->RemoveAllProps();
+          // add this one
+          distanceWidget->GetModel1PointPlacer()->AddProp(prop);
+          rep->GetPoint1Representation()->ConstrainedOff();
+          rep->GetPoint1Representation()->SetPointPlacer(distanceWidget->GetModel1PointPlacer());
+          }
         }
       }
     else
@@ -1531,7 +1535,9 @@ void vtkMeasurementsRulerWidget::Update3DWidget(vtkMRMLMeasurementsRulerNode *ac
       }
     // is it a valid model?
     if (model &&
-        model->GetDisplayNode())
+        model->GetDisplayNode() &&
+        this->GetViewerWidget() &&
+        this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()))
       {
       vtkProp *prop = vtkProp::SafeDownCast(this->GetViewerWidget()->GetActorByID(model->GetDisplayNode()->GetID()));
       // is it already set to constrain the point placer?
