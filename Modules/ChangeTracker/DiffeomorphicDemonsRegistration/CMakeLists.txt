@@ -24,7 +24,7 @@ generateclp(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h
 #set_target_properties (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
 add_executable(${CLP} ${${CLP}_SOURCE})
 target_link_libraries (${CLP} ITKIO ITKStatistics)
-install(TARGETS ${CLP_MODULE} RUNTIME DESTINATION bin COMPONENT Development)
+install(TARGETS ${CLP} RUNTIME DESTINATION bin COMPONENT Development)
 
 #the following line is an example of how to add a test to your project.
 #Testname is the title for this particular test.  ExecutableToRun is the
