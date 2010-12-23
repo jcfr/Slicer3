@@ -174,6 +174,7 @@ void vtkPichonFastMarchingPDF::update( void )
   for(int k=0;k<=realizationMax;k++)
     coefGauss[k]=exp(-0.5*double(k*k)/sigma2Smooth);
 
+//  std::cerr << "Before update, realization max is " << realizationMax << std::endl;
   {
 
     double val;
@@ -196,6 +197,7 @@ void vtkPichonFastMarchingPDF::update( void )
     smoothedBins[k]=val/nval/double(nRealInBins);
       }
   }
+//  std::cerr << "After update" << std::endl;
 }
 
 void vtkPichonFastMarchingPDF::addRealization( int k )
