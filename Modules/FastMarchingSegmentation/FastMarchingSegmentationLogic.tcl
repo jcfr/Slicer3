@@ -43,7 +43,6 @@ proc FastMarchingSegmentationClone { moduleName {slicerSourceDir ""} {targetDir 
 proc FastMarchingSegmentationInitializeFilter {this} {
 
   set ::FastMarchingSegmentation($this,fastMarchingFilter) [vtkPichonFastMarching New]
-  set ::FastMarchingSegmentation($this,fmOutputImage) [vtkImageData New]
   
   # observe progress events
   set fmFilter $::FastMarchingSegmentation($this,fastMarchingFilter)
@@ -173,7 +172,6 @@ proc FastMarchingSegmentationCreateLabelVolume {this} {
   set inputVolumeName [$volumeNode GetName]
   set inputImageData $::FastMarchingSegmentation($this,inputImage)
   set outputVolumeName [$outputVolumeNode GetName]
-#  $outputVolumeNode SetName "${inputVolumeName}_${outputVolumeName}"
 
   # from vtkSlicerVolumesLogic
   set outputDisplayNode [$outputVolumeNode GetDisplayNode]
@@ -222,15 +220,10 @@ proc FastMarchingSegmentationCreateLabelVolume {this} {
   set ::FastMarchingSegmentation($this,labelVolume) $outputVolumeNode
   set ::FastMarchingSegmentation($this,labelImage) [$outputVolumeNode GetImageData]
 
-#  set selectionNode [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode]
-#  $selectionNode SetReferenceActiveLabelVolumeID [$outputVolumeNode GetID]
-#  $selectionNode Modified
-#  [[$this GetLogic] GetApplicationLogic]  PropagateVolumeSelection 0
-  
   FastMarchingSegmentationShowOutputLabel $this
 
-  # this is here to trigger updates on node selectors
-  $scene InvokeEvent 66000
+  # trigger scene update
+  $scene Edited
 }
 
 proc FastMarchingSegmentationPrepareInput {this} {
@@ -239,13 +232,10 @@ proc FastMarchingSegmentationPrepareInput {this} {
  
   set inputImageData [$::FastMarchingSegmentation($this,inputVolume) GetImageData]
   
-  # next we need to rescale the data, and then cast it to short
-  set ::FastMarchingSegmentation($this,cast) [vtkImageCast New]
-  set cast $::FastMarchingSegmentation($this,cast)
-
-  set ::FastMarchingSegmentation($this,rescale) [vtkImageShiftScale New]
-  set rescale $::FastMarchingSegmentation($this,rescale)
-
+  # cast and rescale the input to reduce memory requirements of the filter
+  set rescaledInputImage [vtkImageData New]
+  set cast [vtkImageCast New]
+  set rescale [vtkImageShiftScale New]
   scan [$inputImageData GetScalarRange] "%f%f" rangeLow rangeHigh
   set depth [expr $rangeHigh-$rangeLow]
   
@@ -267,6 +257,7 @@ proc FastMarchingSegmentationPrepareInput {this} {
   $rescale Update
   
   $cast SetInput [$rescale GetOutput]
+  $cast SetOutput $rescaledInputImage
   $cast SetOutputScalarTypeToShort
   $cast Update
 
@@ -274,15 +265,15 @@ proc FastMarchingSegmentationPrepareInput {this} {
   puts "Scalar range of the prepared image is $rangeLow-$rangeHigh"
 
   set ::FastMarchingSegmentation($this,inputImage) [$cast GetOutput]
+  $rescale Delete
+  $cast Delete
 }
 
 proc FastMarchingSegmentationFinalize {this} {
   # deallocate the filter
-  $::FastMarchingSegmentation($this,cast) Delete
-  $::FastMarchingSegmentation($this,rescale) Delete
   $::FastMarchingSegmentation($this,fastMarchingFilter) unInit
   $::FastMarchingSegmentation($this,fastMarchingFilter) Delete
-  # disable the segmentation adjustment controls
+  $::FastMarchingSegmentation($this,inputImage) Delete
 }
 
 
