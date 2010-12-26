@@ -27,7 +27,7 @@ PURPOSE.  See the above copyright notices for more information.
 // vtkMimxMeshActor is the class to handle display and manipulation
 // of meshes. The actor has default representation for the input unstructuredgrid.
 // In addition, the wire frame is represented through a tubefilter and element sets
-// stored as seperate actors. For scalar display, cell based scalars are the only ones
+// stored as separate actors. For scalar display, cell based scalars are the only ones
 // that are available.
 
 #ifndef __vtkMimxMeshActor_h

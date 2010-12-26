@@ -445,7 +445,7 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     this->NodeParametersSpatialPriorWeightScale->SetResolution(0.01);
     this->NodeParametersSpatialPriorWeightScale->GetEntry()->
       SetCommandTriggerToAnyChange();
-    this->NodeParametersSpatialPriorWeightScale->SetBalloonHelpString("Weight of the atlas (spatial prior) versus the image data. The value must be in the range [0,1], where 0 indicates that the atlas is ignored and 1 indicates the maximum atlas weight. For example, when skullstripping an image, one should set the atlas weight to 1 as the algorithm requires spatial information to seperate the neck from the brain"); 
+    this->NodeParametersSpatialPriorWeightScale->SetBalloonHelpString("Weight of the atlas (spatial prior) versus the image data. The value must be in the range [0,1], where 0 indicates that the atlas is ignored and 1 indicates the maximum atlas weight. For example, when skullstripping an image, one should set the atlas weight to 1 as the algorithm requires spatial information to separate the neck from the brain"); 
     }
 
   this->Script("grid %s -column 0 -row 2 -sticky nw -padx 2 -pady 2",

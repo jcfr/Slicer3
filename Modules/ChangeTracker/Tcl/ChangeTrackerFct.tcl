@@ -995,7 +995,7 @@ namespace eval ChangeTrackerTcl {
     catch { compThrAbs Delete}
     # it is extremly important that the mean of the absolute value is roughly zero otherwise this approach will fail
     # bc we always bias shrinkage or growth towards based on the image with the greater overall intensity value 
-    # ideally compose two seperate histograms - one for shrinkage (the negative values) and one for growth (the positive values ) => zero mean does not matter anymore 
+    # ideally compose two separate histograms - one for shrinkage (the negative values) and one for growth (the positive values ) => zero mean does not matter anymore 
     vtkImageMathematics compThrAbs 
        compThrAbs  SetInput1 $Scan1SubScan2
        compThrAbs  SetOperationToAbsoluteValue

@@ -659,7 +659,7 @@ void vtkChangeTrackerROIStep::ShowUserInterface()
 
   // Very Important 
   this->AddGUIObservers();
-  // Keep seperate bc GUIObserver is also called from vtkChangeTrackerGUI ! 
+  // Keep separate bc GUIObserver is also called from vtkChangeTrackerGUI ! 
   // You only want to add the observers below when the step is active 
   this->AddROISamplingGUIObservers();
 }

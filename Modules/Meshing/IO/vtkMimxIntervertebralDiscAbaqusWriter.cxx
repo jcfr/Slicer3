@@ -125,7 +125,7 @@ int vtkMimxIntervertebralDiscAbaqusWriter::RequestData(
         out << std::endl;
       }  
     }
-        // seperate element sets for disc rings
+        // separate element sets for disc rings
         double meshseed[3];
         bbox->GetCellData()->GetVectors()->GetTuple(0, meshseed);
         for (int i=0; i<meshseed[2]-1; i++) {

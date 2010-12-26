@@ -1747,7 +1747,7 @@ template  <class T> void EMLocalAlgorithm<T>::RunAlgorithm(EMTriVolume& iv_m, EM
   float *skern = new float[this->SmoothingWidth];
   for (int i=0; i < this->SmoothingWidth; i++) skern[i] = float(vtkImageEMGeneral::FastGauss(1.0 / SmoothingSigma,i + lbound));
 
-  // Later define a Print function for E and M step sperately so that we can more easily seperate E and M-Step variables 
+  // Later define a Print function for E and M step separately so that we can more easily separate E and M-Step variables 
   float PCACost = 0;
   float RegistrationCost   = 0.0;
   float RegistrationClassSpecificCost   = 0.0;

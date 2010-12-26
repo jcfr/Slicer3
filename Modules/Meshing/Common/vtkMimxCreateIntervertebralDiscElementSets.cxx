@@ -80,7 +80,7 @@ void vtkMimxCreateIntervertebralDiscElementSets::CreateElementSetArrays()
         //      elementarray->Delete();
         //}
         int i,j;
-        // seperate element sets for disc rings
+        // separate element sets for disc rings
         if(!strcmp(this->ElementSetsName, ""))
         {
                 this->ElementSetsName = "Element_Set_";
