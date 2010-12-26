@@ -35,12 +35,12 @@ template <class T> void EMLocalAlgorithm<T>::RegularizeWeightsWithMeanField(int 
 
   if (this->PrintMFALabelMapConvergence) {
     this->LabelMapMFADifferenceFile = this->OpenTextFile("MFALabelMapConvergence",0,0,1,iter,1,"MFA LabelMap Convergence parameters will be written to: " );
-    fprintf(this->LabelMapMFADifferenceFile, "%% Absolut Percent \n");      
+    fprintf(this->LabelMapMFADifferenceFile, "%% Absolute Percent \n");      
   }
   
   if (this->PrintMFAWeightsConvergence) {
     WeightsMFADifferenceFile = this->OpenTextFile("MFAWeightsConvergence",0,0,1,iter,1, "MFA LabelMap Convergence parameters will be written to: ");
-    fprintf(this->WeightsMFADifferenceFile, "%% Absolut Percent \n");      
+    fprintf(this->WeightsMFADifferenceFile, "%% Absolute Percent \n");      
   }
 
   //--------------------------------------------------------------------

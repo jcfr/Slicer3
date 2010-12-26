@@ -535,7 +535,7 @@ template <class T> void EMLocalAlgorithm<T>::InitializePrint() {
      this->CurrentEMLabelMap  = new short[ImageProd];
      if (this->PrintEMLabelMapConvergence) {
        this->LabelMapEMDifferenceFile = this->OpenTextFile("EMLabelMapConvergence",0,0,1,0,0,"EM Label Convergence Parameters will be written to:" );
-       fprintf(this->LabelMapEMDifferenceFile, "%% Absolut Percent \n");      
+       fprintf(this->LabelMapEMDifferenceFile, "%% Absolute Percent \n");      
      }
   }
 
@@ -544,7 +544,7 @@ template <class T> void EMLocalAlgorithm<T>::InitializePrint() {
     for (int i=0; i< this->NumClasses; i++) this->CurrentEMWeights[i] = new float[ImageProd];
     if (this->PrintEMWeightsConvergence) {
       WeightsEMDifferenceFile = this->OpenTextFile("EMWeightsConvergence",0,0,1,0,0,"EM Weights Convergence Parameters will be written to:");
-      fprintf(this->WeightsEMDifferenceFile, "%% Absolut Percent \n");      
+      fprintf(this->WeightsEMDifferenceFile, "%% Absolute Percent \n");      
     }
   }
 

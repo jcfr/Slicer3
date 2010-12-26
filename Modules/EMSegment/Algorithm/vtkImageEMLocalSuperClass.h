@@ -160,7 +160,7 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMLocalGen
   // Description:  
   // After which criteria should be stopped   
   // 0 = fixed iterations 
-  // 1 = Absolut measure 
+  // 1 = Absolute measure 
   // 2 = Relative measure 
   vtkGetMacro(StopMFAType,int); 
   vtkSetMacro(StopMFAType,int); 
@@ -266,7 +266,7 @@ protected:
 
   int StopEMType;       // After which criteria should be stopped   
                         // 0 = fixed iterations 
-                        // 1 = Absolut measure 
+                        // 1 = Absolute measure 
                         // 2 = Relative measure
   float StopEMValue;    // What is the obundary value, note if the number of iterations 
                         // extend EMiter than stops than

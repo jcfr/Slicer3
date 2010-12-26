@@ -842,13 +842,13 @@ void vtkImageGraph::ExecuteData(vtkDataObject *output) {
       // Check Dimension of curve
       TempExt = TempCurve->GetExtent();
       if ((TempExt[1] - TempExt[0] + 1) != this->Xlength) {
-    vtkErrorMacro("Execute: Length of all curves / regions is not complient with Xlength setting (accepted: "<< this->Xlength << " given: " 
+    vtkErrorMacro("Execute: Length of all curves / regions is not compliant with Xlength setting (accepted: "<< this->Xlength << " given: " 
               << TempExt[1] - TempExt[0] + 1 << "!");
     return;
       }
       if (this->Dimension > 1) {
     if ((TempExt[3] - TempExt[2] + 1) != this->Ylength) {
-      vtkErrorMacro("Execute: Width of a region (" << TempExt[3] - TempExt[2] + 1 << ") is not complient with Ylength setting ("<<this->Ylength<<")!");
+      vtkErrorMacro("Execute: Width of a region (" << TempExt[3] - TempExt[2] + 1 << ") is not compliant with Ylength setting ("<<this->Ylength<<")!");
       return;
     }
     if (ScalarType != TempCurve->GetScalarType()) {

@@ -32,12 +32,12 @@ public:
   /*
    * Constructor. Needed to ensure the exception object can be copied.
    */
-  InvalidImageRegionMomentsError(const char *file, unsigned int lineNumber) : ExceptionObject(file, lineNumber) { this->SetDescription("No valid image moments are availble.");}
+  InvalidImageRegionMomentsError(const char *file, unsigned int lineNumber) : ExceptionObject(file, lineNumber) { this->SetDescription("No valid image moments are available.");}
 
   /*
    * Constructor. Needed to ensure the exception object can be copied.
    */
-  InvalidImageRegionMomentsError(const std::string& file, unsigned int lineNumber) : ExceptionObject(file, lineNumber) { this->SetDescription("No valid image moments are availble.");}  
+  InvalidImageRegionMomentsError(const std::string& file, unsigned int lineNumber) : ExceptionObject(file, lineNumber) { this->SetDescription("No valid image moments are available.");}  
   
   itkTypeMacro(InvalidImageRegionMomentsError, ExceptionObject);
 };
