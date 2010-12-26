@@ -143,7 +143,7 @@ template<class T> int DoIt( int argc, char * argv[], T )
   if (polyData == NULL ||
       polyData->GetPoints() == NULL)
     {
-    std::cerr << "PolyDataToLabelmap: input model file didn't get read from disk property, no points! Check file : " << surface.c_str() << std::endl;
+    std::cerr << "PolyDataToLabelmap: input model file didn't get read from disk properly, no points! Check file : " << surface.c_str() << std::endl;
     return EXIT_FAILURE;
     }
   // LPS vs RAS
