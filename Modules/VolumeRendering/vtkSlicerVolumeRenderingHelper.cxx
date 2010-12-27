@@ -1873,7 +1873,38 @@ void vtkSlicerVolumeRenderingHelper::SetButtonDown(int isDown)
     return;
     
   int val = this->Gui->GetLogic()->SetupVolumeRenderingInteractive(this->Gui->GetCurrentParametersNode(), isDown);
-
+  
+  int numViewer = this->Gui->GetApplicationGUI()->GetNumberOfViewerWidgets();
+  
+  if (isDown)
+  {//12/27/10, added by yanling to support rendering quality drop down when moving sliders (in vtk GPU mapper)
+    int fps = vspNode->GetExpectedFPS();
+    
+    for (int i = 0; i < numViewer; i++)
+    {
+      vtkSlicerViewerWidget *slicer_viewer_widget = this->Gui->GetApplicationGUI()->GetNthViewerWidget(i);
+      if (slicer_viewer_widget)
+      {
+        vtkRenderWindow* renderWindow = slicer_viewer_widget->GetMainViewer()->GetRenderWindow();
+        renderWindow->SetDesiredUpdateRate(fps);
+        renderWindow->GetInteractor()->SetDesiredUpdateRate(fps);
+      }
+    }
+  }
+  else
+  {
+    for (int i = 0; i < numViewer; i++)
+    {
+      vtkSlicerViewerWidget *slicer_viewer_widget = this->Gui->GetApplicationGUI()->GetNthViewerWidget(i);
+      if (slicer_viewer_widget)
+      {
+        vtkRenderWindow* renderWindow = slicer_viewer_widget->GetMainViewer()->GetRenderWindow();
+        renderWindow->SetDesiredUpdateRate(0);
+        renderWindow->GetInteractor()->SetDesiredUpdateRate(0);
+      }
+    }
+  }
+    
   if (val == 0)
     return;
 
