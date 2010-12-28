@@ -326,7 +326,7 @@ void vtkLabelStatisticsGUI::BuildGUI ( )
   app->Script("pack %s -side top -anchor e -padx 20 -pady 4", 
                 this->GrayscaleSelector->GetWidgetName());
   
-  this->LabelmapSelector->SetNodeClass("vtkMRMLScalarVolumeNode", NULL, NULL, NULL);
+  this->LabelmapSelector->SetNodeClass("vtkMRMLScalarVolumeNode", "LabelMap", "1", NULL);
   this->LabelmapSelector->SetParent( moduleFrame->GetFrame() );
   this->LabelmapSelector->Create();
   this->LabelmapSelector->SetMRMLScene(this->Logic->GetMRMLScene());
