@@ -2189,7 +2189,7 @@ CreatePackageFilenames(vtkMRMLScene* scene,
           volumeStorageNode = vtkMRMLVolumeArchetypeStorageNode::New();
           scene->AddNodeNoNotify(volumeStorageNode);
           volumeNode->SetAndObserveStorageNodeID(volumeStorageNode->GetID());
-          std::cout << "Added storage node : " << storageNode->GetID() 
+          std::cout << "Added storage node : " << volumeStorageNode->GetID() 
                     << std::endl;
           volumeStorageNode->Delete();
           storageNode = volumeStorageNode;
