@@ -175,10 +175,8 @@ void vtkSlicerModelDisplayWidget::SetModelDisplayNode ( vtkMRMLModelDisplayNode 
   //
   vtkSetAndObserveMRMLNodeMacro(this->ModelDisplayNode, node);
 
-  if ( node )
-    {
-    this->UpdateWidget();
-    }
+  this->UpdateWidget();
+
 }
 
 //---------------------------------------------------------------------------
@@ -435,14 +433,8 @@ void vtkSlicerModelDisplayWidget::UpdateWidget()
     }
   this->UpdatingWidget = 1;
   
-  if ( this->ModelDisplayNode == NULL )
-    {
-    this->UpdatingWidget = 0;
-    return;
-    }
-
   // get the model node so can get at it's scalars
-  if (this->ModelNode != NULL &&
+  if (this->ModelNode != NULL && this->ModelDisplayNode != NULL &&
       this->ModelNode->GetPolyData() != NULL)
     {
     this->ScalarVisibilityButton->SetEnabled(1);
@@ -504,61 +496,98 @@ void vtkSlicerModelDisplayWidget::UpdateWidget()
     vtkDebugMacro("UpdateWidget: Updating SelectedButton from model node's selected value: " << this->ModelNode->GetSelected());
     this->SelectedButton->GetWidget()->SetSelectedState(this->ModelNode->GetSelected());
     }
-  // for now, let the display node's selected over ride the model node's flag
-  this->SelectedButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetSelected());
 
-  this->VisibilityButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetVisibility());
-  this->ScalarVisibilityButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetScalarVisibility());
-  this->AutoScalarRangeCheckButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetAutoScalarRange());
-  double* scalarRange = this->ModelDisplayNode->GetScalarRange();
-  if (scalarRange)
+  if ( this->ModelDisplayNode == NULL )
     {
-    this->MinScalarRangeEntry->GetWidget()->SetValueAsDouble(scalarRange[0]);
-    this->MaxScalarRangeEntry->GetWidget()->SetValueAsDouble(scalarRange[1]);
+    this->VisibilityButton->SetEnabled(0);
+    this->SelectedButton->SetEnabled(0);
+    this->ScalarVisibilityButton->SetEnabled(0);
+    this->AutoScalarRangeCheckButton->SetEnabled(0);
+    this->MinScalarRangeEntry->SetEnabled(0);
+    this->MaxScalarRangeEntry->SetEnabled(0);
+    this->ScalarMenu->SetEnabled(0);
+    this->ColorSelectorWidget->SetEnabled(0);
+    this->ClippingButton->SetEnabled(0);
+    this->SliceIntersectionVisibilityButton->SetEnabled(0);
+    this->BackfaceCullingButton->SetEnabled(0);
+    this->OpacityScale->SetEnabled(0);
+    this->SurfaceMaterialPropertyWidget->SetEnabled(0);
+    this->ChangeColorButton->SetEnabled(0);
     }
-  // set the active one if it's not already set
-  this->ScalarMenu->GetWidget()->GetMenu()->SelectItem(this->ModelDisplayNode->GetActiveScalarName());
-  // get the color node
-  if (this->ModelDisplayNode->GetColorNode() != NULL)
+  else 
     {
-    vtkMRMLColorNode *color =
-      vtkMRMLColorNode::SafeDownCast(this->ColorSelectorWidget->GetSelected());
-    if (color == NULL ||
-        strcmp(this->ModelDisplayNode->GetColorNodeID(), color->GetID()) != 0)
+    this->VisibilityButton->SetEnabled(1);
+    this->SelectedButton->SetEnabled(1);
+    this->ScalarVisibilityButton->SetEnabled(1);
+    this->AutoScalarRangeCheckButton->SetEnabled(1);
+    this->MinScalarRangeEntry->SetEnabled(1);
+    this->MaxScalarRangeEntry->SetEnabled(1);
+    this->ScalarMenu->SetEnabled(1);
+    this->ColorSelectorWidget->SetEnabled(1);
+    this->ClippingButton->SetEnabled(1);
+    this->SliceIntersectionVisibilityButton->SetEnabled(1);
+    this->BackfaceCullingButton->SetEnabled(1);
+    this->OpacityScale->SetEnabled(1);
+    this->SurfaceMaterialPropertyWidget->SetEnabled(1);
+    this->ChangeColorButton->SetEnabled(1);
+
+    // for now, let the display node's selected over ride the model node's flag
+    this->SelectedButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetSelected());
+
+    this->VisibilityButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetVisibility());
+    this->ScalarVisibilityButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetScalarVisibility());
+    this->AutoScalarRangeCheckButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetAutoScalarRange());
+    double* scalarRange = this->ModelDisplayNode->GetScalarRange();
+    if (scalarRange)
       {
-      this->ColorSelectorWidget->SetSelected(this->ModelDisplayNode->GetColorNode());
+      this->MinScalarRangeEntry->GetWidget()->SetValueAsDouble(scalarRange[0]);
+      this->MaxScalarRangeEntry->GetWidget()->SetValueAsDouble(scalarRange[1]);
       }
-    }
-  else
-    {
-    // clear the selection
-    this->ColorSelectorWidget->SetSelected(NULL);
-    }
-  this->ClippingButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetClipping());
-  this->SliceIntersectionVisibilityButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetSliceIntersectionVisibility());
-  this->BackfaceCullingButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetBackfaceCulling());
-  this->OpacityScale->GetWidget()->SetValue(this->ModelDisplayNode->GetOpacity());
-  if (this->SurfaceMaterialPropertyWidget->GetProperty() == NULL)
-    {
-    vtkProperty *prop = vtkProperty::New();
-    this->SurfaceMaterialPropertyWidget->SetProperty(prop);
-    prop->Delete();
-    }
-  
-  this->SurfaceMaterialPropertyWidget->GetProperty()->SetAmbient(this->ModelDisplayNode->GetAmbient());
-  this->SurfaceMaterialPropertyWidget->GetProperty()->SetDiffuse(this->ModelDisplayNode->GetDiffuse());
-  this->SurfaceMaterialPropertyWidget->GetProperty()->SetSpecular(this->ModelDisplayNode->GetSpecular());
-  this->SurfaceMaterialPropertyWidget->GetProperty()->SetSpecularPower(this->ModelDisplayNode->GetPower());
-  double *rgb = this->ChangeColorButton->GetColor();
-  double *rgb1 = ModelDisplayNode->GetColor();
-  if (fabs(rgb[0]-rgb1[0]) > 0.001 ||
-      fabs(rgb[1]-rgb1[1]) > 0.001 ||
-      fabs(rgb[2]-rgb1[2]) > 0.001)
-    {
-    this->ChangeColorButton->SetColor(this->ModelDisplayNode->GetColor());
+    // set the active one if it's not already set
+    this->ScalarMenu->GetWidget()->GetMenu()->SelectItem(this->ModelDisplayNode->GetActiveScalarName());
+    // get the color node
+    if (this->ModelDisplayNode->GetColorNode() != NULL)
+      {
+      vtkMRMLColorNode *color =
+        vtkMRMLColorNode::SafeDownCast(this->ColorSelectorWidget->GetSelected());
+      if (color == NULL ||
+          strcmp(this->ModelDisplayNode->GetColorNodeID(), color->GetID()) != 0)
+        {
+        this->ColorSelectorWidget->SetSelected(this->ModelDisplayNode->GetColorNode());
+        }
+      }
+    else
+      {
+      // clear the selection
+      this->ColorSelectorWidget->SetSelected(NULL);
+      }
+    this->ClippingButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetClipping());
+    this->SliceIntersectionVisibilityButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetSliceIntersectionVisibility());
+    this->BackfaceCullingButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetBackfaceCulling());
+    this->OpacityScale->GetWidget()->SetValue(this->ModelDisplayNode->GetOpacity());
+    if (this->SurfaceMaterialPropertyWidget->GetProperty() == NULL)
+      {
+      vtkProperty *prop = vtkProperty::New();
+      this->SurfaceMaterialPropertyWidget->SetProperty(prop);
+      prop->Delete();
+      }
+    
+    this->SurfaceMaterialPropertyWidget->GetProperty()->SetAmbient(this->ModelDisplayNode->GetAmbient());
+    this->SurfaceMaterialPropertyWidget->GetProperty()->SetDiffuse(this->ModelDisplayNode->GetDiffuse());
+    this->SurfaceMaterialPropertyWidget->GetProperty()->SetSpecular(this->ModelDisplayNode->GetSpecular());
+    this->SurfaceMaterialPropertyWidget->GetProperty()->SetSpecularPower(this->ModelDisplayNode->GetPower());
+    double *rgb = this->ChangeColorButton->GetColor();
+    double *rgb1 = ModelDisplayNode->GetColor();
+    if (fabs(rgb[0]-rgb1[0]) > 0.001 ||
+        fabs(rgb[1]-rgb1[1]) > 0.001 ||
+        fabs(rgb[2]-rgb1[2]) > 0.001)
+      {
+      this->ChangeColorButton->SetColor(this->ModelDisplayNode->GetColor());
+      }
+
+    this->SurfaceMaterialPropertyWidget->Update();
     }
 
-  this->SurfaceMaterialPropertyWidget->Update();
   this->UpdatingWidget = 0;
 
 }
