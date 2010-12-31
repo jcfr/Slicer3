@@ -217,6 +217,7 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
   this->ProcessingMRMLEvent = 0;
   this->SceneClosing = false;
   this->PythonResult = NULL;
+  this->ModelHierarchyLogic = NULL;
 }
 
 //---------------------------------------------------------------------------
@@ -314,6 +315,11 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
     this->SetAndObserveMRMLScene (NULL);
     delete this->Internals;
     this->DataCount = 0;
+
+    if (this->ModelHierarchyLogic)
+      {
+      this->ModelHierarchyLogic->Delete();
+      }
 }
 
 vtkSlicerApplication*
@@ -2764,6 +2770,12 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
           viewer_widget->SetAndObserveMRMLScene(this->MRMLScene);
           viewer_widget->SetAndObserveViewNode(node);
           viewer_widget->AddMRMLSceneObservers();
+          if (this->ModelHierarchyLogic == NULL)
+            {
+            this->ModelHierarchyLogic = vtkSlicerModelHierarchyLogic::New();
+            this->ModelHierarchyLogic->SetMRMLScene(this->MRMLScene);
+            }
+          viewer_widget->SetModelHierarchyLogic(this->ModelHierarchyLogic);
           viewer_widget->Create();
           this->Internals->ViewerWidgets.push_back(viewer_widget);
           node->InvokeEvent(

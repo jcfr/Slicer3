@@ -61,6 +61,7 @@ class vtkSlicerModulesWizardDialog;
 class vtkSlicerApplicationGUIInternals;
 class vtkMRMLViewNode;
 class vtkSlicerApplication;
+class vtkSlicerModelHierarchyLogic;
 
 /// Description:
 /// This class implements Slicer's main Application GUI.
@@ -495,6 +496,9 @@ protected:
 
   /// Result of the most recent python command as a string
   char *PythonResult;
+
+  vtkSlicerModelHierarchyLogic* ModelHierarchyLogic;
+
 
  private:
 
