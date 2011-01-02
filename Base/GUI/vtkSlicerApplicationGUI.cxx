@@ -2961,7 +2961,7 @@ void vtkSlicerApplicationGUI::OnViewNodeAdded(vtkMRMLViewNode *view_node)
   if (this->GUILayoutNode) 
   {
     int target = this->GUILayoutNode->GetViewArrangement();
-    char *whichSlice = NULL;
+    const char *whichSlice = NULL;
     switch (target)
     {
       case vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView:
