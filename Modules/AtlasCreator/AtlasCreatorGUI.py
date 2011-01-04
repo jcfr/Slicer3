@@ -24,8 +24,13 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._origDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
         self._segDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
+        self._outDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
 
         self._secondFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+
+        self._defaultCaseEntry = slicer.vtkKWEntryWithLabel()
+
+        self._regTypeRadios = slicer.vtkKWRadioButtonSetWithLabel()
 
         self._saveTransformCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._saveDeformationFieldCheckBox = slicer.vtkKWCheckButtonWithLabel()
@@ -70,16 +75,20 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
           
     def GenerateAtlas(self):
         # call the logic
-        atlas = slicer.vtkImageData()
-        atlas.DeepCopy(self._logic.GenerateAtlas(self._origDirButton.GetWidget().GetFileName(),self._segDirButton.GetWidget().GetFileName(),self._saveTransformCheckBox.GetWidget().GetSelectedState(),self._saveDeformationFieldCheckBox.GetWidget().GetSelectedState(),self._labelEntry.GetWidget().GetValue()))
+        tmpImageData = self._logic.GenerateAtlas(self._origDirButton.GetWidget().GetFileName(),self._segDirButton.GetWidget().GetFileName(),self._outDirButton.GetWidget().GetFileName(),self._defaultCaseEntry.GetWidget().GetValue(),self._regTypeRadios.GetWidget().GetWidget(0).GetSelectedState(), self._saveTransformCheckBox.GetWidget().GetSelectedState(),self._saveDeformationFieldCheckBox.GetWidget().GetSelectedState(),self._labelEntry.GetWidget().GetValue())
 
-        # create an output node, if not existent
-        self.CreateOutVolumeNodes()
+        if tmpImageData:
 
-        # save our atlas to the node
-        outVolume = self._outVolumeSelector.GetSelected()
-        outVolume.SetAndObserveImageData(atlas)
-        outVolume.SetModifiedSinceRead(1)
+            atlas = slicer.vtkImageData()
+            atlas.DeepCopy(tmpImageData)
+
+            # create an output node, if not existent
+            self.CreateOutVolumeNodes()
+
+            # save our atlas to the node
+            outVolume = self._outVolumeSelector.GetSelected()
+            outVolume.SetAndObserveImageData(atlas)
+            outVolume.SetModifiedSinceRead(1)
 
                   
     def CreateOutVolumeNodes(self):
@@ -151,11 +160,38 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._segDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._segDirButton.GetWidgetName())
 
+        self._outDirButton.SetParent(self._topFrame.GetFrame())
+        self._outDirButton.Create()
+        self._outDirButton.GetWidget().SetText("Click to pick a directory")
+        self._outDirButton.SetLabelText("Output directory:")
+        self._outDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._outDirButton.GetWidgetName())
+
         self._secondFrame.SetParent(self._moduleFrame.GetFrame())
         self._secondFrame.Create()
         self._secondFrame.SetLabelText("Registration")
         self._secondFrame.ExpandFrame()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._secondFrame.GetWidgetName())
+
+        self._defaultCaseEntry.SetParent(self._secondFrame.GetFrame())
+        self._defaultCaseEntry.Create()
+        self._defaultCaseEntry.SetLabelText("Default case:")
+        self._defaultCaseEntry.GetWidget().SetValue("")
+        self._defaultCaseEntry.SetBalloonHelpString("The filename of the default case used for registration.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._defaultCaseEntry.GetWidgetName())
+
+        self._regTypeRadios.SetParent(self._secondFrame.GetFrame())
+        self._regTypeRadios.Create()
+        self._regTypeRadios.SetLabelText("Registration Type:")
+
+        affineRadio = self._regTypeRadios.GetWidget().AddWidget(0)
+        affineRadio.SetText("Affine")
+
+        nonRigidRadio = self._regTypeRadios.GetWidget().AddWidget(1)
+        nonRigidRadio.SetText("Non-Rigid")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._regTypeRadios.GetWidgetName())
+
+        self._regTypeRadios.GetWidget().GetWidget(0).SetSelectedState(1)
 
         self._saveTransformCheckBox.SetParent(self._secondFrame.GetFrame())
         self._saveTransformCheckBox.Create()
@@ -178,7 +214,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._labelEntry.SetParent(self._thirdFrame.GetFrame())
         self._labelEntry.Create()
         self._labelEntry.SetLabelText("Label Map Values:")
-        self._labelEntry.GetWidget().SetValue("1 2 4 6 10 11 12 13")
+        self._labelEntry.GetWidget().SetValue("3 4 5 6 7 8 9 10 31 32")
         self._labelEntry.SetBalloonHelpString("The label map values of the manual segmentation.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._labelEntry.GetWidgetName())
 
@@ -210,4 +246,3 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
     def GetMyLogic(self):
         return self._logic
-

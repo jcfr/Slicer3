@@ -7,12 +7,15 @@ class AtlasCreatorLogic(object):
 
         self._parentClass = parentClass
 
-    def GenerateAtlas(self,inputOriginalsPath,inputManualSegmentationsPath,saveTransforms,saveDeformationFields,labels):
+    def GenerateAtlas(self,inputOriginalsPath,inputManualSegmentationsPath,outputPath,defCase,onlyAffineReg,saveTransforms,saveDeformationFields,labels):
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("AtlasCreator: GenerateAtlas() called")
         self._parentClass.GetHelper().debug("Path to Original Images: " + str(inputOriginalsPath))
         self._parentClass.GetHelper().debug("Path to Manual Segmentations: " + str(inputManualSegmentationsPath))
+        self._parentClass.GetHelper().debug("Output path: " + str(outputPath))
+        self._parentClass.GetHelper().debug("Default case: " + str(defCase))
+        self._parentClass.GetHelper().debug("Use only affine registration: " + str(onlyAffineReg))
         self._parentClass.GetHelper().debug("Save Transforms: " + str(saveTransforms))
         self._parentClass.GetHelper().debug("Save Deformation Fields: " + str(saveDeformationFields))
         self._parentClass.GetHelper().debug("Labels: " + str(labels))
@@ -23,8 +26,13 @@ class AtlasCreatorLogic(object):
             return 0
 
         # find default case
-        defaultCase = glob.glob(os.path.join(inputOriginalsPath, '*.nrrd'))[0];
-        defaultCaseSeg = glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd'))[0];
+        if defCase:
+            defaultCase = os.path.join(inputOriginalsPath, defCase)
+            defaultCaseSeg = os.path.join(inputManualSegmentationsPath, defCase)
+        else:
+            # no default case was specified, choose the first one
+            defaultCase = glob.glob(os.path.join(inputOriginalsPath, '*.nrrd'))[0];
+            defaultCaseSeg = glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd'))[0];
 
         # get the Slicer paths without environment variables
         slicerDir = str(slicer.Application.GetBinDir())+"/../"
@@ -44,11 +52,11 @@ class AtlasCreatorLogic(object):
                 caseFile = os.path.basename(origFile)
                 caseName = caseFile.rstrip('.nrrd')
                 if saveTransforms:
-                    outputTransform = inputOriginalsPath+"/"+caseName+".mat"
+                    outputTransform = outputPath+"/"+caseName+".mat"
                 else:
                     outputTransform = slicerTempDir+"/"+caseName+".mat"
 
-                os.system(slicerDir+"Slicer3 --launch "+slicerPluginsDir+self.Register(defaultCase,origFile,outputTransform))
+                os.system(slicerDir+"Slicer3 --launch "+slicerPluginsDir+self.Register(defaultCase,origFile,outputTransform,onlyAffineReg))
 
 
         #
@@ -65,7 +73,7 @@ class AtlasCreatorLogic(object):
                 caseName = caseFile.rstrip('.nrrd')
                 origFile = inputOriginalsPath+"/"+caseFile
                 if saveTransforms:
-                    inputTransform = inputOriginalsPath+"/"+caseName+".mat"
+                    inputTransform = outputPath+"/"+caseName+".mat"
                 else:
                     inputTransform = slicerTempDir+"/"+caseName+".mat"
                 outputRegisteredSegmentation = slicerTempDir+"/"+caseName+".nrrd"
@@ -89,7 +97,7 @@ class AtlasCreatorLogic(object):
                     caseFile = os.path.basename(origFile)
                     caseName = caseFile.rstrip('.nrrd')
                     if saveTransforms:
-                        inputTransform = inputOriginalsPath+"/"+caseName+".mat"
+                        inputTransform = outputPath+"/"+caseName+".mat"
                     else:
                         inputTransform = slicerTempDir+"/"+caseName+".mat"
                     outputDeformationField = inputOriginalsPath+"/"+caseName+"DeformationField.nrrd"
@@ -175,7 +183,7 @@ class AtlasCreatorLogic(object):
         return atlas
 
 
-    def Register(self,defaultCase,origFile,outputTransform):
+    def Register(self,defaultCase,origFile,outputTransform,onlyAffineReg):
         registrationCommand = "BRAINSFit "
         registrationCommand += "--fixedVolume "+os.path.normpath(defaultCase)+" "
         registrationCommand += "--movingVolume "+os.path.normpath(origFile)+" "
@@ -184,7 +192,12 @@ class AtlasCreatorLogic(object):
         #registrationCommand += "--maskProcessingMode  ROIAUTO --ROIAutoDilateSize 3.0 --maskInferiorCutOffFromCenter 65.0 "
         registrationCommand += "--useRigid --useScaleVersor3D --useScaleSkewVersor3D "
         #registrationCommand += "--initializeTransformMode useCenterOfHeadAlign --useRigid --useScaleVersor3D --useScaleSkewVersor3D "
-        registrationCommand += "--useAffine --useBSpline --numberOfSamples 100000 --numberOfIterations 1500 "
+        registrationCommand += "--useAffine "
+
+        if not onlyAffineReg:
+            registrationCommand += "--useBSpline "
+
+        registrationCommand += "--numberOfSamples 100000 --numberOfIterations 1500 "
         registrationCommand += "--translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --splineGridSize 28,20,24 --fixedVolumeTimeIndex 0 "
         registrationCommand += "--movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON "
         registrationCommand += "--useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --failureExitCode -1 --debugNumberOfThreads -1 "
