@@ -151,7 +151,7 @@ class AtlasCreatorLogic(object):
                 add.Update()            
     
                 # copy the combined segmentation
-                currentLabelAtlas.DeepCopy(add)
+                currentLabelAtlas.DeepCopy(add.GetOutput())
     
             numberOfManualSegmentations = len(glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')))
     
