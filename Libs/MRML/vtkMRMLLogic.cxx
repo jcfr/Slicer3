@@ -5,6 +5,7 @@
 #include "vtkMRMLStorageNode.h"
 #include "vtkMRMLDisplayableNode.h"
 #include "vtkMRMLDisplayNode.h"
+#include "vtkMRMLModelHierarchyNode.h"
 
 #include <map>
 #include <set>
@@ -123,6 +124,29 @@ void vtkMRMLLogic::RemoveUnreferencedDisplayNodes()
         {
         referencedNodes.insert(displayNode);
         }
+      }
+    }
+
+  // Add hierarcy references
+  vtkMRMLModelHierarchyNode *hierarchyNode = NULL;
+  std::vector<vtkMRMLNode *> displayableHierarchyNodes;
+  this->Scene->GetNodesByClass("vtkMRMLModelHierarchyNode", displayableHierarchyNodes);
+  for (i=0; i<displayableHierarchyNodes.size(); i++)
+    {
+    node = displayableHierarchyNodes[i];
+    if (node)
+      {
+      hierarchyNode = vtkMRMLModelHierarchyNode::SafeDownCast(node);
+      }
+    else
+      {
+      continue;
+      }
+
+    displayNode = hierarchyNode->GetDisplayNode();
+    if (displayNode)
+      {
+      referencedNodes.insert(displayNode);
       }
     }  
   
