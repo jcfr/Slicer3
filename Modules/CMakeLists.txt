@@ -42,7 +42,7 @@ endif(GenerateLM_FOUND)
 #   - ScriptedModule (at run-time for its Tcl package)
 
 SET(modules
-  #AtlasCreator <- culled from slicer 3.6
+  AtlasCreator
   CommandLineModule
   Editor
   Endoscopy
