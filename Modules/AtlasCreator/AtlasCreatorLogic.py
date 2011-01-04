@@ -36,6 +36,7 @@ class AtlasCreatorLogic(object):
 
         # get the Slicer paths without environment variables
         slicerDir = str(slicer.Application.GetBinDir())+"/../"
+        slicerBinDir = str(slicer.Application.GetBinDir())+"/"
         slicerPluginsDir = slicerDir+"lib/Slicer3/Plugins/"
         slicerTempDir = str(slicer.Application.GetTemporaryDirectory())
 
@@ -56,7 +57,7 @@ class AtlasCreatorLogic(object):
                 else:
                     outputTransform = slicerTempDir+"/"+caseName+".mat"
 
-                os.system(slicerDir+"Slicer3 --launch "+slicerPluginsDir+self.Register(defaultCase,origFile,outputTransform,onlyAffineReg))
+                os.system(slicerDir+"Slicer3 --launch "+slicerBinDir+self.Register(defaultCase,origFile,outputTransform,onlyAffineReg))
 
 
         #
@@ -78,7 +79,7 @@ class AtlasCreatorLogic(object):
                     inputTransform = slicerTempDir+"/"+caseName+".mat"
                 outputRegisteredSegmentation = slicerTempDir+"/"+caseName+".nrrd"
 
-                os.system(slicerDir+"Slicer3 --launch "+slicerPluginsDir+self.Resample(segmentfile,origFile,inputTransform,outputRegisteredSegmentation))
+                os.system(slicerDir+"Slicer3 --launch "+slicerBinDir+self.Resample(segmentfile,origFile,inputTransform,outputRegisteredSegmentation))
 
 
         #
