@@ -21,7 +21,7 @@ class AtlasCreatorLogic(object):
         self._parentClass.GetHelper().debug("Labels: " + str(labels))
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
 
-        if not inputOriginalsPath or not inputManualSegmentationsPath:
+        if not inputOriginalsPath or not inputManualSegmentationsPath or not outputPath:
             self._parentClass.GetHelper().debug("Input paths for the original images and the manual segmentations are required.")
             return 0
 
@@ -87,8 +87,8 @@ class AtlasCreatorLogic(object):
         #
         self._parentClass.GetHelper().debug("*** (3) Save Deformationfields ***")
 
-        if not saveDeformationFields:
-            self._parentClass.GetHelper().debug("Saving was disabled.")
+        if not saveDeformationFields or onlyAffineReg:
+            self._parentClass.GetHelper().debug("Saving was disabled or only affine registration was selected.")
         else:
             for origFile in glob.glob(os.path.join(inputOriginalsPath, '*.nrrd')):
 
@@ -101,7 +101,7 @@ class AtlasCreatorLogic(object):
                         inputTransform = outputPath+"/"+caseName+".mat"
                     else:
                         inputTransform = slicerTempDir+"/"+caseName+".mat"
-                    outputDeformationField = inputOriginalsPath+"/"+caseName+"DeformationField.nrrd"
+                    outputDeformationField = outputPath+"/"+caseName+"DeformationField.nrrd"
 
                     os.system(slicerDir+"Slicer3 --launch "+slicerPluginsDir+self.SaveDeformationField(origFile,inputTransform,outputDeformationField))
 
@@ -111,12 +111,15 @@ class AtlasCreatorLogic(object):
         self._parentClass.GetHelper().debug("*** (4) Create Atlas Stage ***")
 
         atlas = slicer.vtkImageData()
+        imageDataBuffer = slicer.vtkImageData()
+        firstrun2 = True
 
         for label in labels:
             
             # for each label, we create an atlas using all manual segmentations
             currentLabelAtlas = slicer.vtkImageData()
-        
+            firstrun = True        
+
             for segmentfile in glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')):
                 
                 # read the manual segmentation
@@ -126,6 +129,8 @@ class AtlasCreatorLogic(object):
                 
                 currentSegmentation = slicer.vtkImageData()
                 currentSegmentation.DeepCopy(reader.GetOutput())
+
+                self._parentClass.GetHelper().debug("::::LOAD::::" + str(currentSegmentation))
                 
                 # threshold for current label
                 threshold = slicer.vtkImageThreshold()
@@ -136,6 +141,8 @@ class AtlasCreatorLogic(object):
                 threshold.SetOutValue(0)
                 threshold.Update()
         
+                self._parentClass.GetHelper().debug("::::THRESHOLD::::" + str(threshold.GetOutput()))
+
                 # divide by label value -> all values are 1 or 0
                 shiftScale = slicer.vtkImageShiftScale()
                 shiftScale.SetInput(threshold.GetOutput())
@@ -143,16 +150,26 @@ class AtlasCreatorLogic(object):
                 shiftScale.SetScale(1/label)
                 shiftScale.Update()
         
+                self._parentClass.GetHelper().debug("::::SHIFTSCALE::::" + str(shiftScale.GetOutput()))
+
                 # combine with other segmentations
                 add = slicer.vtkImageMathematics()
                 add.SetInput1(shiftScale.GetOutput())
                 add.SetInput2(currentLabelAtlas)
                 add.SetOperationToAdd()
                 add.Update()            
+
+                if firstrun:
+                    # copy just the first segmentation
+                    currentLabelAtlas.DeepCopy(shiftScale.GetOutput())
+                    firstrun = False
+                else:
+                    # copy the combined segmentation
+                    currentLabelAtlas.DeepCopy(add.GetOutput())
+
+                self._parentClass.GetHelper().debug("::::ADD::::" + str(currentLabelAtlas))
     
-                # copy the combined segmentation
-                currentLabelAtlas.DeepCopy(add.GetOutput())
-    
+
             numberOfManualSegmentations = len(glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')))
     
             # now we divide our label atlas by the number of manual segmentations
@@ -161,7 +178,9 @@ class AtlasCreatorLogic(object):
             divide.SetOperationToMultiplyByK()
             divide.SetConstantK(1/numberOfManualSegmentations)
             divide.Update()
-                
+            
+            self._parentClass.GetHelper().debug("::::DIVIDE::::" + str(divide.GetOutput()))
+    
             # and combine it with the other label atlases
             # 
             # the result is an image with probabilities between 0 and 1
@@ -170,13 +189,18 @@ class AtlasCreatorLogic(object):
             add.SetInput2(atlas)
             add.SetOperationToAdd()
             add.Update()
-            
-            atlas.DeepCopy(add.GetOutput())
+
+            if firstrun2:
+                atlas.DeepCopy(divide.GetOutput())
+                firstrun2 = True
+            else:
+                atlas.DeepCopy(add.GetOutput())
             
         #
         # done creating the atlas, now return it
         #
         self._parentClass.GetHelper().debug("Atlas was created.")
+        self._parentClass.GetHelper().debug("::::FINAL RESULT::::" + str(atlas))
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
