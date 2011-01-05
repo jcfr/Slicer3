@@ -303,7 +303,8 @@ class VTK_SLICER_FETCHMI_MODULE_LOGIC_EXPORT vtkFetchMILogic : public vtkSlicerM
   void SetSlicerDataTypeOnUnstructuredGridNodes();
   void SetSlicerDataTypeOnFiducialListNodes();
   void SetSlicerDataTypeOnColorTableNodes();
-
+  const char *CreateDefaultStorageNode( vtkMRMLStorableNode *node );
+  void CreateDefaultFilename( vtkMRMLStorableNode *stnode, vtkMRMLStorageNode *snode);
 
   //---------------------------------------------------------------------
   // Upload Tagged Data Methods
@@ -351,6 +352,9 @@ class VTK_SLICER_FETCHMI_MODULE_LOGIC_EXPORT vtkFetchMILogic : public vtkSlicerM
   // It changes a storable node's filename to include the cache path.
   void SetCacheFileNamesOnSelectedResources ( );
 
+  // Description:
+  // Sets the logic's web service based on the node.
+  void UpdateCurrentWebService();
   
   // Description:
   // This method checks to see if the file for xml query responses

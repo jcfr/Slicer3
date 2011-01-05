@@ -601,8 +601,15 @@ void vtkFetchMILogic::RequestResourceUpload ( )
   // set storage nodes with filenames
   //---
   int retval = this->CheckStorageNodeFileNames();
-  // TO DO -- use this.
-//  int retval = this->CheckModifiedSinceRead();
+  if ( retval == 0 )
+    {
+    std::string msg = "Some files have no filenames. Please use the File->Save interface to name all unnamed datasets.";
+    this->FetchMINode->SetErrorMessage (msg.c_str() );
+    this->FetchMINode->InvokeEvent ( vtkMRMLFetchMINode::RemoteIOErrorEvent );
+    return;
+    }
+
+  retval = this->CheckModifiedSinceRead();
   if ( retval == 0 )
     {
     std::string msg = "Some files have been modified since read. Please save all unsaved data to local disk first to ensure some safe copy exists.";
@@ -610,7 +617,7 @@ void vtkFetchMILogic::RequestResourceUpload ( )
     this->FetchMINode->InvokeEvent ( vtkMRMLFetchMINode::RemoteIOErrorEvent );
     return;
     }
-
+  
   //---
   //--- Set filename on all storable nodes to include the cache path
   //--- so they are saved to cache prior to upload.
@@ -1212,8 +1219,8 @@ void vtkFetchMILogic::SaveResourceSelectionState ( )
     vtkMRMLModelNode *mnode = vtkMRMLModelNode::SafeDownCast(node);
     if (mnode != NULL )
       {
-      vtkMRMLStorageNode *snode = mnode->GetStorageNode();
-      if ( snode)
+      vtkMRMLStorageNode* snode = mnode->GetStorageNode();
+      if ( snode )
         {
         this->SelectedStorableNodeIDs.push_back ( node->GetID() );
         }
@@ -1379,13 +1386,31 @@ void vtkFetchMILogic::ProcessMRMLEvents(vtkObject *caller,
   vtkMRMLFetchMINode* node = vtkMRMLFetchMINode::SafeDownCast ( caller );
   if ( node == this->FetchMINode && event == vtkMRMLFetchMINode::SelectedServerModifiedEvent )
     {
-    this->CurrentWebService = this->GetServerCollection()->FindServerByName ( this->FetchMINode->GetSelectedServer() );
-    this->CurrentWebService->SetTagTable (this->FetchMINode->GetTagTableCollection()->
-                                          FindTagTableByName (  this->CurrentWebService->GetTagTableName() ) );
+    this->UpdateCurrentWebService();
     }
 }
 
 
+
+
+//----------------------------------------------------------------------------
+void vtkFetchMILogic::UpdateCurrentWebService()
+{
+  if ( this->FetchMINode == NULL )
+    {
+    vtkErrorMacro ( "Got NULL FetchMINode." );
+    return;
+    }
+  if ( this->GetServerCollection () == NULL )
+    {
+    vtkErrorMacro ( "Got NULL ServerCollection." );
+    return;
+    }
+
+  this->CurrentWebService = this->GetServerCollection()->FindServerByName ( this->FetchMINode->GetSelectedServer() );
+  this->CurrentWebService->SetTagTable (this->FetchMINode->GetTagTableCollection()->
+                                          FindTagTableByName (  this->CurrentWebService->GetTagTableName() ) );
+}
 
 
 //----------------------------------------------------------------------------
@@ -1662,6 +1687,8 @@ void vtkFetchMILogic::SetSlicerDataTypeOnVolumeNodes()
       }
     }
 }
+
+
 
 
 //----------------------------------------------------------------------------
@@ -4018,6 +4045,12 @@ int vtkFetchMILogic::CheckStorageNodeFileNames()
         vtkErrorMacro("CheckStorageNodeFileNames: found a node with null storage node checked for upload.");
         return (0);
         }
+      //--- check for name
+      if ( snode->GetFileName() == NULL )
+        {
+        vtkErrorMacro("CheckStorageNodeFileNames: found a node with null filename.");
+        return (0);
+        }
       }
     }
   return (1);
@@ -4028,8 +4061,8 @@ int vtkFetchMILogic::CheckStorageNodeFileNames()
 //----------------------------------------------------------------------------
 int vtkFetchMILogic::CheckModifiedSinceRead()
 {
-  // Before upload, check to make sure all storable nodes have
-  // set storage nodes with filenames
+  // If we have unsaved data and something really bad happens
+  // during upload, want to give user a chance to save files to local disk.
 
   //--- Get the MRML Scene
   if ( this->GetMRMLScene() == NULL )
@@ -4528,6 +4561,16 @@ void vtkFetchMILogic::SetCacheFileNamesOnSelectedResources ( )
     vtkErrorMacro ("vtkFetchMILogic::SetCacheFileNamesOnSelectedResources Null scene. ");
     return;
     }
+  if ( this->GetMRMLScene()->GetCacheManager() == NULL )
+    {
+    vtkErrorMacro ("vtkFetchMILogic::SetCacheFileNamesOnSelectedResources Null cache manager.. ");
+    return;
+    }
+  if ( this->GetMRMLScene()->GetCacheManager()->GetRemoteCacheDirectory() == NULL )
+    {
+    vtkErrorMacro ("vtkFetchMILogic::SetCacheFileNamesOnSelectedResources Null RemoteIO cache directory.. ");
+    return;
+    }
   if ( this->GetFetchMINode() == NULL )
     {
     vtkErrorMacro ("vtkFetchMILogic::SetCacheFileNamesOnSelectedResources Null FetchMI node. ");
@@ -4577,6 +4620,12 @@ void vtkFetchMILogic::SetCacheFileNamesOnSelectedResources ( )
     if ( storableNode )
       {
 
+      //--- don't show nodes that should not be saved.
+      if ( storableNode->GetHideFromEditors())
+        {
+        continue;
+        }
+
       // for each storage node
       int numStorageNodes = storableNode->GetNumberOfStorageNodes();
       vtkMRMLStorageNode *storageNode;
@@ -4585,6 +4634,27 @@ void vtkFetchMILogic::SetCacheFileNamesOnSelectedResources ( )
         storageNode = storableNode->GetNthStorageNode(i);
         if ( storageNode )
           {
+
+          //--- set some default filenames
+          if (storageNode->GetFileName() == NULL &&
+              this->GetMRMLScene()->GetCacheManager()->GetRemoteCacheDirectory() != NULL)
+            {
+            std::string name (this->GetMRMLScene()->GetCacheManager()->GetRemoteCacheDirectory());
+            name += std::string(storableNode->GetName());
+            const char* ext = storageNode->GetDefaultWriteFileExtension();
+            if (ext) 
+              {
+              name += std::string(".");
+              name += std::string(ext);
+              }
+            storageNode->SetFileName(name.c_str());
+
+            // If the data is sitting in cache, it's vulnerable to overwriting or deleting.
+            // Mark the node as modified since read so that a user will be more likely
+            // to save it to a reliable location on local (or remote) disk.
+            storableNode->ModifiedSinceReadOn();
+            }
+
           //---
           // SPECIAL CASE: NEED TO HANDLE  A FEW NODE TYPES SEPARATELY WAY BECAUSE THEY HAVE NO WRITER!
           //---
@@ -4676,11 +4746,84 @@ void vtkFetchMILogic::SetCacheFileNamesOnSelectedResources ( )
           // if the URIHandler is set before calling CanHandleURI() on all scene handlers,
           // and if not, fix this logic to use the storage node's handler as set.
           // } // end LOOP THRU NODES.
+
           }
         }
       }
     }
 }
+
+
+//----------------------------------------------------------------------------
+const char *vtkFetchMILogic::CreateDefaultStorageNode( vtkMRMLStorableNode *node )
+{
+
+  if ( !this->MRMLScene )
+    {
+    vtkErrorMacro ( "Got NULL scene." );
+    return NULL;
+    }
+  if ( !node )
+    {
+    vtkErrorMacro ( "Got NULL storable node." );
+    return NULL;
+    }
+
+
+  vtkMRMLStorageNode* storageNode = node->CreateDefaultStorageNode();
+  storageNode->SetScene(this->GetMRMLScene());
+  this->SetMRMLScene(this->GetMRMLScene());
+  this->GetMRMLScene()->AddNode(storageNode);  
+  this->SetAndObserveMRMLScene(this->GetMRMLScene());
+  const char *id = storageNode->GetID();
+  node->SetAndObserveStorageNodeID(id);
+  storageNode->Delete();
+  return (id);
+}
+
+
+
+//----------------------------------------------------------------------------
+void vtkFetchMILogic::CreateDefaultFilename( vtkMRMLStorableNode *stnode, vtkMRMLStorageNode *snode)
+{
+  if ( !this->MRMLScene )
+    {
+    vtkErrorMacro ( "Got NULL scene." );
+    return;
+    }
+  if ( !this->MRMLScene->GetCacheManager() )
+    {
+    vtkErrorMacro ( "Got NULL cache manager" );
+    return;
+    }
+  if ( !stnode )
+    {
+    vtkErrorMacro ( "Got NULL storable node." );
+    return;
+    }
+  if ( !snode )
+    {
+    vtkErrorMacro ( "Got NULL storage node" );
+    return;
+    }
+
+  
+  //--- set a default filenames if the name is currently NULL
+  if (snode->GetFileName() == NULL)
+    {
+    std::string name = std::string(stnode->GetName());
+    const char* ext = snode->GetDefaultWriteFileExtension();
+    if (ext) 
+      {
+      name += std::string(".");
+      name += std::string(ext);
+      }
+    snode->SetFileName(name.c_str());
+    this->ApplySlicerDataTypeTag();
+    }
+  return;
+}
+
 
 
 

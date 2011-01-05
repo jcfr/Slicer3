@@ -180,7 +180,7 @@ void vtkFetchMIFlatResourceWidget::ProcessWidgetEvents(vtkObject *caller,
       //--- check for enough cache to do the work.
       if ( this->GetMRMLScene() == NULL || this->GetMRMLScene()->GetCacheManager() == NULL )
         {
-        vtkErrorMacro ( "QueryServerForTags: Got NULL CacheManager." );
+        vtkErrorMacro ( "ProcesWidgetEvents: Got NULL CacheManager." );
         return;
         }
       else
@@ -188,7 +188,7 @@ void vtkFetchMIFlatResourceWidget::ProcessWidgetEvents(vtkObject *caller,
         if ( this->GetMRMLScene()->GetCacheManager()->CacheSizeQuickCheck() == false )
           {
           //--- event invoked by cache manager should be posted by cache&remoteioGUI.
-          vtkErrorMacro ( "QueryServerForTags: Cache size exceeded quota." );
+          vtkErrorMacro ( "ProcessWidgetEvents: Cache size exceeded quota." );
           return;
           }
         }
@@ -303,7 +303,7 @@ void vtkFetchMIFlatResourceWidget::ProcessWidgetEvents(vtkObject *caller,
       //--- check for enough cache to do the work.
       if ( this->GetMRMLScene() == NULL || this->GetMRMLScene()->GetCacheManager() == NULL )
         {
-        vtkErrorMacro ( "QueryServerForTags: Got NULL CacheManager." );
+        vtkErrorMacro ( "ProcessWidgetEvents: Got NULL CacheManager." );
         return;
         }
       else
@@ -311,7 +311,7 @@ void vtkFetchMIFlatResourceWidget::ProcessWidgetEvents(vtkObject *caller,
         if ( this->GetMRMLScene()->GetCacheManager()->CacheSizeQuickCheck() == false )
           {
           //--- event invoked by cache manager should be posted by cache&remoteioGUI.
-          vtkErrorMacro ( "QueryServerForTags: Cache size exceeded quota." );
+          vtkErrorMacro ( "ProcessWidgetEvents: Cache size exceeded quota." );
           return;
           }
         }

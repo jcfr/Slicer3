@@ -58,8 +58,17 @@ public:
   vtkGetStringMacro (TagToAddValuesTo);
   vtkSetStringMacro (TagToAddValuesTo);
   
-  
+  vtkGetMacro ( FileNameColumn, int );
+  vtkSetMacro ( FileNameColumn, int );
+  vtkGetMacro ( NodeNameColumn, int );
+  vtkSetMacro ( NodeNameColumn, int );
+
   void RaiseTaggingHelpWindow();
+  void HandleSceneRenaming( int row, int col, const char *newname);
+  void HandleDataRenaming( int row, int col, const char *newname);
+  //BTX
+  bool CheckRowFileFormatWithExtension( const char* extension, vtkStringArray* supportedFileFormats);
+  //ETX
   
   virtual void AddNewItem ( const char *dataset, const char *dtype);
   //BTX
@@ -195,6 +204,10 @@ public:
   char *NewUserValue;
   char *TagToAddValuesTo;
 
+  int FileNameColumn;
+  int NodeNameColumn;
+  int SceneRow;
+  
   // Description:
   // Create the widget.
   virtual void CreateWidget();

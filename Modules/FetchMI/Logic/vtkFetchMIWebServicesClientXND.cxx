@@ -50,7 +50,7 @@ bool vtkFetchMIWebServicesClientXND::CheckConnectionAndServer ( )
   q << "/tags";
   std::string query = q.str();
   const char *errorString = h->CheckServerStatus(query.c_str() );
-  if ( !strcmp (errorString, "OK"))
+  if ((errorString != NULL) && (!strcmp (errorString, "OK")))
     {
     return 1;
     }
@@ -87,7 +87,7 @@ int vtkFetchMIWebServicesClientXND::QueryServerForTags ( const char *responseFil
   q << "/tags";
   std::string query = q.str();
   const char *errorString = h->QueryServer (query.c_str(), responseFileName );
-  if ( !strcmp (errorString, "OK"))
+  if ( (errorString != NULL ) && (!strcmp (errorString, "OK")))
     {
     return 1;
     }
@@ -117,7 +117,7 @@ int vtkFetchMIWebServicesClientXND::QueryServerForTags ( const char *responseFil
   q << att;
   std::string query = q.str();
   const char *errorString = h->QueryServer ( query.c_str(), responseFilename );
-  if ( !strcmp ( errorString, "OK" ) )
+  if ( (errorString != NULL) && (!strcmp ( errorString, "OK" )) )
     {
     return 1;
     }
@@ -238,7 +238,7 @@ int vtkFetchMIWebServicesClientXND::QueryServerForResources ( vtkTagTable *table
   //---
   query = q.str();
   const char *errorString = h->QueryServer ( query.c_str(), responseFileName );
-  if ( !strcmp(errorString, "OK" ))
+  if ( (errorString != NULL) && (!strcmp(errorString, "OK" )))
     {
     return 1;
     }

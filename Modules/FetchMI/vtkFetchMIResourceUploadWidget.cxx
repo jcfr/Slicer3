@@ -2,6 +2,8 @@
 #include "vtkObjectFactory.h"
 #include "vtkProperty.h"
 
+#include "vtkDataFileFormatHelper.h"
+
 #include "vtkFetchMIResourceUploadWidget.h"
 #include "vtkSlicerApplication.h"
 #include "vtkSlicerApplicationGUI.h"
@@ -37,6 +39,7 @@
 #include <map>
 #include <iterator>
 
+
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkFetchMIResourceUploadWidget );
 vtkCxxRevisionMacro ( vtkFetchMIResourceUploadWidget, "$Revision: 1.0 $");
@@ -70,6 +73,10 @@ vtkFetchMIResourceUploadWidget::vtkFetchMIResourceUploadWidget ( )
 
   this->NewUserTag = NULL;
   this->NewUserValue = NULL;
+
+  this->FileNameColumn = 0;
+  this->NodeNameColumn = 0;
+  this->SceneRow = 0;
 
   this->Logic = NULL;
 }
@@ -424,7 +431,7 @@ void vtkFetchMIResourceUploadWidget::UpdateNewUserTag( const char *att, const ch
 //---------------------------------------------------------------------------
 void vtkFetchMIResourceUploadWidget::ProcessWidgetEvents(vtkObject *caller,
                                                          unsigned long event,
-                                                         void *vtkNotUsed(callData) )
+                                                         void *callData )
 {
   vtkKWPushButton *b = vtkKWPushButton::SafeDownCast ( caller );
   vtkKWMultiColumnList *l = vtkKWMultiColumnList::SafeDownCast( caller );
@@ -499,8 +506,30 @@ void vtkFetchMIResourceUploadWidget::ProcessWidgetEvents(vtkObject *caller,
 
     if ( (l == this->GetMultiColumnList()->GetWidget()) && (event == vtkKWMultiColumnList::CellUpdatedEvent) )
       {
-      this->UpdateSelectedStorableNodes();
+      //---check to see if filename has been changed.
+          this->MultiColumnList->GetWidget()->FinishEditing();
+          if(callData)
+            {
+            void **data = static_cast< void ** >(callData);
+            int* row = static_cast< int* >(data[0]);
+            int* col = static_cast< int* >(data[1]);
+            if ( *col == this->FileNameColumn)
+              {
+              //--- user-specified name and extension.
+              std::string cellText = this->MultiColumnList->GetWidget()->GetCellText ( *row, *col );
+              if ( *row == this->SceneRow)
+                {
+                HandleSceneRenaming( *row, *col, cellText.c_str() );
+                }
+              else 
+                {
+                HandleDataRenaming( *row, *col, cellText.c_str() );
+                }
+              }
+            }
+          this->UpdateSelectedStorableNodes();
       }
+    
     if ( (b == this->GetApplyTagsButton()) && (event == vtkKWPushButton::InvokedEvent ) )
       {
       this->InvokeEvent (vtkFetchMIResourceUploadWidget::TagSelectedDataEvent);
@@ -616,6 +645,395 @@ void vtkFetchMIResourceUploadWidget::ProcessWidgetEvents(vtkObject *caller,
     }
   this->UpdateMRML();
 }
+
+
+
+
+//---------------------------------------------------------------------------
+void vtkFetchMIResourceUploadWidget::HandleSceneRenaming( int row, int col, const char *newname)
+{
+  std::string cellText = newname;
+  std::string cellTextExtension = vtksys::SystemTools::LowerCase (vtksys::SystemTools::GetFilenameLastExtension ( cellText ));
+  std::string cellTextBaseName = vtksys::SystemTools::GetFilenameWithoutExtension ( cellText);
+  std::string cellTextPath = vtksys::SystemTools::GetFilenamePath ( cellText );
+
+  //--- current name and extension.
+  std::string oldPath;
+  std::string oldFullName;
+  std::string oldBaseName;
+  std::string oldExtension;
+  std::string oldURL;
+
+  //--- new name and extension (possibly tweaked after error checking.)
+  std::string useBaseName;
+  std::string useExtension;
+  std::string usePath;
+  std::vector<std::string> pathComponents;
+
+  oldURL = this->GetMRMLScene()->GetURL();
+  oldFullName = vtksys::SystemTools::GetFilenameName ( oldURL );
+  oldPath = vtksys::SystemTools::GetFilenamePath ( oldURL );
+  oldBaseName = vtksys::SystemTools::GetFilenameWithoutExtension ( oldFullName );
+  oldExtension = vtksys::SystemTools::GetFilenameLastExtension ( oldFullName );
+
+  //--- break out if name is same; no changes required.
+  if ( ( cellText == oldURL ) ||
+       ( cellText == oldFullName ) )
+    {
+    return;
+    }
+  //--- if user enters old name without extension, update to
+  //--- include extension and then break out of here.
+  if ( cellText == oldBaseName )
+    {
+    this->MultiColumnList->GetWidget()->SetCellText ( row,  col, oldFullName.c_str() );
+    return;
+    }
+  //--- just keep old stuff if user entered empty field,
+  //--- and then break out of here.
+  if (!cellText.c_str() || !(*cellText.c_str()) || !strlen(cellText.c_str()))
+    {
+    vtkErrorMacro ( "Invalid filename for saving. Reverting to previous name." );
+    this->MultiColumnList->GetWidget()->SetCellText ( row, col, oldFullName.c_str() );
+    return;
+    }
+
+  //--- otherwise, user has entered something new.
+  //--- check all componentes of what user entered carefully:
+  //--- change name if good, or revert name if not good.
+  //--- TODO: add error feedback.
+  //---
+  //--- PATH
+  //---
+  if ( cellTextPath.empty())
+    {
+    //--- keep old path if no new path is specified
+    usePath = oldPath;
+    }
+  //--- keep old path if bad new path is specified but print error.
+  else if ( !vtksys::SystemTools::FileExists(cellTextPath.c_str()) ||
+            !vtksys::SystemTools::FileIsDirectory(cellTextPath.c_str()) )                  
+    {
+    vtkErrorMacro ( "Path for saving does not exist. Reverting to previous pathname." );
+    usePath = oldPath;
+    }
+  else
+    {
+    usePath = cellTextPath;
+    }
+  if ( usePath[usePath.size()-1] != '/')
+    {
+    usePath.append ( "/");
+    }
+
+  //---
+  //--- FILENAME 
+  //---
+  if (!cellTextBaseName.c_str() || !(*cellTextBaseName.c_str()) || !strlen(cellTextBaseName.c_str()))
+    {
+    //--- if new filename is empty, use old one.
+    useBaseName = oldBaseName;
+    }
+  else
+    {
+    useBaseName = cellTextBaseName;
+    }
+
+  //---
+  //--- EXTENSION                
+  //---
+  if ( !cellTextExtension.c_str() || !(*cellTextExtension.c_str()) || !strlen(cellTextExtension.c_str()) || strcmp (cellTextExtension.c_str(), ".mrml"))
+    {
+    //--- if new extension is empty or weird, use .mrml
+    useExtension += ".mrml";
+    }
+  else
+    {
+    //--- well, always use mrml actually...
+    useExtension += ".mrml";
+    }
+
+  //--- set the new URL on the scene...
+  std::string newName = useBaseName;
+  newName.append (useExtension);
+
+  std::string newURL = usePath;
+  newURL.append ( newName );
+  
+  vtksys::SystemTools::ConvertToUnixSlashes(newURL);
+  this->MRMLScene->SetURL ( newURL.c_str() );
+
+  //--- then update the text with new url
+  this->MultiColumnList->GetWidget()->SetCellText ( row, col, newName.c_str() );
+
+}
+
+
+
+
+//---------------------------------------------------------------------------
+void vtkFetchMIResourceUploadWidget::HandleDataRenaming( int row, int col, const char *newname)
+{
+  std::string cellText = newname;
+  std::string cellTextExtension = vtksys::SystemTools::LowerCase (vtksys::SystemTools::GetFilenameLastExtension ( cellText ));
+  std::string cellTextBaseName = vtksys::SystemTools::GetFilenameWithoutExtension ( cellText);
+  std::string cellTextPath = vtksys::SystemTools::GetFilenamePath ( cellText );
+
+  //--- current name and extension.
+  std::string oldPath;
+  std::string oldFullName;
+  std::string oldBaseName;
+  std::string oldExtension;
+  std::string oldURL;
+
+  //--- new name and extension (possibly tweaked after error checking.)
+  std::string useBaseName;
+  std::string useExtension;
+  std::string usePath;
+  std::vector<std::string> pathComponents;
+
+
+  //---
+  //--- HANDLE DATASET RENAMING
+  //---
+  const char *nodeID = this->MultiColumnList->GetWidget()->GetCellText (row, NodeNameColumn);
+
+  //--- get the node's current filename and extension.
+  vtkMRMLStorableNode *node = vtkMRMLStorableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID( nodeID ));
+  if (!node )
+    {
+    vtkErrorMacro ( << this->GetClassName() << ": Got null node.");
+    return;
+    }
+  vtkMRMLStorageNode *snode = node->GetStorageNode ();
+  if ( !snode )
+    {
+    //--- create a default and hook it up...
+    vtkMRMLStorageNode *storageNode = node->CreateDefaultStorageNode();
+    if (storageNode == NULL )
+      {
+      vtkErrorMacro ( << this->GetClassName() << ": couldn't create default storage node.");
+      return;
+      }
+    storageNode->SetScene(this->GetMRMLScene());
+    this->SetMRMLScene(this->GetMRMLScene());
+    this->GetMRMLScene()->AddNode(storageNode);  
+    this->SetAndObserveMRMLScene(this->GetMRMLScene());
+    node->SetAndObserveStorageNodeID(storageNode->GetID());
+    storageNode->Delete();
+    snode = storageNode;
+    }
+                
+  std::string origFilename = snode->GetFileName();
+  //--- if node has no filename associated,
+  //--- either use user's filename if it's valid, or
+  //--- create a default one based on node name.
+  //--- mimics behavior in save data widget.
+  if (origFilename.empty())
+    {
+    origFilename = node->GetName();
+    const char *ext = snode->GetDefaultWriteFileExtension();
+    if (ext )
+      {
+      origFilename.append(".");
+      origFilename.append(ext);
+      }
+    }
+  //--- get the original file path. 
+  //--- if there's no path, or if there's a relative path,
+  //--- then set the path to the same path as scene.
+  oldFullName = vtksys::SystemTools::GetFilenameName ( origFilename );
+  oldPath = vtksys::SystemTools::GetFilenamePath ( origFilename );
+  if (oldPath.empty() || this->MRMLScene->IsFilePathRelative(oldURL.c_str()) )
+    {
+    oldPath = this->MRMLScene->GetRootDirectory();
+    if ( oldPath[oldPath.size()-1] != '/')
+      {
+      oldPath.append ( "/");
+      }
+    }
+
+  //--- now we have an original or default good path, a good filename and an extension.
+  //--- use this to compare user's entered filename and path to.
+  oldBaseName = vtksys::SystemTools::GetFilenameWithoutExtension ( oldFullName );
+  oldExtension = vtksys::SystemTools::GetFilenameLastExtension ( oldFullName );
+  oldURL = oldPath;
+  oldURL.append (origFilename);
+
+  //--- break out if name is same; no changes required.
+  if ( cellText == oldFullName )
+    {
+    return;
+    }
+  //--- if user enters old name without extension, update to
+  //--- include extension and then break out of here.
+  if ( cellText == oldBaseName )
+    {
+    cellText.clear();
+    this->MultiColumnList->GetWidget()->SetCellText ( row,  col, oldFullName.c_str() );
+    return;
+    }
+  //--- just keep old stuff if user entered empty field.
+  if (!cellText.c_str() || !(*cellText.c_str()) || !strlen(cellText.c_str()))
+    {
+    vtkErrorMacro ( "Invalid filename for saving. Reverting to previous name." );
+    this->MultiColumnList->GetWidget()->SetCellText ( row, col, oldFullName.c_str() );
+    return;
+    }
+
+  //--- try to get hooks to tools to do valid extension checking.
+  if ( this->GetMRMLScene()->GetDataIOManager() == NULL )
+    {
+    vtkErrorMacro ("Problem accessing tools to check filename extensions. Reverting to previous name.");
+    this->MultiColumnList->GetWidget()->SetCellText ( row, col, oldFullName.c_str() );
+    return;
+    }
+  if ( this->GetMRMLScene()->GetDataIOManager()->GetFileFormatHelper() == NULL )
+    {
+    vtkErrorMacro ("Problem accessing tools to check filename extensions. Reverting to previous name.");
+    this->MultiColumnList->GetWidget()->SetCellText ( row, col, oldFullName.c_str() );
+    return;
+    }
+
+  //--- otherwise, user has entered something new.
+  //--- check all componentes of what user entered carefully:
+  //--- change name if good, or revert name if not good.
+  //--- TODO: add error feedback.
+  //---
+  //--- PATH
+  //---
+  if ( cellTextPath.empty())
+    {
+    //--- keep old path if no new path is specified
+    usePath = oldPath;
+    }
+  //--- keep old path if bad new path is specified but print error.
+  else if ( !vtksys::SystemTools::FileExists(cellTextPath.c_str()) ||
+            !vtksys::SystemTools::FileIsDirectory(cellTextPath.c_str()) )                  
+    {
+    vtkErrorMacro ( "Path for saving does not exist. Reverting to previous pathname." );
+    usePath = oldPath;
+    }
+  else
+    {
+    usePath = cellTextPath;
+    }
+  //--- add final slash if not already there.
+  if ( usePath[usePath.size()-1] != '/')
+    {
+    usePath.append ( "/");
+    }
+
+  //--- FILENAME & EXTENSION CHECKING.
+  //--- test user's filename for emptiness.
+  if (!cellTextBaseName.c_str() || !(*cellTextBaseName.c_str()) || !strlen(cellTextBaseName.c_str()))
+    {
+    vtkErrorMacro ( "Invalid filename for saving. Reverting to previous name." );
+    this->MultiColumnList->GetWidget()->SetCellText ( row, col, oldFullName.c_str() );
+    return;
+    }
+  else
+    {
+    useBaseName = cellTextBaseName;
+    }
+
+  //--- test user's file extension for emptiness or lack of a "."
+  if (!cellTextExtension.c_str() || !(*cellTextExtension.c_str()) || !strlen(cellTextExtension.c_str()) )
+    {
+    //--- if no extension, add default extension.
+    const char *ext =snode->GetDefaultWriteFileExtension();
+    if ( ext )
+      {
+      cellTextExtension.clear();
+      cellTextExtension = ".";
+      cellTextExtension.append(ext);
+      }
+    else if ( cellTextExtension[0] != '.' )
+      {
+      cellTextExtension.insert(0, "." );
+      }
+    else
+      {
+      vtkErrorMacro ( "Invalid filename for saving. Reverting to previous name." );
+      this->MultiColumnList->GetWidget()->SetCellText ( row, col, oldFullName.c_str() );
+      return;
+      }
+    }
+
+  //--- test user's file extension for appropriateness.....
+  vtkStringArray *supportedFileFormats = snode->GetSupportedWriteFileTypes();
+  if (this->CheckRowFileFormatWithExtension(cellTextExtension.c_str(), supportedFileFormats))
+    {
+    useExtension = cellTextExtension;
+    }
+  else
+    {
+    vtkErrorMacro ( "Inappropriate extension. Using default file format.." );
+    const char *ext = snode->GetDefaultWriteFileExtension();
+    if (ext )
+      {
+      useExtension.clear();
+      useExtension = ".";
+      useExtension.append(ext);      
+      }
+    }
+
+  std::string newName = useBaseName;
+  newName.append(useExtension);
+
+  std::string newURL = usePath;
+  newURL.append (newName);
+  
+  vtksys::SystemTools::ConvertToUnixSlashes(newURL);
+  snode->SetFileName ( newName.c_str() );
+  snode->SetURI(NULL);
+  this->MultiColumnList->GetWidget()->SetCellText ( row, col, newName.c_str() );
+}
+
+
+//---------------------------------------------------------------------------
+bool vtkFetchMIResourceUploadWidget::CheckRowFileFormatWithExtension(
+                                                                     const char* extension, vtkStringArray* supportedFileFormats)
+{
+  if(!extension || !(*extension) || strcmp(extension,".")==0)
+    {
+    vtkErrorMacro ( "Invalid file extension. Reverting to previous filename." );
+    return false;
+    }
+  if ( !supportedFileFormats && supportedFileFormats->GetNumberOfTuples() <= 0 )
+    {
+    vtkErrorMacro ( "No supported file formats. Reverting to previous filename" );
+    return false;
+    }
+
+  //--- try to get hooks to tools to do valid extension checking.
+  if ( this->GetMRMLScene()->GetDataIOManager() == NULL )
+    {
+    vtkErrorMacro ("Problem accessing tools to check filename extensions. Reverting to previous name.");
+    return false;
+    }
+  if ( this->GetMRMLScene()->GetDataIOManager()->GetFileFormatHelper() == NULL )
+    {
+    vtkErrorMacro ("Problem accessing tools to check filename extensions. Reverting to previous name.");
+    return false;
+    }
+  
+    std::string::size_type ext_pos;
+    std::string fileformat;
+    for(int i=0; i<supportedFileFormats->GetNumberOfTuples(); i++)
+      {
+      fileformat=supportedFileFormats->GetValue(i);
+      
+      if ( fileformat.find ( extension ) != std::string::npos )
+        {
+        return true;
+        }
+      }
+
+    return false;
+}
+
+
 
 //---------------------------------------------------------------------------
 void vtkFetchMIResourceUploadWidget::RaiseTaggingHelpWindow()
@@ -1051,6 +1469,7 @@ void vtkFetchMIResourceUploadWidget::CreateWidget ( )
   this->Script ("pack %s -side right -anchor w -expand n -padx 2 -pady 2",
                 this->TaggingHelpButton->GetWidgetName() );
 
+  int index;
   this->GetMultiColumnList()->GetWidget()->AddColumn ( "Tag" );
   this->GetMultiColumnList()->GetWidget()->ColumnEditableOn ( 0 );
   this->GetMultiColumnList()->GetWidget()->SetColumnAlignmentToLeft (0 );
@@ -1068,10 +1487,11 @@ void vtkFetchMIResourceUploadWidget::CreateWidget ( )
   //--- turn off for now until we implement it.
   this->GetMultiColumnList()->GetWidget()->ColumnVisibilityOff ( 1 );
 
-  this->GetMultiColumnList()->GetWidget()->AddColumn ( "Filename      " );
-  this->GetMultiColumnList()->GetWidget()->ColumnEditableOff ( 2 );
+  index = this->GetMultiColumnList()->GetWidget()->AddColumn ( "Filename      " );
+  this->GetMultiColumnList()->GetWidget()->ColumnEditableOn ( 2 );
   this->GetMultiColumnList()->GetWidget()->SetColumnWidth ( 2, 0 );
   this->GetMultiColumnList()->GetWidget()->SetColumnSortModeToAscii ( 2 );
+  this->FileNameColumn = index;
 
   this->GetMultiColumnList()->GetWidget()->AddColumn ( "Slicer Data Type" );
   this->GetMultiColumnList()->GetWidget()->ColumnEditableOff ( 3 );
@@ -1079,14 +1499,17 @@ void vtkFetchMIResourceUploadWidget::CreateWidget ( )
   this->GetMultiColumnList()->GetWidget()->SetColumnSortModeToAscii ( 3 );
 //  this->GetMultiColumnList()->GetWidget()->ColumnVisibilityOff ( 3 );
   
-  this->GetMultiColumnList()->GetWidget()->AddColumn ( "Scene/Data" );
+  index = this->GetMultiColumnList()->GetWidget()->AddColumn ( "Scene/Data" );
   this->GetMultiColumnList()->GetWidget()->ColumnEditableOff ( 4 );
   this->GetMultiColumnList()->GetWidget()->SetColumnWidth ( 4, 0 );
   this->GetMultiColumnList()->GetWidget()->SetColumnSortModeToAscii ( 4 );
-
+  this->NodeNameColumn = index;
+  
   this->GetMultiColumnList()->GetWidget()->SetHeight ( 22);
   
-  this->Script ( "pack %s -side top -fill x -pady 0 -expand n", this->GetMultiColumnList()->GetWidgetName() );
+
+ 
+ this->Script ( "pack %s -side top -fill x -pady 0 -expand n", this->GetMultiColumnList()->GetWidgetName() );
 
   topFrame->Delete();
   l1->Delete();
@@ -1252,6 +1675,7 @@ void vtkFetchMIResourceUploadWidget::AddNewItem ( const char *dataset, const cha
   std::string filePath;
   vtkMRMLStorableNode *node;
   vtkMRMLStorageNode *snode;
+  int scenerow = 0;
   
   if  (this->MRMLScene == NULL )
     {
@@ -1263,6 +1687,7 @@ void vtkFetchMIResourceUploadWidget::AddNewItem ( const char *dataset, const cha
     {
     //--- what is the filename for the scene???
     filePath = this->MRMLScene->GetURL();
+    this->SceneRow = this->GetMultiColumnList()->GetWidget()->GetNumberOfRows();
     }
   else
     {
@@ -1301,6 +1726,8 @@ void vtkFetchMIResourceUploadWidget::AddNewItem ( const char *dataset, const cha
   unique = 1;
   // check to see if dataset is unique before adding it
   int n = this->GetMultiColumnList()->GetWidget()->GetNumberOfRows();
+
+
   for ( i=0; i<n; i++ )
     {
     if ( !strcmp (this->GetMultiColumnList()->GetWidget()->GetCellText(i, 4), dataset ) )
@@ -1319,7 +1746,7 @@ void vtkFetchMIResourceUploadWidget::AddNewItem ( const char *dataset, const cha
   if ( unique )
     {
     //this->GetMultiColumnList()->GetWidget()->SetSelectionTypeToRow();
-    i = this->GetMultiColumnList()->GetWidget()->GetNumberOfRows();
+    i = this->GetMultiColumnList()->GetWidget()->GetNumberOfRows();    
     this->GetMultiColumnList()->GetWidget()->AddRow();
     this->GetMultiColumnList()->GetWidget()->RowSelectableOff(i);
     this->GetMultiColumnList()->GetWidget()->SetCellWindowCommandToCheckButton(i, 0);
