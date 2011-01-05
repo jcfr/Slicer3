@@ -164,35 +164,20 @@ void vtkXNDHandler::StageFileRead(const char * source,
     }
 
   //---
+  //--- write into temporary buffer before copying to destination file.
+  //--- once download is successful, move it to destination.
+  //---
   //--- if it's open already, close it up.
   //---
   if ( this->LocalFile )
     {
-    fclose ( this->LocalFile );
+    if ( fclose(this->LocalFile) != 0 )
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
     this->LocalFile = NULL;
     }
 
-  //---
-  //--- init and configure transfer
-  //---
-  this->InitTransfer( );
-  if ( this->CurlHandle == NULL )
-    {
-    vtkErrorMacro ( "Got NULL curl handle." );
-    return;
-    }
-
-  curl_easy_setopt(this->CurlHandle, CURLOPT_HTTPGET, 1);
-  curl_easy_setopt(this->CurlHandle, CURLOPT_URL, source);
-  curl_easy_setopt(this->CurlHandle, CURLOPT_NOPROGRESS, 1);
-  curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
-  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
-  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 5);
-  
-  //---
-  //--- write into temporary buffer before copying to destination file.
-  //--- once download is successful, move it to destination.
-  //---
   int useBucket = 1;
   if ( useBucket )
     {
@@ -205,6 +190,27 @@ void vtkXNDHandler::StageFileRead(const char * source,
     useBucket = 0;
     this->LocalFile = fopen(destination, "wb");
     }
+  if ( this->LocalFile == NULL )
+    {
+    vtkErrorMacro ( "Unable to open destination file for downloading. No download performed." );
+    return;
+    }
+
+  //---
+  //--- init and configure transfer
+  //---
+  this->InitTransfer( );
+  if ( this->CurlHandle == NULL )
+    {
+    vtkErrorMacro ( "Got NULL curl handle." );
+    return;
+    }
+  curl_easy_setopt(this->CurlHandle, CURLOPT_HTTPGET, 1);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_URL, source);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_NOPROGRESS, 1);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 5);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, this->LocalFile);    
 
   vtkDebugMacro("StageFileRead: about to do the curl download... source = " << source << ", dest = " << destination);
@@ -226,9 +232,12 @@ void vtkXNDHandler::StageFileRead(const char * source,
   // close transfer and clean up.
   this->CloseTransfer();
 
-  if (this->LocalFile )
+  if ( this->LocalFile )
     {
-    fclose(this->LocalFile);
+    if ( fclose(this->LocalFile) != 0 )
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
     this->LocalFile = NULL;
     }
 
@@ -244,7 +253,6 @@ void vtkXNDHandler::StageFileRead(const char * source,
            (vtksys::SystemTools::FileLength ( this->GetFileBucket()) != 0 ) )
         {
         vtkDirectory::Rename (this->GetFileBucket(), destination );
-//        vtksys::SystemTools::CopyFileIfDifferent ( this->GetFileBucket(), destination, true );
         }
       }
     }
@@ -278,11 +286,14 @@ void vtkXNDHandler::StageFileWrite(const char *source,
   // Open file
   if ( this->LocalFile != NULL )
     {
-    fclose ( this->LocalFile );
+    if ( fclose ( this->LocalFile ) != 0)
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
     this->LocalFile = NULL;
     }
   this->LocalFile = fopen(source, "rb");
-  if (this->LocalFile == NULL)
+  if ( this->LocalFile == NULL )
     {
     vtkErrorMacro("StageFileWrite: unable to open file " << source );
     return;
@@ -330,7 +341,10 @@ void vtkXNDHandler::StageFileWrite(const char *source,
 
   if ( this->LocalFile )
     {
-    fclose ( this->LocalFile );
+    if ( fclose ( this->LocalFile ) != 0)
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
     this->LocalFile = NULL;
     }
 }
@@ -383,6 +397,15 @@ int vtkXNDHandler::PostTag ( const char *svr, const char *label,
     return 0;
     }
 
+  // then need to set up a local file for capturing the return uri from the post
+  const char *responseFileName = temporaryResponseFileName;
+  FILE *responseFile = fopen(responseFileName, "wb");
+  if (responseFile == NULL)
+    {
+    this->CloseTransfer();
+    vtkErrorMacro("PostTag: unable to open a local file called " << responseFileName << " to write out to for capturing the uri");
+    return 0;
+    }
   
   //-- configure the curl handle
   curl_easy_setopt(this->CurlHandle, CURLOPT_POST, 1);
@@ -390,21 +413,8 @@ int vtkXNDHandler::PostTag ( const char *svr, const char *label,
   curl_easy_setopt(this->CurlHandle, CURLOPT_URL, uri);
   curl_easy_setopt(this->CurlHandle, CURLOPT_POSTFIELDS, pf );  
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
-  
-  // then need to set up a local file for capturing the return uri from the
-  // post
-  const char *responseFileName = temporaryResponseFileName;
-  FILE *responseFile = fopen(responseFileName, "wb");
-  if (responseFile == NULL)
-    {
-    vtkErrorMacro("PostTag: unable to open a local file caled " << responseFileName << " to write out to for capturing the uri");
-    }
-  else
-    {
-    // for windows
-    curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
-    curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, responseFile);
-    }
+  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, responseFile);
   
   CURLcode retval = curl_easy_perform(this->CurlHandle);
 
@@ -423,7 +433,10 @@ int vtkXNDHandler::PostTag ( const char *svr, const char *label,
 
   if (responseFile)
     {
-    fclose(responseFile);
+    if ( fclose ( responseFile ) != 0)
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
     }
   
   return 1;
@@ -469,12 +482,20 @@ int vtkXNDHandler::PostMetadata( const char *serverPath,
 
   //--- tried this foen with both 'r' and 'rb'
   this->LocalFile = fopen(metaDataFileName, "r");
-  if (this->LocalFile == NULL)
+  if ( this->LocalFile == NULL )
     {
     vtkErrorMacro("PostMetadata: unable to open meta data file " << metaDataFileName);
     return 0;
     }
-  
+  // then need to set up a local file for capturing the return uri from the
+  // post
+  const char *returnURIFileName = temporaryResponseFileName;
+  FILE *returnURIFile = fopen(returnURIFileName, "wb");
+  if (returnURIFile == NULL)
+    {
+    vtkErrorMacro("PostMetadata: unable to open a local file caled " << returnURIFileName << " to write out to for capturing the uri");
+    return 0;
+    }
 
   this->InitTransfer();
   if ( this->CurlHandle == NULL )
@@ -504,21 +525,8 @@ int vtkXNDHandler::PostMetadata( const char *serverPath,
   curl_easy_setopt(this->CurlHandle, CURLOPT_READFUNCTION, xnd_read_callback);
   curl_easy_setopt(this->CurlHandle, CURLOPT_READDATA, this->LocalFile);
   curl_easy_setopt(this->CurlHandle, CURLOPT_POSTFIELDS, NULL );
-  
-  // then need to set up a local file for capturing the return uri from the
-  // post
-  const char *returnURIFileName = temporaryResponseFileName;
-  FILE *returnURIFile = fopen(returnURIFileName, "wb");
-  if (returnURIFile == NULL)
-    {
-    vtkErrorMacro("PostMetadata: unable to open a local file caled " << returnURIFileName << " to write out to for capturing the uri");
-    }
-  else
-    {
-    // for windows
-    curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
-    curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, returnURIFile);
-    }
+  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, returnURIFile);
 
   CURLcode retval = curl_easy_perform(this->CurlHandle);
 
@@ -535,14 +543,20 @@ int vtkXNDHandler::PostMetadata( const char *serverPath,
   curl_slist_free_all(cl);
   this->CloseTransfer();
 
-
-  if (this->LocalFile)
+  if ( this->LocalFile)
     {
-    fclose(this->LocalFile);
+    if ( fclose ( this->LocalFile ) != 0)
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
+      this->LocalFile = NULL;
     }
   if (returnURIFile)
     {
-    fclose(returnURIFile);
+    if ( fclose ( returnURIFile ) != 0)
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
     }
 
   return 1;
@@ -564,13 +578,20 @@ int vtkXNDHandler::DeleteResource ( const char *uri, const char *temporaryRespon
     return ( 0);
     }
 
+  const char *responseFileName = temporaryResponseFileName;
+  FILE *responseFile = fopen(responseFileName, "wb");
+  if (responseFile == NULL)
+    {
+    vtkErrorMacro("vtkXNDHandler::DeleteResource unable to open a local file caled " << responseFileName << " to write out to for capturing the uri");
+    return 0;
+    }
+
   this->InitTransfer( );
   if ( this->CurlHandle == NULL )
     {
     vtkErrorMacro ( "Got NULL curl handle." );
     return 0;
     }
-
 
   //--- not sure what config options we need...
   curl_easy_setopt(this->CurlHandle, CURLOPT_HTTPGET, 1);
@@ -579,21 +600,8 @@ int vtkXNDHandler::DeleteResource ( const char *uri, const char *temporaryRespon
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_NOPROGRESS, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_VERBOSE, true);
-
-
-  const char *responseFileName = temporaryResponseFileName;
-  FILE *responseFile = fopen(responseFileName, "wb");
-  if (responseFile == NULL)
-    {
-    vtkErrorMacro("vtkXNDHandler::DeleteResource unable to open a local file caled " << responseFileName << " to write out to for capturing the uri");
-    }
-  else
-    {
-    // for windows
-    curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
-    curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, responseFile);
-    }
-
+  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, responseFile);
   
   CURLcode retval = curl_easy_perform(this->CurlHandle);
 
@@ -626,7 +634,10 @@ int vtkXNDHandler::DeleteResource ( const char *uri, const char *temporaryRespon
 
   if (responseFile)
     {
-    fclose(responseFile);
+    if ( fclose(responseFile) != 0 )
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
     }
   
   //--- if result = 1, delete response went fine. Otherwise, problem with delete.
@@ -647,6 +658,13 @@ const char *vtkXNDHandler::QueryServer( const char *uri, const char *destination
     return ( returnString );
     }
 
+  this->LocalFile = fopen(destination, "w");
+  if ( this->LocalFile == NULL )
+    {
+    vtkErrorMacro ( "Could not open file for saving the query response, so no queries were made." );
+    return ( "Could not open file for saving query response. No queries made." );
+    }
+
   this->InitTransfer( );
   if ( this->CurlHandle == NULL )
     {
@@ -654,14 +672,10 @@ const char *vtkXNDHandler::QueryServer( const char *uri, const char *destination
     return ("Could not init transfer." );
     }
 
-
-  //--- not sure what config options we need...
-
   curl_easy_setopt(this->CurlHandle, CURLOPT_HTTPGET, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_URL, uri);
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
-  this->LocalFile = fopen(destination, "w");
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, this->LocalFile);
   CURLcode retval = curl_easy_perform(this->CurlHandle);
 
@@ -689,9 +703,13 @@ const char *vtkXNDHandler::QueryServer( const char *uri, const char *destination
       }
     }
   this->CloseTransfer();
-  if (this->LocalFile)
+  if ( this->LocalFile)
     {
-    fclose(this->LocalFile);
+    if ( fclose(this->LocalFile) != 0 )
+      {
+      vtkErrorMacro ( "A remoteIO file was not properly closed." );
+      }
+    this->LocalFile = NULL;
     }
   return ( returnString );
 }
@@ -739,6 +757,7 @@ const char *vtkXNDHandler::CheckServerStatus ( const char *uri )
   CURLcode retval = curl_easy_perform(this->CurlHandle);
   const char *returnString;
 
+/*
   long httpCode;
   long responseCode;
   long connectCode;
@@ -749,7 +768,8 @@ const char *vtkXNDHandler::CheckServerStatus ( const char *uri )
   vtkDebugMacro ("HTTPCONNECTCODE = " << connectCode );
   vtkDebugMacro ("HTTPCODE = " << httpCode);
   vtkDebugMacro ("RESPONSECODE = " << responseCode);
-
+*/
+  
   if (retval == CURLE_OK)
     {
     returnString = "OK";

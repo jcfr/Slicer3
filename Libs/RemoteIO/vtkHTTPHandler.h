@@ -66,7 +66,6 @@ class VTK_RemoteIO_EXPORT vtkHTTPHandler : public vtkURIHandler
   virtual ~vtkHTTPHandler();
   vtkHTTPHandler(const vtkHTTPHandler&);
   void operator=(const vtkHTTPHandler&);
-
   int ForbidReuse;
 
 };
