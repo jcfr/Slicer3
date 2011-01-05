@@ -75,7 +75,14 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
           
     def GenerateAtlas(self):
         # call the logic
-        tmpImageData = self._logic.GenerateAtlas(self._origDirButton.GetWidget().GetFileName(),self._segDirButton.GetWidget().GetFileName(),self._outDirButton.GetWidget().GetFileName(),self._defaultCaseEntry.GetWidget().GetValue(),self._regTypeRadios.GetWidget().GetWidget(0).GetSelectedState(), self._saveTransformCheckBox.GetWidget().GetSelectedState(),self._saveDeformationFieldCheckBox.GetWidget().GetSelectedState(),self._labelEntry.GetWidget().GetValue())
+        tmpImageData = self._logic.GenerateAtlas(self._origDirButton.GetWidget().GetFileName(),
+                                                 self._segDirButton.GetWidget().GetFileName(),
+                                                 self._outDirButton.GetWidget().GetFileName(),
+                                                 self._defaultCaseEntry.GetWidget().GetValue(),
+                                                 self._regTypeRadios.GetWidget().GetWidget(0).GetSelectedState(),
+                                                 self._saveTransformCheckBox.GetWidget().GetSelectedState(),
+                                                 self._saveDeformationFieldCheckBox.GetWidget().GetSelectedState(),
+                                                 self._labelEntry.GetWidget().GetValue())
 
         if tmpImageData:
 

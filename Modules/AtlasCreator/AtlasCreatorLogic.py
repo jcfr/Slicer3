@@ -209,24 +209,24 @@ class AtlasCreatorLogic(object):
 
 
     def Register(self,defaultCase,origFile,outputTransform,onlyAffineReg):
-        registrationCommand = "BRAINSFit "
-        registrationCommand += "--fixedVolume "+os.path.normpath(defaultCase)+" "
-        registrationCommand += "--movingVolume "+os.path.normpath(origFile)+" "
-        registrationCommand += "--outputTransform "+os.path.normpath(outputTransform)+" "
-        registrationCommand += "--maxBSplineDisplacement 10.0 --outputVolumePixelType short --backgroundFillValue 0.0 --interpolationMode Linear "
-        #registrationCommand += "--maskProcessingMode  ROIAUTO --ROIAutoDilateSize 3.0 --maskInferiorCutOffFromCenter 65.0 "
-        registrationCommand += "--useRigid --useScaleVersor3D --useScaleSkewVersor3D "
-        #registrationCommand += "--initializeTransformMode useCenterOfHeadAlign --useRigid --useScaleVersor3D --useScaleSkewVersor3D "
-        registrationCommand += "--useAffine "
+        registrationCommand = "BRAINSFit"
+        registrationCommand += " --fixedVolume "+os.path.normpath(defaultCase)
+        registrationCommand += " --movingVolume "+os.path.normpath(origFile)
+        registrationCommand += " --outputTransform "+os.path.normpath(outputTransform)
+        registrationCommand += " --maxBSplineDisplacement 10.0 --outputVolumePixelType short --backgroundFillValue 0.0 --interpolationMode Linear"
+        #registrationCommand += " --maskProcessingMode  ROIAUTO --ROIAutoDilateSize 3.0 --maskInferiorCutOffFromCenter 65.0"
+        registrationCommand += " --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
+        #registrationCommand += " --initializeTransformMode useCenterOfHeadAlign --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
+        registrationCommand += " --useAffine"
 
         if not onlyAffineReg:
-            registrationCommand += "--useBSpline "
+            registrationCommand += " --useBSpline"
 
-        registrationCommand += "--numberOfSamples 100000 --numberOfIterations 1500 "
-        registrationCommand += "--translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --splineGridSize 28,20,24 --fixedVolumeTimeIndex 0 "
-        registrationCommand += "--movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON "
-        registrationCommand += "--useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --failureExitCode -1 --debugNumberOfThreads -1 "
-        registrationCommand += "--debugLevel 0 --costFunctionConvergenceFactor 1e+9 --projectedGradientTolerance 1e-5"
+        registrationCommand += " --numberOfSamples 100000 --numberOfIterations 1500"
+        registrationCommand += " --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --splineGridSize 28,20,24 --fixedVolumeTimeIndex 0"
+        registrationCommand += " --movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON"
+        registrationCommand += " --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --failureExitCode -1 --debugNumberOfThreads -1"
+        registrationCommand += " --debugLevel 0 --costFunctionConvergenceFactor 1e+9 --projectedGradientTolerance 1e-5"
 
         self._parentClass.GetHelper().debug(registrationCommand)
 
@@ -234,22 +234,22 @@ class AtlasCreatorLogic(object):
 
 
     def Resample(self,segmentFile,origFile,inputTransform,outputRegisteredSegmentation):
-        resampleCommand = "BRAINSResample "
-        resampleCommand += "--inputVolume "+os.path.normpath(segmentFile)+" "
-        resampleCommand += "--referenceVolume "+os.path.normpath(origFile)+" "
-        resampleCommand += "--warpTransform "+os.path.normpath(inputTransform)+" "
-        resampleCommand += "--outputVolume "+os.path.normpath(outputRegisteredSegmentation)+" "
-        resampleCommand += "--defaultValue 8.0 --pixelType short --interpolationMode NearestNeighbor"
+        resampleCommand = "BRAINSResample"
+        resampleCommand += " --inputVolume "+os.path.normpath(segmentFile)
+        resampleCommand += " --referenceVolume "+os.path.normpath(origFile)
+        resampleCommand += " --warpTransform "+os.path.normpath(inputTransform)
+        resampleCommand += " --outputVolume "+os.path.normpath(outputRegisteredSegmentation)
+        resampleCommand += " --defaultValue 8.0 --pixelType short --interpolationMode NearestNeighbor"
 
         return resampleCommand
 
 
     def SaveDeformationField(self,origFile,inputTransform,outputDeformationField):
     
-        saveDefFieldCommand = "BSplineToDeformationField "
-        saveDefFieldCommand += "--refImage "+os.path.normpath(origFile)+" "
-        saveDefFieldCommand += "--tfm "+os.path.normpath(inputTransform)+" "
-        saveDefFieldCommand += "--defImage "+os.path.normpath(outputDeformationField)
+        saveDefFieldCommand = "BSplineToDeformationField"
+        saveDefFieldCommand += " --refImage "+os.path.normpath(origFile)
+        saveDefFieldCommand += " --tfm "+os.path.normpath(inputTransform)
+        saveDefFieldCommand += " --defImage "+os.path.normpath(outputDeformationField)
 
         return saveDefFieldCommand
 
