@@ -126,7 +126,7 @@ class AtlasCreatorLogic(object):
                 reader = slicer.vtkNRRDReader()
                 reader.SetFileName(segmentfile)
                 reader.Update()
-                
+
                 currentSegmentation = slicer.vtkImageData()
                 currentSegmentation.DeepCopy(reader.GetOutput())
 
@@ -136,32 +136,24 @@ class AtlasCreatorLogic(object):
                 threshold = slicer.vtkImageThreshold()
                 threshold.SetInput(currentSegmentation)
                 threshold.ThresholdBetween(label,label)
-                threshold.ReplaceInOff()
+                threshold.ReplaceInOn()
                 threshold.ReplaceOutOn()
+                threshold.SetInValue(1)
                 threshold.SetOutValue(0)
                 threshold.Update()
-        
-                self._parentClass.GetHelper().debug("::::THRESHOLD::::" + str(threshold.GetOutput()))
 
-                # divide by label value -> all values are 1 or 0
-                shiftScale = slicer.vtkImageShiftScale()
-                shiftScale.SetInput(threshold.GetOutput())
-                shiftScale.SetShift(0)
-                shiftScale.SetScale(1/label)
-                shiftScale.Update()
-        
-                self._parentClass.GetHelper().debug("::::SHIFTSCALE::::" + str(shiftScale.GetOutput()))
+                self._parentClass.GetHelper().debug("::::THRESHOLD::::" + str(threshold.GetOutput()))
 
                 # combine with other segmentations
                 add = slicer.vtkImageMathematics()
-                add.SetInput1(shiftScale.GetOutput())
+                add.SetInput1(threshold.GetOutput())
                 add.SetInput2(currentLabelAtlas)
                 add.SetOperationToAdd()
                 add.Update()            
 
                 if firstrun:
                     # copy just the first segmentation
-                    currentLabelAtlas.DeepCopy(shiftScale.GetOutput())
+                    currentLabelAtlas.DeepCopy(threshold.GetOutput())
                     firstrun = False
                 else:
                     # copy the combined segmentation
@@ -170,29 +162,34 @@ class AtlasCreatorLogic(object):
                 self._parentClass.GetHelper().debug("::::ADD::::" + str(currentLabelAtlas))
     
 
+            writer = slicer.vtkNRRDWriter()
+            writer.SetFileName("/tmp/atlas_label_"+str(label)+".nrrd")
+            writer.SetInput(currentLabelAtlas)
+            writer.Update()
+
             numberOfManualSegmentations = len(glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')))
     
-            # now we divide our label atlas by the number of manual segmentations
-            divide = slicer.vtkImageMathematics()
-            divide.SetInput(currentLabelAtlas)
-            divide.SetOperationToMultiplyByK()
-            divide.SetConstantK(1/numberOfManualSegmentations)
-            divide.Update()
-            
-            self._parentClass.GetHelper().debug("::::DIVIDE::::" + str(divide.GetOutput()))
+#            # now we divide our label atlas by the number of manual segmentations
+#            divide = slicer.vtkImageMathematics()
+#            divide.SetInput(currentLabelAtlas)
+#            divide.SetOperationToMultiplyByK()
+#            divide.SetConstantK(1/numberOfManualSegmentations)
+#            divide.Update()
+#            
+#            self._parentClass.GetHelper().debug("::::DIVIDE::::" + str(divide.GetOutput()))
     
             # and combine it with the other label atlases
             # 
             # the result is an image with probabilities between 0 and 1
             add = slicer.vtkImageMathematics()
-            add.SetInput1(divide.GetOutput())
+            add.SetInput1(currentLabelAtlas)
             add.SetInput2(atlas)
             add.SetOperationToAdd()
             add.Update()
 
             if firstrun2:
-                atlas.DeepCopy(divide.GetOutput())
-                firstrun2 = True
+                atlas.DeepCopy(currentLabelAtlas)
+                firstrun2 = False
             else:
                 atlas.DeepCopy(add.GetOutput())
             
