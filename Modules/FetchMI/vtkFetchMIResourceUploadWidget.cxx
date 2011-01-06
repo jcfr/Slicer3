@@ -1018,7 +1018,6 @@ bool vtkFetchMIResourceUploadWidget::CheckRowFileFormatWithExtension(
     return false;
     }
   
-    std::string::size_type ext_pos;
     std::string fileformat;
     for(int i=0; i<supportedFileFormats->GetNumberOfTuples(); i++)
       {
@@ -1675,7 +1674,6 @@ void vtkFetchMIResourceUploadWidget::AddNewItem ( const char *dataset, const cha
   std::string filePath;
   vtkMRMLStorableNode *node;
   vtkMRMLStorageNode *snode;
-  int scenerow = 0;
   
   if  (this->MRMLScene == NULL )
     {
