@@ -29,23 +29,23 @@ class AtlasCreatorLogic(object):
         if defCase:
             defaultCase = os.path.join(inputOriginalsPath, defCase)
             defaultCaseSeg = os.path.join(inputManualSegmentationsPath, defCase)
-        else:
-            # no default case was specified, choose the first one
-            defaultCase = glob.glob(os.path.join(inputOriginalsPath, '*.nrrd'))[0];
-            defaultCaseSeg = glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd'))[0];
+
+        # get the extension of the default case, we will use to find all other cases
+        extension = os.path.splitext(defCase)[1]
 
         # get the Slicer paths without environment variables
-        slicerDir = str(slicer.Application.GetBinDir())+"/../"
-        slicerBinDir = str(slicer.Application.GetBinDir())+"/"
-        slicerPluginsDir = slicerDir+"lib/Slicer3/Plugins/"
-        slicerTempDir = str(slicer.Application.GetTemporaryDirectory())
+        slicerDir = os.path.normpath(str(slicer.Application.GetBinDir())+"/../")
+        slicerLauncher = os.path.normpath(slicerDir+"/Slicer3")
+        slicerBinDir = os.path.normpath(str(slicer.Application.GetBinDir()))+"/"
+        slicerPluginsDir = os.path.normpath(slicerDir+"lib/Slicer3/Plugins")+"/"
+        slicerTempDir = os.path.normpath(str(slicer.Application.GetTemporaryDirectory()))
 
         #
         # registration stage
         #
         self._parentClass.GetHelper().debug("*** (1) Registration Stage ***")
 
-        for origFile in glob.glob(os.path.join(inputOriginalsPath, '*.nrrd')):
+        for origFile in glob.glob(os.path.join(inputOriginalsPath, '*'+extension)):
 
             if origFile!=defaultCase:
                 self._parentClass.GetHelper().debug("Registering "+origFile+" to default case..")
@@ -57,7 +57,7 @@ class AtlasCreatorLogic(object):
                 else:
                     outputTransform = slicerTempDir+"/"+caseName+".mat"
 
-                os.system(slicerDir+"Slicer3 --launch "+slicerBinDir+self.Register(defaultCase,origFile,outputTransform,onlyAffineReg))
+                os.system(slicerLauncher+" --launch "+slicerBinDir+self.Register(defaultCase,origFile,outputTransform,onlyAffineReg))
 
 
         #
@@ -65,7 +65,7 @@ class AtlasCreatorLogic(object):
         #
         self._parentClass.GetHelper().debug("*** (2) Resample Stage ***")
 
-        for segmentfile in glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')):
+        for segmentfile in glob.glob(os.path.join(inputManualSegmentationsPath, '*'+extension)):
 
             if segmentfile!=defaultCaseSeg:
                 self._parentClass.GetHelper().debug("Resampling "+segmentfile+" using the calculated transform..")
@@ -79,7 +79,7 @@ class AtlasCreatorLogic(object):
                     inputTransform = slicerTempDir+"/"+caseName+".mat"
                 outputRegisteredSegmentation = slicerTempDir+"/"+caseName+".nrrd"
 
-                os.system(slicerDir+"Slicer3 --launch "+slicerBinDir+self.Resample(segmentfile,origFile,inputTransform,outputRegisteredSegmentation))
+                os.system(slicerLauncher+" --launch "+slicerBinDir+self.Resample(segmentfile,origFile,inputTransform,outputRegisteredSegmentation))
 
 
         #
@@ -90,7 +90,7 @@ class AtlasCreatorLogic(object):
         if not saveDeformationFields or onlyAffineReg:
             self._parentClass.GetHelper().debug("Saving was disabled or only affine registration was selected.")
         else:
-            for origFile in glob.glob(os.path.join(inputOriginalsPath, '*.nrrd')):
+            for origFile in glob.glob(os.path.join(inputOriginalsPath, '*'+extension)):
 
                 if origFile!=defaultCase:
                     self._parentClass.GetHelper().debug("Saving the deformation field for "+origFile+"..")
@@ -103,7 +103,7 @@ class AtlasCreatorLogic(object):
                         inputTransform = slicerTempDir+"/"+caseName+".mat"
                     outputDeformationField = outputPath+"/"+caseName+"DeformationField.nrrd"
 
-                    os.system(slicerDir+"Slicer3 --launch "+slicerPluginsDir+self.SaveDeformationField(origFile,inputTransform,outputDeformationField))
+                    os.system(slicerLauncher+" --launch "+slicerPluginsDir+self.SaveDeformationField(origFile,inputTransform,outputDeformationField))
 
         #
         # create atlas stage
@@ -112,7 +112,7 @@ class AtlasCreatorLogic(object):
 
         atlas = slicer.vtkImageData()
         imageDataBuffer = slicer.vtkImageData()
-        firstrun2 = True
+        firstAtlas = True
 
         for label in labels:
             
@@ -120,7 +120,7 @@ class AtlasCreatorLogic(object):
             currentLabelAtlas = slicer.vtkImageData()
             firstrun = True        
 
-            for segmentfile in glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')):
+            for segmentfile in glob.glob(os.path.join(inputManualSegmentationsPath, '*'+extension)):
                 
                 # read the manual segmentation
                 reader = slicer.vtkNRRDReader()
@@ -129,8 +129,6 @@ class AtlasCreatorLogic(object):
 
                 currentSegmentation = slicer.vtkImageData()
                 currentSegmentation.DeepCopy(reader.GetOutput())
-
-                self._parentClass.GetHelper().debug("::::LOAD::::" + str(currentSegmentation))
                 
                 # threshold for current label
                 threshold = slicer.vtkImageThreshold()
@@ -142,32 +140,20 @@ class AtlasCreatorLogic(object):
                 threshold.SetOutValue(0)
                 threshold.Update()
 
-                self._parentClass.GetHelper().debug("::::THRESHOLD::::" + str(threshold.GetOutput()))
-
-                # combine with other segmentations
-                add = slicer.vtkImageMathematics()
-                add.SetInput1(threshold.GetOutput())
-                add.SetInput2(currentLabelAtlas)
-                add.SetOperationToAdd()
-                add.Update()            
-
                 if firstrun:
                     # copy just the first segmentation
                     currentLabelAtlas.DeepCopy(threshold.GetOutput())
                     firstrun = False
                 else:
                     # copy the combined segmentation
+                    add = slicer.vtkImageMathematics()
+                    add.SetInput1(threshold.GetOutput())
+                    add.SetInput2(currentLabelAtlas)
+                    add.SetOperationToAdd()
+                    add.Update()
                     currentLabelAtlas.DeepCopy(add.GetOutput())
-
-                self._parentClass.GetHelper().debug("::::ADD::::" + str(currentLabelAtlas))
     
-
-            writer = slicer.vtkNRRDWriter()
-            writer.SetFileName("/tmp/atlas_label_"+str(label)+".nrrd")
-            writer.SetInput(currentLabelAtlas)
-            writer.Update()
-
-            numberOfManualSegmentations = len(glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')))
+             #numberOfManualSegmentations = len(glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')))
     
 #            # now we divide our label atlas by the number of manual segmentations
 #            divide = slicer.vtkImageMathematics()
@@ -176,33 +162,33 @@ class AtlasCreatorLogic(object):
 #            divide.SetConstantK(1/numberOfManualSegmentations)
 #            divide.Update()
 #            
-#            self._parentClass.GetHelper().debug("::::DIVIDE::::" + str(divide.GetOutput()))
     
             # and combine it with the other label atlases
-            # 
-            # the result is an image with probabilities between 0 and 1
-            add = slicer.vtkImageMathematics()
-            add.SetInput1(currentLabelAtlas)
-            add.SetInput2(atlas)
-            add.SetOperationToAdd()
-            add.Update()
-
-            if firstrun2:
+            if firstAtlas:
                 atlas.DeepCopy(currentLabelAtlas)
-                firstrun2 = False
+                firstAtlas = False
             else:
+                add = slicer.vtkImageMathematics()
+                add.SetInput1(currentLabelAtlas)
+                add.SetInput2(atlas)
+                add.SetOperationToAdd()
+                add.Update()    
                 atlas.DeepCopy(add.GetOutput())
+
+        writer = slicer.vtkNRRDWriter()
+        writer.SetFileName(os.path.normpath(outputPath+"/atlas.nrrd"))
+        writer.SetInput(atlas)
+        writer.Update()
             
         #
-        # done creating the atlas, now return it
+        # done creating the atlas
         #
-        self._parentClass.GetHelper().debug("Atlas was created.")
-        self._parentClass.GetHelper().debug("::::FINAL RESULT::::" + str(atlas))
+        self._parentClass.GetHelper().debug("Atlas was created and saved to "+os.path.normpath(outputPath+"/atlas.nrrd")+".")
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         
-        return atlas
+        return 1
 
 
     def Register(self,defaultCase,origFile,outputTransform,onlyAffineReg):
@@ -225,7 +211,6 @@ class AtlasCreatorLogic(object):
         registrationCommand += " --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --failureExitCode -1 --debugNumberOfThreads -1"
         registrationCommand += " --debugLevel 0 --costFunctionConvergenceFactor 1e+9 --projectedGradientTolerance 1e-5"
 
-        self._parentClass.GetHelper().debug(registrationCommand)
 
         return registrationCommand
 

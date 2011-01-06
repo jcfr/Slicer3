@@ -1,10 +1,15 @@
 from SlicerScriptedModule import ScriptedModuleGUI
 from Slicer import slicer
+from operator import itemgetter, attrgetter
+import glob
+import os
 
 from AtlasCreatorHelper import AtlasCreatorHelper
 from AtlasCreatorLogic import AtlasCreatorLogic
 
 vtkKWPushButton_InvokedEvent = 10000
+
+vtkKWFileBrowserDialog_FileNameChangedEvent = 15000
 
 vtkMRMLScene_CloseEvent = 66003
 
@@ -28,7 +33,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._secondFrame = slicer.vtkSlicerModuleCollapsibleFrame()
 
-        self._defaultCaseEntry = slicer.vtkKWEntryWithLabel()
+        self._defaultCaseEntry = slicer.vtkKWComboBoxWithLabel()
 
         self._regTypeRadios = slicer.vtkKWRadioButtonSetWithLabel()
 
@@ -37,7 +42,6 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._thirdFrame = slicer.vtkSlicerModuleCollapsibleFrame()
         self._labelEntry = slicer.vtkKWEntryWithLabel()
-        self._outVolumeSelector = slicer.vtkSlicerNodeSelectorWidget()
         self._generateButton = slicer.vtkKWPushButton()
 
         self._helper = AtlasCreatorHelper(self)
@@ -61,7 +65,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
     def AddGUIObservers(self):
         self._generateButtonTag = self.AddObserverByNumber(self._generateButton,vtkKWPushButton_InvokedEvent)
-
+        self._origDirButtonTag = self.AddObserverByNumber(self._origDirButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
+        self._segDirButtonTag = self.AddObserverByNumber(self._segDirButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
 
     def RemoveGUIObservers(self):
         pass
@@ -71,11 +76,41 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
             if caller == self._generateButton and event == vtkKWPushButton_InvokedEvent:
                 self.GenerateAtlas()
+            elif caller == self._origDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
+                self.UpdateCaseCombobox()
+            elif caller == self._segDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
+                self.UpdateCaseCombobox()
 
-          
+
+    def UpdateCaseCombobox(self):
+        if self._origDirButton.GetWidget().GetFileName() and self._segDirButton.GetWidget().GetFileName():
+            # originals and segmentations dir were configured, now we parse for potential image data
+            nrrdFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.nrrd'))
+            nhdrFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.nhdr'))
+            hdrFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.hdr'))          
+            mhdFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.mhd'))          
+            mhaFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.mha'))
+        
+            listOfFiles = [
+                          ('.nrrd',len(nrrdFiles)),
+                          ('.nhdr',len(nhdrFiles)),
+                          ('.hdr',len(hdrFiles)),
+                          ('.mhd',len(mhdFiles)),
+                          ('.mha',len(mhaFiles)),                               
+                          ]
+
+            self._helper.debug("Found "+str(sorted(listOfFiles, key=itemgetter(1), reverse=True)[0][1])+" files of type "+str(sorted(listOfFiles, key=itemgetter(1), reverse=True)[0][0]))
+
+            for nrrdFile in nrrdFiles:
+                caseFile = os.path.basename(nrrdFile)
+                if os.path.isfile(os.path.join(self._segDirButton.GetWidget().GetFileName(),caseFile)):
+                    # file exists in originals and segmentations directory, so we can add it to our list of cases
+                    self._defaultCaseEntry.GetWidget().AddValue(caseFile)
+                    self._defaultCaseEntry.GetWidget().SetValue(caseFile)
+
     def GenerateAtlas(self):
         # call the logic
-        tmpImageData = self._logic.GenerateAtlas(self._origDirButton.GetWidget().GetFileName(),
+        result = self._logic.GenerateAtlas(self._origDirButton.GetWidget().GetFileName(),
                                                  self._segDirButton.GetWidget().GetFileName(),
                                                  self._outDirButton.GetWidget().GetFileName(),
                                                  self._defaultCaseEntry.GetWidget().GetValue(),
@@ -84,18 +119,25 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                                                  self._saveDeformationFieldCheckBox.GetWidget().GetSelectedState(),
                                                  self._labelEntry.GetWidget().GetValue())
 
-        if tmpImageData:
+        if result:
 
-            atlas = slicer.vtkImageData()
-            atlas.DeepCopy(tmpImageData)
+            import os
+            newVolNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/atlas.nrrd"),'Atlas')
 
-            # create an output node, if not existent
-            self.CreateOutVolumeNodes()
+            displayNode = newVolNode.GetDisplayNode()
+            if displayNode:
+                newDisplayNode = displayNode.NewInstance()
+                newDisplayNode.Copy(displayNode)
+                slicer.MRMLScene.AddNodeNoNotify(newDisplayNode)
+                newVolNode.SetAndObserveDisplayNodeID(newDisplayNode.GetID())
+                newDisplayNode.AutoWindowLevelOff()
+                newDisplayNode.AutoWindowLevelOn()
 
-            # save our atlas to the node
-            outVolume = self._outVolumeSelector.GetSelected()
-            outVolume.SetAndObserveImageData(atlas)
-            outVolume.SetModifiedSinceRead(1)
+
+            selectionNode = slicer.ApplicationLogic.GetSelectionNode()
+            selectionNode.SetReferenceActiveVolumeID(newVolNode.GetID())
+            slicer.ApplicationLogic.PropagateVolumeSelection()
+
 
                   
     def CreateOutVolumeNodes(self):
@@ -149,7 +191,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._topFrame.SetParent(self._moduleFrame.GetFrame())
         self._topFrame.Create()
-        self._topFrame.SetLabelText("Input")
+        self._topFrame.SetLabelText("Input/Output")
         self._topFrame.ExpandFrame()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._topFrame.GetWidgetName())
 
@@ -160,12 +202,16 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._origDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._origDirButton.GetWidgetName())
 
+        self._origDirButton.GetWidget().GetLoadSaveDialog().Create()
+
         self._segDirButton.SetParent(self._topFrame.GetFrame())
         self._segDirButton.Create()
         self._segDirButton.GetWidget().SetText("Click to pick a directory")
         self._segDirButton.SetLabelText("Manual segmentations:")
         self._segDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._segDirButton.GetWidgetName())
+
+        self._segDirButton.GetWidget().GetLoadSaveDialog().Create()
 
         self._outDirButton.SetParent(self._topFrame.GetFrame())
         self._outDirButton.Create()
@@ -182,8 +228,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._defaultCaseEntry.SetParent(self._secondFrame.GetFrame())
         self._defaultCaseEntry.Create()
+        self._defaultCaseEntry.GetWidget().ReadOnlyOn()
         self._defaultCaseEntry.SetLabelText("Default case:")
-        self._defaultCaseEntry.GetWidget().SetValue("")
         self._defaultCaseEntry.SetBalloonHelpString("The filename of the default case used for registration.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._defaultCaseEntry.GetWidgetName())
 
@@ -224,17 +270,6 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._labelEntry.GetWidget().SetValue("3 4 5 6 7 8 9 10 31 32")
         self._labelEntry.SetBalloonHelpString("The label map values of the manual segmentation.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._labelEntry.GetWidgetName())
-
-        self._outVolumeSelector.SetNodeClass("vtkMRMLScalarVolumeNode","","1","AtlasOutput")
-        self._outVolumeSelector.SetNewNodeEnabled(1)
-        self._outVolumeSelector.SetParent(self._thirdFrame.GetFrame())
-        self._outVolumeSelector.Create()
-        self._outVolumeSelector.SetMRMLScene(self.GetLogic().GetMRMLScene())
-        self._outVolumeSelector.UpdateMenu()
-        self._outVolumeSelector.SetBorderWidth(2)
-        self._outVolumeSelector.SetLabelText("Atlas Output Volume: ")
-        self._outVolumeSelector.SetBalloonHelpString("select an output volume from the current mrml scene.")
-        slicer.TkCall("pack %s -side top -anchor e -padx 20 -pady 4" % self._outVolumeSelector.GetWidgetName())
 
         self._generateButton.SetParent(self._moduleFrame.GetFrame())
         self._generateButton.Create()
