@@ -268,7 +268,6 @@ proc FastMarchingSegmentationBuildGUI {this} {
   # disable results adjustment frame to reduce confusion
   FastMarchingSegmentationDisableAdjustFrameGUI $this
 
-  set ::FastMarchingSegmentation($this,userWarnedFlag) 0
   set ::FastMarchingSegmentation($this,newFiducialListFlag) 0
 }
 
@@ -323,15 +322,6 @@ proc FastMarchingSegmentationProcessGUIEvents {this caller event} {
     if { [$::FastMarchingSegmentation($this,segVolumeThumbWheel) GetValue] == 0} {
       FastMarchingSegmentationErrorDialog $this "Target segmentation volume cannot be 0!"
       return
-    }
-
-    #if { $::FastMarchingSegmentation($this,userWarnedFlag) == 0 } {
-    if { 0 } {
-      FastMarchingSegmentationErrorDialog $this "WARNING: The segmentation \
-      produced by this method cannot approach closer than 3 pixels to the \
-      boundary of the image.\n\nPlease make sure there is sufficient pixel margin \
-      around the structure you are trying to segment!"
-      set ::FastMarchingSegmentation($this,userWarnedFlag) 1
     }
 
     # try to prevent user from messing up the module
