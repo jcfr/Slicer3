@@ -325,7 +325,8 @@ proc FastMarchingSegmentationProcessGUIEvents {this caller event} {
       return
     }
 
-    if { $::FastMarchingSegmentation($this,userWarnedFlag) == 0 } {
+    #if { $::FastMarchingSegmentation($this,userWarnedFlag) == 0 } {
+    if { 0 } {
       FastMarchingSegmentationErrorDialog $this "WARNING: The segmentation \
       produced by this method cannot approach closer than 3 pixels to the \
       boundary of the image.\n\nPlease make sure there is sufficient pixel margin \
