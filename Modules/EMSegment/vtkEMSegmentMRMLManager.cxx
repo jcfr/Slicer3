@@ -1935,7 +1935,7 @@ GetTreeNodeSubParcellationVolumeID(vtkIdType nodeID)
   
   if (mrmlVolumeNodeID == NULL || strlen(subParcellationVolumeName) == 0)
     {
-    vtkErrorMacro("MRMLID for prior volume is null; nodeID=" << nodeID);
+    vtkErrorMacro("MRMLID for subparcellation volume is null; nodeID=" << nodeID);
     return ERROR_NODE_VTKID;
     }
   else if (this->IDMapContainsMRMLNodeID(mrmlVolumeNodeID))
@@ -4484,6 +4484,12 @@ RegisterMRMLNodesWithScene()
     vtkMRMLEMSTargetNode::New();
   this->GetMRMLScene()->RegisterNodeClass(emsTargetNode);
   emsTargetNode->Delete();  
+
+
+  vtkMRMLEMSVolumeCollectionNode* emsVolumeCollectionNode =  vtkMRMLEMSVolumeCollectionNode::New();
+  this->GetMRMLScene()->RegisterNodeClass(emsVolumeCollectionNode);
+  emsVolumeCollectionNode->Delete();  
+
 
   vtkMRMLEMSWorkingDataNode* emsWorkingDataNode = 
     vtkMRMLEMSWorkingDataNode::New();
