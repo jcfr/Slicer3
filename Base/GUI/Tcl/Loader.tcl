@@ -615,7 +615,11 @@ itcl::body Loader::apply { } {
            # uses smart pointers which don't return the node back to tcl
            set ret [[$::slicer3::ColorGUI GetLogic] LoadColorFile $path $name]
            if {$ret != 1} {
-               $this errorDialog "Could not open color file $path"
+               if {$ret == -1} {
+                   $this errorDialog "A color file with the same name has been already loaded. Please rename $path and try again."
+               } else {
+                   $this errorDialog "Could not open color file $path"
+               }
            }
         }
         "Transform" {

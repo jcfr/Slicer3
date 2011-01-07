@@ -109,8 +109,8 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerColorLogic : public vtkSlicerLogic
   void AddColorFile(const char *fileName, std::vector<std::string> *Files);
 //ETX
   /// 
-  /// load in a color file, creating a storage node. Returns 1 on success,
-  /// 0 on failure.
+  /// load in a color file, creating a storage node. Returns 1 on
+  /// success. Returns -1 if there's a file name clash, 0 on general loading failure.
   int LoadColorFile(const char *fileName, const char *nodeName = NULL);
 
   /// 

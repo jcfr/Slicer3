@@ -954,6 +954,11 @@ int vtkSlicerColorLogic::LoadColorFile(const char *fileName, const char *nodeNam
       //this->AddColorFile(fileName);
       return 1;
       }
+    else
+      {
+      vtkErrorMacro("LoadColorFile: a file has already been loaded with the file name " << colorStorageNode->GetFileName() << ", there is an ID clash (generated from the file name) of " << id.c_str() << ".\nPlease rename your file and load it again");
+      return -1;
+      }
     }
   else
     {
