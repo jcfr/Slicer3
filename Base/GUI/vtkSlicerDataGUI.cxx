@@ -1214,12 +1214,20 @@ void vtkSlicerDataGUI::ProcessGUIEvents ( vtkObject *caller,
             win->SetStatusText ( "Reading and loading color LUT file..." );
             app->Script ( "update idletasks" );
             int retval = colorLogic->LoadColorFile(fileName);
-            if (!retval)
+            if (retval != 1)
               {
                 vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
                 dialog->SetParent ( this->UIPanel->GetPageWidget ( "Data" ) );
                 dialog->SetStyleToMessage();
-                std::string msg = std::string("Unable to read color file ") + std::string(fileName);
+                std::string msg;
+                if (retval == -1)
+                  {
+                  msg = std::string("A color file with the same name has been already loaded. Please rename the file and try again: ") + std::string(fileName);
+                  }
+                else
+                  {
+                  msg = std::string("Unable to read color file ") + std::string(fileName);
+                  }
                 dialog->SetText(msg.c_str());
                 dialog->Create ( );
                 dialog->Invoke();

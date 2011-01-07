@@ -18,16 +18,24 @@ proc TestColorStorageNodeInScene {  } {
     set colorLogic [ $::slicer3::ColorGUI GetLogic ]
     
     # load the color node
-    set cnode [$colorLogic LoadColorFile $colorFileName "ColorTest"]
+    set loadFlag [$colorLogic LoadColorFile $colorFileName "ColorTest"]
 
-    if {$cnode == ""} {
+    if {$loadFlag != 1} {
         puts "Error loading color file $colorFileName"
         return 1
     } else {
-        puts "Loaded color file as node named [$cnode GetName]"
+        puts "Loaded color file"
     }
 
-    set cnodeID [$cnode GetID]
+    # get the color node
+    set cnodeID [$colorLogic GetDefaultFileColorNodeID $colorFileName]
+    set cnode [$::slicer3::MRMLScene GetNodeByID $cnodeID]
+    if {$cnode == ""} {
+        puts "Error getting color node for file $colorFileName"
+        return 1
+    } else {
+        puts "Loaded color file has id $cnodeID"
+    }
     set cnodeName [$cnode GetName]
     set testNode [$::slicer3::MRMLScene GetNodeByID $cnodeID]
     if {$testNode == ""} {
