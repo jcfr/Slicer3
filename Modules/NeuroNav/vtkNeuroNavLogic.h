@@ -35,6 +35,8 @@ Version:   $Revision: $
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkIGTPat2ImgRegistration.h"
 
+#include "vtkMRMLCrosshairNode.h"
+#include "vtkMRMLSliceNode.h"
 
 class VTK_NEURONAV_EXPORT vtkNeuroNavLogic : public vtkSlicerModuleLogic 
 {
@@ -105,10 +107,11 @@ public:
   vtkGetObjectMacro ( LocatorTransform, vtkTransform );
   vtkGetObjectMacro ( LocatorMatrix,    vtkMatrix4x4 );
   vtkGetObjectMacro ( Pat2ImgReg, vtkIGTPat2ImgRegistration );
+  vtkGetObjectMacro ( locatorModel, vtkMRMLModelNode );
 
 
-  vtkSetStringMacro(TransformNodeName); 
-  vtkGetStringMacro(TransformNodeName);
+  vtkSetStringMacro(TransformNodeID); 
+  vtkGetStringMacro(TransformNodeID);
 
   vtkSetMacro (UseRegistration, bool);
   vtkGetMacro (UseRegistration, bool);
@@ -118,15 +121,26 @@ public:
 
   int EnableLocatorDriver(int sw);
   vtkMRMLModelNode* SetVisibilityOfLocatorModel(const char* nodeName, int v);
-  vtkMRMLModelNode* AddLocatorModel(const char* nodeName, double r, double g, double b);
+  
+// vtkMRMLModelNode* AddLocatorModel(const char* nodeName, double r, double g, double b);
+
+  //  void SetVisibilityOfLocatorModel(const char* nodeName, int v);
+  void AddLocatorModel(const char* nodeName, double r, double g, double b);
+
 
   void UpdateDisplay(int sliceNo1, int sliceNo2, int sliceNo3);
   void GetCurrentPosition(double *px, double *py, double *pz);
   void UpdateTransformNodeByName(const char *name);
+  void UpdateTransformNodeByID(const char *id);
+  void UpdateCrosshair(vtkMRMLCrosshairNode* crosshair);
+
   int PerformPatientToImageRegistration();
 
   void UpdateFiducialSeeding(const char *name, double offset);
 
+  int GetLabelNumber(const char *id, vtkMRMLScalarVolumeNode* LabelMap);
+
+  void BeepingFunction();
 protected:
 
   vtkNeuroNavLogic();
@@ -148,10 +162,10 @@ private:
   void UpdateSliceNode(int sliceNo1, int sliceNo2, int sliceNo3,
                        float nx, float ny, float nz,
                        float tx, float ty, float tz,
-                       float px, float py, float pz,
-                       float ux, float uy, float uz);
+                       float px, float py, float pz);
 
   void CheckSliceNodes();
+  void ApplyTransform(float *position, float *norm, float *transnorm);
   void UpdateLocatorTransform();
 
   //----------------------------------------------------------------
@@ -187,10 +201,12 @@ private:
   vtkMatrix4x4*         LocatorMatrix;
   vtkTransform*         LocatorTransform;
 
+  vtkMRMLModelNode *locatorModel;
+
   bool  Connection;  
 
   bool UseRegistration;
-  char *TransformNodeName;
+  char *TransformNodeID;
   int SliceNo1Last;
   int SliceNo2Last;
   int SliceNo3Last;
