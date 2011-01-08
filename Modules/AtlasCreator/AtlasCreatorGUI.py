@@ -40,8 +40,6 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._saveTransformCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._saveDeformationFieldCheckBox = slicer.vtkKWCheckButtonWithLabel()
 
-        self._thirdFrame = slicer.vtkSlicerModuleCollapsibleFrame()
-        self._labelEntry = slicer.vtkKWEntryWithLabel()
         self._generateButton = slicer.vtkKWPushButton()
 
         self._helper = AtlasCreatorHelper(self)
@@ -110,19 +108,30 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
     def GenerateAtlas(self):
         # call the logic
-        result = self._logic.GenerateAtlas(self._origDirButton.GetWidget().GetFileName(),
+        labels = self._logic.GenerateAtlas(self._origDirButton.GetWidget().GetFileName(),
                                                  self._segDirButton.GetWidget().GetFileName(),
                                                  self._outDirButton.GetWidget().GetFileName(),
                                                  self._defaultCaseEntry.GetWidget().GetValue(),
                                                  self._regTypeRadios.GetWidget().GetWidget(0).GetSelectedState(),
                                                  self._saveTransformCheckBox.GetWidget().GetSelectedState(),
-                                                 self._saveDeformationFieldCheckBox.GetWidget().GetSelectedState(),
-                                                 self._labelEntry.GetWidget().GetValue())
+                                                 self._saveDeformationFieldCheckBox.GetWidget().GetSelectedState())
 
-        if result:
+        if labels:
 
-            import os
-            newVolNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/atlas.nrrd"),'Atlas')
+            for i in range(0,len(labels)): 
+                # loading atlas for label i
+                newVolNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/atlas"+str(labels[i])+".nrrd"),'AtlasForLabel'+str(labels[i]))
+                displayNode = newVolNode.GetDisplayNode()
+                if displayNode:
+                    newDisplayNode = displayNode.NewInstance()
+                    newDisplayNode.Copy(displayNode)
+                    slicer.MRMLScene.AddNodeNoNotify(newDisplayNode)
+                    newVolNode.SetAndObserveDisplayNodeID(newDisplayNode.GetID())
+                    newDisplayNode.AutoWindowLevelOff()
+                    newDisplayNode.AutoWindowLevelOn()
+    
+            # now loading the atlas for all labels
+            newVolNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/atlas.nrrd"),'AtlasAllLabels')
 
             displayNode = newVolNode.GetDisplayNode()
             if displayNode:
@@ -257,19 +266,6 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._saveDeformationFieldCheckBox.SetLabelText("Save Deformation Fields:")
         self._saveDeformationFieldCheckBox.GetWidget().SetSelectedState(1)
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._saveDeformationFieldCheckBox.GetWidgetName())
-
-        self._thirdFrame.SetParent(self._moduleFrame.GetFrame())
-        self._thirdFrame.Create()
-        self._thirdFrame.SetLabelText("Atlas Generation")
-        self._thirdFrame.ExpandFrame()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._thirdFrame.GetWidgetName())
-
-        self._labelEntry.SetParent(self._thirdFrame.GetFrame())
-        self._labelEntry.Create()
-        self._labelEntry.SetLabelText("Label Map Values:")
-        self._labelEntry.GetWidget().SetValue("3 4 5 6 7 8 9 10 31 32")
-        self._labelEntry.SetBalloonHelpString("The label map values of the manual segmentation.")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._labelEntry.GetWidgetName())
 
         self._generateButton.SetParent(self._moduleFrame.GetFrame())
         self._generateButton.Create()

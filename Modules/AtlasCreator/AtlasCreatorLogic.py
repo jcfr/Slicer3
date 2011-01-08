@@ -7,7 +7,7 @@ class AtlasCreatorLogic(object):
 
         self._parentClass = parentClass
 
-    def GenerateAtlas(self,inputOriginalsPath,inputManualSegmentationsPath,outputPath,defCase,onlyAffineReg,saveTransforms,saveDeformationFields,labels):
+    def GenerateAtlas(self,inputOriginalsPath,inputManualSegmentationsPath,outputPath,defCase,onlyAffineReg,saveTransforms,saveDeformationFields):
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("AtlasCreator: GenerateAtlas() called")
@@ -18,7 +18,6 @@ class AtlasCreatorLogic(object):
         self._parentClass.GetHelper().debug("Use only affine registration: " + str(onlyAffineReg))
         self._parentClass.GetHelper().debug("Save Transforms: " + str(saveTransforms))
         self._parentClass.GetHelper().debug("Save Deformation Fields: " + str(saveDeformationFields))
-        self._parentClass.GetHelper().debug("Labels: " + str(labels))
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
 
         if not inputOriginalsPath or not inputManualSegmentationsPath or not outputPath:
@@ -32,6 +31,15 @@ class AtlasCreatorLogic(object):
 
         # get the extension of the default case, we will use to find all other cases
         extension = os.path.splitext(defCase)[1]
+
+        # get the label values of the default case
+        reader = slicer.vtkNRRDReader()
+        reader.SetFileName(defaultCaseSeg)
+        reader.Update()
+        defCaseImage = slicer.vtkImageData()
+        defCaseImage.DeepCopy(reader.GetOutput())
+        labels = self.GetLabels(defCaseImage)
+        self._parentClass.GetHelper().debug("LabelMap values found in default case: "+str(labels))
 
         # get the Slicer paths without environment variables
         slicerDir = os.path.normpath(str(slicer.Application.GetBinDir())+"/../")
@@ -175,6 +183,11 @@ class AtlasCreatorLogic(object):
                 add.Update()    
                 atlas.DeepCopy(add.GetOutput())
 
+            writer = slicer.vtkNRRDWriter()
+            writer.SetFileName(os.path.normpath(outputPath+"/atlas"+str(label)+".nrrd"))
+            writer.SetInput(currentLabelAtlas)
+            writer.Update()
+
         writer = slicer.vtkNRRDWriter()
         writer.SetFileName(os.path.normpath(outputPath+"/atlas.nrrd"))
         writer.SetInput(atlas)
@@ -188,8 +201,21 @@ class AtlasCreatorLogic(object):
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
         
-        return 1
+        return labels
 
+    def GetLabels(self,labelMap):
+        accum = slicer.vtkImageAccumulate()
+        accum.SetInput(labelMap)
+        accum.UpdateWholeExtent()
+        accum.Update()
+        data = accum.GetOutput()
+        numBins = accum.GetComponentExtent()[1]
+        nonZeroLabels = []
+        for i in range(1, numBins + 1):
+            numVoxels = data.GetScalarComponentAsDouble(i,0,0,0)
+            if (numVoxels>0):
+                nonZeroLabels.append(i)
+        return nonZeroLabels
 
     def Register(self,defaultCase,origFile,outputTransform,onlyAffineReg):
         registrationCommand = "BRAINSFit"
