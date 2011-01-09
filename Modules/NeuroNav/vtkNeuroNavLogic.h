@@ -130,7 +130,7 @@ public:
 
   void UpdateDisplay(int sliceNo1, int sliceNo2, int sliceNo3);
   void GetCurrentPosition(double *px, double *py, double *pz);
-  void UpdateTransformNodeByName(const char *name);
+  //void UpdateTransformNodeByName(const char *name);
   void UpdateTransformNodeByID(const char *id);
   void UpdateCrosshair(vtkMRMLCrosshairNode* crosshair);
 
