@@ -1012,13 +1012,18 @@ int vtkVolumeRenderingLogic::SetupMapperFromParametersNode(vtkMRMLVolumeRenderin
   case 3:
     this->MapperGPURaycast->SetInput( vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData() );
     this->MapperGPURaycast->SetFramerate(vspNode->GetExpectedFPS());
-    if (this->MapperGPURaycast->IsRenderSupported(window,vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
-    {
-      this->Volume->SetMapper(this->MapperGPURaycast);
-      this->Volume->SetProperty(vspNode->GetVolumePropertyNode()->GetVolumeProperty());
-    }
+    if ( vspNode->GetVolumePropertyNode() && vspNode->GetVolumePropertyNode()->GetVolumeProperty() )
+      {
+      if (this->MapperGPURaycast->IsRenderSupported(window,vspNode->GetVolumePropertyNode()->GetVolumeProperty()))
+        {
+        this->Volume->SetMapper(this->MapperGPURaycast);
+        this->Volume->SetProperty(vspNode->GetVolumePropertyNode()->GetVolumeProperty());
+        }
+      }
     else
+      {
       return -1;
+      }
     break;
   case 4:
     this->MapperGPURaycastII->SetNthInput(0, vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData());
