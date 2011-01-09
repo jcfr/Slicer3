@@ -293,6 +293,7 @@ void vtkNeuroNavLogic::GetCurrentPosition(double *px, double *py, double *pz)
 }
 
 
+// Jan. 8, 2011: if UpdateTransformNodeByName(...) is no longer needed, it should be deleted!
 /*
 void vtkNeuroNavLogic::UpdateTransformNodeByName(const char *name)
 {

@@ -130,6 +130,8 @@ public:
 
   void UpdateDisplay(int sliceNo1, int sliceNo2, int sliceNo3);
   void GetCurrentPosition(double *px, double *py, double *pz);
+
+  // Jan. 8, 2011: if UpdateTransformNodeByName(...) is no longer needed, it should be deleted!
   //void UpdateTransformNodeByName(const char *name);
   void UpdateTransformNodeByID(const char *id);
   void UpdateCrosshair(vtkMRMLCrosshairNode* crosshair);
