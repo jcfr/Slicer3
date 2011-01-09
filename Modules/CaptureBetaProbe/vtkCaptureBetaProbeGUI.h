@@ -56,6 +56,14 @@ class VTK_CaptureBetaProbe_EXPORT vtkCaptureBetaProbeGUI : public vtkSlicerModul
     this->SetLogic ( vtkObjectPointer (&this->Logic), logic );
   } 
 
+  // NH added the following line on Jan 9 2011 in response to RK's request to move the module under IGT
+  // LC should review the following line, and upon approval, should remove this comment.
+
+  const char *GetCategory() const { return "IGT";}
+
+
+  // NH addition end.
+
   void SetContinuousMode(bool val){this->continuous_mode = val;};
   bool GetContinuousMode(){return this->continuous_mode;};
 
