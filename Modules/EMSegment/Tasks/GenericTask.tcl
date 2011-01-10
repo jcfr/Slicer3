@@ -1829,17 +1829,24 @@ namespace eval EMSegmenterPreProcessingTcl {
         set transformDirName "" 
         set transformNode ""
         set transformNodeType ""  
+
         if { $UseBRAINS } {
-            set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
-            if { $BSplineNode == "" } {
+            # 0 =  debugging 
+            if {1} {
+              set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
+              if { $BSplineNode == "" } {
                 PrintError "RegisterAtlas: BSpline Transform node is null"
                 return 1
-            }
-            set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
-            if { $transformNode == "" } {
+              }
+              set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
+              if { $transformNode == "" } {
                 PrintError "RegisterAtlas: Deformation Field Transform node is null"
                 return 1
-            }
+              }
+        } else {
+                 # for debugging 
+                 set transformNode /home/pohl/Slicer3pohl/4879_vtkMRMLScalarVolumeNode36.nrrd
+        }
             set transformNodeType "DeformVolumeTransform"  
         } else {
             set bSplineFlag 1
@@ -1869,10 +1876,9 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
         }
-
+ 
         # Sub parcelation
         for { set i 0 } {$i < [$outputSubParcellationNode GetNumberOfVolumes] } { incr i } {
-            if { $i == $subParcellationRegistrationVolumeIndex} { continue }
             $LOGIC PrintText "TCL: Resampling subparcallation map  $i ..."
             set movingVolumeNode [$inputSubParcellationNode GetNthVolumeNode $i]
             set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]

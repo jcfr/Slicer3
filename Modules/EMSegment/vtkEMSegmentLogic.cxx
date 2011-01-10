@@ -1044,6 +1044,23 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
     vtkWarningMacro("Changing output image to labelmap");
     outVolume->LabelMapOn();
   }
+
+  vtkMRMLVolumeDisplayNode *outDisplayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(outVolume->GetDisplayNode());
+  if (!outDisplayNode) 
+    {
+       vtkWarningMacro("Did not define lookup table bc display node is not defined ");
+    } 
+  else 
+    {
+      const char* colorID = this->MRMLManager->GetColormap();
+      if (colorID) 
+    {
+             outDisplayNode->SetAndObserveColorNodeID(colorID);
+    }
+    }
+
+    
+
   outVolume->SetModifiedSinceRead(1);
 
   //
