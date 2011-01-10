@@ -181,7 +181,8 @@ void vtkXNDHandler::StageFileRead(const char * source,
   int useBucket = 1;
   if ( useBucket )
     {
-    this->CreateFileBucket();
+    std::string bucketName = vtksys::SystemTools::GetFilenameName (destination);
+    this->CreateFileBucket(bucketName.c_str() );
     this->LocalFile = fopen (this->FileBucket, "wb");
     }
   if ( this->LocalFile == NULL )
@@ -729,6 +730,41 @@ const char* vtkXNDHandler::GetNameSpace()
   const char *returnString = "xmlns=\"http://nrg.wustl.edu/xe\"";
   return (returnString);
 }
+
+
+//--- for calling by the application. Return 1 for connected, 0 for not.
+//----------------------------------------------------------------------------
+bool vtkXNDHandler::CheckConnectionAndServer ( const char *uri )
+{
+  if ( uri == NULL )
+    {
+    // not used.
+    vtkErrorMacro ( "CheckConnectionAndServer: got NULL uri." );
+    }
+
+  if (this->GetHostName() == NULL)
+    {
+    vtkErrorMacro ( "Got NULL Host Name on XNDHandler." );
+    return 0;
+    }
+
+  const char *hostname = this->GetHostName();
+  std::stringstream q;
+  q << hostname;
+  q << "/tags";
+  std::string query = q.str();
+  const char *errorString = this->CheckServerStatus(query.c_str() );
+  if ((errorString != NULL) && (!strcmp (errorString, "OK")))
+    {
+    return 1;
+    }
+  else
+    {
+    vtkErrorMacro ( "No connection to host." );
+    return 0;
+    }
+}
+
 
 
 //----------------------------------------------------------------------------

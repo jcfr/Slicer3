@@ -33,6 +33,12 @@ class VTK_RemoteIO_EXPORT vtkXNDHandler : public vtkHTTPHandler
   virtual void StageFileRead(const char * source,
                              const char * destination);
 
+  /// This function can be called by the application before download attempt.
+  /// re-implement in any subclass to condition the appropriate
+  /// query and parse the appropriate response.
+  /// returns 1 if connected, 0 if fail.
+  virtual bool CheckConnectionAndServer ( const char *uri );
+
   virtual const char* CheckServerStatus ( const char *uri );
 
   //BTX

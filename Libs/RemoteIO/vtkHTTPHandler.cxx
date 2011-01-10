@@ -184,7 +184,8 @@ void vtkHTTPHandler::StageFileRead(const char * source, const char * destination
   int useBucket = 1;
   if ( useBucket )
     {
-    this->CreateFileBucket();
+    std::string bucketName = vtksys::SystemTools::GetFilenameName (destination);
+    this->CreateFileBucket(bucketName.c_str() );
     this->LocalFile = fopen (this->FileBucket, "wb");
     }
   if ( this->LocalFile == NULL )
@@ -351,6 +352,28 @@ void vtkHTTPHandler::StageFileWrite(const char * source, const char * destinatio
     }
 }
 
+
+
+//--- for calling by the application. Return 1 for connected, 0 for not.
+//----------------------------------------------------------------------------
+bool vtkHTTPHandler::CheckConnectionAndServer ( const char *uri )
+{
+  if ( uri == NULL )
+    {
+    vtkErrorMacro ( "CheckConnectionAndServer: got NULL uri." );
+    return 0;
+    }
+  
+  const char *retval = this->CheckServerStatus ( uri );
+  if ( ( retval != NULL ) && ( !(strcmp (retval, "OK")) ))
+    {
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
+}
 
 
 //----------------------------------------------------------------------------

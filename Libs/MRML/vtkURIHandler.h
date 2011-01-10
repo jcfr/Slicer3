@@ -48,6 +48,13 @@ class VTK_MRML_EXPORT vtkURIHandler : public vtkObject
   virtual int CanHandleURI ( const char * vtkNotUsed(uri) ) { return 0; };
 
   ///
+  /// This function can be called by the application.
+  /// re-implement in any subclass to condition the appropriate
+  /// query and parse the appropriate response.
+  /// returns 1 if connected, 0 if fail.
+  virtual bool CheckConnectionAndServer ( const char * vtkNotUsed(uri) ) { return false; };
+
+  ///
   /// This function checks to see if the remote host can be reached.
   /// This should be called prior to any attempt to GET or PUT,
   /// and its return value is either "OK" or an error string that
@@ -85,6 +92,7 @@ class VTK_MRML_EXPORT vtkURIHandler : public vtkObject
   vtkSetStringMacro ( RemoteCacheDirectory );
 
   void CreateFileBucket();
+  void CreateFileBucket( const char *fileName);
   void DeleteFileBucket();
   
  private:

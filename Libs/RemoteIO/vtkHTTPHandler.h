@@ -48,6 +48,13 @@ class VTK_RemoteIO_EXPORT vtkHTTPHandler : public vtkURIHandler
   using vtkURIHandler::StageFileWrite;
   //ETX
   ///
+  /// This function can be called by the application directly before download attempt.
+  /// re-implement in any subclass to condition the appropriate
+  /// query and parse the appropriate response.
+  /// returns 1 if connected, 0 if fail.
+  virtual bool CheckConnectionAndServer ( const char *uri );
+
+  ///
   /// This function checks to see if the remote host can be reached.
   /// This should be called prior to any attempt to GET or PUT,
   /// and its return value is either "OK" or an error string that
