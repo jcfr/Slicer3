@@ -752,7 +752,25 @@ void vtkSlicerApplicationGUI::DownloadSampleVolume(const char *uri)
     return;
     }
 
-
+  //---
+  // Make sure we can connect
+  //---
+  vtkHTTPHandler *h = vtkHTTPHandler::SafeDownCast (this->GetMRMLScene()->FindURIHandlerByName ( "HTTPHandler"));
+  if (!(h->CheckConnectionAndServer(uri)))
+    {
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent (  this->MainSlicerWindow );
+    dialog->SetStyleToMessage();
+    std::string msg = "No route to host found. Please check your network connection or the status of the server.";
+    dialog->SetText(msg.c_str());
+    dialog->Create ( );
+    dialog->SetMasterWindow( this->MainSlicerWindow );
+    dialog->ModalOn();
+    dialog->Invoke();
+    dialog->Delete();
+    return;
+    }
+  
   vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());  
   std::string uri_String = uri;
 
@@ -1742,6 +1760,19 @@ void vtkSlicerApplicationGUI::ProcessMRMLEvents ( vtkObject *caller,
     }
   else if (scene != NULL &&
            scene == this->MRMLScene &&
+           event == vtkMRMLScene::SceneLoadingErrorEvent )
+    {
+        vtkKWMessageDialog *message = vtkKWMessageDialog::New();
+        message->SetParent ( this->MainSlicerWindow );
+        message->SetStyleToMessage();
+        message->SetDialogName("Warning");
+        message->SetText ("Slicer had trouble loading the scene file. Scene may contain emtpy datasets.");
+        message->Create();
+        message->Invoke();
+        message->Delete();
+    }
+  else if (scene != NULL &&
+           scene == this->MRMLScene &&
            event == vtkMRMLScene::SceneCloseEvent )
     {
     // is the scene closing?
@@ -2021,6 +2052,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
   events->InsertNextValue( vtkMRMLScene::NodeRemovedEvent );
   events->InsertNextValue( vtkMRMLScene::SceneCloseEvent );
   events->InsertNextValue( vtkCommand::ModifiedEvent );
+  events->InsertNextValue ( vtkMRMLScene::SceneLoadingErrorEvent);
   this->SetAndObserveMRMLSceneEvents (this->MRMLScene, events );
   events->Delete();
 
