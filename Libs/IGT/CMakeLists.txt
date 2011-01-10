@@ -62,31 +62,16 @@ install(FILES
 # Sources
 
 set(IGT_SRCS
-  vtkIGTDataManager.cxx
-  vtkIGTDataStream.cxx
+#The following two lines are excluded by NH on Jan 10 in an
+anticipation that these have not been used in Modules.
+
+#  vtkIGTDataManager.cxx
+#  vtkIGTDataStream.cxx
   vtkIGTMatrixState.cxx
   vtkIGTPat2ImgRegistration.cxx
   )
 set(TRACKING_INTERFACE_LIBRARY "")
 
-#--- NH took out the following section in an effot to remove Navitrak
-#--- 10/16/07
-
-#IF(IGT_USE_NAVITRACK)
-#  SET(IGT_SRCS
-#    vtkIGTDataManager.cxx
-#    vtkIGTDataStream.cxx
-#    vtkIGTMatrixState.cxx
-#    vtkIGTPat2ImgRegistration.cxx
-#    vtkIGTOpenTrackerStream.cxx
-#  )
-#  SET(TRACKING_INTERFACE_INCLUDE_DIR
-#    ${NAVITRACK_INC}
-#  )
-#  SET(TRACKING_INTERFACE_LIB  
-#    ${NAVITRACK_LIB}
-#  )
-#ENDIF(IGT_USE_NAVITRACK)
 
 if(IGT_USE_IGSTK)
   set(IGT_SRCS
@@ -167,3 +152,5 @@ install(TARGETS ${lib_name}
 if(BUILD_TESTING)
   ADD_SUBDIRECTORY(Testing)
 endif(BUILD_TESTING)
+
+
