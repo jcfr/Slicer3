@@ -63,10 +63,9 @@ install(FILES
 
 set(IGT_SRCS
 #The following two lines are excluded by NH on Jan 10 in an
-anticipation that these have not been used in Modules.
-
-#  vtkIGTDataManager.cxx
-#  vtkIGTDataStream.cxx
+#anticipation that these have not been used in Modules.
+  vtkIGTDataManager.cxx
+  vtkIGTDataStream.cxx
   vtkIGTMatrixState.cxx
   vtkIGTPat2ImgRegistration.cxx
   )
