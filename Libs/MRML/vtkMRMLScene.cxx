@@ -759,7 +759,6 @@ int vtkMRMLScene::Import()
       this->AddNodeNoNotify(node);
       }
 
-
     // fix node references that may be not unique in the imported scene.
     this->UpdateNodeReferences(scene);
 
@@ -849,10 +848,19 @@ int vtkMRMLScene::LoadIntoScene(vtkCollection* nodeCollection)
     if (remote)
       {
       vtkDebugMacro("LoadIntoScene: mrml file lives on a remote disk: " << this->URL.c_str());
+
       // do a synchronous download for now
       vtkURIHandler *handler = this->FindURIHandler(this->URL.c_str());
       if (handler != NULL)
         {
+        // check connection and server status...
+        if ( !handler->CheckConnectionAndServer(this->URL.c_str() ) )
+          {
+          vtkErrorMacro ("Slicer could not find a connection to remote host. Load aborted.");
+          this->InvokeEvent ( vtkMRMLScene::SceneLoadingErrorEvent );
+          return 0;
+          }
+
         // put it on disk somewhere
         const char *localURL = this->GetCacheManager()->GetFilenameFromURI(this->URL.c_str());
         handler->StageFileRead(this->URL.c_str(), localURL);
