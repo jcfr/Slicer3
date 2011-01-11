@@ -42,7 +42,7 @@ class AtlasCreatorLogic(object):
         self._parentClass.GetHelper().debug("LabelMap values found in default case: "+str(labels))
 
         # get the Slicer paths without environment variables
-        slicerDir = os.path.normpath(str(slicer.Application.GetBinDir())+"/../")
+        slicerDir = os.path.normpath(str(slicer.Application.GetBinDir()))+"/../"
         slicerLauncher = os.path.normpath(slicerDir+"/Slicer3")
         slicerBinDir = os.path.normpath(str(slicer.Application.GetBinDir()))+"/"
         slicerPluginsDir = os.path.normpath(slicerDir+"lib/Slicer3/Plugins")+"/"
@@ -65,7 +65,7 @@ class AtlasCreatorLogic(object):
                 else:
                     outputTransform = slicerTempDir+"/"+caseName+".mat"
 
-                os.system(slicerLauncher+" --launch "+slicerBinDir+self.Register(defaultCase,origFile,outputTransform,onlyAffineReg))
+                os.system(slicerLauncher+" --launch "+slicerPluginsDir+self.Register(defaultCase,origFile,outputTransform,onlyAffineReg))
 
 
         #
@@ -87,7 +87,7 @@ class AtlasCreatorLogic(object):
                     inputTransform = slicerTempDir+"/"+caseName+".mat"
                 outputRegisteredSegmentation = slicerTempDir+"/"+caseName+".nrrd"
 
-                os.system(slicerLauncher+" --launch "+slicerBinDir+self.Resample(segmentfile,origFile,inputTransform,outputRegisteredSegmentation))
+                os.system(slicerLauncher+" --launch "+slicerPluginsDir+self.Resample(segmentfile,origFile,inputTransform,outputRegisteredSegmentation))
 
 
         #
