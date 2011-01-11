@@ -217,6 +217,13 @@ if(Slicer3_USE_PYTHON)
 endif(Slicer3_USE_PYTHON)
 
 #-----------------------------------------------------------------------------
+## Java
+option(Slicer3_USE_JAVA "Enable support for Java in Slicer." OFF)
+if(Slicer3_USE_JAVA)
+  find_package( Java )
+endif(Slicer3_USE_JAVA)
+
+#-----------------------------------------------------------------------------
 ## ITK
 find_package(ITK REQUIRED)
 if(NOT ITK_FOUND)

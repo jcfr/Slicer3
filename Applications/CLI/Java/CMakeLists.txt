@@ -1,6 +1,6 @@
 project(JavaExamples Java )
 
-FIND_PACKAGE ( Java )
+# FIND_PACKAGE ( Java )
 
 
 

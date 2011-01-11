@@ -726,10 +726,13 @@ SET(cli_modules
   DiffusionApplications
   #EndoNavTracking
   ExtractSkeleton
-  #Java
   N4ITKBiasFieldCorrection
   RobustStatisticsSegmenter
   )
+
+if (Slicer3_USE_JAVA)
+  SET(cli_modules ${cli_modules} Java)
+endif (Slicer3_USE_JAVA)
 
 if ( ${ITK_VERSION_MAJOR} GREATER 3 )
 
