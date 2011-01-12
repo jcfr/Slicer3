@@ -989,7 +989,7 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
     {
     ErrorMsg = "Exception thrown during segmentation: "  + std::string(e.what()) + "\n";
     vtkErrorMacro( << ErrorMsg );
-    //return EXIT_FAILURE;
+    return EXIT_FAILURE;
     } 
 
   if (this->GetDebug())

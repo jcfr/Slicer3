@@ -380,9 +380,19 @@ template <class T>
 void vtkImageEMLocalSegment_RunEMAlgorithm(vtkImageEMLocalSegmenter *self, T** ProbDataPtr, int NumTotalTypeCLASS, int ImageProd,  float **InputVector, short *ROI, 
                                            char *LevelName, float GlobalRegInvRotation[9], float GlobalRegInvTranslation[3], int RegistrationType, 
                                            EMTriVolume& iv_m, EMVolume *r_m, short *SegmentationResult, int DataType, int &SegmentLevelSucessfullFlag) {
+
   // Initialize Values
-  float **w_m            = new float*[NumTotalTypeCLASS];
-  for (int i=0; i< NumTotalTypeCLASS; i++) w_m[i] = new float[ImageProd];
+  float **w_m    = new float*[NumTotalTypeCLASS];
+  try
+  {
+    for (int i=0; i< NumTotalTypeCLASS; i++) w_m[i] = new float[ImageProd];
+  }
+  catch (std::exception& e)
+  {
+    cout << "Standard exception: " << e.what() << endl;
+    cout << "Failed to allocate " << NumTotalTypeCLASS*ImageProd*4  << " bytes." << endl;
+    throw e;
+  }
 
   EMLocalAlgorithm<T> Algorithm(self, ProbDataPtr, InputVector, ROI, w_m, LevelName, GlobalRegInvRotation, GlobalRegInvTranslation, RegistrationType, 
                                 DataType,SegmentLevelSucessfullFlag);
