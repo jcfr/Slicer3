@@ -86,11 +86,19 @@ class VTK_OPENIGTLINKIF_EXPORT vtkMRMLIGTLConnectorNode : public vtkMRMLNode
     //vtkMRMLNode*  node;
   } DeviceInfoType;
 
+  typedef struct {
+    vtkMRMLNode*  node;
+    int           lock;
+    int           second;
+    int           nanosecond;
+  } NodeInfoType;
+
   typedef std::map<int, DeviceInfoType>   DeviceInfoMapType;   // Device list:  index is referred as
                                                                // a device id in the connector.
   typedef std::set<int>                   DeviceIDSetType;
   typedef std::list<vtkIGTLToMRMLBase*>   MessageConverterListType;
   typedef std::vector<vtkMRMLNode*>       MRMLNodeListType;
+  typedef std::vector<NodeInfoType>       NodeInfoListType;
   typedef std::map<std::string, vtkIGTLToMRMLBase*> MessageConverterMapType;
   //ETX
 
@@ -230,7 +238,9 @@ class VTK_OPENIGTLINKIF_EXPORT vtkMRMLIGTLConnectorNode : public vtkMRMLNode
 
   // Description:
   // Register MRML node for incoming data.
-  int RegisterIncomingMRMLNode(vtkMRMLNode* node);
+  // Returns a pointer to the node information in IncomingMRMLNodeInfoList
+  NodeInfoType* RegisterIncomingMRMLNode(vtkMRMLNode* node);
+
   // Description:
   // Unregister MRML node for incoming data.
   void UnregisterIncomingMRMLNode(vtkMRMLNode* node);
@@ -267,6 +277,24 @@ class VTK_OPENIGTLINKIF_EXPORT vtkMRMLIGTLConnectorNode : public vtkMRMLNode
   void PushQuery(vtkMRMLIGTLQueryNode* query);
   //ETX
 #endif //OpenIGTLinkIF_USE_VERSION_2
+
+  //----------------------------------------------------------------
+  // For OpenIGTLink time stamp access
+  //----------------------------------------------------------------
+
+  // Description:
+  // Turn lock flag on to stop updating MRML node. Call this function before
+  // reading the content of the MRML node and the corresponding time stamp.
+  void LockIncomingMRMLNode(vtkMRMLNode* node);
+
+  // Description:
+  // Turn lock flag off to start updating MRML node. Make sure to call this function
+  // after reading the content / time stamp.
+  void UnlockIncomingMRMLNode(vtkMRMLNode* node);
+
+  // Description:
+  // Get OpenIGTLink's time stamp information. Returns 0, if it fails to obtain time stamp.
+  int GetIGTLTimeStamp(vtkMRMLNode* node, int& second, int& nanosecond);
 
 
  private:
@@ -350,7 +378,7 @@ class VTK_OPENIGTLINKIF_EXPORT vtkMRMLIGTLConnectorNode : public vtkMRMLNode
 
   // List of nodes that this connector node is observing.
   MRMLNodeListType         OutgoingMRMLNodeList;
-  MRMLNodeListType         IncomingMRMLNodeList;
+  NodeInfoListType         IncomingMRMLNodeInfoList;
   
   int CheckCRC;
   
