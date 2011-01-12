@@ -28,7 +28,8 @@ public:
   typedef SmartPointer<const Self> ConstPointer;
   typedef ConstNeighborhoodIterator<DeformationImageType> ConstNeighborhoodIteratorType;
   typedef typename ConstNeighborhoodIteratorType::RadiusType RadiusType;  
-
+  typedef typename Superclass::ParametersType  ParametersType;
+  
   itkNewMacro( Self ) ;
   itkTypeMacro( WarpTransform3D, Transform ) ;
   OutputPointType TransformPoint( const InputPointType & inputPoint ) const ;
@@ -38,6 +39,10 @@ protected:
   /** Get/Set the neighborhood radius used for gradient computation */
   itkGetConstReferenceMacro( NeighborhoodRadius, RadiusType ) ;
   itkSetMacro( NeighborhoodRadius, RadiusType ) ;
+  /**This is a dummy function. This class does not allow to set the transform parameters through this function. Use SetDeformationField() to set the transform */
+  virtual void  SetParameters (const ParametersType &){};
+  /**This is a dummy function. This class does not allow to set the transform fixed parameters through this function. Use SetDeformationField() to set the transform */
+  virtual void  SetFixedParameters (const ParametersType &){};
   WarpTransform3D() ;
   void operator=(const Self&); //purposely not implemented
   RadiusType m_NeighborhoodRadius ;
