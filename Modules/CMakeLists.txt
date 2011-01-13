@@ -83,8 +83,9 @@ SET(modules
   PETCTFusion
   IGTToolSelector
   IGTRecorder
-  UDPServer
-  CaptureBetaProbe
+#  UDPServer
+#  CaptureBetaProbe
+  OsteoPlan
   )
 
 if(Slicer3_USE_OPENIGTLINK)
