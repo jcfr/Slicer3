@@ -59,7 +59,7 @@ public:
   //BTX
   vtkSetReferenceStringMacro(AlignedTargetNodeID);
   //ETX
-  void SetReferenceAlignTargetNodeID(const char* name)
+  void SetReferenceAlignedTargetNodeID(const char* name)
   {
     this->SetAlignedTargetNodeID(name);
   } 
