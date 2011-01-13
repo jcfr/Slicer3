@@ -85,7 +85,7 @@ SET(modules
   IGTRecorder
 #  UDPServer
 #  CaptureBetaProbe
-  OsteoPlan
+#  OsteoPlan
   )
 
 if(Slicer3_USE_OPENIGTLINK)
