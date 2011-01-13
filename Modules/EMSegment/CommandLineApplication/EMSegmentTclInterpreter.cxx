@@ -176,6 +176,8 @@ int main(int argc, char** argv)
      // Source the tcl file 
      CMD = std::string("source ") + argv[1] ; 
      app->Script(CMD.c_str());
+     app->Start();
+
 
       appLogic->Delete();
       appLogic = NULL;  
