@@ -329,7 +329,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         if { $alignedTarget == "" } {
             # input scan does not have to be aligned
             set alignedTarget [$mrmlManager CloneTargetNode $inputTargetNode "Aligned"]
-            $workingDN SetAlignedTargetNodeID [$alignedTarget GetID]
+            $workingDN SetReferenceAlignedTargetNodeID [$alignedTarget GetID]
         } else {
             $mrmlManager SynchronizeTargetNode $inputTargetNode $alignedTarget "Aligned"
         }
@@ -453,7 +453,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Atlas was empty"
             #  $LOGIC PrintText "set outputAtlasNode \[$mrmlManager CloneAtlasNode $inputAtlasNode \"AlignedAtlas\"\] "
             set outputAtlasNode [$mrmlManager CloneAtlasNode $inputAtlasNode "Aligned"]
-            $workingDN SetAlignedAtlasNodeID [$outputAtlasNode GetID]
+            $workingDN SetReferenceAlignedAtlasNodeID [$outputAtlasNode GetID]
         } else {
             $LOGIC PrintText "TCL: Atlas was just synchronized"
             $mrmlManager SynchronizeAtlasNode $inputAtlasNode $outputAtlasNode AlignedAtlas
@@ -463,7 +463,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: SubParcellation was empty"
             #  $LOGIC PrintText "set outputSubParcellationNode \[$mrmlManager CloneSubParcellationNode $inputSubParcellationNode \"AlignedSubParcellation\"\] "
             set outputSubParcellationNode [$mrmlManager CloneSubParcellationNode $inputSubParcellationNode "Aligned"]
-            $workingDN SetAlignedSubParcellationNodeID [$outputSubParcellationNode GetID]
+            $workingDN SetReferenceAlignedSubParcellationNodeID [$outputSubParcellationNode GetID]
         } else {
             $LOGIC PrintText "TCL: SubParcellation was just synchronized"
             $mrmlManager SynchronizeSubParcellationNode $inputSubParcellationNode $outputSubParcellationNode AlignedSubParcellation
@@ -1725,7 +1725,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Aligned Atlas was empty"
             #  $LOGIC PrintText "TCL: set outputAtlasNode \[ $mrmlManager CloneAtlasNode $inputAtlasNode \"AlignedAtlas\"\] "
             set outputAtlasNode [ $mrmlManager CloneAtlasNode $inputAtlasNode "Aligned"]
-            $workingDN SetAlignedAtlasNodeID [$outputAtlasNode GetID]
+            $workingDN SetReferenceAlignedAtlasNodeID [$outputAtlasNode GetID]
         } else {
             $LOGIC PrintText "TCL: Atlas was just synchronized"
             $mrmlManager SynchronizeAtlasNode $inputAtlasNode $outputAtlasNode "Aligned"
@@ -1735,7 +1735,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Aligned SubParcellation was empty"
             #  $LOGIC PrintText "TCL: set outputSubParcellationNode \[ $mrmlManager CloneSubParcellationNode $inputSubParcellationNode \"AlignedSubParcellation\"\] "
             set outputSubParcellationNode [ $mrmlManager CloneSubParcellationNode $inputSubParcellationNode "Aligned"]
-            $workingDN SetAlignedSubParcellationNodeID [$outputSubParcellationNode GetID]
+            $workingDN SetReferenceAlignedSubParcellationNodeID [$outputSubParcellationNode GetID]
         } else {
             $LOGIC PrintText "TCL: SubParcellation was just synchronized"
             $mrmlManager SynchronizeSubParcellationNode $inputSubParcellationNode $outputSubParcellationNode "Aligned"

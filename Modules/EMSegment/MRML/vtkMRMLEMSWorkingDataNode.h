@@ -45,27 +45,64 @@ public:
   virtual void UpdateReferenceID(const char *oldID, const char *newID);
 
   vtkGetStringMacro(InputTargetNodeID);
-  void SetInputTargetNodeID(const char *input);
+  //BTX
+  vtkSetReferenceStringMacro(InputTargetNodeID);
+  //ETX
+  // For tcl Wrapping
+  void SetReferenceInputTargetNodeID(const char *input)
+  {
+    this->SetInputTargetNodeID(input);
+  }
   vtkMRMLEMSTargetNode* GetInputTargetNode();
 
   vtkGetStringMacro(AlignedTargetNodeID);
-  void SetAlignedTargetNodeID(const char *input);
+  //BTX
+  vtkSetReferenceStringMacro(AlignedTargetNodeID);
+  //ETX
+  void SetReferenceAlignTargetNodeID(const char* name)
+  {
+    this->SetAlignedTargetNodeID(name);
+  } 
   vtkMRMLEMSTargetNode* GetAlignedTargetNode();
   
   vtkGetStringMacro(InputAtlasNodeID);
-  void SetInputAtlasNodeID(const char *input);
+  //BTX
+  vtkSetReferenceStringMacro(InputAtlasNodeID);
+  //ETX
+  void SetReferenceInputAtlasNodeID(const char* name)
+  {
+    this->SetInputAtlasNodeID(name);
+  } 
   vtkMRMLEMSAtlasNode* GetInputAtlasNode();
 
   vtkGetStringMacro(AlignedAtlasNodeID);
-  void SetAlignedAtlasNodeID(const char *input);
+  //BTX
+  vtkSetReferenceStringMacro(AlignedAtlasNodeID);
+  //ETX
+  void SetReferenceAlignedAtlasNodeID(const char* name)
+  {
+    this->SetAlignedAtlasNodeID(name);
+  } 
   vtkMRMLEMSAtlasNode* GetAlignedAtlasNode();
 
   vtkGetStringMacro(InputSubParcellationNodeID);
-  void SetInputSubParcellationNodeID(const char *input);
+  //BTX
+  vtkSetReferenceStringMacro(InputSubParcellationNodeID);
+  //ETX
+  void SetReferenceInputSubParcellationNodeID(const char* name)
+  {
+    this->SetInputSubParcellationNodeID(name);
+  } 
   vtkMRMLEMSVolumeCollectionNode* GetInputSubParcellationNode();
 
   vtkGetStringMacro(AlignedSubParcellationNodeID);
-  void SetAlignedSubParcellationNodeID(const char *input);
+  //BTX
+  vtkSetReferenceStringMacro(AlignedSubParcellationNodeID);
+  //ETX
+  void SetReferenceAlignedSubParcellationNodeID(const char* name)
+  {
+    this->SetAlignedSubParcellationNodeID(name);
+  } 
   vtkMRMLEMSVolumeCollectionNode* GetAlignedSubParcellationNode();
 
   vtkGetMacro(InputTargetNodeIsValid, int);
