@@ -38,6 +38,7 @@ extern "C" int Slicerbaselogic_Init(Tcl_Interp *interp);
 extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Mrmlcli_Init(Tcl_Interp *interp); 
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
+extern "C" int Kwwidgets_Init(Tcl_Interp *interp);
 
 #define tgVtkCreateMacro(name,type) \
   name  = type::New(); \
@@ -131,6 +132,7 @@ int main(int argc, char** argv)
      Vtkteem_Init(interp);
      Vtkitk_Init(interp);
      Commandlinemodule_Init(interp);
+     Kwwidgets_Init(interp);
 
      // SLICER_HOME
      vtksys_stl::string slicerHome = tgGetSLICER_HOME(argv);
