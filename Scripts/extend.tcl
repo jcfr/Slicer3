@@ -45,6 +45,8 @@ set ::EXTEND(buildList) ""
 set ::EXTEND(no-extension-update) ""
 set ::EXTEND(upload) "false"
 set ::EXTEND(ext-dir) ""
+# when transition to CMake, use Slicer3_USE_JAVA 
+set ::EXTEND(use-java) "false"
 
 if {[info exists ::env(CVS)]} {
     set ::CVS "{$::env(CVS)}"
@@ -94,6 +96,9 @@ for {set i 0} {$i < $argc} {incr i} {
         }
         "--upload" {
             set ::EXTEND(upload) "true"
+        }
+        "--use-java" {
+            set ::EXTEND(use-java) "true"
         }
         "--ext-dir" {
             incr i
@@ -623,6 +628,11 @@ proc buildExtension {s3ext} {
   }
   foreach link $extraLink {
     lappend cmakeCmd $link
+  }
+  if {$::EXTEND(use-java) == "true"} {
+    lappend cmakeCmd -DSlicer3_USE_JAVA:BOOL=ON
+  } else {
+    lappend cmakeCmd -DSlicer3_USE_JAVA:BOOL=OFF
   }
   lappend cmakeCmd $::ext(srcDir)
   eval runcmd $cmakeCmd
