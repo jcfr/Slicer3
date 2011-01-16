@@ -446,7 +446,7 @@ ExternalProject_Add(${proj}
     -DSlicer3_USE_OPENIGTLINK:BOOL=ON
     -DOpenIGTLink_DIR:PATH=${CMAKE_BINARY_DIR}/OpenIGTLink-build
     # BatchMake
-    -DSlicer3_USE_BatchMake=ON
+    -DSlicer3_USE_BatchMake:BOOL=OFF
     -DBatchMake_DIR:PATH=${CMAKE_BINARY_DIR}/BatchMake-build
     # VTK
     -DVTK_DIR:PATH=${VTK_DIR}
