@@ -295,10 +295,12 @@ proc CropVolumeProcessGUIEvents {this caller event} {
 
   if {$caller == $::CropVolume($this,roiSelector)} {
     catch {$this RemoveMRMLObserverByNumber $::CropVolume($this,observedROINode) \
-      [$this GetNumberForVTKEvent ModifiedEvent] }
+      [$this GetNumberForVTKEvent ModifiedEvent]; \
+      $::CropVolume($this,observedROINode) SetVisibility 0 }
     set ::CropVolume($this,observedROINode) [$::CropVolume($this,roiSelector) GetSelected]
     $this AddMRMLObserverByNumber $::CropVolume($this,observedROINode) \
       [$this GetNumberForVTKEvent ModifiedEvent]
+    $::CropVolume($this,observedROINode) SetVisibility 1
   }
 
   if {$caller == [$::CropVolume($this,roiVisibility) GetWidget] } {
@@ -318,8 +320,13 @@ proc CropVolumeProcessGUIEvents {this caller event} {
     set roiNode [$::CropVolume($this,roiSelector) GetSelected]
 
     set inputVolume [$::CropVolume($this,inputSelector) GetSelected]
-    if {$inputVolume == "" || $inputVolume == $::CropVolume($this,inputVolume) || $roiNode == ""} {
-      puts "Something not set, returning"
+    if {$inputVolume == "" || $roiNode == ""} {      
+      # if roilabelNode is not empty, and the selector becomes empty, this
+      # means the scene was closed and we need to reset the pointer
+      # Deletion of the node will be taken care of by closing the scene, I
+      # don't see other scenarios where this can happen
+      set ::CropVolume($this,roilabelNode) ""
+
       return
     }
     set ::CropVolume($this,inputVolume) $inputVolume
