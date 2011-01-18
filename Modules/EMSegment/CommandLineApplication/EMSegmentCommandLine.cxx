@@ -1120,7 +1120,13 @@ int main(int argc, char** argv)
 
           if (verbose) std::cerr << "EMSEG: Start Segmentation." << std::endl;
 
-          emLogic->StartSegmentationWithoutPreprocessing(app,appLogic);
+          int return_value;
+          return_value = emLogic->StartSegmentationWithoutPreprocessing(app,appLogic);
+          if ( return_value == 1 )
+          {
+            std::cerr << "ERROR: StartSegmentationWithoutPreprocessing failed." << std::endl;
+            throw std::runtime_error("");
+          }
 
           if (verbose) std::cerr << "Segmentation complete." << std::endl;
           std::cerr << "============ End of New Pipeline =========================" << std::endl;
