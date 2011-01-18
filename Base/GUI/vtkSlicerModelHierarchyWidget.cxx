@@ -800,6 +800,16 @@ void vtkSlicerModelHierarchyWidget::ProcessMRMLEvents(vtkObject *vtkNotUsed(call
                                                       unsigned long event, 
                                                       void *callData )
 {
+  if (this->MRMLScene == NULL || this->MRMLScene->GetIsClosed())
+    {
+    return;
+    }
+
+  if (event == vtkMRMLScene::SceneLoadEndEvent)
+    {
+    this->UpdateTreeFromMRML();
+    }
+
   if (((event == vtkMRMLScene::NodeAddedEvent || event == vtkMRMLScene::NodeRemovedEvent) && 
       (reinterpret_cast<vtkMRMLModelNode *>(callData) || reinterpret_cast<vtkMRMLModelHierarchyNode *>(callData))) ||
       event == vtkMRMLScene::NewSceneEvent || event == vtkMRMLScene::SceneCloseEvent)
@@ -924,6 +934,7 @@ void vtkSlicerModelHierarchyWidget::CreateWidget ( )
   events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
   events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
   events->InsertNextValue(vtkMRMLScene::SceneCloseEvent);
+  events->InsertNextValue(vtkMRMLScene::SceneLoadEndEvent);
   this->SetAndObserveMRMLSceneEvents(this->GetMRMLScene(), events);
   events->Delete();
 

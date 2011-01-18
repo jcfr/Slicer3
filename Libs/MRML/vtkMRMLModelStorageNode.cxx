@@ -287,7 +287,9 @@ int vtkMRMLModelStorageNode::ReadData(vtkMRMLNode *refNode)
   {
     modelNode->GetPolyData()->Modified();
   }
+  modelNode->SetDisableModifiedEvent(1);
   modelNode->SetModifiedSinceRead(0);
+  modelNode->SetDisableModifiedEvent(0);
   return result;
 }
 
