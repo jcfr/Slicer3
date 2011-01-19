@@ -180,7 +180,13 @@ namespace eval EMSegmenterPreProcessingTcl {
                 set MSG "${MSG}[$mrmlManager GetTreeNodeName $ID]\n"
             }
             set MSG "${MSG}This can cause failure of the automatic segmentation. To address the issue, please visit the web site listed under Help"
-            $preGUI PopUpWarningWindow "$MSG"
+
+            if { 0 } {
+                # TODO
+                $preGUI PopUpWarningWindow "$MSG"
+            } else {
+                $LOGIC PrintText "TCLMRI: WARNING: $MSG"
+            }
         }
 
         return 0
