@@ -303,7 +303,12 @@ namespace eval EMSegmenterAutoSampleTcl {
                 incr Xindex
             }
 
-            set EMSegment(GaussCurveCalc,Covariance,$channelID,$channelID)  [expr $EMSegment(GaussCurveCalc,Covariance,$channelID,$channelID)/ double($EMSegment(GaussCurveCalc,Sum) - 1)]
+            if { $EMSegment(GaussCurveCalc,Sum) > 1 } {
+                set EMSegment(GaussCurveCalc,Covariance,$channelID,$channelID)  [expr $EMSegment(GaussCurveCalc,Covariance,$channelID,$channelID)/ double($EMSegment(GaussCurveCalc,Sum) - 1)]
+            } else {
+                EMSegmentPrint $LOGIC "WARNING: Covariance set to 0.0001, Does the atlas contain only zero values?" 0
+                set EMSegment(GaussCurveCalc,Covariance,$channelID,$channelID) 0.0001
+            }
 
             # we do not need to go over the entire image domain anymore
             # speeds it up a little bit later when we compute 2D Covariance
@@ -359,7 +364,12 @@ namespace eval EMSegmenterAutoSampleTcl {
                         incr Yindex
                     }
                     # Normalize results
-                    set EMSegment(GaussCurveCalc,Covariance,$i,$j) [expr $EMSegment(GaussCurveCalc,Covariance,$i,$j) / double($EMSegment(GaussCurveCalc,Sum) - 1)]
+                    if { $EMSegment(GaussCurveCalc,Sum) > 1} {
+                        set EMSegment(GaussCurveCalc,Covariance,$i,$j) [expr $EMSegment(GaussCurveCalc,Covariance,$i,$j) / double($EMSegment(GaussCurveCalc,Sum) - 1)]
+                    } else {
+                        EMSegmentPrint $LOGIC "WARNING: Covariance set to 0.0001, Does the atlas contain only zero values?" 0
+                        set EMSegment(GaussCurveCalc,Covariance,$i,$j) 0.0001
+                    }
                     set EMSegment(GaussCurveCalc,Covariance,$j,$i) $EMSegment(GaussCurveCalc,Covariance,$i,$j)
 
                     twoDImage Delete
