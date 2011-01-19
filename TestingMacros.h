@@ -651,6 +651,9 @@
       {                                                                 \
       std::cout << "\t" << types->GetValue(i).c_str() << std::endl;      \
       }                                                                 \
+    types->Resize(0);                                                   \
+    types->Delete();                                                    \
+    types = NULL;                                                       \
     int sup = node->SupportedFileType(NULL);                            \
     std::cout << "Filename or uri supported? " << sup << std::endl;     \
     sup = node->SupportedFileType("testing.vtk");                       \
