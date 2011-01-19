@@ -5366,6 +5366,11 @@ void vtkEMSegmentMRMLManager::CreateOutputVolumeNode()
 vtkMRMLVolumeNode*  vtkEMSegmentMRMLManager::GetAlignedSpatialPriorFromTreeNodeID(vtkIdType nodeID)
 {
    vtkMRMLEMSAtlasNode* workingAtlas = this->GetWorkingDataNode()->GetAlignedAtlasNode();
+   if (workingAtlas == NULL)
+     {
+     vtkErrorMacro("Invalid ID: " << nodeID);
+     return NULL;
+     }
    std::string atlasVolumeKey = this->GetTreeParametersNode(nodeID)->GetSpatialPriorVolumeName() ? this->GetTreeParametersNode(nodeID)->GetSpatialPriorVolumeName() : "";
    int atlasVolumeIndex       = workingAtlas->GetIndexByKey(atlasVolumeKey.c_str());
     if (atlasVolumeIndex >= 0 )
