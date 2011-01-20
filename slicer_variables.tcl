@@ -86,7 +86,7 @@ set ::Teem_TAG http://teem.svn.sourceforge.net/svnroot/teem/teem/branches/Teem-1
 set ::KWWidgets_TAG "Slicer-3-6"
 #set ::VTK_TAG "http://svn.github.com/pieper/SlicerVTK.git" ;# slicer's patched vtk 5.6
 set ::VTK_TAG "http://svn.slicer.org/Slicer3-lib-mirrors/branches/Slicer-3-6/VTK" ;# slicer's patched vtk 5.6
-set ::ITK_TAG ITK-3-18
+set ::ITK_TAG ITK-3-20
 set ::PYTHON_TAG "http://svn.python.org/projects/python/branches/release26-maint"
 set ::PYTHON_REVISION 76651 ;# avoid windows manifest "fix"
 set ::BLAS_TAG http://svn.slicer.org/Slicer3-lib-mirrors/trunk/netlib/BLAS
