@@ -31,6 +31,7 @@ set(TEMP "${Slicer3_BINARY_DIR}/Testing/Temporary")
 # DicomToNrrdConverter tests
 add_test(DicomToNrrdConverterTest ${Slicer3_EXE} --launch DicomToNrrdConverterTest
     ModuleEntryPoint
+    --useBMatrixGradientDirections
     --inputDicomDirectory ${TEST_DATA}/DWIDicom
     --outputDirectory ${TEMP}
     --outputVolume DWIDicom.nhdr
