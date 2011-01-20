@@ -645,15 +645,12 @@
     std::string fullName0 = node->GetFullNameFromNthFileName(0);     \
     std::cout << "fullName0 = " << fullName0.c_str() << std::endl; \
                                                                         \
-    vtkStringArray *types = node->GetSupportedWriteFileTypes();         \
-    std::cout << "Supported write types:" << std::endl;                 \
+    vtkSmartPointer<vtkStringArray> types = node->GetSupportedWriteFileTypes();         \
+    std::cout << "Supported write types: (" << types->GetNumberOfValues() << ")" << std::endl; \
     for (vtkIdType i = 0; i < types->GetNumberOfValues(); i++)                 \
       {                                                                 \
       std::cout << "\t" << types->GetValue(i).c_str() << std::endl;      \
       }                                                                 \
-    types->Resize(0);                                                   \
-    types->Delete();                                                    \
-    types = NULL;                                                       \
     int sup = node->SupportedFileType(NULL);                            \
     std::cout << "Filename or uri supported? " << sup << std::endl;     \
     sup = node->SupportedFileType("testing.vtk");                       \

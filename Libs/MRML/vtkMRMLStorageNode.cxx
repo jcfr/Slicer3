@@ -644,7 +644,7 @@ std::string vtkMRMLStorageNode::GetFullNameFromNthFileName(int n)
 //----------------------------------------------------------------------------
 int vtkMRMLStorageNode::SupportedFileType(const char *fileName)
 {
-  vtkErrorMacro("SupportedFileType: sub class didn't define this method! (fileName = '" << fileName << "')");
+  vtkErrorMacro("SupportedFileType: sub class didn't define this method! (fileName = '" << (fileName == NULL ? "null" : fileName) << "')");
   return 0;
 }
 
