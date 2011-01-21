@@ -51,11 +51,17 @@ include_directories(
 
 set(BRAINSCommonLib_SRCS GenericTransformImage.cxx BRAINSFitHelper.cxx Slicer3LandmarkIO.cxx)
 
+## ITKv4 requires that ITKReview is explicitly linked against
+if(ITK_VERSION_MAJOR EQUAL 4 )
+  set(ITKREVIEWLIB ITKReview)
+endif(ITK_VERSION_MAJOR EQUAL 4 )
+
+
 add_library(BRAINSCommonLib ${BRAINSCommonLib_SRCS})
-target_link_libraries(BRAINSCommonLib ITKAlgorithms ITKIO)
+target_link_libraries(BRAINSCommonLib ITKAlgorithms ITKIO ${ITKREVIEWLIB})
 
 
-if (Slicer3_SOURCE_DIR)
+if (Slicer_SOURCE_DIR)
 
   # install each target in the production area (where it would appear in an
   # installation) and install each target in the developer area (for running
@@ -65,7 +71,7 @@ if (Slicer3_SOURCE_DIR)
     )
   slicer3_install_plugins(${TARGETS})
 
-else (Slicer3_SOURCE_DIR)
+else (Slicer_SOURCE_DIR)
 
   INSTALL(TARGETS BRAINSCommonLib
       RUNTIME DESTINATION bin
@@ -84,18 +90,24 @@ else (Slicer3_SOURCE_DIR)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/BRAINSCommonLibInstallConfig.cmake.in
                  ${CMAKE_CURRENT_BINARY_DIR}/BRAINSCommonLibInstallConfig.cmake
                  @ONLY)
- 
+
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/BRAINSCommonLibInstallConfig.cmake
           DESTINATION lib/BRAINSCommonLib
           COMPONENT Development
           RENAME BRAINSCommonLibConfig.cmake)
 
-   INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/UseBRAINSCommonLib.cmake.in
-           DESTINATION lib/BRAINSCommonLib
-           COMPONENT Development
-           RENAME UseBRAINSCommonLib.cmake)
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/UseBRAINSCommonLib.cmake.in
+     ${CMAKE_CURRENT_BINARY_DIR}/UseBRAINSCommonLib.cmake @ONLY)
 
-endif (Slicer3_SOURCE_DIR)
+   # INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/UseBRAINSCommonLib.cmake.in
+   #         DESTINATION lib/BRAINSCommonLib
+   #         COMPONENT Development
+   #         RENAME UseBRAINSCommonLib.cmake)
+   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/UseBRAINSCommonLib.cmake
+     DESTINATION lib/BRAINSCommonLib
+     COMPONENT Development)
+
+endif (Slicer_SOURCE_DIR)
 
 ##HACK NEED BETTER TESTS add_directory( TestLargestForegroundFilledMaskImageFilter )
 ##HACK NEED BETTER TESTS add_directory( Test_FindCenterOfBrainFilter )

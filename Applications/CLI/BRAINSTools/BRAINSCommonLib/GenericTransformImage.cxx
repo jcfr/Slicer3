@@ -395,7 +395,7 @@ void WriteTransformToDisk(GenericTransformType const *const MyTransform, const s
     if ( !itksys::SystemTools::FileExists( TransformFilename.c_str() ) )
       {
       itk::ExceptionObject e(__FILE__, __LINE__, "Failed to write file", "WriteTransformToDisk");
-      OStringStream        msg;
+      std::ostringstream        msg;
       msg << "The file was not successfully created. "
           << std::endl << "Filename = " << TransformFilename
           << std::endl;
@@ -435,7 +435,6 @@ void AddExtraTransformRegister(void)
   itk::TransformFactory< itk::QuaternionRigidTransform< double > >::RegisterTransform ();
   itk::TransformFactory< itk::Rigid2DTransform< double > >::RegisterTransform ();
   itk::TransformFactory< itk::Rigid3DPerspectiveTransform< double > >::RegisterTransform ();
-  itk::TransformFactory< itk::Rigid3DTransform< double > >::RegisterTransform ();
   itk::TransformFactory< itk::ScalableAffineTransform< double > >::RegisterTransform ();
   itk::TransformFactory< itk::ScaleLogarithmicTransform< double > >::RegisterTransform ();
   itk::TransformFactory< itk::ScaleSkewVersor3DTransform< double > >::RegisterTransform ();
@@ -463,7 +462,6 @@ void AddExtraTransformRegister(void)
   itk::TransformFactory< itk::QuaternionRigidTransform< float > >::RegisterTransform ();
   itk::TransformFactory< itk::Rigid2DTransform< float > >::RegisterTransform ();
   itk::TransformFactory< itk::Rigid3DPerspectiveTransform< float > >::RegisterTransform ();
-  itk::TransformFactory< itk::Rigid3DTransform< float > >::RegisterTransform ();
   itk::TransformFactory< itk::ScalableAffineTransform< float > >::RegisterTransform ();
   itk::TransformFactory< itk::ScaleLogarithmicTransform< float > >::RegisterTransform ();
   itk::TransformFactory< itk::ScaleSkewVersor3DTransform< float > >::RegisterTransform ();

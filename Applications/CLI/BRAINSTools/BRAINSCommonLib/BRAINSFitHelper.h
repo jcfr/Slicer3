@@ -16,6 +16,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <stdio.h>
 
 #include "BRAINSCommonLibWin32Header.h"
 
@@ -24,36 +25,12 @@
 #include "BRAINSFitBSpline.h"
 #include "BRAINSFitUtils.h"
 
-#include "itkFindCenterOfBrainFilter.h"
-#include "itkMedianImageFilter.h"
-#include "itkHistogramMatchingImageFilter.h"
 
 #include "itkIO.h"
-
-#include "itkCenteredVersorTransformInitializer.h"
-#include "itkCenteredTransformInitializer.h"
-
-#include "itkVersorRigid3DTransformOptimizer.h"
-#include "itkVersorRigid3DTransformOptimizer.h"
-#include "itkVersorTransformOptimizer.h"
-
-#include "itkVector.h"
-#include "itkMultiThreader.h"
-
-#include "itkExtractImageFilter.h"
-
-#include "itkResampleImageFilter.h"
-#include "itkExtractImageFilter.h"
-#include "itkAffineTransform.h"
-#include <stdio.h>
-#include "ConvertToRigidAffine.h"
-
+#include "GenericTransformImage.h"
+#include "itkFindCenterOfBrainFilter.h"
 #include "ReadMask.h"
 #include "BRAINSMacro.h"
-
-#include "itkImageMaskSpatialObject.h"
-
-#include "GenericTransformImage.h"
 
 typedef itk::SpatialObject< 3 >    SpatialObjectType;
 typedef SpatialObjectType::Pointer ImageMaskPointer;
@@ -67,9 +44,6 @@ BRAINSCommonLib_EXPORT extern void ValidateTransformRankOrdering(const std::vect
 
 namespace itk
 {
-
-
-
 
 class BRAINSCommonLib_EXPORT BRAINSFitHelper:public Object
 {
