@@ -36,6 +36,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "BRAINSFitHelper.h"
 #include "BRAINSFitPrimaryCLP.h"
 
+#if ( ITK_VERSION_MAJOR < 4  ) //These are all defaults in ITKv4
+#include "itkBrains2MaskImageIOFactory.h"
 // Check that ITK was compiled with correct flags set:
 #ifndef ITK_IMAGE_BEHAVES_AS_ORIENTED_IMAGE
 #  error                                                                  \
@@ -48,6 +50,7 @@ PURPOSE.  See the above copyright notices for more information.
 #ifndef ITK_USE_TRANSFORM_IO_FACTORIES
 #  error                                                                  \
   "BRAINSFit Requires ITK_USE_TRANSFORM_IO_FACTORIES to be on, please rebuild ITK."
+#endif
 #endif
 
 #if ( ITK_VERSION_MAJOR < 3  )
@@ -63,7 +66,7 @@ PURPOSE.  See the above copyright notices for more information.
 #  endif
 #endif
 
-#include "GenericTransformImage.h"
+#include "itkMedianImageFilter.h"
 
 typedef float PixelType;
 // Dimension and MaxInputDimension comes from an enum at the start of
@@ -190,6 +193,9 @@ DebugImageViewerClient DebugImageDisplaySender;
 int BRAINSFitPrimary(int argc, char *argv[])
 {
   PARSE_ARGS;
+#if ( ITK_VERSION_MAJOR < 4  ) //These are all defaults in ITKv4
+  itk::ObjectFactoryBase::RegisterFactory( itk::Brains2MaskImageIOFactory::New() );
+#endif
 
   itk::AddExtraTransformRegister();
   // Apparently when you register one transform, you need to register all your
@@ -200,8 +206,6 @@ int BRAINSFitPrimary(int argc, char *argv[])
   itk::TransformFactory< ScaleSkewVersor3DTransformType >::RegisterTransform();
   itk::TransformFactory< AffineTransformType >::RegisterTransform();
   itk::TransformFactory< BSplineTransformType >::RegisterTransform();
-
-  RegisterBrains2MaskFactory();
 
 #ifdef USE_DEBUG_IMAGE_VIEWER
   if ( UseDebugImageViewer )
@@ -420,6 +424,8 @@ int BRAINSFitPrimary(int argc, char *argv[])
                                                                      // along z
     // DEBUG
     std::cout << "Median radius  " << indexRadius << std::endl;
+    std::cout << "Fixed Image size     "  << extractFixedVolume->GetLargestPossibleRegion().GetSize() << std::endl;
+    std::cout << "Moving Image size     " << extractMovingVolume->GetLargestPossibleRegion().GetSize() << std::endl;
     extractFixedVolume = DoMedian< FixedVolumeType >(extractFixedVolume,
                                                      indexRadius);
     extractMovingVolume = DoMedian< MovingVolumeType >(extractMovingVolume,
