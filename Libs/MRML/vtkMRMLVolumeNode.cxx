@@ -552,6 +552,17 @@ void vtkMRMLVolumeNode::ComputeIJKToRASFromScanOrder(char *order,
     }
 }
 
+void vtkMRMLVolumeNode::ComputeIJKToRASFromScanOrder(char *order, 
+                                    double spacing1, double spacing2, double spacing3, 
+                                    int dims1, int dims2, int dims3,
+                                    bool centerImage,
+                                    vtkMatrix4x4 *IJKToRAS)
+{
+  double spacing[3] = { spacing1, spacing2, spacing3 };
+  int dim[3] = { dims1, dims2, dims3 } ;
+  this->ComputeIJKToRASFromScanOrder(order,spacing, dim, centerImage, IJKToRAS);
+}
+
 //----------------------------------------------------------------------------
 const char* vtkMRMLVolumeNode::ComputeScanOrderFromIJKToRAS(vtkMatrix4x4 *ijkToRAS)
 {

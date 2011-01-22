@@ -86,7 +86,15 @@ class VTK_MRML_EXPORT vtkMRMLVolumeNode : public vtkMRMLDisplayableNode
                                            bool centerImage,
                                            vtkMatrix4x4 *IJKToRAS);
 
+  // So it is tcl wrapped
+  void ComputeIJKToRASFromScanOrder(char *order, 
+                                    double spacing1, double spacing2, double spacing3, 
+                                    int dims1, int dims2, int dims3,
+                                    bool centerImage,
+                                    vtkMatrix4x4 *IJKToRAS);
+
   static const char* ComputeScanOrderFromIJKToRAS(vtkMatrix4x4 *IJKToRAS);
+
 
   void SetIJKToRASDirections(double dirs[3][3]);
   void SetIJKToRASDirections(double ir, double ia, double is,
