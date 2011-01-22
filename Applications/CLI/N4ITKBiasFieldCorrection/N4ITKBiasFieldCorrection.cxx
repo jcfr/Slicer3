@@ -275,7 +275,7 @@ int main(int argc, char** argv){
   if( histogramSharpening.size() && histogramSharpening[0] )
     correcter->SetBiasFieldFullWidthAtHalfMaximum( histogramSharpening[0] );
   if( histogramSharpening.size()>1 && histogramSharpening[1] )
-    correcter->SetWeinerFilterNoise( histogramSharpening[1] );
+    correcter->SetWienerFilterNoise( histogramSharpening[1] );
   if( histogramSharpening.size()>2 && histogramSharpening[2] )
     correcter->SetNumberOfHistogramBins( histogramSharpening[2] );
 

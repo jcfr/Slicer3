@@ -683,7 +683,7 @@ namespace
 
       correcter->SetMaximumNumberOfIterations( MaximumNumberOfIterations );
       correcter->SetNumberOfFittingLevels( NumberOfFittingLevels );
-      correcter->SetWeinerFilterNoise( WienerFilterNoise );
+      correcter->SetWienerFilterNoise( WienerFilterNoise );
       correcter->SetBiasFieldFullWidthAtHalfMaximum( FullWidthAtHalfMaximum );
       correcter->SetConvergenceThreshold( ConvergenceThreshold );
       correcter->Update();
@@ -875,7 +875,7 @@ namespace
 
       correcter->SetMaximumNumberOfIterations( maximumNumberOfIterations );
       correcter->SetNumberOfFittingLevels( NumberOfFittingLevels );
-      correcter->SetWeinerFilterNoise( WienerFilterNoise );
+      correcter->SetWienerFilterNoise( WienerFilterNoise );
       correcter->SetBiasFieldFullWidthAtHalfMaximum( FullWidthAtHalfMaximum );
       correcter->SetConvergenceThreshold( ConvergenceThreshold );
       correcter->Update();

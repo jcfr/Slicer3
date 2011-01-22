@@ -63,7 +63,7 @@ namespace itk {
  *     can reconstruct it using the class itkBSplineControlPointImageFilter.
  *     See the IJ article and the test file for an example.
  *  5. The 'Z' parameter in Sled's 1998 paper is the square root
- *     of the class variable 'm_WeinerFilterNoise'.
+ *     of the class variable 'm_WienerFilterNoise'.
  *
  * \author Nicholas J. Tustison
  *
@@ -223,8 +223,8 @@ public:
   itkSetMacro( NumberOfHistogramBins, unsigned int );
   itkGetConstMacro( NumberOfHistogramBins, unsigned int );
 
-  itkSetMacro( WeinerFilterNoise, RealType );
-  itkGetConstMacro( WeinerFilterNoise, RealType );
+  itkSetMacro( WienerFilterNoise, RealType );
+  itkGetConstMacro( WienerFilterNoise, RealType );
 
   itkSetMacro( BiasFieldFullWidthAtHalfMaximum, RealType );
   itkGetConstMacro( BiasFieldFullWidthAtHalfMaximum, RealType );
@@ -286,10 +286,10 @@ private:
   MaskPixelType                               m_MaskLabel;
 
   /**
-   * Parameters for deconvolution with Weiner filter
+   * Parameters for deconvolution with Wiener filter
    */
   unsigned int                                m_NumberOfHistogramBins;
-  RealType                                    m_WeinerFilterNoise;
+  RealType                                    m_WienerFilterNoise;
   RealType                                    m_BiasFieldFullWidthAtHalfMaximum;
 
   /**
