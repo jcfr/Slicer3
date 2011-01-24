@@ -399,7 +399,7 @@ if(NOT DISABLE_CXX_TESTING)
     EMSegCL_EFBogusMRMLScene
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
-    --verbose --dontWriteResults --mrmlSceneFileName /tmp/bogus_file_scene.mrml
+    --verbose --dontWriteResults --mrmlSceneFileName ${Slicer3_BINARY_DIR}/Testing/Temporary/bogus_file_scene.mrml
     )
   set_tests_properties(
     EMSegCL_EFBogusMRMLScene
@@ -465,13 +465,13 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TUTORIAL_DIR}/VolumeData/targetT1Normed_small.mhd,${EMSegment_TUTORIAL_DIR}/VolumeData/targetT2Normed_small.mhd
     --intermediateResultsDirectory
-    /tmp
+    "${Slicer3_BINARY_DIR}/Testing/Temporary"
     )
   set_tests_properties(
     EMSegCL_IntermediateResults
     PROPERTIES
     FAIL_REGULAR_EXPRESSION
-    "Error writing intermediate results"
+    "ERROR;Error writing intermediate results"
     )
 
   # Task test - small
