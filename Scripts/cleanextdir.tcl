@@ -66,28 +66,32 @@ foreach dir $dirs {
       # file was deleted in earlier iteration
       continue
     }
+    set fTail [file tail $f]]
+
+    # strip off everything before the svn tag, since
+    # module names may have their own hyphens embedded
+    # (like plastimatch-slicer, for example)
+    set svnIndex [string first "-svn" $fTail]
+    if { $svnIndex == -1 } {
+      # no svn tag, skip it
+      continue
+    }
+
+    set module [string range $fTail 0 [expr $svnIndex -1]]
+    set id [string range $fTail [expr $svnIndex + 1] end]
+
 
     # extract the date, finds all matching files in dir
-    set namelist [split [file tail $f] "-."]
-    if { [llength $namelist] < 6 } {
+    set namelist [split $id "-."]
+    if { [llength $namelist] < 5 } {
       # file was not a slicer extension file, skip it
       continue
     }
-    set module [lindex $namelist 0]
-    set svnno [lindex $namelist 1]
-    set year [lindex $namelist 2]
-    set month [lindex $namelist 3]
-    set day [lindex $namelist 4]
-    set os [lindex $namelist 5]
-    if { $os == "win32" } {
-      set osarch "win32"
-    } else {
-      set osarch "$os-[lindex $namelist 6]"
-    }
 
+    # get all builds for this module
+    set matchfiles [lsort [glob $dir/$module-svn*]]
 
-    set matchfiles [lsort [glob $dir/$module-$svnno-*-$osarch*]]
-
+    # delete all but the most recent build of the most recent svn number
     if { [llength $matchfiles] > 1 } {
       foreach ff [lrange $matchfiles 0 end-1] {
         if { $::VERBOSE } {
