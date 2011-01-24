@@ -464,14 +464,16 @@ if(NOT DISABLE_CXX_TESTING)
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
     ${EMSegment_TUTORIAL_DIR}/VolumeData/targetT1Normed_small.mhd,${EMSegment_TUTORIAL_DIR}/VolumeData/targetT2Normed_small.mhd
+    --resultVolumeFileName
+    ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegCL_IntermediateResults_FinalResult.nrrd
     --intermediateResultsDirectory
-    "${Slicer3_BINARY_DIR}/Testing/Temporary"
+    ${Slicer3_BINARY_DIR}/Testing/Temporary
     )
   set_tests_properties(
     EMSegCL_IntermediateResults
     PROPERTIES
     FAIL_REGULAR_EXPRESSION
-    "ERROR;Error writing intermediate results"
+    "Error writing intermediate results"
     )
 
   # Task test - small
