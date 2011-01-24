@@ -305,6 +305,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   void SetBinDir(const char* path);
   const char* GetBinDir() const;
 
+  ///
+  /// Get the plugins directory
+  const char* GetPluginsDir() const;
+
   /// 
   /// Set/Get the application window size
   /// for saving in the registry.

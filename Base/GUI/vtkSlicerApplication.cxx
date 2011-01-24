@@ -2093,6 +2093,12 @@ const char* vtkSlicerApplication::GetBinDir() const
 }
 
 //----------------------------------------------------------------------------
+const char* vtkSlicerApplication::GetPluginsDir() const
+{
+  return getenv("Slicer3_PLUGINS_DIR");
+}
+
+//----------------------------------------------------------------------------
 bool vtkSlicerApplication::RequestDisplayMessage( const char *type, const char *message )
 {
   bool active;
