@@ -1,5 +1,10 @@
 include(ExternalProject)
 
+#  This is a hack to get similar behavior in both Slicer3 and Slicer4 for building BRAINSFit
+if (Slicer3_SOURCE_DIR)
+  set(Slicer_SOURCE_DIR "${Slicer3_SOURCE_DIR}" CACHE INTERNAL "Needed to get Slicer3 and Slicer4 to have same behavior" FORCE)
+endif (Slicer3_SOURCE_DIR)
+
 #
 # argv1 == program name
 # argv2 == src variable name
