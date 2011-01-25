@@ -838,6 +838,10 @@ proc CropVolumeErrorDialog {this errorText} {
 }
 
 proc CropVolumeUpdateLabelMap {this} {
+  if { $::CropVolume($this,roilabelNode) == "" } { 
+    return
+  }
+
   set roiNode [$::CropVolume($this,roiSelector) GetSelected]
 
   set roiTnode [$roiNode GetParentTransformNode]
