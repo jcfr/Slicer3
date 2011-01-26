@@ -481,13 +481,20 @@ GuessRegistrationBackgroundLevel(vtkImageData* imageData)
                        MapCompare<T>::map_value_comparer);
 
     std::cout << "   Background level guess : " 
-              << static_cast<int>(backgroundLevel) << "(" << percentageOfVoxels << "%) "
-              << "second place: "
-              << static_cast<int>(itor2->first) << "(" 
-              << 100.0 * static_cast<double>(itor2->second)/totalVoxelsCounted
-              << "%)"
+              << static_cast<int>(backgroundLevel) << " (" << percentageOfVoxels << "%) "
               << std::endl;
-    
+
+    /*
+    //ATTENTION: commented out because of a Windows runtime bug if accessing "static_cast<int>(itor2->first)"
+
+    int second_place = static_cast<int>(itor2->first);
+    double percentageOfVoxels_secondplace =
+      100.0 * static_cast<double>(itor2->second)/totalVoxelsCounted;
+
+    std::cout << "second place: " << second_place << " (" << percentageOfVoxels_secondplace << "%)"
+              << std::endl;
+    */
+
     return backgroundLevel;
     }
 }
