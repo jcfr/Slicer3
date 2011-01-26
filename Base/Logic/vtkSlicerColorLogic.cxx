@@ -431,6 +431,25 @@ void vtkSlicerColorLogic::AddDefaultColorNodes()
         // selector
         // can't unset an attribute, so just don't set it at all
         }
+      else if (strcmp(ctnode->GetName(),"BlueToRedRainbow") == 0)
+        {
+        // recategorise this one
+        ctnode->SetAttribute("Category", "Discrete");
+        }
+      else if (strstr(ctnode->GetName(), "Atlas") != NULL)
+        {
+        // try to find atlas ones
+        ctnode->SetAttribute("Category", "Atlas");
+        }
+      else if (strstr(ctnode->GetName(), "Abdomen") != NULL ||
+               strstr(ctnode->GetName(), "Pelvis") != NULL ||
+               strstr(ctnode->GetName(), "Lung") != NULL ||
+               strstr(ctnode->GetName(), "Heart") != NULL ||
+               strstr(ctnode->GetName(), "Knee") != NULL)
+        {
+        // try to find non brain ones
+        ctnode->SetAttribute("Category", "Body");
+        }
       else
         {
         ctnode->SetAttribute("Category", "Default Labels from File");
