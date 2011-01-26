@@ -23,7 +23,7 @@ set_target_properties(VBRAINSDemonWarpCLPTests PROPERTIES RUNTIME_OUTPUT_DIRECTO
 set(VBRAINS_Demon_Warp_TESTS ${LAUNCH_EXE} $<TARGET_FILE:VBRAINSDemonWarpCLPTests> )
 
 include(${BRAINS_CMAKE_HELPER_DIR}/MIDAS.cmake)
-set(MIDAS_KEY_DIR "${BRAINSCommonLib_DATA_DIRS}")
+set(MIDAS_KEY_DIR "${PROJECT_SOURCE_DIR}/../BRAINSCommonLib/TestData")
 
 #1
 midas_add_test(NAME ValidateBRAINSDemonsWarpTest_nii COMMAND ${BRAINS_Demon_Warp_TESTS}
