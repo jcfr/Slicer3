@@ -424,7 +424,11 @@ if { $::GETBUILDTEST(doxy) } {
 
 # build the lib with options
 cd $::Slicer3_HOME
-set cmd "sh ./Scripts/genlib.tcl $Slicer3_LIB"
+if {$isWindows} {
+  set cmd "./Utilities/Launcher/tclkits/tclkit-win32.exe ./Scripts/genlib.tcl $Slicer3_LIB"
+} else {
+  set cmd "sh ./Scripts/genlib.tcl $Slicer3_LIB"
+}
 
 if { $::GETBUILDTEST(compiler) != "" } {
   append cmd " --$::GETBUILDTEST(compiler)"
