@@ -812,6 +812,7 @@ void vtkMRMLIGTLConnectorNode::ImportDataFromCircularBuffer()
           buffer->GetTimeStamp(ts);
           (*inIter).second = ts->GetSecond();
           (*inIter).nanosecond = ts->GetNanosecond();
+          //node->SetAttribute("IGTLTime", )
           node->Modified();  // in case converter doesn't call any Modified()s 
           node->DisableModifiedEventOff();
           node->InvokePendingModifiedEvent();
