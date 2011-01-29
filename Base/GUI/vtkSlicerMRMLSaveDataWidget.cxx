@@ -765,6 +765,7 @@ int vtkSlicerMRMLSaveDataWidget::UpdateFromMRML()
     this->SetFileNameRelatedCells(row, name.c_str(), snode->GetSupportedWriteFileTypes());
     this->AddNodeId(node->GetID(), row);
     this->AddStorageNodeId(snode->GetID(), row);
+    this->UpdateRowFileFormatWithName(row);
     row++;
     }
 
@@ -951,7 +952,7 @@ void vtkSlicerMRMLSaveDataWidget::UpdateRowFileFormatWithName(int row)
 
   std::string fileName = this->MultiColumnList->GetWidget()->GetCellText(
     row,FileName_Column);
-  std::string fileExt = vtksys::SystemTools::GetFilenameLastExtension(fileName);
+  std::string fileExt = vtksys::SystemTools::GetFilenameExtension(fileName);
 
   if(!fileExt.empty() && strcmp(fileExt.c_str(), currExt.c_str()))
     {
@@ -967,7 +968,7 @@ void vtkSlicerMRMLSaveDataWidget::UpdateRowFileFormatWithName(int row)
         cb->SetValue(strFormat.c_str());
         }
       this->MultiColumnList->GetWidget()->SetCellText(
-        row,Format_Column,fileName.c_str());
+        row,Format_Column,strFormat.c_str());
       }
     else
       {
