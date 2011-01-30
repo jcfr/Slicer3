@@ -436,6 +436,43 @@ void vtkSlicerApplicationLogic::ProcessMRMLEvents(vtkObject * /*caller*/,
 }
 
 //----------------------------------------------------------------------------
+void vtkSlicerApplicationLogic::PropagateVolumeLayerSelection(int layer)
+{
+  if ( !this->SelectionNode || !this->MRMLScene )
+    {
+    return;
+    }
+
+  int i, nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLSliceCompositeNode");
+  char *ID = this->SelectionNode->GetActiveVolumeID();
+  char *secondID = this->SelectionNode->GetSecondaryVolumeID();
+  char *labelID = this->SelectionNode->GetActiveLabelVolumeID();
+
+  vtkMRMLSliceCompositeNode *cnode;
+  for (i = 0; i < nnodes; i++)
+    {
+    cnode = vtkMRMLSliceCompositeNode::SafeDownCast (
+            this->MRMLScene->GetNthNodeByClass( i, "vtkMRMLSliceCompositeNode" ) );
+    if(!cnode->GetDoPropagateVolumeSelection())
+      {
+      continue;
+      }
+    if ( layer == 0 )
+      {
+      cnode->SetBackgroundVolumeID( ID );
+      }
+    else if ( layer == 1 )
+      {
+      cnode->SetForegroundVolumeID( secondID );
+      }
+    else if ( layer == 2 )
+      {
+      cnode->SetLabelVolumeID( labelID );
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
 void vtkSlicerApplicationLogic::PropagateVolumeSelection(int fit)
 {
   if ( !this->SelectionNode || !this->MRMLScene )
@@ -1649,20 +1686,18 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
         {
         this->GetSelectionNode()
           ->SetActiveLabelVolumeID( req.GetNode().c_str() );
+        this->PropagateVolumeLayerSelection(2);
         }
       else
         {
         this->GetSelectionNode()
           ->SetActiveVolumeID( req.GetNode().c_str() );
+        this->PropagateVolumeLayerSelection(0);
         }
       if (vtkMRMLScalarVolumeDisplayNode::SafeDownCast(svnd->GetDisplayNode()) != NULL)
         {
         // make sure win/level gets calculated
         svnd->CalculateAutoLevels(vtkMRMLScalarVolumeDisplayNode::SafeDownCast(svnd->GetDisplayNode()), svnd->GetImageData());
-        }
-//      if (!strcmp(svnd->GetClassName(), "vtkMRMLScalarVolumeNode"))
-        {
-        this->PropagateVolumeSelection();
         }
       }
     }

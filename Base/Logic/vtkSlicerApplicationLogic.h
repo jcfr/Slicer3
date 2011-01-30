@@ -150,6 +150,10 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerApplicationLogic : public vtkSlicerL
   void PropagateVolumeSelection() {this->PropagateVolumeSelection(1);}; 
 
   /// 
+  /// only propagate the selected layer (0 = back, 1 = fore, 2 = label)
+  void PropagateVolumeLayerSelection(int layer);
+
+  /// 
   /// Perform the default behaviour related to selecting a fiducial list
   /// (display it in the Fiducials GUI)
   void PropagateFiducialListSelection();
