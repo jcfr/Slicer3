@@ -322,7 +322,6 @@ itcl::body SlicePlaneSWidget::updateNodeFromWidget {sliceNode planeRepresentatio
   # make the other slice planes orthogonal to the one being moved if they are linked
   if { [$_sliceCompositeNode GetLinkedControl] == 1  } {
     set sliceLogics [$this getLinkedSliceLogics]
-
     if { [$sliceNode GetLayoutName] == "Red" } {
       if { [$this isCompareViewMode] == 0} {
         foreach logic $sliceLogics {
