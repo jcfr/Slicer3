@@ -61,7 +61,7 @@ vtkMRMLSliceCompositeNode::vtkMRMLSliceCompositeNode()
   this->LinkedControl = 0;
   this->ForegroundGrid = 0;
   this->BackgroundGrid = 0;
-  this->LabelGrid = 1;
+  this->LabelGrid = 0;
   this->FiducialVisibility = 1;
   this->FiducialLabelVisibility = 1;
   this->AnnotationSpace = vtkMRMLSliceCompositeNode::IJKAndRAS;
