@@ -701,7 +701,6 @@ itcl::body LoadVolume::apply { } {
             $dispNode AutoWindowLevelOff
             # for now, take the first if there's a list
             set dicomwin [lindex [split $_dicomWindowLevel(window) {\\}] 0]
-            # puts "Got $dicomwin out of  $_dicomWindowLevel(window)"
             $dispNode SetWindow $dicomwin
           }
         }
@@ -713,7 +712,6 @@ itcl::body LoadVolume::apply { } {
             $dispNode AutoWindowLevelOff
             # for now, take the first if there's a list
             set lev  [lindex [split $_dicomWindowLevel(level) {\\}] 0]
-            # puts "Got $lev out of $_dicomWindowLevel(level)"
             $dispNode SetLevel $lev
           }
         }
@@ -1456,7 +1454,8 @@ itcl::body LoadVolume::organizeDICOMSeries {arrayName {includeSubseries 0} {prog
 
   if { $includeSubseries } {
     set subseriesSpecs {
-      SeriesInstanceUID              0020|000E
+      StudyInstanceUID               0020|000d
+      SeriesInstanceUID              0020|000e
       ContentTime                    0008|0033
       TriggerTime                    0018|1060
       DiffusionGradientOrientation   0018|9089 
@@ -1490,6 +1489,7 @@ itcl::body LoadVolume::organizeDICOMSeries {arrayName {includeSubseries 0} {prog
         }
 
 
+
         # second, for any specs that have more than one value, create a new
         # virtual series
         if { $progressCmd != "" } {
@@ -1512,7 +1512,8 @@ itcl::body LoadVolume::organizeDICOMSeries {arrayName {includeSubseries 0} {prog
     }
   }
 
-
+  array set ::tree [array get tree]
+  array set ::subseriesValues [array get subseriesValues]
 
   #
   # sort each series geometrically
