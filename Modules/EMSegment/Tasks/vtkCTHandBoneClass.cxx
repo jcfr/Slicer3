@@ -205,6 +205,8 @@ int vtkCTHandBoneClass::fiducial_threshold(const char* inputImage, const char* o
   ImageType::PointType origin = image->GetOrigin( );
   ImageType::SpacingType spacing = image->GetSpacing( );
 
+  //TODO
+  /*
   int dominantAxisRL = itk::Function::Max3(imageDir[0][0],imageDir[1][0],imageDir[2][0]);
   int signRL = itk::Function::Sign(imageDir[dominantAxisRL][0]);
   int dominantAxisAP = itk::Function::Max3(imageDir[0][1],imageDir[1][1],imageDir[2][1]);
@@ -214,8 +216,6 @@ int vtkCTHandBoneClass::fiducial_threshold(const char* inputImage, const char* o
 
   ImageType::DirectionType DirectionToRAS;
   DirectionToRAS.SetIdentity( );
-  //TODO
-  /*
     if (signRL == 1)
     {
     DirectionToRAS[dominantAxisRL][dominantAxisRL] = -1.0;
