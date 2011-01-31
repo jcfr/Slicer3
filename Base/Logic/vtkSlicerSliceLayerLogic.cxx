@@ -67,6 +67,7 @@ vtkSlicerSliceLayerLogic::vtkSlicerSliceLayerLogic()
   this->AlphaLogic = vtkImageLogic::New();
   this->Threshold = vtkImageThreshold::New();
   this->LabelOutline = vtkImageLabelOutline::New();
+  this->LabelOutline->SetKernelSize(5,5,5);
   this->AppendComponents = vtkImageAppendComponents::New();
 
   // Create the parts for the DWI layer pipeline
