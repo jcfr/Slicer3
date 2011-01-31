@@ -49,6 +49,18 @@ if(NOT DISABLE_CXX_TESTING)
   # add test executables
   ############################################################################
   add_executable(
+    vtkEMSegmentRemoteIOTest
+    vtkEMSegmentRemoteIOTest.cxx
+
+    )
+  target_link_libraries(
+    vtkEMSegmentRemoteIOTest
+    RemoteIO
+    vtkCommon
+    )
+
+
+  add_executable(
     vtkEMSegmentBlackBoxSegmentationTest
     vtkEMSegmentBlackBoxSegmentationTest.cxx
     vtkEMSegmentTestUtilities.cxx
@@ -757,3 +769,14 @@ if(NOT DISABLE_CXX_TESTING)
   endif(EMSEG_RUN_EXTRA_SHORT_TESTS)
 
 endif(NOT DISABLE_CXX_TESTING)
+
+
+
+# Are we able to download our update file ?
+add_test(
+  RemoteIOTest
+  ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentRemoteIOTest
+  http://slicer.org/EMSegmentUpdates/
+  ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegmenterUpdates
+)
+
