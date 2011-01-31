@@ -58,13 +58,13 @@ public:
   /// Get the increments to use when looping through the mask.
   void GetMaskIncrements(vtkIdType &maskInc0, vtkIdType &maskInc1, vtkIdType &maskInc2);
 
-protected:
-  vtkImageNeighborhoodFilter();
-  ~vtkImageNeighborhoodFilter();
-
   /// 
   /// set size of neighborhood of each pixel
   void SetKernelSize(int size0, int size1, int size2);
+
+protected:
+  vtkImageNeighborhoodFilter();
+  ~vtkImageNeighborhoodFilter();
 
   int Neighbor;
   unsigned char *Mask;
