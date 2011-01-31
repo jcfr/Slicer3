@@ -169,6 +169,7 @@ void vtkSlicerTransformEditorWidget::UpdateMatrix ()
       this->MatrixWidget->EnabledOn();
       this->MatrixWidget->SetAndObserveMatrix4x4(matrix);
       this->MatrixWidget->UpdateWidget();
+      this->MatrixWidget->GetMatrix4x4()->RemoveObserver ( this->MRMLCallbackCommand );
       this->MatrixWidget->GetMatrix4x4()->AddObserver (vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand );
       this->UpdateTranslationSliders();
       this->ResetRotationSliders(-1);
