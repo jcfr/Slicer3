@@ -67,6 +67,7 @@ vtkMRMLSliceNode::vtkMRMLSliceNode()
   this->JumpMode = OffsetJumpSlice;
   
   this->OrientationString = NULL;
+  this->OrientationIntentString = NULL;
 
     // calculated by UpdateMatrices()
   this->XYToSlice = vtkMatrix4x4::New();
@@ -116,6 +117,10 @@ vtkMRMLSliceNode::~vtkMRMLSliceNode()
   if ( this->OrientationString )
     {
     delete [] this->OrientationString;
+    }
+  if ( this->OrientationIntentString )
+    {
+    delete [] this->OrientationIntentString;
     }
   this->SetLayoutName(NULL);
 }
@@ -455,6 +460,7 @@ void vtkMRMLSliceNode::WriteXML(ostream& of, int nIndent)
   of << indent << " sliceToRAS=\"" << ss.str().c_str() << "\"";
   of << indent << " layoutName=\"" << this->GetLayoutName() << "\"";
   of << indent << " orientation=\"" << this->OrientationString << "\"";
+  of << indent << " orientationIntent=\"" << this->OrientationIntentString << "\"";
   of << indent << " jumpMode=\"" << this->JumpMode << "\"";
   of << indent << " sliceVisibility=\"" << (this->SliceVisible ? "true" : "false") << "\"";
   of << indent << " widgetVisibility=\"" << (this->WidgetVisible ? "true" : "false") << "\"";
@@ -575,6 +581,10 @@ void vtkMRMLSliceNode::ReadXMLAttributes(const char** atts)
       {
       this->SetOrientationString( attValue );
       }
+   else if (!strcmp(attName, "orientationIntent")) 
+      {
+      this->SetOrientationIntentString( attValue );
+      }
     else if (!strcmp(attName, "layoutName")) 
       {
       this->SetLayoutName( attValue );
@@ -646,6 +656,7 @@ void vtkMRMLSliceNode::Copy(vtkMRMLNode *anode)
   this->SetSliceVisible(node->GetSliceVisible());
   this->SliceToRAS->DeepCopy(node->GetSliceToRAS());
   this->SetOrientationString(node->GetOrientationString());
+  this->SetOrientationIntentString(node->GetOrientationIntentString());
 
   this->JumpMode = node->JumpMode;
   this->ActiveSlice = node->ActiveSlice;
@@ -1183,9 +1194,24 @@ void vtkMRMLSliceNode::RotateToVolumePlane(vtkMRMLVolumeNode *volumeNode)
   // plug vectors into slice matrix to best approximate requested orientation
   //
 
+  if ( !strcmp(this->GetOrientationString(), "Reformat") )
+    {
+    if ( !this->GetOrientationIntentString() )
+      {
+      // no intent string, so default to axial
+      this->SetOrientationIntentString("Axial");
+      }
+    }
+  else
+    {
+    // if current is anything other than Reformat, then save
+    // that value as the inent string
+    this->SetOrientationIntentString(this->GetOrientationString());
+    }
+
   for (row = 0; row < 3; row++)
     {
-    if ( !strcmp(this->GetOrientationString(), "Sagittal") )
+    if ( !strcmp(this->GetOrientationIntentString(), "Sagittal") )
       {
       // first column is 'Posterior'
       this->SliceToRAS->SetElement(row, 0, alignedRAS[3][row]);
@@ -1194,7 +1220,7 @@ void vtkMRMLSliceNode::RotateToVolumePlane(vtkMRMLVolumeNode *volumeNode)
       // third column is 'Right'
       this->SliceToRAS->SetElement(row, 2, alignedRAS[0][row]);
       }
-    else if ( !strcmp(this->GetOrientationString(), "Coronal") )
+    else if ( !strcmp(this->GetOrientationIntentString(), "Coronal") )
       {
       // first column is 'Left'
       this->SliceToRAS->SetElement(row, 0, alignedRAS[1][row]);

@@ -98,6 +98,12 @@ class VTK_MRML_EXPORT vtkMRMLSliceNode : public vtkMRMLNode
   vtkGetStringMacro (OrientationString);
   vtkSetStringMacro (OrientationString);
 
+  /// Description
+  /// The orientation that this slice was, for example, before being
+  /// rotated to lie in the acquisition plane by RotateToVolumePlane
+  vtkGetStringMacro (OrientationIntentString);
+  vtkSetStringMacro (OrientationIntentString);
+
   /// 
   /// Size of the slice plane in millimeters
   vtkGetVector3Macro (FieldOfView, double);
@@ -244,6 +250,7 @@ protected:
   double FieldOfView[3];
   unsigned int Dimensions[3];
   char *OrientationString;
+  char *OrientationIntentString;
 
   int LayoutGridRows;
   int LayoutGridColumns;
