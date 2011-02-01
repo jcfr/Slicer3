@@ -1863,6 +1863,7 @@ void  vtkEMSegmentLogic::AutoCorrectSpatialPriorWeight(vtkIdType nodeID)
 
 //----------------------------------------------------------------------------
 // cannot be moved to vtkEMSEgmentGUI bc of command line interface !
+// This function is used for the UpdateButton in vtkEMSegmentParametersSetStep
 vtksys_stl::string vtkEMSegmentLogic::GetTemporaryTaskDirectory(vtkSlicerApplication* app)
 {
   // FIXME, what happens if user has no write permission to this directory
@@ -1875,7 +1876,7 @@ vtksys_stl::string vtkEMSegmentLogic::GetTemporaryTaskDirectory(vtkSlicerApplica
   const char* tmpDir = app->GetTemporaryDirectory();
   if (tmpDir)
     {
-      std::string tmpTaskDir(std::string(tmpDir) + std::string("/EMSegmentTask"));
+      std::string tmpTaskDir( std::string(tmpDir) + "/" + std::string(app->GetSvnRevision()) + std::string("/EMSegmentTask") );
       taskDir = vtksys::SystemTools::ConvertToOutputPath(tmpTaskDir.c_str());
     }
   else

@@ -234,7 +234,7 @@ void vtkEMSegmentParametersSetStep::UpdateTasksCallback()
       return;
     }
   // also add the manifest filename
-  std::string tmpManifestFilename(std::string(tmpDir) + "/" + std::string(this->GetSlicerApplication()->GetSvnRevision() + std::string("/EMSegmentTasksManifest.html")));
+  std::string tmpManifestFilename( std::string(tmpDir) + "/" + std::string(this->GetSlicerApplication()->GetSvnRevision()) + std::string("/EMSegmentTasksManifest.html") );
   std::string manifestFilename = vtksys::SystemTools::ConvertToOutputPath(tmpManifestFilename.c_str());
 
   // and add the EMSegmentTask directory
@@ -266,8 +266,6 @@ void vtkEMSegmentParametersSetStep::UpdateTasksCallback()
   //       for now, we just assume that we are on-line!
   
 
-  std::cout << "Download file: " << taskRepository << std::endl;
-  std::cout << "into         : " << manifestFilename << std::endl;
   // get the directory listing of the EMSegment task repository and save it as $tmpDir/EMSegmentTasksManifest.html.
   // the manifest always gets overwritten, but nobody should care
   httpHandler->StageFileRead(taskRepository.c_str(),manifestFilename.c_str());
