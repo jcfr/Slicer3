@@ -3092,6 +3092,7 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller,
       if (fabs(oldValue - offset) > 1.0e-6)
         {
         this->SliceLogic->SetSliceOffset( offset );
+        this->SliceLogic->SnapSliceOffsetToIJK();
         modified = 1;
         }
       this->SliceCompositeNode->SetLinkedControl(link);
@@ -3205,6 +3206,7 @@ int vtkSlicerSliceControllerWidget::UpdateCompareView ( double newValue )
             = sgui->GetLogic()->GetSliceCompositeNode()->GetLinkedControl();
           sgui->GetLogic()->GetSliceCompositeNode()->SetLinkedControl(0);
           sgui->GetLogic()->SetSliceOffset( newValue );
+          sgui->GetLogic()->SnapSliceOffsetToIJK();
           sgui->GetLogic()->GetSliceCompositeNode()->SetLinkedControl(link);
           modified = 1;
           }
