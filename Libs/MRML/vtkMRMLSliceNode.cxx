@@ -459,8 +459,14 @@ void vtkMRMLSliceNode::WriteXML(ostream& of, int nIndent)
     }
   of << indent << " sliceToRAS=\"" << ss.str().c_str() << "\"";
   of << indent << " layoutName=\"" << this->GetLayoutName() << "\"";
-  of << indent << " orientation=\"" << this->OrientationString << "\"";
-  of << indent << " orientationIntent=\"" << this->OrientationIntentString << "\"";
+  if (this->OrientationString)
+    {
+    of << indent << " orientation=\"" << this->OrientationString << "\"";
+    }
+  if ( this->OrientationIntentString)
+    {
+    of << indent << " orientationIntent=\"" << this->OrientationIntentString << "\"";
+    }
   of << indent << " jumpMode=\"" << this->JumpMode << "\"";
   of << indent << " sliceVisibility=\"" << (this->SliceVisible ? "true" : "false") << "\"";
   of << indent << " widgetVisibility=\"" << (this->WidgetVisible ? "true" : "false") << "\"";
