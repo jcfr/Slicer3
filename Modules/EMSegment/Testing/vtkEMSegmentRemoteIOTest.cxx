@@ -13,8 +13,8 @@ int main(int argc, char** argv)
   {
     std::cerr 
       << "Usage: vtkEMSegmentRemoteIOTest"  << std::endl
-      <<         "remote URI"                  << std::endl
-      <<         "filename>"               << std::endl
+      <<         "remote URI"               << std::endl
+      <<         "filename"                 << std::endl
       << std::endl;
     return EXIT_FAILURE;
   }
@@ -25,6 +25,8 @@ int main(int argc, char** argv)
 
   // our HTTP handler
   vtkHTTPHandler* httpHandler = vtkHTTPHandler::New();
+  // use the following line if the SlicerApplication is available
+  //vtkHTTPHandler* httpHandler = vtkHTTPHandler::SafeDownCast(this->GetSlicerApplication()->GetMRMLScene()->FindURIHandlerByName("HTTPHandler"));
 
   httpHandler->SetForbidReuse(1);
 
@@ -37,7 +39,7 @@ int main(int argc, char** argv)
 
   std::cout << "Download file: " << url << std::endl;
   std::cout << "into         : " << file << std::endl;
-  httpHandler->StageFileRead(url.c_str(), file.c_str());
+  httpHandler->StageFileRead( url.c_str(), file.c_str() );
 
   
   if (!failed && !vtksys::SystemTools::FileExists(file.c_str()) )
