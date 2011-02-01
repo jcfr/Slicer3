@@ -221,7 +221,7 @@ void vtkEMSegmentParametersSetStep::UpdateTasksCallback()
   //
   // the url to the EMSegment task repository
   //std::string taskRepository = "http://people.csail.mit.edu/pohl/EMSegmentUpdates/";
-  std::string taskRepository = "http://slicer.org/EMSegmentUpdates/";
+  std::string taskRepository = "http://slicer.org/EMSegmentUpdates/3.6.3/";
 
   //
   // ** PATH MANAGEMENT **
@@ -307,9 +307,9 @@ void vtkEMSegmentParametersSetStep::UpdateTasksCallback()
   //  regex_search(htmlManifest, regexResult, mrmlExpression);   
   // but right now, we have to manually parse the string.
   // at least we can use std::string methods :D
-  std::string beginTaskFilenameTag(".tcl\"> ");
+  std::string beginTaskFilenameTag(".tcl\">");
   std::string endTaskFilenameTag(".tcl</a>");
-  std::string beginMrmlFilenameTag(".mrml\"> ");
+  std::string beginMrmlFilenameTag(".mrml\">");
   std::string endMrmlFilenameTag(".mrml</a>");  
   
   bool tclFilesExist = false;
