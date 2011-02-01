@@ -49,6 +49,7 @@ if { [itcl::find class EffectSWidget] == "" } {
     variable _cursorAnimationTag ""
     variable _cursorAnimationState 0
     variable _scopeOptions "all" ;# popup will appear if this is a list of options
+    variable _updatingGUI 0 ;# flag to ignore GUI events while it is being updated (set and unset in leaf classes)
 
     # methods
     method processEvent {{caller ""} {event ""}} {}

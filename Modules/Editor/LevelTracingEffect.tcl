@@ -36,6 +36,7 @@ if { [itcl::find class LevelTracingEffect] == "" } {
     method preview {} {}
     method apply {} {}
     method apply3D {} {}
+    method updateGUIFromMRML {} {}
     method buildOptions {} {}
     method tearDownOptions {} {}
   }
@@ -225,6 +226,12 @@ itcl::body LevelTracingEffect::buildOptions {} {
   }
 
   $this updateGUIFromMRML
+}
+
+itcl::body LevelTracingEffect::updateGUIFromMRML { } {
+  set _updatingGUI 1
+  chain
+  set _updatingGUI 0
 }
 
 itcl::body LevelTracingEffect::tearDownOptions { } {

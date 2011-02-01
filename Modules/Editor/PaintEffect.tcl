@@ -113,6 +113,10 @@ itcl::body PaintEffect::destructor {} {
 }
 
 itcl::configbody PaintEffect::radius {
+  if { ![info exists o(brush)] } {
+    # called during startup...
+    return
+  }
   if { $radius != "" } {
     $this createGlyph $o(brush)
   }
@@ -135,7 +139,6 @@ itcl::body PaintEffect::createGlyph { {polyData ""} } {
   if { $radius != "" } {
     set xyRadius [$o(rasToXY) MultiplyPoint $radius 0 0 0]
   }
-  puts $xyRadius
   foreach {xRadius yRadius zRadius zero} $xyRadius {}
   set xyRadius [expr sqrt( $xRadius * $xRadius + $yRadius * $yRadius + $zRadius * $zRadius )]
 
@@ -219,7 +222,6 @@ itcl::body PaintEffect::highlight { } {
 }
 
 itcl::body PaintEffect::processEvent { {caller ""} {event ""} } {
-
   # chain to superclass
   chain $caller $event
 
@@ -364,6 +366,9 @@ itcl::body PaintEffect::updateMRMLFromGUI { } {
   # - all instances of the effect are observing the node,
   #   so changes will propogate automatically
   #
+  if { $_updatingGUI } {
+    return
+  }
   chain
   set node [EditorGetParameterNode]
   $node SetParameter "Paint,radius" [$o(radius) GetValue]
@@ -386,6 +391,9 @@ itcl::body PaintEffect::setMRMLDefaults { } {
 
 
 itcl::body PaintEffect::updateGUIFromMRML { } {
+
+  set _updatingGUI 1
+
   #
   # get the parameter from the node
   # - set default value if it doesn't exist
@@ -408,6 +416,8 @@ itcl::body PaintEffect::updateGUIFromMRML { } {
   }
 
   $this preview
+
+  set _updatingGUI 0
 }
 
 itcl::body PaintEffect::tearDownOptions { } {
@@ -535,7 +545,6 @@ itcl::body PaintEffect::paintBrush {x y} {
   $_layers(background,node) GetIJKToRASMatrix $backgroundIJKToRAS
   set labelIJKToRAS [vtkMatrix4x4 New]
   $_layers(label,node) GetIJKToRASMatrix $labelIJKToRAS
-
 
   set xyToRAS [$_sliceNode GetXYToRAS]
   set brushCenter [lrange [$xyToRAS MultiplyPoint $x $y 0 1] 0 2]

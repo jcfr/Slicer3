@@ -39,6 +39,7 @@ if { [itcl::find class DrawEffect] == "" } {
     method processEvent {{caller ""} {event ""}} {}
     method apply {} {}
     method buildOptions {} {}
+    method updateGUIFromMRML {} {}
     method tearDownOptions {} {}
 
     method positionActors {} {}
@@ -91,6 +92,10 @@ itcl::body DrawEffect::positionActors { } {
 }
 
 itcl::body DrawEffect::setLineMode {{mode "solid"}} {
+  if { ![info exists o(actor)] } {
+    # called during startup...
+    return
+  }
   set property [$o(actor) GetProperty]
   switch $mode {
     "solid" {
@@ -378,6 +383,24 @@ itcl::body DrawEffect::buildOptions {} {
   $this updateGUIFromMRML
 }
 
+itcl::body DrawEffect::updateGUIFromMRML { } {
+  set _updatingGUI 1
+  chain
+  set _updatingGUI 0
+}
+
+itcl::body DrawEffect::tearDownOptions { } {
+
+  # call superclass version of tearDownOptions
+  chain
+
+  foreach w "percentage cancel" {
+    if { [info exists o($w)] } {
+      $o($w) SetParent ""
+      pack forget [$o($w) GetWidgetName] 
+    }
+  }
+}
 itcl::body DrawEffect::tearDownOptions { } {
 
   # call superclass version of tearDownOptions

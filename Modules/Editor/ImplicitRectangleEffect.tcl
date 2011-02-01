@@ -40,6 +40,7 @@ if { [itcl::find class ImplicitRectangleEffect] == "" } {
     # overridden virtuals
     method processEvent {{caller ""} {event ""}} {}
     method buildOptions {} {}
+    method updateGUIFromMRML {} {}
     method tearDownOptions {} {}
 
     # local methods
@@ -267,6 +268,11 @@ itcl::body ImplicitRectangleEffect::buildOptions {} {
   $this updateGUIFromMRML
 }
 
+itcl::body ImplicitRectangleEffect::updateGUIFromMRML { } {
+  set _updatingGUI 1
+  chain
+  set _updatingGUI 0
+}
 
 itcl::body ImplicitRectangleEffect::tearDownOptions { } {
 

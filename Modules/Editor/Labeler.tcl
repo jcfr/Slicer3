@@ -433,6 +433,9 @@ itcl::body Labeler::updateMRMLFromGUI { } {
   # - all instances of the effect are observing the node,
   #   so changes will propogate automatically
   #
+  if { $_updatingGUI } {
+    return
+  }
   chain
   set node [EditorGetParameterNode]
   $this configure -paintOver [[$o(paintOver) GetWidget] GetSelectedState]
@@ -462,6 +465,8 @@ itcl::body Labeler::setMRMLDefaults { } {
   }
 }
 
+# NOTE: every subclass should implement a version of this that
+# manages the _updatingGUI flag
 itcl::body Labeler::updateGUIFromMRML { } {
 
   #

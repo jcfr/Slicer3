@@ -318,6 +318,9 @@ itcl::body WandEffect::updateMRMLFromGUI { } {
   # - all instances of the effect are observing the node,
   #   so changes will propogate automatically
   #
+  if { $_updatingGUI } {
+    return
+  }
   chain
   set node [EditorGetParameterNode]
   $node SetParameter "Wand,percentage" [$o(percentage) GetValue]
@@ -338,6 +341,9 @@ itcl::body WandEffect::setMRMLDefaults { } {
 
 
 itcl::body WandEffect::updateGUIFromMRML { } {
+
+  set _updatingGUI 1
+
   #
   # get the parameter from the node
   # - set default value if it doesn't exist
@@ -351,6 +357,8 @@ itcl::body WandEffect::updateGUIFromMRML { } {
     $o(percentage) SetValue $percentage
   }
   $this preview
+
+  set _updatingGUI 0
 }
 
 itcl::body WandEffect::tearDownOptions { } {

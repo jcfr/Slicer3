@@ -180,9 +180,14 @@ itcl::body ThresholdEffect::buildOptions { } {
   if { [$this getInputBackground] != "" } {
     set range [[$this getInputBackground] GetScalarRange]
     eval $o(range) SetWholeRange $range
-    foreach {lo hi} $range {}
-    set lo [expr $lo + (0.25 * ($hi - $lo))]
-    $o(range) SetRange $lo $hi
+    if { [EditorGetPaintThresholdState] } {
+      foreach {lo hi} [EditorGetPaintThreshold] {}
+      $o(range) SetRange $lo $hi
+    } else {
+      foreach {lo hi} $range {}
+      set lo [expr $lo + (0.25 * ($hi - $lo))]
+      $o(range) SetRange $lo $hi
+    }
   }
 
   pack [$o(range) GetWidgetName] -side top -anchor e -fill x -padx 2 -pady 2 

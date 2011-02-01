@@ -336,7 +336,11 @@ proc EditorSetPaintThreshold {min max} {
 
 proc EditorGetPaintThresholdState {} {
   set node [EditorGetParameterNode]
-  return [$node GetParameter "Labeler,paintThreshold"]
+  set state [$node GetParameter "Labeler,paintThreshold"]
+  if { $state == "" } {
+    set state 0
+  }
+  return $state
 }
 
 proc EditorSetPaintThresholdState {onOff} {
