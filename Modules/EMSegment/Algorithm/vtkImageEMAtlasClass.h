@@ -24,7 +24,7 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMAtlasClass : public vtkImageEMGenericClass
 {
   public:
   // -----------------------------------------------------
-  // Genral Functions for the filter
+  // General Functions for the filter
   // -----------------------------------------------------
   static vtkImageEMAtlasClass *New();
   vtkTypeMacro(vtkImageEMAtlasClass,vtkObject);
