@@ -1442,6 +1442,20 @@ void vtkSlicerSliceLogic::FitSliceToAll(int width, int height)
     }
 }
 
+vtkMRMLVolumeNode *vtkSlicerSliceLogic::GetLowestVolumeNode()
+{
+  vtkMRMLVolumeNode *volumeNode;
+  for ( int layer=0; layer < 3; layer++ )
+    {
+    volumeNode = this->GetLayerVolumeNode (layer);
+    if (volumeNode)
+      {
+      return volumeNode;
+      }
+    }
+  return NULL;
+}
+
 double *vtkSlicerSliceLogic::GetLowestVolumeSliceSpacing()
 {
   vtkMRMLVolumeNode *volumeNode;
@@ -1508,22 +1522,9 @@ double vtkSlicerSliceLogic::GetSliceOffset()
 
 }
 
-void vtkSlicerSliceLogic::SetSliceOffset(double offset)
+
+void vtkSlicerSliceLogic::CalculateSliceOffset(double offset, double *oldOffsetVector, double *newOffsetVector)
 {
-  //
-  // Set the Offset
-  // - get the current translation in RAS space and convert it to Slice space
-  //   by transforming it by the invers of the upper 3x3 of SliceToRAS
-  // - replace the z value of the translation with the new value given by the slider
-  // - this preserves whatever translation was already in place
-  //
-
-  double oldOffset = this->GetSliceOffset();
-  if (fabs(offset - oldOffset) <= 1.0e-6)
-    {
-    return;
-    }
-
   vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
 
   if ( !sliceNode )
@@ -1540,30 +1541,62 @@ void vtkSlicerSliceLogic::SetSliceOffset(double offset)
   vtkSmartPointer<vtkMatrix4x4> sliceToRASInverted = vtkSmartPointer<vtkMatrix4x4>::New(); // inverse sliceToRAS
   sliceToRASInverted->DeepCopy( sliceToRAS );
   sliceToRASInverted->Invert();
-  double v1[4], v2[4], v3[4];
+  double tempVector[4];
   for (int i = 0; i < 4; i++)
     { // get the translation back as a vector
-    v1[i] = sliceNode->GetSliceToRAS()->GetElement( i, 3 );
+    oldOffsetVector[i] = sliceNode->GetSliceToRAS()->GetElement( i, 3 );
     }
   // bring the translation into slice space
   // and overwrite the z part
-  sliceToRASInverted->MultiplyPoint(v1, v2);
+  sliceToRASInverted->MultiplyPoint(oldOffsetVector, tempVector);
 
-  v2[2] = offset;
+  tempVector[2] = offset;
 
   // Now bring the new translation vector back into RAS space
-  sliceToRAS->MultiplyPoint(v2, v3);
+  sliceToRAS->MultiplyPoint(tempVector, newOffsetVector);
+}
+
+void vtkSlicerSliceLogic::SetSliceOffset(double offset)
+{
+  vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
+
+  if ( !sliceNode )
+    {
+    return;
+    }
+
+  //
+  // Set the Offset
+  // - get the current translation in RAS space and convert it to Slice space
+  //   by transforming it by the invers of the upper 3x3 of SliceToRAS
+  // - replace the z value of the translation with the new value given by the slider
+  // - this preserves whatever translation was already in place
+  //
+
+  double oldOffset = this->GetSliceOffset();
+  if (fabs(offset - oldOffset) <= 1.0e-6)
+    {
+    return;
+    }
+
+  double oldOffsetVector[4];
+  double newOffsetVector[4];
+
+  this->CalculateSliceOffset(offset, oldOffsetVector, newOffsetVector);
  
   // if the translation has changed, update the rest of the matrices
   double eps=1.0e-6;
-  if ( fabs(v1[0] - v3[0]) > eps ||
-       fabs(v1[1] - v3[1]) > eps ||
-       fabs(v1[2] - v3[2]) > eps )
+  if ( fabs(oldOffsetVector[0] - newOffsetVector[0]) > eps ||
+       fabs(oldOffsetVector[1] - newOffsetVector[1]) > eps ||
+       fabs(oldOffsetVector[2] - newOffsetVector[2]) > eps )
     {
+    vtkSmartPointer<vtkMatrix4x4> sliceToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
+    sliceToRAS->DeepCopy( this->SliceNode->GetSliceToRAS() );
+
     // copy new translation into sliceToRAS
     for (int i = 0; i < 4; i++)
       {
-      sliceToRAS->SetElement( i, 3, v3[i] );
+      sliceToRAS->SetElement( i, 3, newOffsetVector[i] );
       }
     sliceNode->GetSliceToRAS()->DeepCopy( sliceToRAS );
     sliceNode->UpdateMatrices();
@@ -1573,6 +1606,7 @@ void vtkSlicerSliceLogic::SetSliceOffset(double offset)
 //----------------------------------------------------------------------------
 void vtkSlicerSliceLogic::SnapSliceOffsetToIJK()
 {
+  /* old way
   double offset, *spacing, bounds[6];
   double oldOffset = this->GetSliceOffset();
   spacing = this->GetLowestVolumeSliceSpacing();
@@ -1583,6 +1617,57 @@ void vtkSlicerSliceLogic::SnapSliceOffsetToIJK()
   int intSlice = static_cast<int> (0.5 + slice);  
   offset = intSlice * spacing[2] + bounds[4];
   this->SetSliceOffset( offset );
+  */
+
+  vtkMRMLVolumeNode *volumeNode = this->GetLowestVolumeNode();
+  if (volumeNode == NULL)
+    {
+    return;
+    }
+
+  vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
+  if ( !sliceNode )
+    {
+    return;
+    }
+
+  double oldOffsetVector[4];
+  double newOffsetVector[4];
+
+  double oldOffset = this->GetSliceOffset();
+  this->CalculateSliceOffset(oldOffset + 1, oldOffsetVector, newOffsetVector);
+
+  // get the transform from RAS to IJK 
+  vtkSmartPointer<vtkMatrix4x4> ijkToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
+  volumeNode->GetIJKToRASMatrix (ijkToRAS);
+  vtkMRMLTransformNode *transformNode = volumeNode->GetParentTransformNode();
+  if ( transformNode )
+    {
+    vtkSmartPointer<vtkMatrix4x4> rasToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
+    transformNode->GetMatrixTransformToWorld(rasToRAS);
+    vtkMatrix4x4::Multiply4x4 (rasToRAS, ijkToRAS, ijkToRAS);
+    }
+
+  vtkSmartPointer<vtkMatrix4x4> rasToIJK = vtkSmartPointer<vtkMatrix4x4>::New();
+  rasToIJK->DeepCopy(ijkToRAS);
+  rasToIJK->Invert();
+  double ijk[4];
+  rasToIJK->MultiplyPoint(oldOffsetVector, ijk);
+  for (int i = 0; i < 3; i++)
+    {
+    ijk[i] = floor( 0.5+ijk[i] );
+    }
+  ijkToRAS->MultiplyPoint(ijk, newOffsetVector);
+
+  // copy new translation into sliceToRAS
+  vtkSmartPointer<vtkMatrix4x4> sliceToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
+  sliceToRAS->DeepCopy( this->SliceNode->GetSliceToRAS() );
+  for (int i = 0; i < 4; i++)
+    {
+    sliceToRAS->SetElement( i, 3, newOffsetVector[i] );
+    }
+  sliceNode->GetSliceToRAS()->DeepCopy( sliceToRAS );
+  sliceNode->UpdateMatrices();
 }
 
 

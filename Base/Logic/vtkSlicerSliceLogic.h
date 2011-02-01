@@ -275,6 +275,10 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
   void FitSliceToAll(int width, int height);
 
   /// 
+  /// Return the volumeNode of the lowes layer (bg, fg, lb)
+  vtkMRMLVolumeNode *GetLowestVolumeNode();
+
+  /// 
   /// Get the spacing of the volume, transformed to slice space 
   /// - to be used, for example, to set the slice increment for stepping a single 
   ///   voxel relative to the current slice view
@@ -292,6 +296,13 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
   /// Get/Set the current distance from the origin to the slice plane
   double GetSliceOffset();
   void SetSliceOffset(double offset);
+
+  /// 
+  /// Calculate the slice offset vectors 
+  /// - oldOffsetVector is the one before applying the offset
+  /// - newOffsetVector is after applying offset
+  /// - the slice node is not changed (use SetSliceOffset for that)
+  void CalculateSliceOffset(double offset, double oldOffsetVector[4], double newOffsetVector[4]);
 
   /// 
   /// Set the current distance so that it corresponds to the closest center of 
