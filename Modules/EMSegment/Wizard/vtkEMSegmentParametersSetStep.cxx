@@ -555,9 +555,6 @@ void vtkEMSegmentParametersSetStep::UpdateTasksCallback()
   // ** ALL DONE, NOW CLEANUP **
   //
   
-  // delete the HTTP handler
-  httpHandler->Delete();
-  
   // delete the htmlManifest char buffer
   delete[] htmlManifest;
   
