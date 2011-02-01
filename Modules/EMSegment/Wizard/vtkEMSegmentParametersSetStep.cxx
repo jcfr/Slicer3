@@ -243,7 +243,9 @@ void vtkEMSegmentParametersSetStep::UpdateTasksCallback()
   // ** HTTP ACCESS **
   //
   // our HTTP handler
-  vtkHTTPHandler* httpHandler = vtkHTTPHandler::New();
+  //vtkHTTPHandler* httpHandler = vtkHTTPHandler::New();
+  vtkHTTPHandler* httpHandler = vtkHTTPHandler::SafeDownCast(this->GetSlicerApplication()->GetMRMLScene()->FindURIHandlerByName("HTTPHandler"));
+
 
   // prevent funny behavior on windows with the side-effect of more network resources are used
   // (o_o) who cares about traffic or the tcp/ip ports? *g
