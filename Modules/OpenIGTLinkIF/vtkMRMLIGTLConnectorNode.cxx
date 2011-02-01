@@ -740,7 +740,7 @@ unsigned int vtkMRMLIGTLConnectorNode::GetUpdatedBuffersList(NameListType& nameL
   CircularBufferMap::iterator iter;
   for (iter = this->Buffer.begin(); iter != this->Buffer.end(); iter ++)
     {
-    if (iter->second->IsUpdated())
+    if (iter->second != NULL && iter->second->IsUpdated())
       {
       nameList.push_back(iter->first);
       }
