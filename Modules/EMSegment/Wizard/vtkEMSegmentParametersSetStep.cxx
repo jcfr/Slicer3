@@ -307,6 +307,8 @@ void vtkEMSegmentParametersSetStep::UpdateTasksCallback()
   //  regex_search(htmlManifest, regexResult, mrmlExpression);   
   // but right now, we have to manually parse the string.
   // at least we can use std::string methods :D
+  //
+  // Fix for recent webservers does not include a space after HTML tags
   std::string beginTaskFilenameTag(".tcl\">");
   std::string endTaskFilenameTag(".tcl</a>");
   std::string beginMrmlFilenameTag(".mrml\">");
