@@ -184,7 +184,8 @@ int vtkCTHandBoneClass::flip( const char* inputFile, const char* outputFlippedIm
 
 
 
-int vtkCTHandBoneClass::fiducial_threshold(const char* inputImage, const char* outputImage, const char* fiducialfile, const char* logfile )
+//int vtkCTHandBoneClass::fiducial_threshold(const char* inputImage, const char* outputImage, const char* fiducialfile, const char* logfile )
+int vtkCTHandBoneClass::fiducial_threshold(const char* inputImage, const char* outputImage)
 {
   std::cerr << "Fiducial Threshold: " << std::endl;
 

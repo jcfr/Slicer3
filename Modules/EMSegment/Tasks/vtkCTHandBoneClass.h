@@ -42,7 +42,8 @@ class VTK_EMSEGMENT_EXPORT vtkCTHandBoneClass : public vtkObject
   int blur(const char* inputImage, const char* outputImage, const char* gaussianVariance, const char* maxKernelWidth);
   int binary_threshold(const char* inputDirectory, const char* outputThresholdImage, const char* _lowerThreshold, const char* _upperThreshold);
   int flip( const char* inputFile, const char* outputFlippedImageFile, const char* flipAxisX, const char* flipAxisY, const char* flipAxisZ );
-  int fiducial_threshold(const char* inputImage, const char* outputImage, const char* fiducialfile, const char* logfile );
+  //int fiducial_threshold(const char* inputImage, const char* outputImage, const char* fiducialfile, const char* logfile )
+  int fiducial_threshold(const char* inputImage, const char* outputImage);
   int largest_component( const char* inputImage, const char* outputImage );
 
 
