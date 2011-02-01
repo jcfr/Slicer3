@@ -415,6 +415,18 @@ int vtkSlicerModulesConfigurationStep::IsRepositoryValid()
     vtkSlicerApplication *app = 
       vtkSlicerApplication::SafeDownCast(this->GetApplication());
 
+    if (!app)
+      {
+      vtkErrorMacro("Could not get Slicer app.")
+      return -1;
+      }
+
+    if (!app->GetMRMLScene())
+      {
+      vtkErrorMacro("Could not get MRMLScene.")
+      return -1;
+      }
+
     const char* tmp = app->GetTemporaryDirectory();
     std::string tmpfile(tmp);
     tmpfile += "/manifest.html";
@@ -424,15 +436,16 @@ int vtkSlicerModulesConfigurationStep::IsRepositoryValid()
       itksys::SystemTools::RemoveFile(tmpfile.c_str());
       }
 
-    vtkHTTPHandler *handler = vtkHTTPHandler::New();
+    // vtkHTTPHandler *handler = vtkHTTPHandler::New();
+    // Fix for Bug 1080: http://na-mic.org/Mantis/view.php?id=1080
+    vtkHTTPHandler *handler = vtkHTTPHandler::SafeDownCast(app->GetMRMLScene()->FindURIHandlerByName("HTTPHandler"));
+
     handler->SetForbidReuse(1);
       
     if (0 != handler->CanHandleURI(url.c_str()))
       {
       handler->StageFileRead(url.c_str(), tmpfile.c_str());
       }
- 
-    handler->Delete();
       
     if (itksys::SystemTools::FileExists(tmpfile.c_str()) &&
         itksys::SystemTools::FileLength(tmpfile.c_str()) > 0)

@@ -981,16 +981,32 @@ void vtkSlicerModulesStep::AddEntry(std::vector<ManifestEntry*> &entries,
 void vtkSlicerModulesStep::DownloadParseS3ext(const std::string& s3ext,
                                               ManifestEntry* entry)
 {
-  vtkHTTPHandler *handler = vtkHTTPHandler::New();
+
+  vtkSlicerApplication *app =
+      vtkSlicerApplication::SafeDownCast(this->GetApplication());
+
+  if (!app)
+    {
+    vtkErrorMacro("Could not get Slicer app.")
+    return;
+    }
+
+  if (!app->GetMRMLScene())
+    {
+    vtkErrorMacro("Could not get MRMLScene.")
+    return;
+    }
+
+  //vtkHTTPHandler *handler = vtkHTTPHandler::New();
+  // Fix for Bug 1080: http://na-mic.org/Mantis/view.php?id=1080
+  vtkHTTPHandler *handler = vtkHTTPHandler::SafeDownCast(app->GetMRMLScene()->FindURIHandlerByName("HTTPHandler"));
+
   handler->SetForbidReuse(1);
 
   if (0 != handler->CanHandleURI(s3ext.c_str()))
     {
     std::string::size_type pos = s3ext.rfind("/");
     std::string s3extname = s3ext.substr(pos + 1);
-      
-    vtkSlicerApplication *app =
-      vtkSlicerApplication::SafeDownCast(this->GetApplication());
       
     std::string tmpfile(std::string(app->GetTemporaryDirectory()) + std::string("/") + s3extname);
       
@@ -1021,8 +1037,6 @@ void vtkSlicerModulesStep::DownloadParseS3ext(const std::string& s3ext,
 
     ifs.close();
     }
-  
-  handler->Delete();
   
 }
 
@@ -1071,16 +1085,32 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
   this->UninstallExtension(ExtensionName);
 
   bool result = false;
+  vtkSlicerApplication *app =
+      vtkSlicerApplication::SafeDownCast(this->GetApplication());
+ 
+  if (!app)
+    {
+    vtkErrorMacro("Could not get Slicer app.")
+    return false;
+    }
 
-  vtkHTTPHandler *handler = vtkHTTPHandler::New();
+  if (!app->GetMRMLScene())
+    {
+    vtkErrorMacro("Could not get MRMLScene.")
+    return false;
+    }
+
+ 
+  //vtkHTTPHandler *handler = vtkHTTPHandler::New();
+  // Fix for Bug 1080: http://na-mic.org/Mantis/view.php?id=1080
+  vtkHTTPHandler *handler = vtkHTTPHandler::SafeDownCast(app->GetMRMLScene()->FindURIHandlerByName("HTTPHandler"));
+  
   handler->SetForbidReuse(1);
 
   if (0 != handler->CanHandleURI(ExtensionBinaryURL.c_str()))
     {
     std::string::size_type pos = ExtensionBinaryURL.rfind("/");
     std::string zipname = ExtensionBinaryURL.substr(pos + 1);
-      
-    vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
       
     std::string tmpfile(std::string(app->GetTemporaryDirectory()) + std::string("/") + zipname);
       
@@ -1113,8 +1143,6 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
     std::cout << "search " << searchdir << std::endl;
       app->AppendPotentialModulePath(searchdir.c_str(), true);
     }
-
-  handler->Delete();
 
   return result;
 }
