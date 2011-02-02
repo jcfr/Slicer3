@@ -73,7 +73,13 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
+        # for BSD/Darwin
+        if { $::tcl_platform(os) == "Darwin" } {
+            set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
+        } else { 
+            set CMD "mktemp --tmpdir=[$GUI GetTemporaryDirectory]"
+        }
+        
         set basefilename [ eval exec $CMD ]
 
         set filename ""
@@ -102,7 +108,13 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable GUI
     variable LOGIC
 
-        set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
+        # for BSD/Darwin
+        if { $::tcl_platform(os) == "Darwin" } {
+            set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
+        } else { 
+            set CMD "mktemp --tmpdir=[$GUI GetTemporaryDirectory]"
+        }
+
         set basefilename [ eval exec $CMD ]
 
         set filename ""
@@ -130,7 +142,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         set dirname ""
 
         if { $type == "xform" } {
-            set CMD "mktemp -d -t [$GUI GetTemporaryDirectory]"
+            # for BSD/Darwin
+            if { $::tcl_platform(os) == "Darwin" } {
+                set CMD "mktemp -d -t [$GUI GetTemporaryDirectory]"
+            } else { 
+                set CMD "mktemp -d --tmpdir=[$GUI GetTemporaryDirectory]"
+            }
             set basedirname [ eval exec $CMD ]
             set dirname $basedirname.xform
         } else {
@@ -1616,7 +1633,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # Need to download file to temp directory
-        set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
+        # for BSD/Darwin
+        if { $::tcl_platform(os) == "Darwin" } {
+            set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
+        } else { 
+            set CMD "mktemp --tmpdir=[$GUI GetTemporaryDirectory]"
+        }
         catch { set basefilename [ eval exec $CMD ] } errmsg
         set NAME "_[file tail $URI]"
         set filename $basefilename$NAME
