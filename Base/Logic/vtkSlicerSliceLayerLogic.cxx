@@ -67,6 +67,7 @@ vtkSlicerSliceLayerLogic::vtkSlicerSliceLayerLogic()
   this->AlphaLogic = vtkImageLogic::New();
   this->Threshold = vtkImageThreshold::New();
   this->LabelOutline = vtkImageLabelOutline::New();
+  this->LabelOutline->SetNeighborTo8();
   this->LabelOutline->SetKernelSize(5,5,5);
   this->AppendComponents = vtkImageAppendComponents::New();
 
