@@ -76,7 +76,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc Run { } {
         variable preGUI
         variable workingDN
-        variable subjectNode
+        variable alignedTargetNode
         variable inputAtlasNode
         variable mrmlManager
         variable LOGIC
@@ -124,9 +124,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         # Step 2: Generate ICC Mask Of input images
         if { $inputAtlasICCMaskNode != "" && 0} {
             set inputAtlasVolumeNode [$inputAtlas GetNthVolumeNode 0]
-            set subjectVolumeNode [$subjectNode GetNthVolumeNode 0]
+            set alignedTargetVolumeNode [$alignedTargetNode GetNthVolumeNode 0]
 
-            set subjectICCMaskNode [GenerateICCMask $inputAtlasVolumeNode $inputAtlasICCMaskNode $subjectVolumeNode]
+            set subjectICCMaskNode [GenerateICCMask $inputAtlasVolumeNode $inputAtlasICCMaskNode $alignedTargetVolumeNode]
 
             if { $subjectICCMaskNode == "" } {
                 PrintError "Run: Generating ICC mask for Input failed!"
@@ -146,14 +146,14 @@ namespace eval EMSegmenterPreProcessingTcl {
                 PrintError "Run: Intensity Correction failed !"
                 return 1
             }
-            if { [UpdateSubjectNode "$subjectIntensityCorrectedNodeList"] } {
+            if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$subjectIntensityCorrectedNodeList"] } {
                 return 1
             }
         } else {
              $LOGIC PrintText "TCLMRI: Skipping intensity correction"
         }
 
-        # write results over to subjectNode
+        # write results over to alignedTargetNode
 
         # -------------------------------------
         # Step 5: Atlas Alignment - you will also have to include the masks

@@ -76,7 +76,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc Run { } {
         variable preGUI
         variable workingDN
-        variable subjectNode
+        variable alignedTargetNode
         variable inputAtlasNode
         variable mrmlManager
         variable LOGIC
@@ -94,6 +94,19 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
+#TODO: TEST: inputAtlasNode might be the wrong version
+        set skullstrippedNodeNodeList [BRAINSSkullStripper $alignedTargetNode $inputAtlasNode]
+
+        if { $skullstrippedNodeNodeList == "" } {
+            PrintError "Run: Intensity Correction failed !"
+            return 1
+        }
+        if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$skullstrippedNodeNodeList"] } {
+            return 1
+        }
+
+
+
         # ----------------------------------------------------------------------------
         # We have to create this function so that we can run it in command line mode
         #
@@ -105,7 +118,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
 
-        if { ($atlasAlignedFlag == 0) && ($skullStrippedFlag == 1) } {
+        if { !$atlasAlignedFlag && $skullStrippedFlag } {
             PrintError "Run: We currently cannot align the atlas to skull stripped image"
             return 1
         }
@@ -124,7 +137,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # Step 2: Generate ICC Mask Of input images
         if { $inputAtlasICCMaskNode != "" && 0} {
             set inputAtlasVolumeNode [$inputAtlas GetNthVolumeNode 0]
-            set subjectVolumeNode [$subjectNode GetNthVolumeNode 0]
+            set subjectVolumeNode [$alignedTargetNode GetNthVolumeNode 0]
 
             set subjectICCMaskNode [GenerateICCMask $inputAtlasVolumeNode $inputAtlasICCMaskNode $subjectVolumeNode]
 
@@ -146,14 +159,14 @@ namespace eval EMSegmenterPreProcessingTcl {
                 PrintError "Run: Intensity Correction failed !"
                 return 1
             }
-            if { [UpdateSubjectNode "$subjectIntensityCorrectedNodeList"] } {
+            if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$subjectIntensityCorrectedNodeList"] } {
                 return 1
             }
         } else {
              $LOGIC PrintText "TCLMRI: Skipping intensity correction"
         }
 
-        # write results over to subjectNode
+        # write results over to alignedTargetNode
 
         # -------------------------------------
         # Step 5: Atlas Alignment - you will also have to include the masks

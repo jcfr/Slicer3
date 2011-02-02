@@ -57,7 +57,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc Run { } {
         variable preGUI
         variable workingDN
-        variable subjectNode
+        variable alignedTargetNode
         variable inputAtlasNode
         variable mrmlManager
         variable LOGIC

@@ -39,9 +39,9 @@ namespace eval EMSegmenterPreProcessingTcl {
     ## Input/Output
     variable inputAtlasNode
     # Variables used for segmentation
-    # Input/Output subject specific scans - by default this is defined by the input scans which are aligned with each other
-    variable subjectNode
-    # spatial priors aligned to subject node
+    # Input/Output target specific scans - by default this is defined by the input scans which are aligned with each other
+    variable alignedTargetNode
+    # spatial priors aligned to target node
     variable outputAtlasNode
 
     variable inputSubParcellationNode
@@ -66,6 +66,84 @@ namespace eval EMSegmenterPreProcessingTcl {
         # if {$displayNode} { $SCENE RemoveNode $displayNode }
     }
 
+
+    #------------------------------------------------------
+    # returns filename when no error occurs
+    proc CreateTemporaryFileNameForNode { Node } {
+        variable GUI
+        variable LOGIC
+
+        set CMD "mktemp -p [$GUI GetTemporaryDirectory]"
+        set basefilename [ eval exec $CMD ]
+
+        set filename ""
+
+        if { [$Node GetClassName] == "vtkMRMLScalarVolumeNode" } {
+            set NAME "_[$Node GetID].nrrd"
+            set filename $basefilename$NAME
+        } elseif { [$Node GetClassName] == "vtkMRMLScene"  } {
+            set NAME "_[file tail [$Node GetURL]]"
+            set filename $basefilename$NAME
+        } else {
+            #TODO,FIXME: need a elseif here
+            # Transform node - check also for bspline
+            set NAME "_[$Node GetID].mat"
+            set filename $basefilename$NAME
+        }
+
+        $LOGIC PrintText "TCL: Create file: $filename"
+
+        return $filename
+    }
+
+
+    #
+    proc CreateFileName { type } {
+    variable GUI
+    variable LOGIC
+
+        set CMD "mktemp -p [$GUI GetTemporaryDirectory]"
+        set basefilename [ eval exec $CMD ]
+
+        set filename ""
+
+        if { $type == "Volume" } {
+            set filename $basefilename.nrrd
+        } elseif { $type == "LinearTransform"  } {
+            set filename $basefilename.mat
+        } elseif { $type == "BSplineTransform"  } {
+            set filename $basefilename.mat
+        } elseif { $type == "Text"  } {
+            set filename $basefilename.txt
+        }
+
+        $LOGIC PrintText "TCL: Create file: $filename"
+
+        return $filename
+    }
+
+    #
+    proc CreateDirName { type } {
+    variable GUI
+    variable LOGIC
+
+        set dirname ""
+
+        if { $type == "xform" } {
+            set CMD "mktemp -d -p [$GUI GetTemporaryDirectory]"
+            set basedirname [ eval exec $CMD ]
+            set dirname $basedirname.xform
+        } else {
+            PrintError "CreateDirName: Unknown type"
+    }
+
+        $LOGIC PrintText "TCL: Create directory: $dirname"
+
+        return $dirname
+    }
+
+
+    # TODO: ChangeName of this function, its doing more than only creating a volume node
     # vtkMRMLVolumeNode *volumeNode, const char *name)
     proc CreateVolumeNode { volumeNode name } {
         variable SCENE
@@ -108,45 +186,28 @@ namespace eval EMSegmenterPreProcessingTcl {
     }
 
 
-    # update subjectNode with new volumes - and delete the old ones
-    proc UpdateSubjectNode { newSubjectVolumeNodeList } {
-        variable subjectNode
-        # Update Aligned Target Nodes
-        set inputNum [$subjectNode GetNumberOfVolumes]
-        for { set i 0 } {$i < $inputNum } { incr i } {
-            set newVolNode [lindex $newSubjectVolumeNodeList $i]
-            if {$newVolNode == "" } {
-                PrintError "Run: Processed target node is incomplete !"
-                return 1
-            }
-            set oldSubjectNode [$subjectNode GetNthVolumeNode $i]
-            # Set up the new ones
-            $subjectNode SetNthVolumeNodeID $i [$newVolNode GetID]
-            # Remove old volumes associated with subjectNode - if you delete right away then subjectNode is decrease
-            DeleteNode $oldSubjectNode
-        }
-        return 0
-    }
-
-    # update targetNode with new volumes - and delete the old ones
-    proc UpdateNode { targetNode newTargetVolumeNodeList } {
+    # update volumeCollectionNode with new volumes - and delete the old ones
+    proc UpdateVolumeCollectionNode { volumeCollectionNode newVolumeCollectionNode } {
         variable LOGIC
 
-        # Update Aligned Target Nodes
-        set inputNum [$targetNode GetNumberOfVolumes]
+        set inputNum [$volumeCollectionNode GetNumberOfVolumes]
         $LOGIC PrintText "TCL: $inputNum targetNodes detected"
-        $LOGIC PrintText "TCL: replace by $newTargetVolumeNodeList"
+        
+        # replace each volume
         for { set i 0 } {$i < $inputNum } { incr i } {
-            set newVolNode [lindex $newTargetVolumeNodeList $i]
-            if {$newVolNode == "" } {
+            set newVolumeNode [lindex $newVolumeCollectionNode $i]
+            if {$newVolumeNode == "" } {
                 PrintError "Run: Processed target node is incomplete !"
                 return 1
             }
-            set oldTargetNode [$targetNode GetNthVolumeNode $i]
+            set oldVolumeNode [$volumeCollectionNode GetNthVolumeNode $i]
+
             # Set up the new ones
-            $targetNode SetNthVolumeNodeID $i [$newVolNode GetID]
-            # Remove old volumes associated with targetNode - if you delete right away then targetNode is decrease
-            DeleteNode $oldTargetNode
+            $volumeCollectionNode SetNthVolumeNodeID $i [$newVolumeNode GetID]
+
+            # Remove old volumes associated with volumeCollectionNode
+            # if you delete right away then volumeCollectionNode is decrease
+            DeleteNode $oldVolumeNode
         }
         return 0
     }
@@ -199,7 +260,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable SCENE
         variable mrmlManager
         variable workingDN
-        variable subjectNode
+        variable alignedTargetNode
         variable inputAtlasNode
         variable outputAtlasNode
         variable inputSubParcellationNode
@@ -279,8 +340,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # All other Variables are defined when running the pipeline as they are the volumes
-        # Define subjectNode when initializing pipeline
-        set subjectNode ""
+        # Define alignedTargetNode when initializing pipeline
+        set alignedTargetNode ""
         set inputAtlasNode ""
         set outputAtlasNode ""
         set inputSubParcellationNode ""
@@ -325,16 +386,16 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: =========================================="
         # ----------------------------------------------------------------
         # set up rigid registration
-        set alignedTarget [$workingDN GetAlignedTargetNode]
-        if { $alignedTarget == "" } {
+        set alignedTargetNode [$workingDN GetAlignedTargetNode]
+        if { $alignedTargetNode == "" } {
             # input scan does not have to be aligned
-            set alignedTarget [$mrmlManager CloneTargetNode $inputTargetNode "Aligned"]
-            $workingDN SetReferenceAlignedTargetNodeID [$alignedTarget GetID]
+            set alignedTargetNode [$mrmlManager CloneTargetNode $inputTargetNode "Aligned"]
+            $workingDN SetReferenceAlignedTargetNodeID [$alignedTargetNode GetID]
         } else {
-            $mrmlManager SynchronizeTargetNode $inputTargetNode $alignedTarget "Aligned"
+            $mrmlManager SynchronizeTargetNode $inputTargetNode $alignedTargetNode "Aligned"
         }
 
-        for { set i 0 } { $i < [$alignedTarget GetNumberOfVolumes] } {incr i} {
+        for { set i 0 } { $i < [$alignedTargetNode GetNumberOfVolumes] } {incr i} {
             set intputVolumeNode($i) [$inputTargetNode GetNthVolumeNode $i]
             if { $intputVolumeNode($i) == "" } {
                 PrintError "RegisterInputImages: the ${i}th input node is not defined!"
@@ -347,7 +408,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
 
-            set outputVolumeNode($i) [$alignedTarget GetNthVolumeNode $i]
+            set outputVolumeNode($i) [$alignedTargetNode GetNthVolumeNode $i]
             if { $outputVolumeNode($i) == "" } {
                 PrintError "RegisterInputImages: the ${i}th aligned input node is not defined!"
                 return 1
@@ -371,7 +432,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # perfom "rigid registration" or "resample only"
-        for { set i 0 } {$i < [$alignedTarget GetNumberOfVolumes] } { incr i } {
+        for { set i 0 } {$i < [$alignedTargetNode GetNumberOfVolumes] } { incr i } {
             if { $i == $fixedTargetImageIndex } {
                 continue;
             }
@@ -431,7 +492,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable workingDN
         variable mrmlManager
         variable LOGIC
-        variable subjectNode
+        variable alignedTargetNode
         variable inputAtlasNode
         variable outputAtlasNode
         variable inputSubParcellationNode
@@ -473,7 +534,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # ----------------------------------------------------------------
         # set the fixed target volume
         # ----------------------------------------------------------------
-        set fixedTargetVolumeNode [$subjectNode GetNthVolumeNode $fixedTargetChannel]
+        set fixedTargetVolumeNode [$alignedTargetNode GetNthVolumeNode $fixedTargetChannel]
         if { [$fixedTargetVolumeNode GetImageData] == "" } {
             PrintError "SkipAtlasRegistration: Fixed image is null, skipping resampling"
             return 1;
@@ -501,10 +562,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
+
+
     # -----------------------------------------------------------
     # sets up all variables
     # Define the three volume relates Input nodes to the pipeline
-    # - subjectNode
+    # - alignedTargetNode
     # - inputAtlasNode
     # - outputAtasNode
     # -----------------------------------------------------------
@@ -512,7 +575,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable mrmlManager
         variable LOGIC
         variable workingDN
-        variable subjectNode
+        variable alignedTargetNode
         variable inputAtlasNode
         variable outputAtlasNode
         variable inputSubParcellationNode
@@ -524,7 +587,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # TODO: Check for
         # - environment variables  and
         # - command line executables
-        #set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+        #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
         #if { $PLUGINS_DIR == "" } {
         #    PrintError "InitPreProcessing: Environmet variable not set corretly"
         #    return 1
@@ -541,35 +604,35 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
         # -----------------------------------------------------------
-        # Define subject Node
+        # Define Target Node
         # this should be the first step for any preprocessing
         # from StartPreprocessingTargetToTargetRegistration
         # -----------------------------------------------------------
 
-        set inputTarget [$workingDN GetInputTargetNode]
-        if {$inputTarget == "" } {
-            PrintError "InitPreProcessing: InputTarget not defined"
+        set inputTargetNode [$workingDN GetInputTargetNode]
+        if {$inputTargetNode == "" } {
+            PrintError "InitPreProcessing: InputTargetNode not defined"
             return 1
         }
 
-        set subjectPositiveNodeList [RemoveNegativeValues $inputTarget]
-        if { $subjectPositiveNodeList == "" } {
+        set inputTargetPositiveCollectionNode [RemoveNegativeValues $inputTargetNode]
+        if { $inputTargetPositiveCollectionNode == "" } {
             PrintError "Run: RemoveNegativeValues failed !"
             return 1
         }
-        if { [UpdateNode $inputTarget "$subjectPositiveNodeList"] } {
-            PrintError "UpdateNode failed !"
+        if { [UpdateVolumeCollectionNode $inputTargetNode "$inputTargetPositiveCollectionNode"] } {
+            PrintError "UpdateVolumeCollectionNode failed !"
             return 1
         }
 
 
-        if {[RegisterInputImages $inputTarget 0] } {
+        if {[RegisterInputImages $inputTargetNode 0] } {
             PrintError "InitPreProcessing: Target-to-Target failed!"
             return 1
         }
 
-        set subjectNode [$workingDN GetAlignedTargetNode]
-        if {$subjectNode == "" } {
+        set alignedTargetNode [$workingDN GetAlignedTargetNode]
+        if {$alignedTargetNode == "" } {
             PrintError "InitPreProcessing: cannot retrieve Aligned Target Node !"
             return 1
         }
@@ -608,7 +671,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # create a deformation field
 
         if { $transformationNode == "" } {
-            PrintError "BRAINSResampleCLI: transformation node not correctly defined"
+            PrintError "calcDFVolumeNode: transformation node not correctly defined"
             return 1
         }
         set tmpTransformFileName [WriteDataToTemporaryDir $transformationNode Transform]
@@ -626,9 +689,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         $DFNode SetAndObserveImageData $outputVolume
         $outputVolume Delete
 
-        set deformationFieldFilename [ CreateTemporaryFileName $DFNode ]
+        set deformationFieldFilename [ CreateTemporaryFileNameForNode $DFNode ]
 
-        set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
         set CMDdeform "${PLUGINS_DIR}/BSplineToDeformationField"
         set CMDdeform "$CMDdeform --refImage $tmpReferenceVolumeFileName" 
         set CMDdeform "$CMDdeform --tfm $tmpTransformFileName"
@@ -651,8 +714,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     # returns transformation when no error occurs
     # now call commandline directly
-
-    proc BRAINSResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformationNode backgroundLevel interpolationType BRAINSBSpline} {
+    #
+    proc BRAINSResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformationNode backgroundLevel interpolationType BRAINSBSpline } {
         variable SCENE
         variable LOGIC
 
@@ -660,15 +723,15 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: == Resample Image CLI"
         $LOGIC PrintText "TCL: =========================================="
 
-        set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
         set CMD "${PLUGINS_DIR}/BRAINSResample"
 
-        set tmpInputVolumeFileName [WriteImageDataToTemporaryDir  $inputVolumeNode ]
+        set tmpInputVolumeFileName [WriteImageDataToTemporaryDir $inputVolumeNode ]
         if { $tmpInputVolumeFileName == "" } { return 1 }
         set RemoveFiles "$tmpInputVolumeFileName"
         set CMD "$CMD --inputVolume $tmpInputVolumeFileName"
 
-        set tmpReferenceVolumeFileName [WriteImageDataToTemporaryDir  $referenceVolumeNode ]
+        set tmpReferenceVolumeFileName [WriteImageDataToTemporaryDir $referenceVolumeNode ]
         if { $tmpReferenceVolumeFileName == "" } { return 1 }
         set RemoveFiles "$RemoveFiles $tmpReferenceVolumeFileName"
         set CMD "$CMD --referenceVolume $tmpReferenceVolumeFileName"
@@ -699,7 +762,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "BRAINSResampleCLI: output volume node not correctly defined"
             return 1
         }
-        set outVolumeFileName [CreateTemporaryFileName $outVolumeNode]
+        set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
         if { $outVolumeFileName == "" } { return 1 }
         set CMD "$CMD --outputVolume $outVolumeFileName"
 
@@ -717,7 +780,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             "int" -
             "float" { set CMD "$CMD $scalarType" }
             default {
-                PrintError "BRAINSResample: cannot resample a volume of type $scalarType"
+                PrintError "BRAINSResampleCLI: cannot resample a volume of type $scalarType"
                 return 1
             }
         }
@@ -739,34 +802,31 @@ namespace eval EMSegmenterPreProcessingTcl {
     }
 
 
-
-    proc SkullStripperCLI { subjectNode } {
+    # This function registers the atlas to the input (both are non-skull stripped)
+    # The transformation will then be applied to the known atlas ICC mask
+    # The transformed mask will then be applied to the input 
+    #
+    # The function returns a node with stripped input volumes
+    proc BRAINSSkullStripper { inputNode atlasNode } {
         variable SCENE
         variable LOGIC
         $LOGIC PrintText "TCL: =========================================="
-        $LOGIC PrintText "TCL: == SkullStripperCLI"
+        $LOGIC PrintText "TCL: == BRAINSSkullStripper"
 
-        set CMD "[$::slicer3::Application GetExtensionsInstallPath]"
-        set svnrevision [$::slicer3::Application GetSvnRevision]
-        if { $svnrevision == "" } {
-            set CMD "$CMD/15602"
-        } else {
-            set CMD "$CMD/$svnrevision"
-        }
-        set CMD "$CMD/SkullStripperModule/SkullStripper"
-
-
+        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+   
         # initialize
-        set SkullStrippedSubjectVolumeNodeList ""
+        set inputNode_SkullStripped ""
+        set atlasNode_SkullStripped ""
 
-        # Run the algorithm on each subject image
-        for { set i 0 } {$i < [$subjectNode GetNumberOfVolumes] } { incr i } {
+        # Run the algorithm on each volume
+        for { set i 0 } {$i < [$inputNode GetNumberOfVolumes] } { incr i } {
 
-            set inputVolumeNode [$subjectNode GetNthVolumeNode $i]
+            set inputVolumeNode [$inputNode GetNthVolumeNode $i]
             set inputVolumeData [$inputVolumeNode GetImageData]
             if { $inputVolumeData == "" } {
-                PrintError "SkullStrippederCLI: the ${i}th subject node has no input data defined!"
-                foreach VolumeNode $SkullStrippedSubjectVolumeNodeList {
+                PrintError "BRAINSSkullStripper: the ${i}th volume node has no input data defined!"
+                foreach VolumeNode $inputNode_SkullStripped {
                     DeleteNode $VolumeNode
                 }
                 return ""
@@ -775,31 +835,115 @@ namespace eval EMSegmenterPreProcessingTcl {
             set tmpInputFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
             set RemoveFiles "\"$tmpInputFileName\""
             if { $tmpInputFileName == "" } {
-                return 1
+                return ""
             }       
 
-            set CMD "$CMD --iteration 10 --division 12 --dilation 0"
+            #Threshold --threshold 1 --lower 0 --upper 255 --outsidevalue 1 --thresholdtype Above slicer:0#vtkMRMLScalarVolumeNode8 slicer:0x0#vtkMRMLScalarVolumeNode5 
+            #TODO: get atlas template file for this input
+            set non_skull_stripped_atlas  /home/domibel/Desktop/data/spl_50_cases_with_manual_segmentation/ForSBIA/case2/spgr/case2norm.nrrd
+            set atlas_mask /home/domibel/Desktop/data/spl_50_cases_with_manual_segmentation/ForSBIA/case2/spgr-strip/case2norm_mask.nrrd
 
-            set surfacefile /tmp/EBF_vtkMRMLModelNodeSurface.vtp
-            set maskfile /tmp/EBF_vtkMRMLScalarVolumeNodeMask.nrrd
-            set CMD "$CMD $tmpInputFileName $surfacefile  $maskfile"
 
+            set atlas_mask_deformed [CreateFileName "Volume"]
+            if { $atlas_mask_deformed == "" } {
+                PrintError "it is empty"
+            }
+
+
+            set linearTransformFileName [CreateFileName "LinearTransform"]
+            if { $linearTransformFileName == "" } {
+                PrintError "it is empty"
+            }
+
+            set oArgument [CreateFileName "Volume"]
+            if { $oArgument == "" } {
+                PrintError "it is empty"
+            }
+
+            set deformationfield [CreateFileName "Volume"]
+            if { $deformationfield == "" } {
+                PrintError "it is empty"
+            }
+
+
+            set fixedVolumeFileName $tmpInputFileName
+            set movingVolumeFileName $non_skull_stripped_atlas
+
+            set outputVolumeFileName [CreateFileName "Volume"]
+            if { $outputVolumeFileName == "" } {
+                PrintError "it is empty"
+            }
+
+            # LINEAR REGISTRATION
+            set CMD "${PLUGINS_DIR}/BRAINSFit"
+            set CMD "$CMD --fixedVolume $fixedVolumeFileName"
+            set CMD "$CMD --movingVolume $movingVolumeFileName"
+            set CMD "$CMD --outputVolume $outputVolumeFileName"
+            set CMD "$CMD --outputTransform $linearTransformFileName"
+            set CMD "$CMD --initializeTransformMode useMomentsAlign --transformType Rigid,Affine"
 
             $LOGIC PrintText "TCL: Executing $CMD"
             catch { eval exec $CMD } errmsg
             $LOGIC PrintText "TCL: $errmsg"
-            set outputVolumeFileName /tmp/output.nrrd
 
 
-            # The SkullStripper module is producing brain masks with two values: 0 and 255
-            set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
-            set CMD2 "${PLUGINS_DIR}/Mask"
-            set CMD2 "$CMD2 --label 255 --replace 0 $tmpInputFileName $maskfile $outputVolumeFileName"
+            # NON-LINEAR REGISTRATION
+            set CMD "${PLUGINS_DIR}/BRAINSDemonWarp"
+            set CMD "$CMD -m $movingVolumeFileName"
+            set CMD "$CMD -f $fixedVolumeFileName"
+            set CMD "$CMD --initializeWithTransform $linearTransformFileName"
+            set CMD "$CMD -o $oArgument -O $deformationfield"
+            #set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
+            # fast - for debugging
+            set CMD "$CMD -i 1,5,2,1,1 -n 5 -e --numberOfMatchPoints 16"
 
-            $LOGIC PrintText "TCL: Executing $CMD2"
-            catch { eval exec $CMD2 } errmsg
+            $LOGIC PrintText "TCL: Executing $CMD"
+            catch { eval exec $CMD } errmsg
             $LOGIC PrintText "TCL: $errmsg"
 
+
+            # WARP(=Resample) mask
+            set CMD "${PLUGINS_DIR}/BRAINSResample"
+            set CMD "$CMD --inputVolume $atlas_mask"
+            set CMD "$CMD --referenceVolume $fixedVolumeFileName"
+            set CMD "$CMD --deformationVolume $deformationfield"
+            set CMD "$CMD --outputVolume $atlas_mask_deformed"
+            #        set CMD "$CMD --defaultValue $backgroundLevel"
+            set CMD "$CMD --pixelType"
+
+
+            set referenceVolume [$inputVolumeNode GetImageData]
+            set scalarType [$referenceVolume GetScalarTypeAsString]
+            switch -exact "$scalarType" {
+                "bit" { set CMD "$CMD binary" }
+                "unsigned char" { set CMD "$CMD uchar" }
+                "unsigned short" { set CMD "$CMD ushort" }
+                "unsigned int" { set CMD "$CMD uint" }
+                "short" -
+                "int" -
+                "float" { set CMD "$CMD $scalarType" }
+                default {
+                    PrintError "BRAINSSkullStripper: cannot resample a volume of type $scalarType"
+                    return 1
+                }
+            }
+            # Linear
+            #        set CMD "$CMD --interpolationMode $interpolationType"
+
+            $LOGIC PrintText "TCL: Executing $CMD"
+            catch { eval exec $CMD } errmsg
+            $LOGIC PrintText "TCL: $errmsg"
+
+
+
+
+            # MASK input volume
+            set CMD "${PLUGINS_DIR}/Mask"
+            set CMD "$CMD --label 1 --replace 0 $tmpInputFileName $atlas_mask_deformed $outputVolumeFileName"
+
+            $LOGIC PrintText "TCL: Executing $CMD"
+            catch { eval exec $CMD } errmsg
+            $LOGIC PrintText "TCL: $errmsg"
 
 
             # create a new node for our output-list
@@ -809,15 +953,89 @@ namespace eval EMSegmenterPreProcessingTcl {
             $outputVolumeData Delete
 
             # Read results back
-
             ReadDataFromDisk $outputVolumeNode $outputVolumeFileName Volume
             file delete -force $outputVolumeFileName
 
             # still in for loop, create a list of Volumes
-            set SkullStrippedSubjectVolumeNodeList "${SkullStrippedSubjectVolumeNodeList}$outputVolumeNode "
-            $LOGIC PrintText "TCL: List of volume nodes: $SkullStrippedSubjectVolumeNodeList"
+            set inputNode_SkullStripped "${inputNode_SkullStripped} $outputVolumeNode "
+            $LOGIC PrintText "TCL: List of volume nodes: $inputNode_SkullStripped"
+
+
+###
+            set atlasVolumeNode [$atlasNode GetNthVolumeNode $i]
+            set atlasVolumeData [$atlasVolumeNode GetImageData]
+            if { $atlasVolumeData == "" } {
+                #PrintError "BRAINSSkullStripper: the ${i}th volume node has no input data defined!"
+                foreach VolumeNode $atlasNode_SkullStripped {
+                    DeleteNode $VolumeNode
+                }
+                return ""
+            }
+            set tmpAtlasFileName [WriteDataToTemporaryDir $atlasVolumeNode Volume]
+            set RemoveFiles "\"$tmpAtlasFileName\""
+            if { $tmpAtlasFileName == "" } {
+                return ""
+            }       
+
+            set outputAtlasVolumeFileName [CreateFileName "Volume"]
+            if { $outputAtlasVolumeFileName == "" } {
+                PrintError "it is empty"
+            }
+#
+
+            # WARP(=Resample) mask
+            set CMD "${PLUGINS_DIR}/BRAINSResample"
+            set CMD "$CMD --inputVolume $tmpAtlasFileName"
+            set CMD "$CMD --referenceVolume $fixedVolumeFileName"
+            set CMD "$CMD --deformationVolume $deformationfield"
+            set CMD "$CMD --outputVolume $outputAtlasVolumeFileName"
+            #        set CMD "$CMD --defaultValue $backgroundLevel"
+            set CMD "$CMD --pixelType"
+
+
+            set referenceVolume [$inputVolumeNode GetImageData]
+            set scalarType [$referenceVolume GetScalarTypeAsString]
+            switch -exact "$scalarType" {
+                "bit" { set CMD "$CMD binary" }
+                "unsigned char" { set CMD "$CMD uchar" }
+                "unsigned short" { set CMD "$CMD ushort" }
+                "unsigned int" { set CMD "$CMD uint" }
+                "short" -
+                "int" -
+                "float" { set CMD "$CMD $scalarType" }
+                default {
+                    PrintError "BRAINSSkullStripper: cannot resample a volume of type $scalarType"
+                    return 1
+                }
+            }
+            # Linear
+            #        set CMD "$CMD --interpolationMode $interpolationType"
+
+            $LOGIC PrintText "TCL: Executing $CMD"
+            catch { eval exec $CMD } errmsg
+            $LOGIC PrintText "TCL: $errmsg"
+
+
+
+#
+
+
+            # create a new node for our output-list
+            set atlasoutputVolumeNode [CreateVolumeNode $atlasVolumeNode "[$atlasVolumeNode GetName]_stripped"]
+            set atlasoutputVolumeData [vtkImageData New]
+            $atlasoutputVolumeNode SetAndObserveImageData $atlasoutputVolumeData
+            $atlasoutputVolumeData Delete
+
+            # Read results back
+            ReadDataFromDisk $atlasoutputVolumeNode $outputAtlasVolumeFileName Volume
+            file delete -force $outputAtlasVolumeFileName
+
+            set atlasNode_SkullStripped "${atlasNode_SkullStripped} $atlasoutputVolumeNode "
+            
+
+
         }
-        return "$SkullStrippedSubjectVolumeNodeList"
+        return "$inputNode_SkullStripped"
     }
 
 
@@ -843,7 +1061,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set CMD "$CMD -v --linear --pad-out $bgValue"
 
 
-        set outVolumeFileName [CreateTemporaryFileName $outVolumeNode]
+        set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
         if { $outVolumeFileName == "" } { return 1 }
         set CMD "$CMD -o $outVolumeFileName"
 
@@ -924,27 +1142,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
-    #------------------------------------------------------
-    # returns transformation when no error occurs
-    proc CreateTemporaryFileName { Node } {
-        variable GUI
-        if { [$Node GetClassName] == "vtkMRMLScalarVolumeNode" } {
-            set NAME "[$Node GetID].nrrd"
-        } elseif { [$Node GetClassName] == "vtkMRMLScene"  } {
-            set NAME "[file tail [$Node GetURL]]"
-        } else {
-            # Transform node - check also for bspline
-            set NAME "[$Node GetID].mat"
-        }
-
-        return "[$GUI GetTemporaryDirectory]/[expr int(rand()*10000)]_$NAME"
-    }
 
     proc WriteDataToTemporaryDir { Node Type } {
-        variable GUI
         variable SCENE
 
-        set tmpName [CreateTemporaryFileName $Node]
+        set tmpName [CreateTemporaryFileNameForNode $Node]
         if { $tmpName == "" } { return "" }
 
         if { "$Type" == "Volume" } {
@@ -977,7 +1179,6 @@ namespace eval EMSegmenterPreProcessingTcl {
     }
 
     proc ReadDataFromDisk { Node FileName Type } {
-        variable GUI
         variable SCENE
         if { [file exists $FileName] == 0 } {
             PrintError "ReadDataFromDisk: $FileName does not exist"
@@ -1013,12 +1214,11 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc BRAINSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel RegistrationType fastFlag } {
         variable SCENE
         variable LOGIC
-        variable GUI
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Image Alignment CommandLine: $RegistrationType "
         $LOGIC PrintText "TCL: =========================================="
 
-        set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
         set CMD "${PLUGINS_DIR}/BRAINSFit "
 
         if { $fixedVolumeNode == "" || [$fixedVolumeNode GetImageData] == "" } {
@@ -1050,7 +1250,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "AlignInputImages: output volume node not correctly defined"
             return ""
         }
-        set outVolumeFileName [CreateTemporaryFileName $outVolumeNode]
+        set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
 
         if { $outVolumeFileName == "" } {
             return ""
@@ -1066,7 +1266,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $transformNode SetName "EMSegmentBSplineTransform"
             $SCENE AddNode $transformNode
             set transID [$transformNode GetID]
-            set outTransformFileName [CreateTemporaryFileName $transformNode]
+            set outTransformFileName [CreateTemporaryFileNameForNode $transformNode]
             $transformNode Delete
             set CMD "$CMD --bsplineTransform $outTransformFileName --maxBSplineDisplacement 10.0"
         } else {
@@ -1074,7 +1274,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $transformNode SetName "EMSegmentLinearTransform"
             $SCENE AddNode $transformNode
             set transID [$transformNode GetID]
-            set outTransformFileName [CreateTemporaryFileName $transformNode]
+            set outTransformFileName [CreateTemporaryFileNameForNode $transformNode]
 
             $transformNode Delete
             set CMD "$CMD --outputTransform $outTransformFileName"
@@ -1165,7 +1365,6 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc CMTKRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel bSplineFlag fastFlag} {
         variable SCENE
         variable LOGIC
-        variable GUI
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Image Alignment CommandLine: $bSplineFlag "
         $LOGIC PrintText "TCL: =========================================="
@@ -1203,7 +1402,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set RemoveFiles "$RemoveFiles $movingVolumeFileName"
 
 
-        set outVolumeFileName [CreateTemporaryFileName $outVolumeNode]
+        set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
         if { $outVolumeFileName == "" } {
             #remove files
             return ""
@@ -1247,7 +1446,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         #            }
         #        }
 
-        set outLinearTransformDirName /tmp/affine.xform
+
+        # affine
+        set outLinearTransformDirName [CreateDirName "xform"]
+
         set outTransformDirName $outLinearTransformDirName
 
         set CMD "$CMD -o $outLinearTransformDirName"
@@ -1273,7 +1475,8 @@ namespace eval EMSegmenterPreProcessingTcl {
             }
             set CMD "$CMD/CMTK4Slicer/warp"
 
-            set outNonLinearTransformDirName /tmp/bspline.xform
+            # BSpline
+            set outNonLinearTransformDirName [CreateDirName "xform"]
             set outTransformDirName $outNonLinearTransformDirName
 
             set CMD "$CMD --delay-refine --grid-spacing 40 --refine 4"
@@ -1294,9 +1497,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         ## Read results back to scene
-
-        # Test:
-        # ReadDataFromDisk $outVolumeNode /home/pohl/Slicer3pohl/463_vtkMRMLScalarVolumeNode17.nrrd Volume
         if { [ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume] == 0 } {
             if { [file exists $outVolumeDirName] == 0 } {
                 set outTransformDirName ""
@@ -1415,8 +1615,13 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
-        # Need to download file to temp directory 
-        set fileName [$GUI GetTemporaryDirectory]/[expr int(rand()*10000)]_[file tail $URI]
+        # Need to download file to temp directory
+        set CMD "mktemp -p [$GUI GetTemporaryDirectory]"
+        catch { set basefilename [ eval exec $CMD ] } errmsg
+        set NAME "_[file tail $URI]"
+        set filename $basefilename$NAME
+        $LOGIC PrintText "DEBUG: Created file: $filename"
+
 
         if { [wget $URI $fileName] } {
             return 1
@@ -1468,7 +1673,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             if { $errorFlag == 0 } {
                 # Set the new path of mrmlScene - by first setting scene to old path so that the function afterwards cen extract the file name  
                 $mrmlScene SetURL $mrmlFileName
-                set tmpFileName [CreateTemporaryFileName  $mrmlScene]
+                set tmpFileName [CreateTemporaryFileNameForNode  $mrmlScene]
                 $mrmlScene SetURL $tmpFileName
                 $mrmlScene SetRootDirectory [file dirname $tmpFileName ] 
                 $mrmlScene Commit $tmpFileName
@@ -1496,7 +1701,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: == Generate ICC MASK (not yet implemented)"
         $LOGIC PrintText "TCL: =========================================="
         set EXE_DIR "$::env(Slicer3_HOME)/bin"
-        set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
 
         # set CMD "$PLUGINS_DIR/DemonsRegistration --fixed_image $Scan2Image --moving_image $Scan1Image --output_image $Scan1ToScan2Image --output_field $Scan1ToScan2Deformation --num_levels 3 --num_iterations 20,20,20 --def_field_sigma 1 --use_histogram_matching --verbose"
 
@@ -1563,8 +1768,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # still in for loop, create a list of outputNodes
             set result "${result}$outputNode "
         }
-        $LOGIC PrintText "TCL: $result"
-        return "$result"
+        return $result
     }
 
     # -------------------------------------
@@ -1575,34 +1779,35 @@ namespace eval EMSegmenterPreProcessingTcl {
     # -------------------------------------
     proc PerformIntensityCorrection { subjectICCMaskNode } {
         variable LOGIC
-        variable subjectNode
+        variable alignedTargetNode
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Intensity Correction "
         $LOGIC PrintText "TCL: =========================================="
 
-        return [N4ITKBiasFieldCorrectionCLI $subjectNode $subjectICCMaskNode]
+        return [N4ITKBiasFieldCorrectionCLI $alignedTargetNode $subjectICCMaskNode]
     }
 
-    proc N4ITKBiasFieldCorrectionCLI { subjectNode subjectICCMaskNode } {
+    # subjectICCMaskNode will be ignored
+    proc N4ITKBiasFieldCorrectionCLI { inputNode subjectICCMaskNode } {
         variable SCENE
         variable LOGIC
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: ==     N4ITKBiasFieldCorrectionCLI      =="
         $LOGIC PrintText "TCL: =========================================="
 
-        set PLUGINS_DIR "$::env(Slicer3_PLUGINS_DIR)"
+        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
         set CMD "${PLUGINS_DIR}/N4ITKBiasFieldCorrection"
 
         # initialize
         set correctedSubjectVolumeNodeList ""
 
-        # Run the algorithm on each subject image
-        for { set i 0 } { $i < [$subjectNode GetNumberOfVolumes] } { incr i } {
+        # Run the algorithm on each volume
+        for { set i 0 } { $i < [$inputNode GetNumberOfVolumes] } { incr i } {
 
-            set inputVolumeNode [$subjectNode GetNthVolumeNode $i]
+            set inputVolumeNode [$inputNode GetNthVolumeNode $i]
             set inputVolumeData [$inputVolumeNode GetImageData]
             if { $inputVolumeData == "" } {
-                PrintError "N4ITKBiasFieldCorrectionCLI: the ${i}th subject node has not input data defined!"
+                PrintError "N4ITKBiasFieldCorrectionCLI: the ${i}th volume node has not input data defined!"
                 foreach VolumeNode $correctedSubjectVolumeNodeList {
                     DeleteNode $VolumeNode
                 }
@@ -1629,7 +1834,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $outputVolumeNode SetAndObserveImageData $outputVolumeData
             $outputVolumeData Delete
 
-            set outputVolumeFileName [ CreateTemporaryFileName $outputVolumeNode ]
+            set outputVolumeFileName [ CreateTemporaryFileNameForNode $outputVolumeNode ]
             $LOGIC PrintText "$outputVolumeFileName"
             if { $outputVolumeFileName == "" } {
                 return 1
@@ -1640,7 +1845,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # for test purposes(reduces execution time)
             # set CMD "$CMD --iterations \"3,2,1\""
 
-            # set outbiasVolumeFileName [ CreateTemporaryFileName $outbiasVolumeFileName ]
+            # set outbiasVolumeFileName [ CreateTemporaryFileNameForNode $outbiasVolumeFileName ]
             # if { $outbiasVolumeFileName == "" } {
             #     return 1
             # }
@@ -1691,6 +1896,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     # -------------------------------------
     # Register Atlas to Subject
+    # This function is changing/updating some nodes
+    #
     # if succesfull returns 0
     # otherwise returns 1
     # -------------------------------------
@@ -1698,7 +1905,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable workingDN
         variable mrmlManager
         variable LOGIC
-        variable subjectNode
+        variable alignedTargetNode
         variable inputAtlasNode
         variable outputAtlasNode
         variable inputSubParcellationNode
@@ -1745,13 +1952,13 @@ namespace eval EMSegmenterPreProcessingTcl {
         set stripped 1
 
         if { $stripped == 0 } {
-            set subjectSkullStrippedNodeList [SkullStripperCLI $subjectNode]
-            UpdateSubjectNode "$subjectSkullStrippedNodeList"
+            set alignedTargetNode_SkullStripped [SkullStripperCLI $alignedTargetNode]
+            UpdateVolumeCollectionNode "$alignedTargetNode" "$alignedTargetNode_SkullStripped"
         }
 
 
         set fixedTargetChannel 0
-        set fixedTargetVolumeNode [$subjectNode GetNthVolumeNode $fixedTargetChannel]
+        set fixedTargetVolumeNode [$alignedTargetNode GetNthVolumeNode $fixedTargetChannel]
         
         if { [$fixedTargetVolumeNode GetImageData] == "" } {
             PrintError "RegisterAtlas: Fixed image is null, skipping registration"
@@ -1806,7 +2013,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # registration
         # ----------------------------------------------------------------
 
-        set registrationType "Rigid  ScaleVersor3D ScaleSkewVersor3D Affine"
+        set registrationType "Rigid ScaleVersor3D ScaleSkewVersor3D Affine"
         set fastFlag 0
         if { $affineFlag } {
             if { $affineType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationRigidMMIFast] } {
@@ -1833,20 +2040,20 @@ namespace eval EMSegmenterPreProcessingTcl {
         if { $UseBRAINS } {
             # 0 =  debugging 
             if {1} {
-              set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
-              if { $BSplineNode == "" } {
-                PrintError "RegisterAtlas: BSpline Transform node is null"
-                return 1
-              }
-              set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
-              if { $transformNode == "" } {
-                PrintError "RegisterAtlas: Deformation Field Transform node is null"
-                return 1
-              }
-        } else {
-                 # for debugging 
-                 set transformNode /home/pohl/Slicer3pohl/4879_vtkMRMLScalarVolumeNode36.nrrd
-        }
+                set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
+                if { $BSplineNode == "" } {
+                    PrintError "RegisterAtlas: BSpline Transform node is null"
+                    return 1
+                }
+                set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
+                if { $transformNode == "" } {
+                    PrintError "RegisterAtlas: Deformation Field Transform node is null"
+                    return 1
+                }
+            } else {
+                # for debugging 
+                set transformNode /home/pohl/Slicer3pohl/4879_vtkMRMLScalarVolumeNode36.nrrd
+            }
             set transformNodeType "DeformVolumeTransform"  
         } else {
             set bSplineFlag 1
@@ -1878,7 +2085,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
  
         # Sub parcelation
-        for { set i 0 } {$i < [$outputSubParcellationNode GetNumberOfVolumes] } { incr i } {
+        for { set i 0 } { $i < [$outputSubParcellationNode GetNumberOfVolumes] } { incr i } {
             $LOGIC PrintText "TCL: Resampling subparcallation map  $i ..."
             set movingVolumeNode [$inputSubParcellationNode GetNthVolumeNode $i]
             set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]
@@ -1886,22 +2093,22 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
 
-            # Create Vernoi diagram with correct scalar type from aligned subparcellation 
+            # Create Voronoi diagram with correct scalar type from aligned subparcellation 
             set output [vtkImageData New]
             $output DeepCopy [$outputVolumeNode GetImageData]
 
-            set vernoi [vtkImageLabelPropagation New]
-            $vernoi SetInput $output 
-            $vernoi Update 
+            set voronoi [vtkImageLabelPropagation New]
+            $voronoi SetInput $output 
+            $voronoi Update 
 
-            set vernoiCast [vtkImageCast New]
-            $vernoiCast SetInput [$vernoi GetPropagatedMap] 
-            $vernoiCast SetOutputScalarType  [$output GetScalarType]
-            $vernoiCast Update
+            set voronoiCast [vtkImageCast New]
+            $voronoiCast SetInput [$voronoi GetPropagatedMap] 
+            $voronoiCast SetOutputScalarType  [$output GetScalarType]
+            $voronoiCast Update
 
-            [$outputVolumeNode GetImageData] DeepCopy [$vernoiCast GetOutput]
-            $vernoiCast Delete
-            $vernoi Delete
+            [$outputVolumeNode GetImageData] DeepCopy [$voronoiCast GetOutput]
+            $voronoiCast Delete
+            $voronoi Delete
             $output Delete
         }
 
@@ -1910,14 +2117,18 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
-    proc Resample { movingVolumeNode fixedTargetVolumeNode transformNode transformDirName transformType interpolationType backgroundLevel outputVolumeNode } {
+
+
+    # output: outputVolumeNode
+    # no side effects
+    proc Resample { inputVolumeNode referenceVolumeNode transformNode transformDirName transformType interpolationType backgroundLevel outputVolumeNode } {
         variable LOGIC
-        if {[$movingVolumeNode GetImageData] == ""} {
-            PrintError "RegisterAtlas: Moving image is null, skipping: $movingVolumeNode"
+        if {[$inputVolumeNode GetImageData] == ""} {
+            PrintError "Resample: Input image is null, skipping: $inputVolumeNode"
             return 1
         }
-        if { [$outputVolumeNode GetImageData] == ""} {
-            PrintError "RegisterAtlas: Registration output is null, skipping: $outputVolumeNode"
+        if {[$outputVolumeNode GetImageData] == ""} {
+            PrintError "Resample: Registration output is null, skipping: $outputVolumeNode"
             return 1
         }
 
@@ -1926,21 +2137,21 @@ namespace eval EMSegmenterPreProcessingTcl {
         switch $transformType {
             "CMTKTransform" {
                 $LOGIC PrintText "TCL: with CMTKResampleCLI..."
-                if { [CMTKResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformDirName] } {
+                if { [CMTKResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName] } {
                     return 1
                 }
             }
             "BSplineTransform" {
                 $LOGIC PrintText "TCL: with BRAINSResample using the BSpline"
                 set BRAINSBSpline 1
-                if { [BRAINSResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType $BRAINSBSpline] } {
+                if { [BRAINSResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType $BRAINSBSpline] } {
                     return 1
                 }
             }
             "DeformVolumeTransform" {
                 $LOGIC PrintText "TCL: with BRAINSResample using the Deformation Field"
                 set BRAINSBSpline 0
-                if { [BRAINSResampleCLI $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType $BRAINSBSpline] } {
+                if { [BRAINSResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformNode $backgroundLevel $interpolationType $BRAINSBSpline] } {
                     return 1
                 }
             }
@@ -1952,6 +2163,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0 
     }
 
+
+
+    # Print error messages
     proc PrintError { TEXT } {
         variable LOGIC
         $LOGIC PrintText "TCL: ERROR: EMSegmenterPreProcessingTcl::${TEXT}"

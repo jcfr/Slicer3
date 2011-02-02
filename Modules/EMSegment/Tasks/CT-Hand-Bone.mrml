@@ -1,6 +1,6 @@
-<?xml version="1.0"?><MRML >
+<?xml version="1.0"?><MRML version="15893" userTags="">
 <EMS
-  id="vtkMRMLEMSNode1"  name="CT Hand Bone"  hideFromEditors="false"  selectable="true"  selected="false"  SegmenterNodeID="vtkMRMLEMSSegmenterNode1"  TemplateFilename=""  SaveTemplateAfterSegmentation="0"  TclTaskFilename="CT-Hand-Bone.tcl"  TaskPreprocessingSetting="|C0|C0" ></EMS>
+  id="vtkMRMLEMSNode1"  name="CT Hand Bone"  hideFromEditors="false"  selectable="true"  selected="false"  SegmenterNodeID="vtkMRMLEMSSegmenterNode1"  TemplateFilename=""  SaveTemplateAfterSegmentation="0"  TclTaskFilename="CT-Hand-Bone.tcl"  TaskPreprocessingSetting="|C1|C1|C0" ></EMS>
  <EMSSegmenter
   id="vtkMRMLEMSSegmenterNode1"  name="vtkMRMLEMSSegmenterNode1"  hideFromEditors="false"  selectable="true"  selected="false"  TemplateNodeID="vtkMRMLEMSTemplateNode1"  OutputVolumeNodeID=""  WorkingDataNodeID="vtkMRMLEMSWorkingDataNode1"  WorkingDirectory="NULL"  ></EMSSegmenter>
  <EMSTemplate
@@ -400,9 +400,9 @@
  <EMSIntensityNormalizationParameters
   id="vtkMRMLEMSIntensityNormalizationParametersNode1"  name="vtkMRMLEMSIntensityNormalizationParametersNode1"  hideFromEditors="true"  selectable="true"  selected="false"  NormValue="90"  NormType="1"  InitialHistogramSmoothingWidth="5"  MaxHistogramSmoothingWidth="10"  RelativeMaxVoxelNum="0.99"  PrintInfo="1"  Enabled="1"  ></EMSIntensityNormalizationParameters>
  <EMSWorkingData
-  id="vtkMRMLEMSWorkingDataNode1"  name="vtkMRMLEMSWorkingDataNode1"  hideFromEditors="false"  selectable="true"  selected="false"  VolumeNodeIDs=""   InputTargetNodeID="vtkMRMLEMSTargetNode1"   InputTargetNodeIsValid="0"  AlignedTargetNodeID=""   AlignedTargetNodeIsValid="0"  InputAtlasNodeID="vtkMRMLEMSAtlasNode1"   InputAtlasNodeIsValid="0"  AlignedAtlasNodeID=""   AlignedAtlasNodeIsValid="0"  InputSubParcellationNodeID="vtkMRMLEMSVolumeCollectionNode1"  AlignedSubParcellationNodeID=""  ></EMSWorkingData>
+  id="vtkMRMLEMSWorkingDataNode1"  name="vtkMRMLEMSWorkingDataNode1"  hideFromEditors="false"  selectable="true"  selected="false"  VolumeNodeIDs=""   InputTargetNodeID="vtkMRMLEMSTargetNode1"   InputTargetNodeIsValid="0"  AlignedTargetNodeID="NULL"   AlignedTargetNodeIsValid="0"  InputAtlasNodeID="vtkMRMLEMSAtlasNode1"   InputAtlasNodeIsValid="0"  AlignedAtlasNodeID="NULL"   AlignedAtlasNodeIsValid="0"  InputSubParcellationNodeID="vtkMRMLEMSVolumeCollectionNode1"  AlignedSubParcellationNodeID="NULL"  ></EMSWorkingData>
  <EMSTarget
-  id="vtkMRMLEMSTargetNode1"  name="vtkMRMLEMSTargetNode1"  hideFromEditors="false"  selectable="true"  selected="false"  VolumeNodeIDs=""  ></EMSTarget>
+  id="vtkMRMLEMSTargetNode1"  name="vtkMRMLEMSTargetNode1"  hideFromEditors="false"  selectable="true"  selected="false"  VolumeNodeIDs="NULL"  ></EMSTarget>
  <EMSAtlas
   id="vtkMRMLEMSAtlasNode1"  name="vtkMRMLEMSAtlasNode1"  hideFromEditors="false"  selectable="true"  selected="false"  VolumeNodeIDs="
 Key vtkMRMLEMSTreeNode3 VolumeNodeID vtkMRMLScalarVolumeNode4
@@ -418,17 +418,16 @@ Key vtkMRMLEMSTreeNode12 VolumeNodeID vtkMRMLScalarVolumeNode13
 Key vtkMRMLEMSTreeNode13 VolumeNodeID vtkMRMLScalarVolumeNode12
 Key vtkMRMLEMSTreeNode14 VolumeNodeID vtkMRMLScalarVolumeNode11
 Key atlas_registration_image0 VolumeNodeID vtkMRMLScalarVolumeNode14
-Key vtkMRMLEMSTreeNode20 VolumeNodeID vtkMRMLScalarVolumeNode11
-Key vtkMRMLEMSTreeNode37 VolumeNodeID vtkMRMLScalarVolumeNode12
-Key vtkMRMLEMSTreeNode24 VolumeNodeID vtkMRMLScalarVolumeNode8
-Key vtkMRMLEMSTreeNode38 VolumeNodeID vtkMRMLScalarVolumeNode12
-Key vtkMRMLEMSTreeNode22 VolumeNodeID vtkMRMLScalarVolumeNode13
-Key vtkMRMLEMSTreeNode26 VolumeNodeID vtkMRMLScalarVolumeNode9
-Key vtkMRMLEMSTreeNode28 VolumeNodeID vtkMRMLScalarVolumeNode10
-Key vtkMRMLEMSTreeNode30 VolumeNodeID vtkMRMLScalarVolumeNode5
-Key vtkMRMLEMSTreeNode32 VolumeNodeID vtkMRMLScalarVolumeNode6
-Key vtkMRMLEMSTreeNode34 VolumeNodeID vtkMRMLScalarVolumeNode7
 Key vtkMRMLEMSTreeNode36 VolumeNodeID vtkMRMLScalarVolumeNode2
+Key vtkMRMLEMSTreeNode34 VolumeNodeID vtkMRMLScalarVolumeNode7
+Key vtkMRMLEMSTreeNode32 VolumeNodeID vtkMRMLScalarVolumeNode6
+Key vtkMRMLEMSTreeNode30 VolumeNodeID vtkMRMLScalarVolumeNode5
+Key vtkMRMLEMSTreeNode28 VolumeNodeID vtkMRMLScalarVolumeNode10
+Key vtkMRMLEMSTreeNode26 VolumeNodeID vtkMRMLScalarVolumeNode9
+Key vtkMRMLEMSTreeNode24 VolumeNodeID vtkMRMLScalarVolumeNode8
+Key vtkMRMLEMSTreeNode22 VolumeNodeID vtkMRMLScalarVolumeNode13
+Key vtkMRMLEMSTreeNode38 VolumeNodeID vtkMRMLScalarVolumeNode12
+Key vtkMRMLEMSTreeNode20 VolumeNodeID vtkMRMLScalarVolumeNode11
 Key vtkMRMLEMSTreeNode18 VolumeNodeID vtkMRMLScalarVolumeNode3
 Key vtkMRMLEMSTreeNode16 VolumeNodeID vtkMRMLScalarVolumeNode4"   NumberOfTrainingSamples="255"  ></EMSAtlas>
  <Volume

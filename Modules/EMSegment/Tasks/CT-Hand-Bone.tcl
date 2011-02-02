@@ -25,14 +25,15 @@ namespace eval EMSegmenterPreProcessingTcl {
     # Variables Specific to this Preprocessing
     #
     variable TextLabelSize 1
-    variable CheckButtonSize 2
+    variable CheckButtonSize 3
     variable VolumeMenuButtonSize 0
     variable TextEntrySize 0
     variable UseBRAINS 1
 
     # Check Button
     variable atlasAlignedFlagID 0
-    variable inhomogeneityCorrectionFlagID 1
+    variable rightHandFlagID 1
+    variable inhomogeneityCorrectionFlagID 2
 
     # Text Entry
     # not defined for this task
@@ -48,7 +49,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc ShowUserInterface { } {
         variable preGUI
         variable atlasAlignedFlagID
-        variable iccMaskSelectID
+        variable rightHandFlagID
         variable inhomogeneityCorrectionFlagID
         variable LOGIC
 
@@ -59,10 +60,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
         $LOGIC PrintText "TCLMRI: Preprocessing MRI Human Brain - ShowUserInterface"
 
-        $preGUI DefineTextLabel "This task only applies to non-skull stripped scans! \n\nShould the EMSegmenter " 0
+        $preGUI DefineTextLabel "This task only applies to right handed scans scans! \n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton "- register the atlas to the input scan ?" 0 $atlasAlignedFlagID
-        # $preGUI DefineCheckButton "Are the input scans skull stripped ?" 0 $skullStrippedFlagID
-        # $preGUI DefineVolumeMenuButton "Define ICC mask of the atlas ?" 0 $iccMaskSelectID
+        $preGUI DefineCheckButton "- right hand scan?" 0 $rightHandFlagID
         $preGUI DefineCheckButton "- perform image inhomogeneity correction on input scan ?" 0 $inhomogeneityCorrectionFlagID
 
         # Define this at the end of the function so that values are set by corresponding MRML node
@@ -76,13 +76,13 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc Run { } {
         variable preGUI
         variable workingDN
-        variable subjectNode
+        variable alignedTargetNode
         variable inputAtlasNode
         variable mrmlManager
         variable LOGIC
 
         variable atlasAlignedFlagID
-        variable iccMaskSelectID
+        variable rightHandFlagID
         variable inhomogeneityCorrectionFlagID
 
         $LOGIC PrintText "TCLMRI: =========================================="
@@ -93,6 +93,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         if {[InitPreProcessing]} {
             return 1
         }
+
+        set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
+        set rightHandFlag [ GetCheckButtonValueFromMRML $rightHandFlagID ]
+        set inhomogeneityCorrectionFlag [ GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID ]
 
         set inputTargetNode [$workingDN GetInputTargetNode]
         set alignedTargetNode [$workingDN GetAlignedTargetNode]
@@ -107,10 +111,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
         if { $inputAtlasNode != "" } {
             $LOGIC PrintText "Detected [$inputAtlasNode GetNumberOfVolumes] inputAtlasNodeVolumes"
-        } 
-        if { $alignedAtlasNode != "" } {
-             $LOGIC PrintText "Detected [$alignedAtlasNode GetNumberOfVolumes] alignedAtlasNodeVolumes"
         }
+        if { $alignedAtlasNode != "" } {
+            $LOGIC PrintText "Detected [$alignedAtlasNode GetNumberOfVolumes] alignedAtlasNodeVolumes"
+        }
+
 
         if { $alignedAtlasNode == "" } {
             $LOGIC PrintText "TCL: Aligned Atlas was empty"
@@ -122,228 +127,204 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
 
-        # (flip), fiducial_threshold, blur, binarize, choose largest component of: atlas and subject
-        # RegisterHandAtlas
-        
+        if { $atlasAlignedFlag } {
+            # (flip), fiducial_threshold, blur, binarize, choose largest component of: atlas and target
+            # RegisterHandAtlas
 
+            set inputTargetVolumeNode [$inputTargetNode GetNthVolumeNode 0]
+            set inputTargetVolumeFileName [WriteDataToTemporaryDir $inputTargetVolumeNode Volume]
 
-        set inputTargetVolumeNode [$inputTargetNode GetNthVolumeNode 0]
-        set inputTargetVolumeFileName [WriteDataToTemporaryDir $inputTargetVolumeNode Volume]
-
-        set blurredInputTargetVolumeFileName [CreateTemporaryFileName $inputTargetVolumeNode]
-        CTHandBonePipeline $inputTargetVolumeFileName $blurredInputTargetVolumeFileName
- 
-
-
-        set atlasRegistrationVolumeIndex -1;
-        if {[[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey] != "" } {
-            set atlasRegistrationVolumeKey [[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey]
-            set atlasRegistrationVolumeIndex [$inputAtlasNode GetIndexByKey $atlasRegistrationVolumeKey]
-        }
-
-        if {$atlasRegistrationVolumeIndex < 0 } {
-            PrintError "RegisterAtlas: Attempt to register atlas image but no atlas image selected!"
-            return 1
-        }
-
-        set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode $atlasRegistrationVolumeIndex]
-        set inputAtlasVolumeFileName [WriteDataToTemporaryDir $inputAtlasVolumeNode Volume]
-
-        set blurredInputAtlasVolumeFileName [CreateTemporaryFileName $inputAtlasVolumeNode]
-        CTHandBonePipeline $inputAtlasVolumeFileName $blurredInputAtlasVolumeFileName
-
-
-
-
-#        set transformfile RegisterAtlasToSubject { $outputAtlasFileName $outputFileName }
-
-        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
-        set CMD "${PLUGINS_DIR}/BRAINSFit"
-
-        set fixedVolumeFileName $blurredInputTargetVolumeFileName
-        set CMD "$CMD --fixedVolume $fixedVolumeFileName"
-
-        set movingVolumeFileName $blurredInputAtlasVolumeFileName
-        set CMD "$CMD --movingVolume $movingVolumeFileName"
-
-        set outputVolumeFileName "/tmp/outputvolume_registered.nrrd"
-        set CMD "$CMD --outputVolume $outputVolumeFileName"
-
-        set linearTransform "/tmp/Subject_Transform.txt"
-        set CMD "$CMD --outputTransform $linearTransform"
-
-        set CMD "$CMD --initializeTransformMode useMomentsAlign --transformType Rigid,Affine"
-
-        $LOGIC PrintText "TCL: Executing $CMD"
-        catch { eval exec $CMD } errmsg
-        $LOGIC PrintText "TCL: $errmsg"
-
-
-
-        set CMD "${PLUGINS_DIR}/BRAINSDemonWarp"
-        set CMD "$CMD -m $movingVolumeFileName -f $fixedVolumeFileName"
-        set CMD "$CMD --initializeWithTransform $linearTransform"
-        set oArgument "/tmp/Subject_demons.nii"
-        set deformationfield "/tmp/AtoS_deformationfield.nii"
-        set CMD "$CMD -o $oArgument -O $deformationfield"
-
-        set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
-        # fast - for debugging
-        # set CMD "$CMD -i 1,5,2,1,1 -n 5 -e --numberOfMatchPoints 16"
-
-        $LOGIC PrintText "TCL: Executing $CMD"
-        catch { eval exec $CMD } errmsg
-        $LOGIC PrintText "TCL: $errmsg"
-
-
-        set fixedTargetChannel 0
-        set fixedTargetVolumeNode [$subjectNode GetNthVolumeNode $fixedTargetChannel]
-        set fixedTargetVolumeFileName [WriteImageDataToTemporaryDir $fixedTargetVolumeNode]
-
-        for { set i 0 } { $i < [$alignedAtlasNode GetNumberOfVolumes] } { incr i } {
-#            if { $i == $atlasRegistrationVolumeIndex} { continue }
-            $LOGIC PrintText "TCL: Resampling atlas image $i ..."
-            set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
-            set outputAtlasVolumeNode [$alignedAtlasNode GetNthVolumeNode $i]
-            set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $inputAtlasVolumeNode]
-            $LOGIC PrintText "TCL: Guessed background level: $backgroundLevel"
-
-            set inputAtlasVolumeFileName [WriteImageDataToTemporaryDir $inputAtlasVolumeNode]
-            set outputAtlasVolumeFileName [WriteImageDataToTemporaryDir $outputAtlasVolumeNode]
-
-            set CMD "${PLUGINS_DIR}/BRAINSResample"
-            set CMD "$CMD --inputVolume $inputAtlasVolumeFileName  --referenceVolume $fixedTargetVolumeFileName"
-            set CMD "$CMD --outputVolume $outputAtlasVolumeFileName --deformationVolume $deformationfield"
-
-            set CMD "$CMD --pixelType"
-            set fixedTargetVolume [$fixedTargetVolumeNode GetImageData]
-            set scalarType [$fixedTargetVolume GetScalarTypeAsString]
-            switch -exact "$scalarType" {
-                "bit" { set CMD "$CMD binary" }
-                "unsigned char" { set CMD "$CMD uchar" }
-                "unsigned short" { set CMD "$CMD ushort" }
-                "unsigned int" { set CMD "$CMD uint" }
-                "short" -
-                "int" -
-                "float" { set CMD "$CMD $scalarType" }
-                default {
-                    PrintError "BRAINSResample: cannot resample a volume of type $scalarType"
-                    return 1
-                }
+            if { $rightHandFlag } {
+                set flip_is_necessary_for_target 0
+                set flip_is_necessary_for_atlas 0
+            } else {
+                set flip_is_necessary_for_target 0
+                set flip_is_necessary_for_atlas 1
             }
 
+
+
+
+            set atlasRegistrationVolumeIndex -1;
+            if {[[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey] != "" } {
+                set atlasRegistrationVolumeKey [[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey]
+                set atlasRegistrationVolumeIndex [$inputAtlasNode GetIndexByKey $atlasRegistrationVolumeKey]
+            }
+
+            if { $atlasRegistrationVolumeIndex < 0 } {
+                PrintError "RegisterAtlas: Attempt to register atlas image but no atlas image selected!"
+                return 1
+            }
+
+            set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode $atlasRegistrationVolumeIndex]
+            set inputAtlasVolumeFileName [WriteDataToTemporaryDir $inputAtlasVolumeNode Volume]
+
+
+
+            set blurredInputTargetVolumeFileName [CreateTemporaryFileNameForNode $inputTargetVolumeNode]
+            CTHandBonePipeline $inputTargetVolumeFileName $blurredInputTargetVolumeFileName $flip_is_necessary_for_target
+
+            set blurredInputAtlasVolumeFileName [CreateTemporaryFileNameForNode $inputAtlasVolumeNode]
+            CTHandBonePipeline $inputAtlasVolumeFileName $blurredInputAtlasVolumeFileName $flip_is_necessary_for_atlas
+
+
+            ### Call Brainsfit ###
+
+            #        set transformfile RegisterAtlasToSubject { $outputAtlasFileName $outputFileName }
+
+            set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+            set CMD "${PLUGINS_DIR}/BRAINSFit"
+
+            set fixedVolumeFileName $blurredInputTargetVolumeFileName
+            set CMD "$CMD --fixedVolume $fixedVolumeFileName"
+
+            set movingVolumeFileName $blurredInputAtlasVolumeFileName
+            set CMD "$CMD --movingVolume $movingVolumeFileName"
+
+            set outputVolumeFileName [CreateFileName "Volume"]
+            if { $outputVolumeFileName == "" } {
+                PrintError "Failed to create a temporary file"
+            }
+            set CMD "$CMD --outputVolume $outputVolumeFileName"
+
+            set linearTransform [CreateFileName "LinearTransform"]
+            if { $linearTransform == "" } {
+                PrintError "Failed to create a temporary file"
+            }
+            set CMD "$CMD --outputTransform $linearTransform"
+
+            set CMD "$CMD --initializeTransformMode useMomentsAlign --transformType Rigid,Affine"
 
             $LOGIC PrintText "TCL: Executing $CMD"
             catch { eval exec $CMD } errmsg
             $LOGIC PrintText "TCL: $errmsg"
 
-            ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
-            file delete -force $outputAtlasVolumeFileName
+
+
+            ### Call BRAINSDemonWarp ###
+
+            set CMD "${PLUGINS_DIR}/BRAINSDemonWarp"
+            set CMD "$CMD -m $movingVolumeFileName -f $fixedVolumeFileName"
+            set CMD "$CMD --initializeWithTransform $linearTransform"
+            set oArgument [CreateFileName "Volume"]
+            if { $oArgument == "" } {
+                PrintError "Failed to create a temporary file"
+            }
+            set deformationfield [CreateFileName "Volume"]
+            if { $deformationfield == "" } {
+                PrintError "Failed to create a temporary file"
+            }
+            set CMD "$CMD -o $oArgument -O $deformationfield"
+            set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
+            # fast - for debugging
+            #set CMD "$CMD -i 1,5,2,1,1 -n 5 -e --numberOfMatchPoints 16"
+
+            $LOGIC PrintText "TCL: Executing $CMD"
+            catch { eval exec $CMD } errmsg
+            $LOGIC PrintText "TCL: $errmsg"
+
+
+
+            ### Call Resample ###
+
+            set fixedTargetChannel 0
+            set fixedTargetVolumeNode [$alignedTargetNode GetNthVolumeNode $fixedTargetChannel]
+            set fixedTargetVolumeFileName [WriteImageDataToTemporaryDir $fixedTargetVolumeNode]
+
+            for { set i 0 } { $i < [$alignedAtlasNode GetNumberOfVolumes] } { incr i } {
+                #            if { $i == $atlasRegistrationVolumeIndex} { continue }
+                $LOGIC PrintText "TCL: Resampling atlas image $i ..."
+                set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
+                set outputAtlasVolumeNode [$alignedAtlasNode GetNthVolumeNode $i]
+                set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $inputAtlasVolumeNode]
+                $LOGIC PrintText "TCL: Guessed background level: $backgroundLevel"
+
+                set inputAtlasVolumeFileName [WriteImageDataToTemporaryDir $inputAtlasVolumeNode]
+                set outputAtlasVolumeFileName [WriteImageDataToTemporaryDir $outputAtlasVolumeNode]
+
+                set CMD "${PLUGINS_DIR}/BRAINSResample"
+                set CMD "$CMD --inputVolume $inputAtlasVolumeFileName  --referenceVolume $fixedTargetVolumeFileName"
+                set CMD "$CMD --outputVolume $outputAtlasVolumeFileName --deformationVolume $deformationfield"
+
+                set CMD "$CMD --pixelType"
+                set fixedTargetVolume [$fixedTargetVolumeNode GetImageData]
+                set scalarType [$fixedTargetVolume GetScalarTypeAsString]
+                switch -exact "$scalarType" {
+                    "bit" { set CMD "$CMD binary" }
+                    "unsigned char" { set CMD "$CMD uchar" }
+                    "unsigned short" { set CMD "$CMD ushort" }
+                    "unsigned int" { set CMD "$CMD uint" }
+                    "short" -
+                    "int" -
+                    "float" { set CMD "$CMD $scalarType" }
+                    default {
+                        PrintError "BRAINSResample: cannot resample a volume of type $scalarType"
+                        return 1
+                    }
+                }
+
+
+                $LOGIC PrintText "TCL: Executing $CMD"
+                catch { eval exec $CMD } errmsg
+                $LOGIC PrintText "TCL: $errmsg"
+
+                ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
+                file delete -force $outputAtlasVolumeFileName
+                
+            }
+            #end for loop
         }
+        # end  atlas alignment
+        
 
-#       ComputeIntensityDistributions
-
-        return 0
-
-        #TODO, return value
-        #        if { $ret == "-1" }
-        #       {
-        #          $LOGIC PrintText "blurring failed, but keep going"
-        #       }
-
-        #  int blur(const char* inputImage, const char* outputImage, const double gaussianVariance, const unsigned int maxKernelWidth);
-        #  int binary_threshold(const char* inputDirectory, const char* outputThresholdImage, const unsigned short _lowerThreshold, const unsigned short _upperThreshold);
-        #  int flip( const char* inputFile, const char* outputFlippedImageFile, int flipAxisX, int flipAxisY, int flipAxisZ );
-        #  int fiducial_threshold(const char* inputImage, const char* outputImage, const char* fiducialfile, const char* logfile );
-        #  int largest_component( const char* inputImage, const char* outputImage );
+        # Status: At this point our atlas is aligned to the input data
 
 
-#        if { $alignedTargetNode == "" } {
-#            # input scan does not have to be aligned
-#            set alignedTargetNode [$mrmlManager CloneTargetNode $inputTargetNode "Aligned"]
-#            $workingDN SetReferenceAlignedTargetNodeID [$alignedTargetNode GetID]
-#        } else {
-#            $mrmlManager SynchronizeTargetNode $inputTargetNode $alignedTargetNode "Aligned"
-#        }
+        #       ComputeIntensityDistributions
 
-#        for { set i 0 } { $i < [$alignedTargetNode GetNumberOfVolumes] } {incr i} {
-#             $LOGIC PrintText "read $i th alignedTargetNode"
-#            set intputVolumeNode($i) [$inputTargetNode GetNthVolumeNode $i]
-#            if { $intputVolumeNode($i) == "" } {
-#                PrintError "RegisterInputImages: the ${i}th input node is not defined!"
-#                return 1
-#            }
-#        }
+
+        #        for { set i 0 } { $i < [$alignedTargetNode GetNumberOfVolumes] } {incr i} {
+        #             $LOGIC PrintText "read $i th alignedTargetNode"
+        #            set intputVolumeNode($i) [$inputTargetNode GetNthVolumeNode $i]
+        #            if { $intputVolumeNode($i) == "" } {
+        #                PrintError "RegisterInputImages: the ${i}th input node is not defined!"
+        #                return 1
+        #            }
+        #        }
 
 
         # ----------------------------------------------------------------------------
         # We have to create this function so that we can run it in command line mode
         #
-        set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
-        set skullStrippedFlag 0
-        set iccMaskVTKID 0
-        # [GetVolumeMenuButtonValueFromMRML $iccMaskSelectID]
-        set inhomogeneityCorrectionFlag [GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID]
 
         $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
 
-        if { ($atlasAlignedFlag == 0) && ($skullStrippedFlag == 1) } {
-            PrintError "Run: We currently cannot align the atlas to skull stripped image"
-            return 1
-        }
-
-        if { $iccMaskVTKID } {
-            set inputAtlasICCMaskNode [$mrmlManager GetVolumeNode $iccMaskVTKID]
-            if { $inputAtlasICCMaskNode == "" } {
-                PrintError "Run: inputAtlasICCMaskNode is not defined"
-                return 1
-            }
-        } else {
-            set inputAtlasICCMaskNode ""
-        }
-
-        # -------------------------------------
-        # Step 2: Generate ICC Mask Of input images
-        if { $inputAtlasICCMaskNode != "" && 0} {
-            set inputAtlasVolumeNode [$inputAtlas GetNthVolumeNode 0]
-            set subjectVolumeNode [$subjectNode GetNthVolumeNode 0]
-
-            set subjectICCMaskNode [GenerateICCMask $inputAtlasVolumeNode $inputAtlasICCMaskNode $subjectVolumeNode]
-
-            if { $subjectICCMaskNode == "" } {
-                PrintError "Run: Generating ICC mask for Input failed!"
-                return 1
-            }
-        } else {
-            #  $LOGIC PrintText "TCLMRI: Skipping ICC Mask generation! - Not yet implemented"
-            set subjectICCMaskNode ""
-        }
 
         # -------------------------------------
         # Step 4: Perform Intensity Correction
-        if { $inhomogeneityCorrectionFlag == 1 } {
+                if { $inhomogeneityCorrectionFlag == 1 } {
+                    set dummy 0
+                    set targetIntensityCorrectedCollectionNode [PerformIntensityCorrection $dummy]
+                    if { $targetIntensityCorrectedCollectionNode == "" } {
+                        PrintError "Run: Intensity Correction failed !"
+                        return 1
+                    }
+                    if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$targetIntensityCorrectedCollectionNode"] } {
+                        return 1
+                    }
+                } else {
+                    $LOGIC PrintText "TCLMRI: Skipping intensity correction"
+                }
 
-            set subjectIntensityCorrectedNodeList [PerformIntensityCorrection $subjectICCMaskNode]
-            if { $subjectIntensityCorrectedNodeList == "" } {
-                PrintError "Run: Intensity Correction failed !"
-                return 1
-            }
-            if { [UpdateSubjectNode "$subjectIntensityCorrectedNodeList"] } {
-                return 1
-            }
-        } else {
-            $LOGIC PrintText "TCLMRI: Skipping intensity correction"
-        }
-
-        # write results over to subjectNode
+        # write results over to alignedTargetNode
 
         # -------------------------------------
         # Step 5: Atlas Alignment - you will also have to include the masks
         # Defines $workingDN GetAlignedAtlasNode
-        if { [RegisterAtlas $atlasAlignedFlag] } {
-            PrintError "Run: Atlas alignment failed !"
-            return 1
-        }
+#        if { [RegisterAtlas $atlasAlignedFlag] } {
+#            PrintError "Run: Atlas alignment failed !"
+#            return 1
+#        }
 
 
         # -------------------------------------
@@ -354,7 +335,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # -------------------------------------
-        # Step 7: Check validity of Distributions 
+        # Step 7: Check validity of Distributions
         set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
         if { $failedIDList != "" } {
             set MSG "Log Covariance matrices for the following classes seemed incorrect:\n "
@@ -370,32 +351,57 @@ namespace eval EMSegmenterPreProcessingTcl {
     #
     # TASK SPECIFIC FUNCTIONS
     #
-    proc CTHandBonePipeline { inputFileName outputFileNameX } {
+    proc CTHandBonePipeline { inputFileName outputFileName flip_is_necessary } {
+        variable LOGIC
 
         set CTHandBoneHelper [vtkCTHandBoneClass New]
 
-#        set outputFileName "/tmp/Target_Flip.nii"
-#        set ret [$CTHandBoneHelper flip $inputFileName $outputFileName "1" "0" "0"]
-#
-#        set inputFileName $outputFileName
-        set outputFileName "/tmp/Target_Flip_Threshold.nii"
-        #TODO
-        set fiducialfile "/projects/sandbox/Slicer3/trunk/Slicer3/Modules/EMSegment/Tasks/CT-Hand-Bone-Code/FiducialsSubject2.fcsv"
-        #TODO
-        set logfile "/tmp/logfile.txt"
-        set ret [$CTHandBoneHelper fiducial_threshold $inputFileName $outputFileName $fiducialfile $logfile]
+        if { $flip_is_necessary } {
+            set TargetFlipFileName [CreateFileName "Volume"]
+            if { $TargetFlipFileName == "" } {
+                PrintError "Failed to create a temporary file"
+            }
+        }
 
-        set inputFileName $outputFileName
-        set outputFileName "/tmp/Target_Flip_Threshold_Blur.nii"
-        set ret [$CTHandBoneHelper blur $inputFileName $outputFileName "1.5" "5"]
-         $LOGIC PrintText "binary..."
-        set inputFileName $outputFileName
-        set outputFileName "/tmp/Target_Flip_Threshold_Blur_Binary.nii"
-        set ret [$CTHandBoneHelper binary_threshold $inputFileName $outputFileName "0" "30"]
-        $LOGIC PrintText "laregest..."
-        set inputFileName $outputFileName
-#        set outputFileName "/tmp/Target_Flip_Threshold_Blur_Binary_Largest.nii"
-        set ret [$CTHandBoneHelper largest_component $inputFileName $outputFileNameX]
+        set TargetFlipThresholdFileName [CreateFileName "Volume"]
+        if { $TargetFlipThresholdFileName == "" } {
+            PrintError "Failed to create a temporary file"
+        }
+        set TargetFlipThresholdBlurFileName [CreateFileName "Volume"]
+        if { $TargetFlipThresholdBlurFileName == "" } {
+            PrintError "Failed to create a temporary file"
+        }
+        set TargetFlipThresholdBlurBinaryFileName [CreateFileName "Volume"]
+        if { $TargetFlipThresholdBlurBinaryFileName == "" } {
+            PrintError "Failed to create a temporary file"
+        }
+
+        if { $flip_is_necessary } {
+            $LOGIC PrintText "flip..."
+            set ret [$CTHandBoneHelper flip $inputFileName $TargetFlipFileName "1" "0" "0"]
+        } else {
+            # skip flipping
+            $LOGIC PrintText "skip flipping..."
+            set TargetFlipFileName $inputFileName
+        }
+
+        $LOGIC PrintText "threshold..."
+        #TODO
+        # set fiducialfile "/tmp/Subject2.fcsv"
+        #TODO
+        # set logfile "/tmp/logfile.txt"
+        #set ret [$CTHandBoneHelper fiducial_threshold $TargetFlipFileName $TargetFlipThresholdFileName $fiducialfile $logfile]
+        set ret [$CTHandBoneHelper fiducial_threshold $TargetFlipFileName $TargetFlipThresholdFileName]
+
+        $LOGIC PrintText "blur..."
+        set ret [$CTHandBoneHelper blur $TargetFlipThresholdFileName $TargetFlipThresholdBlurFileName "1.5" "5"]
+
+        $LOGIC PrintText "binary..."
+        set ret [$CTHandBoneHelper binary_threshold $TargetFlipThresholdBlurFileName $TargetFlipThresholdBlurBinaryFileName "0" "30"]
+
+        $LOGIC PrintText "largest..."
+        set ret [$CTHandBoneHelper largest_component $TargetFlipThresholdBlurBinaryFileName $outputFileName]
+
         $LOGIC PrintText "atlas template..."
 
         $CTHandBoneHelper Delete
@@ -423,7 +429,8 @@ namespace eval EMSegmenterSimpleTcl {
         }
 
         $inputChannelGUI DefineTextLabel "Is the subject right handed?" 0
-        $inputChannelGUI DefineCheckButton "Perform image inhomogeneity correction on input scans ?" 0 $EMSegmenterPreProcessingTcl::inhomogeneityCorrectionFlagID
+        $inputChannelGUI DefineCheckButton "- Are you providing a right hand scan?" 0 $EMSegmenterPreProcessingTcl::rightHandFlagID
+
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $inputChannelGUI SetButtonsFromMRML
