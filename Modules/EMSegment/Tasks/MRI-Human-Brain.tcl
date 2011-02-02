@@ -94,16 +94,16 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
-#TODO: TEST: inputAtlasNode might be the wrong version
-        set skullstrippedNodeNodeList [BRAINSSkullStripper $alignedTargetNode $inputAtlasNode]
-
-        if { $skullstrippedNodeNodeList == "" } {
-            PrintError "Run: Intensity Correction failed !"
-            return 1
-        }
-        if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$skullstrippedNodeNodeList"] } {
-            return 1
-        }
+        # TODO: TEST: inputAtlasNode might be the wrong version
+#        set skullstrippedNodeNodeList [BRAINSSkullStripper $alignedTargetNode $inputAtlasNode]
+#
+#        if { $skullstrippedNodeNodeList == "" } {
+#            PrintError "Run: BRAINSSkullStripper failed !"
+#            return 1
+#        }
+#        if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$skullstrippedNodeNodeList"] } {
+#            return 1
+#        }
 
 
 
