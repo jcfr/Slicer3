@@ -73,7 +73,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        set CMD "mktemp -p [$GUI GetTemporaryDirectory]"
+        set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
         set basefilename [ eval exec $CMD ]
 
         set filename ""
@@ -102,7 +102,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable GUI
     variable LOGIC
 
-        set CMD "mktemp -p [$GUI GetTemporaryDirectory]"
+        set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
         set basefilename [ eval exec $CMD ]
 
         set filename ""
@@ -130,7 +130,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set dirname ""
 
         if { $type == "xform" } {
-            set CMD "mktemp -d -p [$GUI GetTemporaryDirectory]"
+            set CMD "mktemp -d -t [$GUI GetTemporaryDirectory]"
             set basedirname [ eval exec $CMD ]
             set dirname $basedirname.xform
         } else {
@@ -1616,7 +1616,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # Need to download file to temp directory
-        set CMD "mktemp -p [$GUI GetTemporaryDirectory]"
+        set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
         catch { set basefilename [ eval exec $CMD ] } errmsg
         set NAME "_[file tail $URI]"
         set filename $basefilename$NAME
