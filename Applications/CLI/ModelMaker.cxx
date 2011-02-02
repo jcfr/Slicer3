@@ -36,6 +36,7 @@ Version:   $Revision$
 #include "vtkPolyDataWriter.h"
 #include "vtkImageChangeInformation.h"
 #include "vtkSmartPointer.h"
+#include "vtkImageConstantPad.h"
 
 #include "vtkPluginFilterWatcher.h"
 
@@ -79,6 +80,7 @@ int main(int argc, char * argv[])
       std::cout << "Number of decimate iterations: " << Decimate << std::endl;
       std::cout << "Split normals? " << SplitNormals << std::endl;
       std::cout << "Calculate point normals? " << PointNormals << std::endl;
+      std::cout << "Pad? " << Pad << std::endl;
       std::cout << "Filter type: " << FilterType << std::endl;
       std::cout << "Output model scene file: " << (ModelSceneFile.size() > 0 ? ModelSceneFile[0].c_str() : "None") << std::endl;
       std::cout << "Color table file : " << ColorTable.c_str() << std::endl;
@@ -201,6 +203,7 @@ int main(int argc, char * argv[])
     vtkSmartPointer< vtkWindowedSincPolyDataFilter > smootherSinc = NULL;    
     vtkSmartPointer< vtkSmoothPolyDataFilter > smootherPoly = NULL;
 
+    vtkSmartPointer<vtkImageConstantPad> padder = NULL;
     vtkSmartPointer< vtkDecimatePro > decimator = NULL;
     vtkSmartPointer< vtkMarchingCubes > mcubes = NULL;
     vtkSmartPointer< vtkImageThreshold > imageThreshold = NULL;
@@ -312,14 +315,19 @@ int main(int argc, char * argv[])
       std::cout << "useStartEnd = " << useStartEnd << ", numModelsToGenerate = "<< numModelsToGenerate << ", numFilterSteps " << numFilterSteps << endl;
       }
     // check for the input file
-    FILE * infile;
-    infile = fopen(InputVolume.c_str(),"r");
-    if (infile == NULL)
+    // - strings that start with slicer: are shared memory references, so they won't exist
+    //   The memory address starts with 0x in linux but not on Windows
+    if ( InputVolume.find(std::string("slicer:")) != 0 )
       {
-      std::cerr << "ERROR: cannot open input volume file " << InputVolume << endl;     
-      return EXIT_FAILURE;
+      FILE * infile;
+      infile = fopen(InputVolume.c_str(),"r");
+      if (infile == NULL)
+        {
+        std::cerr << "ERROR: cannot open input volume file " << InputVolume << endl;     
+        return EXIT_FAILURE;
+        }
+      fclose(infile);
       }
-    fclose(infile);
 
     // Read the file
     reader = vtkSmartPointer< vtkITKArchetypeImageSeriesScalarReader >::New();
@@ -346,7 +354,40 @@ int main(int argc, char * argv[])
 
     image = ici->GetOutput();
     image->Update();
-    
+
+    // add padding if flag is set
+    if (Pad)
+      {
+      if (debug)
+        {
+        std::cout << "Adding 1 pixel padding around the image, shifting origin." << std::endl;
+        }
+      if (padder)
+        {
+        padder->SetInput(NULL);
+        padder = NULL;
+        }
+      padder = vtkSmartPointer<vtkImageConstantPad>::New();
+      vtkSmartPointer< vtkImageChangeInformation > translator = vtkSmartPointer< vtkImageChangeInformation >::New();
+      translator->SetInput(image);
+      // translate the extent by 1 pixel
+      translator->SetExtentTranslation(1, 1, 1);
+      // args are: -padx*xspacing, -pady*yspacing, -padz*zspacing
+      // but padding and spacing are both 1
+      translator->SetOriginTranslation(-1.0, -1.0, -1.0);
+      padder->SetInput(translator->GetOutput());
+      padder->SetConstant(0);
+
+      translator->Update();
+      int extent[6];
+      image->GetWholeExtent(extent);
+      // now set the output extent to the new size, padded by 2 on the
+      // positive side
+      padder->SetOutputWholeExtent(extent[0], extent[1]+2,
+                                   extent[2], extent[3]+2,
+                                   extent[4], extent[5]+2);
+      }
+ 
     if (useColorNode)
       {
       colorNode = vtkSmartPointer< vtkMRMLColorTableNode >::New();
@@ -525,7 +566,15 @@ int main(int argc, char * argv[])
         watchDMCubes.QuietOn();
         }
       currentFilterOffset += 1.0;
-      cubes->SetInput(image);
+      // add padding if flag is set
+      if (Pad)
+        {
+        cubes->SetInput(padder->GetOutput());
+        }
+      else
+        {
+        cubes->SetInput(image);
+        }
       if (useStartEnd)
         {
         if (debug)
@@ -852,7 +901,15 @@ int main(int argc, char * argv[])
           {
           watchImageThreshold.QuietOn();
           }
-        imageThreshold->SetInput(image);
+        // add padding to the input image if the flag is on
+        if (Pad)
+          {
+          imageThreshold->SetInput(padder->GetOutput());
+          }
+        else
+          {
+          imageThreshold->SetInput(image);
+          }
         imageThreshold->SetReplaceIn(1);
         imageThreshold->SetReplaceOut(1);
         imageThreshold->SetInValue(200);

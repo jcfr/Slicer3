@@ -811,6 +811,14 @@ add_test(ModelMakerGenerateAllThreeLabelsTest ${Launcher_Command} ${TestLocation
     --modelSceneFile ${TEMP}/ModelMakerTest.mrml\#vtkMRMLModelHierarchyNode1
     ${MRML_TEST_DATA}/helixMask3Labels.nrrd
   )
+add_test(ModelMakerGenerateAllThreeLabelsPadTest ${Launcher_Command} ${TestLocation}ModelMakerTest
+  ModelMakerTest
+    --generateAll
+    --modelSceneFile ${TEMP}/ModelMakerTest.mrml\#vtkMRMLModelHierarchyNode1
+    --pad
+    ${MRML_TEST_DATA}/helixMask3Labels.nrrd
+  )
+
 add_test(ModelMakerStartEndTest ${Launcher_Command} ${TestLocation}ModelMakerTest
   ModelMakerTest
     --start 1 --end 5
