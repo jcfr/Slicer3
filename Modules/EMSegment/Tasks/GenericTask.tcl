@@ -73,12 +73,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        # for BSD/Darwin
-        if { $::tcl_platform(os) == "Darwin" } {
-            set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
-        } else { 
-            set CMD "mktemp --tmpdir=[$GUI GetTemporaryDirectory]"
-        }
+        set CMD "mktemp [$GUI GetTemporaryDirectory]/XXXXXX"
         
         set basefilename [ eval exec $CMD ]
 
@@ -108,12 +103,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable GUI
     variable LOGIC
 
-        # for BSD/Darwin
-        if { $::tcl_platform(os) == "Darwin" } {
-            set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
-        } else { 
-            set CMD "mktemp --tmpdir=[$GUI GetTemporaryDirectory]"
-        }
+        set CMD "mktemp [$GUI GetTemporaryDirectory]/XXXXXX"
 
         set basefilename [ eval exec $CMD ]
 
@@ -142,13 +132,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set dirname ""
 
         if { $type == "xform" } {
-            # for BSD/Darwin
-            if { $::tcl_platform(os) == "Darwin" } {
-                set CMD "mktemp -d -t [$GUI GetTemporaryDirectory]"
-            } else { 
-                set CMD "mktemp -d --tmpdir=[$GUI GetTemporaryDirectory]"
-            }
-            set basedirname [ eval exec $CMD ]
+            set CMD "mktemp -d [$GUI GetTemporaryDirectory]/XXXXXX"
             set dirname $basedirname.xform
         } else {
             PrintError "CreateDirName: Unknown type"
@@ -1633,12 +1617,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # Need to download file to temp directory
-        # for BSD/Darwin
-        if { $::tcl_platform(os) == "Darwin" } {
-            set CMD "mktemp -t [$GUI GetTemporaryDirectory]"
-        } else { 
-            set CMD "mktemp --tmpdir=[$GUI GetTemporaryDirectory]"
-        }
+        set CMD "mktemp [$GUI GetTemporaryDirectory]/XXXXXX"
         catch { set basefilename [ eval exec $CMD ] } errmsg
         set NAME "_[file tail $URI]"
         set filename $basefilename$NAME
