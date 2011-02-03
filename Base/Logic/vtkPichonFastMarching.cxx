@@ -147,7 +147,7 @@ inline void vtkPichonFastMarching::getMedianInhomo( int index, int &med, int &in
 
   // otherwise, just do it
   for(int k=0;k<=26;k++)
-      tmpNeighborhood[k] = (int)indata[index + arrayShiftNeighbor[k]];
+      tmpNeighborhood[k] = (short)indata[index + arrayShiftNeighbor[k]];
 
   qsort( (void*)tmpNeighborhood, 27, sizeof(int), &compareInt );
   
@@ -1199,6 +1199,7 @@ int vtkPichonFastMarching::addSeedIJK( int I, int J, int K )
     return 0;
   }
 
+  std::cout << "Adding seed at " << I << ", " << J << ", " << K << std::endl;
   if ( (I>=1) && (I<(dimX-1))
        &&  (J>=1) && (J<(dimY-1))
        &&  (K>=1) && (K<(dimZ-1)) )
