@@ -96,9 +96,11 @@ vtkSlicerModulesStep::vtkSlicerModulesStep()
   this->HomePageColIndex = 0;
   this->DownloadButton = NULL;
   this->UninstallButton = NULL;
+  this->NextStepLabel = NULL;
   this->StopButton = NULL;
   this->WizardDialog = NULL;
 
+  this->Messages["WORKING"] = "Searching for compatible extensions...";
   this->Messages["READY"] = "Select extensions, then click uninstall to remove them from\nyour version of 3D Slicer, or click download to retrieve them.";
   this->Messages["DOWNLOAD"] = "Download in progress... Clicking the cancel button will stop\nthe process after the current extension operation is finished.";
   this->Messages["FINISHED"] = "Continue selecting extensions for download or removal,\nor click finish to complete the operation.";
@@ -150,6 +152,10 @@ vtkSlicerModulesStep::~vtkSlicerModulesStep()
   if (this->UninstallButton)
     {
     this->UninstallButton->Delete();
+    }
+  if (this->NextStepLabel)
+    {
+    this->NextStepLabel->Delete();
     }
   if (this->StopButton)
     {
@@ -229,7 +235,7 @@ void vtkSlicerModulesStep::ShowUserInterface()
     {
     this->HeaderText->SetParent( this->Frame1 );
     this->HeaderText->Create();
-    this->HeaderText->SetText(this->Messages["READY"].c_str());
+    this->HeaderText->SetText(this->Messages["WORKING"].c_str());
     }
 
   if (!this->SelectAllButton)
@@ -330,6 +336,17 @@ void vtkSlicerModulesStep::ShowUserInterface()
     this->UninstallButton->SetCommand(this, "Uninstall");
     }
 
+  if (!this->NextStepLabel)
+    {
+    this->NextStepLabel = vtkKWLabel::New();
+    }
+  if (!this->NextStepLabel->IsCreated())
+    {
+    this->NextStepLabel->SetParent( this->Frame4 );
+    this->NextStepLabel->Create();
+    this->NextStepLabel->SetText("");
+    }
+
   this->Script("pack %s -side top -pady 2 -anchor center", 
                this->HeaderText->GetWidgetName());
 
@@ -340,11 +357,28 @@ void vtkSlicerModulesStep::ShowUserInterface()
   this->Script("pack %s -side left -anchor sw -expand true -fill both", 
                this->ModulesMultiColumnList->GetWidgetName());
 
+  /* Do not use the Download and Uninstall buttons
+   * - use the state selected on the first screen to
+   *   define the behavior of the Next button
   this->Script("pack %s %s -side left -anchor sw -pady 2", 
                this->DownloadButton->GetWidgetName(),
                this->UninstallButton->GetWidgetName());
+  */
+  this->Script("pack %s -side right -anchor sw -pady 2", 
+               this->NextStepLabel->GetWidgetName());
 
+  // display temp feedback
+  if (this->ModulesMultiColumnList)
+    {
+    this->ModulesMultiColumnList->GetWidget()->DeleteAllRows();
+    vtkKWMultiColumnList *the_list = this->ModulesMultiColumnList->GetWidget();
+    the_list->InsertCellText(0, 2, "Working...");
+    }
+  // display the interface
+  app->ProcessPendingEvents();
+  // populate extensions
   this->Update();
+  this->HeaderText->SetText(this->Messages["READY"].c_str());
 }
 
 //----------------------------------------------------------------------------
@@ -450,6 +484,7 @@ void vtkSlicerModulesStep::Update()
   vtkSlicerApplication *app =
     vtkSlicerApplication::SafeDownCast(this->GetApplication());
 
+
   if (app)
     {
     int action = this->ActionToBeTaken();
@@ -466,6 +501,10 @@ void vtkSlicerModulesStep::Update()
         {
         this->UninstallButton->EnabledOff();
         }
+      if (this->NextStepLabel)
+        {
+        this->NextStepLabel->SetText("Download and Install selected extensions...");
+        }
       }
     else if (vtkSlicerModulesConfigurationStep::ActionUninstall == action)
       {
@@ -478,6 +517,10 @@ void vtkSlicerModulesStep::Update()
       if (this->UninstallButton)
         {
         this->UninstallButton->EnabledOn();
+        }
+      if (this->NextStepLabel)
+        {
+        this->NextStepLabel->SetText("Uninstall selected extensions...");
         }
       }
     else if (vtkSlicerModulesConfigurationStep::ActionEither == action)
@@ -606,6 +649,8 @@ void vtkSlicerModulesStep::SelectNone()
 //----------------------------------------------------------------------------
 void vtkSlicerModulesStep::DownloadInstall()
 {
+  this->GetWizardDialog()->GetWizardWidget()->NextButtonVisibilityOff();
+  this->GetWizardDialog()->GetWizardWidget()->BackButtonVisibilityOff();
   this->GetWizardDialog()->GetWizardWidget()->CancelButtonVisibilityOff();
 
   this->HeaderText->SetText(this->Messages["DOWNLOAD"].c_str());
@@ -630,23 +675,36 @@ void vtkSlicerModulesStep::DownloadInstall()
 
   this->HeaderText->SetText(this->Messages["FINISHED"].c_str());
 
+  vtkKWMessageDialog::PopupMessage(this->GetApplication(), 
+                           this->GetWizardDialog(),
+                           "Extension Manager", 
+                           "Selected extensions have been downloaded and installed");
+
   this->ActionTaken = vtkSlicerModulesStep::ActionIsDownloadInstall;
   
+  this->GetWizardDialog()->GetWizardWidget()->NextButtonVisibilityOn();
+  this->GetWizardDialog()->GetWizardWidget()->BackButtonVisibilityOn();
   this->GetWizardDialog()->GetWizardWidget()->CancelButtonVisibilityOn();
 }
 
 //----------------------------------------------------------------------------
 void vtkSlicerModulesStep::Uninstall()
 {
+  // get user confirmation
   vtkKWMessageDialog *dlg = vtkKWMessageDialog::New();
-
   dlg->SetApplication( this->GetApplication() );
   dlg->SetMasterWindow( this->GetWizardDialog() );
   dlg->SetText("You are about to uninstall the selected modules, OK?");
   dlg->SetStyleToOkCancel();
-
+  dlg->Invoke();
+  int status = dlg->GetStatus();
   dlg->Delete();
+  if ( status == vtkKWDialog::StatusCanceled )
+    {
+    return;
+    }
 
+  // perform the uninstall
   int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   for (int row=0; row<nrows; row++)
     {
@@ -665,6 +723,11 @@ void vtkSlicerModulesStep::Uninstall()
     }
 
   this->ActionTaken = vtkSlicerModulesStep::ActionIsUninstall;
+
+  vtkKWMessageDialog::PopupMessage(this->GetApplication(), 
+                           this->GetWizardDialog(),
+                           "Extension Manager", 
+                           "Selected extensions have been uninstalled");
 
   this->GetWizardDialog()->GetWizardWidget()->CancelButtonVisibilityOff();
 }
@@ -807,8 +870,8 @@ void vtkSlicerModulesStep::Validate()
   vtkKWWizardWorkflow *wizard_workflow = 
     this->GetWizardDialog()->GetWizardWidget()->GetWizardWorkflow();
 
-  int valid = this->IsActionValid();
-  if (valid != 0)
+  //int valid = this->IsActionValid();
+  if ( 0 /* valid != 0 */ ) // slicer 3.6.3 change: perform action on Next... button
     {
     wizard_workflow->PushInput(vtkKWWizardStep::GetValidationSucceededInput());
     }
@@ -817,18 +880,22 @@ void vtkSlicerModulesStep::Validate()
     int action = this->ActionToBeTaken();
     if (vtkSlicerModulesConfigurationStep::ActionInstall == action)
       {
-      wizard_widget->SetErrorText("No action taken, choose \"Download & Install\".");
+      this->DownloadInstall();
+      wizard_workflow->PushInput(vtkKWWizardStep::GetValidationSucceededInput());
+      //wizard_widget->SetErrorText("No action taken, choose \"Download & Install\".");
       }
     else if (vtkSlicerModulesConfigurationStep::ActionUninstall == action)
       {
-      wizard_widget->SetErrorText("No action taken, choose \"Uninstall\".");
+      this->Uninstall();
+      wizard_workflow->PushInput(vtkKWWizardStep::GetValidationSucceededInput());
+      //wizard_widget->SetErrorText("No action taken, choose \"Uninstall\".");
       }
     else
       {
       wizard_widget->SetErrorText("No action taken, choose \"Download & Install\" or \"Uninstall\".");
+      wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
       }
 
-    wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
     }
 
   wizard_workflow->ProcessInputs();
@@ -1142,6 +1209,9 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
 
     std::cout << "search " << searchdir << std::endl;
       app->AppendPotentialModulePath(searchdir.c_str(), true);
+
+    // delete the temporary zip file
+    itksys::SystemTools::RemoveFile(tmpfile.c_str());
     }
 
   return result;
@@ -1162,42 +1232,62 @@ bool vtkSlicerModulesStep::UninstallExtension(const std::string& ExtensionName)
     // module will be under this directory if the user has made edits
     // to the location over time.
 
-    std::string installdir = this->GetInstallPath();
+    // this is the actual install dir with a revision number
+    std::string installdir = this->GetInstallPath(false);
 
     std::string libdir(installdir + std::string("/") + ExtensionName);
     
+    // try to remove directory containing extension
     if (itksys::SystemTools::FileExists(libdir.c_str()))
       {
       itksys::SystemTools::RemoveADirectory(libdir.c_str());
       }
 
+    // confirm removal worked
     if (!itksys::SystemTools::FileExists(libdir.c_str()))
       {
       result = true;
-
-      std::string paths = app->GetModulePaths();
-
-#if WIN32
-      std::string delim = ";;";
-#else
-      std::string delim = "::";
-#endif
-      
-      std::string::size_type pos = paths.find(libdir.c_str());
-      if (std::string::npos != pos)
-        {
-        paths.erase(pos, libdir.size());
-        }
-
-      pos = paths.find(delim);
-      
-      if (std::string::npos != pos)
-        {
-        paths.erase(pos, 2);
-        }    
-
-      app->SetModulePaths(paths.c_str());
       }
+
+    // now update module paths
+    // The PotentialModulePaths also have an extra 2 characters after each path.  
+    // "|0" means the path is not active and 
+    // "|1" means the path is active.  
+    // PotentialModulePaths uses | as the separator on all platforms.
+    
+    // this is the virtual install dir with a @SVN@
+    installdir = this->GetInstallPath(true);
+    libdir = std::string(installdir + std::string("/") + ExtensionName);
+
+    std::string paths = app->GetPotentialModulePaths();
+    std::string::size_type pos = paths.find(libdir.c_str());
+    if (std::string::npos != pos)
+      {
+      // erase the path plus the delimiter and state value
+      paths.erase(pos, libdir.size()+2);
+      }
+
+    std::string delims = std::string("||");
+    pos = paths.find(delims);
+    if (std::string::npos != pos)
+      {
+      // two delimeters in a row means we deleted from middle of the list
+      // so erase one of them
+      paths.erase(pos, 1);
+      }
+    if (paths[0] == delims[0])
+      {
+      // delmiter at the beginning means we deleted first entry
+      paths.erase(0, 1);
+      }    
+    if ( paths[paths.size()-1] == delims[0] )
+      {
+      // delmiter at the end means we deleted last entry
+      paths.erase(paths.size()-1, 1);
+      }    
+
+    app->SetPotentialModulePaths(paths.c_str());
+
     }
 
   return result;

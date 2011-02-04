@@ -124,6 +124,7 @@ private:
 
   vtkKWPushButton *DownloadButton;
   vtkKWPushButton *UninstallButton;
+  vtkKWLabel      *NextStepLabel;
   vtkKWPushButton *StopButton;
 
   vtkSlicerModulesWizardDialog *WizardDialog;

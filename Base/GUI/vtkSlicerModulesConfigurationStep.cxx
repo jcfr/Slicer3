@@ -221,12 +221,14 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     radiob->SetText("Uninstall");
     radiob->SetCommand(this, "ActionRadioButtonSetChangedCallback");
  
+    /* remove "Either" option
     radiob = this->ActionRadioButtonSet->AddWidget(
       vtkSlicerModulesConfigurationStep::ActionEither);
     radiob->SetText("Either");
     radiob->SetCommand(this, "ActionRadioButtonSetChangedCallback");
+    */
 
-    this->ActionRadioButtonSet->PackHorizontallyOn();
+    this->ActionRadioButtonSet->PackHorizontallyOff();
   }
 
   if (!this->CacheDirectoryButton)
@@ -237,7 +239,7 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     {
     this->CacheDirectoryButton->SetParent( this->Frame3 );
     this->CacheDirectoryButton->Create();
-    this->CacheDirectoryButton->SetLabelText("Change extensions install path:");
+    this->CacheDirectoryButton->SetLabelText("Extensions install path:");
     this->CacheDirectoryButton->SetLabelWidth(34);
     this->CacheDirectoryButton->GetLabel()->SetAnchorToEast();
     this->CacheDirectoryButton->GetWidget()->TrimPathFromFileNameOff();
@@ -254,6 +256,11 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     this->CacheDirectoryButton->GetWidget()->SetCommand(this, "CacheDirectoryCallback");
     }
 
+  /*
+   * trash button
+   * - NOTE trash button is disabled (never packed) because the back-end
+   *   logic for implementing this feature was never created.
+   */
   vtkKWLabel *l = vtkKWLabel::New();
   l->SetParent ( this->Frame3 );
   l->Create();
@@ -295,6 +302,8 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     this->SearchLocationLabel->SetText("Where to search:");
     this->SearchLocationLabel->SetWidth(17);
     this->SearchLocationLabel->SetAnchorToEast();
+    this->SearchLocationLabel->SetBalloonHelpString(
+      "The URL for the extension server is determined by the machine type and slicer revision.  The site is populated by extensions built to match your slicer installation.  It is possible to specify a custom URL, but it is not assured to match the needs of your installation.");
     }
 
   if (!this->SearchLocationBox)
@@ -306,6 +315,8 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     this->SearchLocationBox->SetParent( this->Frame4 );
     this->SearchLocationBox->Create();
     this->SearchLocationBox->SetCommand(this, "SearchLocationCallback");
+    this->SearchLocationBox->SetBalloonHelpString(
+      "The URL for the extension server is determined by the machine type and slicer revision.  The site is populated by extensions built to match your slicer installation.  It is possible to specify a custom URL, but it is not assured to match the needs of your installation.");
     }
  
   this->Script("pack %s %s -side left -anchor w -padx 5", 
@@ -315,12 +326,14 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
   this->Script("pack %s -side top -padx 2 -anchor w", 
                this->ActionRadioButtonSet->GetWidgetName());
 
-  this->Script("pack %s -side top -padx 2 -pady 25 -anchor w",
+  this->Script("pack %s -side right -padx 2 -pady 25 -anchor w",
                this->CacheDirectoryButton->GetWidgetName());
 
+#if 0
   this->Script("pack %s %s -side left -padx 2 -pady 2 -anchor w",
                l->GetWidgetName(),
                this->TrashButton->GetWidgetName());
+#endif
 
   this->Script("pack %s %s -side left -anchor w -padx 5 -pady 25 -fill x -expand y",
                this->SearchLocationLabel->GetWidgetName(),
