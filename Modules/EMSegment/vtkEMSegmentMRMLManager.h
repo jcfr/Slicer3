@@ -42,6 +42,8 @@ public:
   vtkGetObjectMacro(MRMLScene, vtkMRMLScene);
 
   // Get/Set MRML node storing parameter values
+  // Be very carefull when setting the node this way - should only be done if you know what you are doing 
+  // otherwise use a version of  SetLoadedParameterSetIndex which tests that all volumes are defined correctly 
   virtual void SetNode(vtkMRMLEMSNode*);
   vtkGetObjectMacro(Node, vtkMRMLEMSNode);
 
@@ -63,7 +65,8 @@ public:
   // populates the nodes with default values, adds the nodes to the
   // MRML scene.
   virtual void        CreateAndObserveNewParameterSet();
-  virtual void        SetLoadedParameterSetIndex(int i);
+  virtual int         SetLoadedParameterSetIndex(int i);
+  virtual int         CheckEMSVolumeNodes(vtkMRMLEMSNode* emsNode);
 
   //
   // functions for manipulating the tree structure

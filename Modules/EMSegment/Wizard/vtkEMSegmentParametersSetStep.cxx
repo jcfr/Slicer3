@@ -784,12 +784,13 @@ void vtkEMSegmentParametersSetStep::SelectedParameterSetChangedCallback(int inde
     vtkErrorMacro("Did not find nth template builder node in scene: " << index);
     return;
     }
-   // Do not delete nodes here bc ReferencedNodeID stack is emptied when doing an import so that 
-   // that you can not rely on it anymore after import as they point to the wrong nodes which can cause a seg fault !   
-   //  mrmlManager->RemoveAllEMSNodesButOne(node);
 
-   // Now only one is left
-   mrmlManager->SetLoadedParameterSetIndex(index);
+   // Set the emsnode in the mrml manager 
+  if (mrmlManager->SetLoadedParameterSetIndex(index))  
+    {
+      vtkErrorMacro("EMS node is corrupted - the manager could not be updated with new task: " << index);
+      return; 
+    }
 
   vtkEMSegmentAnatomicalStructureStep *anat_step =
     this->GetGUI()->GetAnatomicalStructureStep();
@@ -1032,7 +1033,7 @@ int vtkEMSegmentParametersSetStep::LoadDefaultTask(int index, bool warningFlag)
 
   // Remove the default selection entry from the menu,
   this->PopulateLoadedParameterSets();
-      
+
   // Figure out the menu index number of the default task that was just loaded
   // and go to the next step 
   int numSets = mrmlManager->GetNumberOfParameterSets();

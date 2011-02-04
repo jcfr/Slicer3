@@ -3944,14 +3944,14 @@ void  vtkEMSegmentMRMLManager::SetNthParameterName(int n, const char* newName)
 }
 
 //----------------------------------------------------------------------------
-void
+int
 vtkEMSegmentMRMLManager::
 SetLoadedParameterSetIndex(int n)
 {
   if (!this->GetMRMLScene())
     {
     vtkErrorMacro("MRML scene is NULL.");
-    return;
+    return 1;
     }
 
   // this always has to be called before calling the function 
@@ -3959,7 +3959,7 @@ SetLoadedParameterSetIndex(int n)
   if (node == NULL)
     {
     vtkErrorMacro("Did not find nth template builder node in scene: " << n);
-    return;
+    return 1;
     }
 
   vtkMRMLEMSNode* templateBuilderNode = vtkMRMLEMSNode::SafeDownCast(node);
@@ -3967,10 +3967,72 @@ SetLoadedParameterSetIndex(int n)
     {
     vtkErrorMacro("Failed to cast node to template builder node: " << 
                   node->GetID());
-    return;
+    return 1;
     }
   
+  // Check if all the volume data in the EMSegmenter tree is non-null 
+  if (this->CheckEMSVolumeNodes(templateBuilderNode)) 
+    {
+       vtkErrorMacro("EMSegment related volume nodes are corrupted for node: " << node->GetID());
+       return 1;
+    }
+   
   this->SetNode(templateBuilderNode);
+  return 0;
+}
+
+//----------------------------------------------------------------------------
+int vtkEMSegmentMRMLManager::CheckEMSVolumeNodes(vtkMRMLEMSNode* emsNode)
+{
+    if (emsNode == NULL)
+    {
+       vtkErrorMacro("EMS node is NULL !"); 
+       return 1;
+    }
+
+   vtkMRMLScene*   currentScene = this->GetMRMLScene();
+   if (currentScene == NULL)
+    {
+        vtkErrorMacro("Current scene not set !"); 
+        return 1 ;
+    }
+
+    vtkMRMLScene *emsScene =  vtkMRMLScene::New();
+    currentScene->GetReferencedSubScene(emsNode, emsScene);
+
+    emsScene->InitTraversal();
+    vtkMRMLNode* currentNode;
+
+    int errorFlag = 0;
+    while ((currentNode = emsScene->GetNextNodeByClass("vtkMRMLVolumeNode")) && (currentNode != NULL) && !errorFlag )
+    {
+       vtkMRMLVolumeNode* volumeNode = dynamic_cast<vtkMRMLVolumeNode*>(currentNode);
+       if (volumeNode == NULL)
+       {
+          vtkErrorMacro("Volume node is null for node: " << volumeNode->GetID());
+          errorFlag = 1;
+          continue;
+      }
+
+      vtkImageData *volumeData = volumeNode->GetImageData();
+      if (volumeData == NULL)
+      {
+          vtkErrorMacro("Image data is null for volume node: " << volumeNode->GetID() << " Name : " <<  (volumeNode->GetName() ? volumeNode->GetName(): "(none)" ));
+          errorFlag = 1;
+          continue;
+      }
+
+      int* dim = volumeData->GetDimensions();
+      if (!(dim[0]*dim[1]))
+    {
+          vtkErrorMacro("Image data is null for volume node: " << volumeNode->GetID() << " Name : " <<  (volumeNode->GetName() ? volumeNode->GetName(): "(none)" ));
+          errorFlag = 1;
+          continue;
+    }
+    }
+
+    emsScene->Delete();
+    return errorFlag;
 }
 
 //----------------------------------------------------------------------------
