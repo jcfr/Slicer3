@@ -102,14 +102,6 @@ public:
 
   double GuessRegistrationBackgroundLevel(vtkMRMLVolumeNode* volumeNode);
 
-  static void SlicerRigidRegister(vtkMRMLVolumeNode* fixedVolumeNode,
-                                  vtkMRMLVolumeNode* movingVolumeNode,
-                                  vtkMRMLVolumeNode* outputVolumeNode,
-                                  vtkTransform* fixedRASToMovingRASTransform,
-                                  int imageMatchType,
-                                  int iterpolationType,
-                                  double backgroundLevel);
-
   static void 
   SlicerImageResliceWithGrid(vtkMRMLVolumeNode* inputVolumeNode,
                              vtkMRMLVolumeNode* outputVolumeNode,

@@ -424,64 +424,61 @@ namespace eval EMSegmenterPreProcessingTcl {
         set fixedVolumeNode $outputVolumeNode($fixedTargetImageIndex)
         set fixedImageData $outputVolumeData($fixedTargetImageIndex)
 
+
         # ----------------------------------------------------------------
-        # inform the user what happens next
+        # perfom "rigid registration" or "resample and cast only"
         if {[$mrmlManager GetEnableTargetToTargetRegistration] } {
+
             $LOGIC PrintText "TCL: ===> Register Target To Target "
-        } else {
-            $LOGIC PrintText "TCL: ===> Skipping Registration of Target To Target "
-        }
 
-        # perfom "rigid registration" or "resample only"
-        for { set i 0 } {$i < [$alignedTargetNode GetNumberOfVolumes] } { incr i } {
-            if { $i == $fixedTargetImageIndex } {
-                continue;
-            }
-
-            set movingVolumeNode $intputVolumeNode($i)
-            set outVolumeNode $outputVolumeNode($i)
-
-            if {[$mrmlManager GetEnableTargetToTargetRegistration] } {
-                # ------------------------------------------------------------
-                # Perform Rigid Registration - old style
-                set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
-                if { 0 } {
-                    # Old Style of Slicer 3.4
-                    set alignType [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationRigidMMI]
-                    set interType [$mrmlManager GetInterpolationTypeFromString InterpolationLinear]
-                    set fixedRASToMovingRASTransform [vtkTransform New]
-                    $LOGIC SlicerRigidRegister $fixedVolumeNode $movingVolumeNode $outVolumeNode $fixedRASToMovingRASTransform $alignType $interType $backgroundLevel
-                    $fixedRASToMovingRASTransform Delete;
-                } else {
-                    # Using BRAINS suite
-                    set transformNode [BRAINSRegistration $fixedVolumeNode $movingVolumeNode $outVolumeNode $backgroundLevel "Rigid" 0]
-                    if { $transformNode == "" } {
-                        PrintError "Transform node is null"
-                        return 1
-                    }
-                    $LOGIC PrintText "TCL: === Just for debugging $transformNode [$transformNode GetName] [$transformNode GetID]"
-                    set outputNode [vtkMRMLScalarVolumeDisplayNode New]
-                    $outputNode SetName "blub1"
-                    $SCENE AddNode $outputNode
-                    set outputNodeID [$outputNode GetID]
-                    $outputNode Delete
-
-                    if { [Resample $movingVolumeNode $fixedVolumeNode $transformNode "NotUsedForBSpline" "BSplineTransform" Linear  $backgroundLevel [$SCENE GetNodeByID $outputNodeID]] } {
-                        return 1
-                    }
-                    ## $SCENE RemoveNode $transformNode
+            for { set i 0 } {$i < [$alignedTargetNode GetNumberOfVolumes] } { incr i } {
+                if { $i == $fixedTargetImageIndex } {
+                    continue;
                 }
 
-                # ------------------------------------------------------------
-                # Here comes new rigid registration later
-            } else {
+                set movingVolumeNode $intputVolumeNode($i)
+                set outVolumeNode $outputVolumeNode($i)
+                set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
+
+                # Using BRAINS suite
+                set transformNode [BRAINSRegistration $fixedVolumeNode $movingVolumeNode $outVolumeNode $backgroundLevel "Rigid" 0]
+                if { $transformNode == "" } {
+                    PrintError "Transform node is null"
+                    return 1
+                }
+
+                $LOGIC PrintText "TCL: === Just for debugging $transformNode [$transformNode GetName] [$transformNode GetID]"
+                set outputNode [vtkMRMLScalarVolumeDisplayNode New]
+                $outputNode SetName "blub1"
+                $SCENE AddNode $outputNode
+                set outputNodeID [$outputNode GetID]
+                $outputNode Delete
+
+                if { [Resample $movingVolumeNode $fixedVolumeNode $transformNode "NotUsedForBSpline" "BSplineTransform" Linear  $backgroundLevel [$SCENE GetNodeByID $outputNodeID]] } {
+                    return 1
+                }
+                ## $SCENE RemoveNode $transformNode
+            }
+        } else {
+
+            $LOGIC PrintText "TCL: ===> Skipping Registration of Target To Target "
+
+            for { set i 0 } {$i < [$alignedTargetNode GetNumberOfVolumes] } { incr i } {
+                if { $i == $fixedTargetImageIndex } {
+                    continue;
+                }
+
+                set movingVolumeNode $intputVolumeNode($i)
+                set outVolumeNode $outputVolumeNode($i)
+
                 # Just creates output with same dimension as fixed volume
                 $LOGIC StartPreprocessingResampleAndCastToTarget $movingVolumeNode $fixedVolumeNode $outVolumeNode
             }
         }
-        # ----------------------------------------------------------------
+
         # Clean up
         $workingDN SetAlignedTargetNodeIsValid 1
+
         return 0
     }
 
