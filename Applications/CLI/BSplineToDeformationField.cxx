@@ -24,16 +24,20 @@ int main( int argc , char * argv[] )
   transformFile->SetFileName(inputTransformName.c_str());
   transformFile->Update();
 
+  /*
+  // DEBUG output
+
   std::cout << "size: " << transformFile->GetTransformList()->size() << std::endl;
 
   itk::TransformFileReader::TransformListType::iterator iteratorA;
-  for (iteratorA=transformFile->GetTransformList()->begin();iteratorA!=transformFile->GetTransformList()->end(); ++iteratorA)
-  {
-    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
-    *iteratorA->Print(std::cout);
-    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
-  }
 
+  for ( iteratorA=transformFile->GetTransformList()->begin(); iteratorA!=transformFile->GetTransformList()->end(); ++iteratorA )
+  {
+    std::cout << "BSplineToDeformationField: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+    *iteratorA->Print(std::cout);
+    std::cout << "BSplineToDeformationField: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+  }
+  */
 
   typedef itk::BSplineDeformableTransform< double , Dimension , Dimension > BSplineDeformableTransformType;
 
