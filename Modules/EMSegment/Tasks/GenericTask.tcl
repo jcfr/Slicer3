@@ -1911,8 +1911,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable UseBRAINS
 
 
-        set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationOff])]
-        set bSplineFlag [expr ([$mrmlManager GetRegistrationDeformableType] != [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationOff])]
+        set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
+        set bSplineFlag [expr ([$mrmlManager GetRegistrationDeformableType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
 
         if {($alignFlag == 0) || (( $affineFlag == 0 ) && ( $bSplineFlag == 0 )) } {
             return [SkipAtlasRegistration]
@@ -2014,7 +2014,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set registrationType "Rigid ScaleVersor3D ScaleSkewVersor3D Affine"
         set fastFlag 0
         if { $affineFlag } {
-            if { $affineType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetAffineRegistrationRigidMMIFast] } {
+            if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
                 set fastFlag 1
             } else {
                 set fastFlag 0
@@ -2023,7 +2023,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         
         if { $bSplineFlag } {
             set registrationType "${registrationType} BSpline"
-            if { $deformableType == [$mrmlManager GetRegistrationTypeFromString AtlasToTargetDeformableRegistrationBSplineMMIFast] } {
+            if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
                 set fastFlag 1
             } else {
                 set fastFlag 0

@@ -44,8 +44,11 @@ protected:
   vtkKWMenuButtonWithLabel *RegistrationParametersInterpolationMenuButton;
 
 private:
-  vtkEMSegmentRegistrationParametersStep(const vtkEMSegmentRegistrationParametersStep&);
-  void operator=(const vtkEMSegmentRegistrationParametersStep&);
+   vtkEMSegmentRegistrationParametersStep(const vtkEMSegmentRegistrationParametersStep&);
+//BTX
+   vtkstd::string RegistrationTypeValueToString(int v);
+//ETX
+   void operator=(const vtkEMSegmentRegistrationParametersStep&);
 };
 
 #endif

@@ -5266,67 +5266,18 @@ int  vtkEMSegmentMRMLManager::GetInterpolationTypeFromString(const char* type)
 //----------------------------------------------------------------------------
 int  vtkEMSegmentMRMLManager::GetRegistrationTypeFromString(const char* type)
 {
-  if (!strcmp(type,"AtlasToTargetAffineRegistrationOff")) 
+  if (!strcmp(type,"RegistrationOff")) 
     {
-      return vtkEMSegmentMRMLManager::AtlasToTargetAffineRegistrationOff;
+      return vtkEMSegmentMRMLManager::RegistrationOff;
     }
 
-  if (!strcmp(type,"AtlasToTargetAffineRegistrationCenters")) 
+  if (!strcmp(type,"RegistrationFast")) 
     {
-      return vtkEMSegmentMRMLManager::AtlasToTargetAffineRegistrationCenters;
+      return vtkEMSegmentMRMLManager::RegistrationFast;
     }
-  if (!strcmp(type,"AtlasToTargetAffineRegistrationRigidMMI")) 
+  if (!strcmp(type,"RegistrationSlow")) 
     {
-      return vtkEMSegmentMRMLManager::AtlasToTargetAffineRegistrationRigidMMI;
-    }
-  if (!strcmp(type,"AtlasToTargetAffineRegistrationRigidNCC")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetAffineRegistrationRigidNCC;
-    }
-  if (!strcmp(type,"AtlasToTargetAffineRegistrationRigidMMIFast")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetAffineRegistrationRigidMMIFast;
-    }
-  if (!strcmp(type,"AtlasToTargetAffineRegistrationRigidNCCFast")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetAffineRegistrationRigidNCCFast;
-    }
-  if (!strcmp(type,"AtlasToTargetAffineRegistrationRigidMMISlow")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetAffineRegistrationRigidMMISlow;
-    }
-  if (!strcmp(type,"AtlasToTargetAffineRegistrationRigidNCCSlow")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetAffineRegistrationRigidNCCSlow;
-    }
-  if (!strcmp(type,"AtlasToTargetDeformableRegistrationOff")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetDeformableRegistrationOff;
-    }
-
-  if (!strcmp(type,"AtlasToTargetDeformableRegistrationBSplineMMI")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetDeformableRegistrationBSplineMMI;
-    }
-  if (!strcmp(type,"AtlasToTargetDeformableRegistrationBSplineNCC")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetDeformableRegistrationBSplineNCC ;
-    }
-  if (!strcmp(type,"AtlasToTargetDeformableRegistrationBSplineMMIFast")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetDeformableRegistrationBSplineMMIFast;
-    }
-  if (!strcmp(type,"AtlasToTargetDeformableRegistrationBSplineNCCFast")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetDeformableRegistrationBSplineNCCFast;
-    }
-  if (!strcmp(type,"AtlasToTargetDeformableRegistrationBSplineMMISlow")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetDeformableRegistrationBSplineMMISlow;
-    }
-  if (!strcmp(type,"AtlasToTargetDeformableRegistrationBSplineNCCSlow")) 
-    {
-      return vtkEMSegmentMRMLManager::AtlasToTargetDeformableRegistrationBSplineNCCSlow ;
+      return vtkEMSegmentMRMLManager::RegistrationSlow;
     }
   return -1;
 }

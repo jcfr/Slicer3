@@ -411,31 +411,14 @@ public:
   //BTX
   enum
     {
-    AtlasToTargetAffineRegistrationOff          = 0,
-    AtlasToTargetAffineRegistrationCenters      = 1,
-    AtlasToTargetAffineRegistrationRigidMMI     = 2,
-    AtlasToTargetAffineRegistrationRigidNCC     = 3,
-    AtlasToTargetAffineRegistrationRigidMMIFast = 4,
-    AtlasToTargetAffineRegistrationRigidNCCFast = 5,
-    AtlasToTargetAffineRegistrationRigidMMISlow = 6,
-    AtlasToTargetAffineRegistrationRigidNCCSlow = 7
+    RegistrationOff  = 0,
+    RegistrationFast = 1,
+    RegistrationSlow = 2
     };
   //ETX
   virtual int       GetRegistrationAffineType();
   virtual void      SetRegistrationAffineType(int affineType);
 
-  //BTX
-  enum
-    {
-    AtlasToTargetDeformableRegistrationOff            = 0,
-    AtlasToTargetDeformableRegistrationBSplineMMI     = 1,
-    AtlasToTargetDeformableRegistrationBSplineNCC     = 2,
-    AtlasToTargetDeformableRegistrationBSplineMMIFast = 3,
-    AtlasToTargetDeformableRegistrationBSplineNCCFast = 4,
-    AtlasToTargetDeformableRegistrationBSplineMMISlow = 5,
-    AtlasToTargetDeformableRegistrationBSplineNCCSlow = 6
-    };
-  //ETX
   int GetRegistrationTypeFromString(const char* type);
 
   virtual int       GetRegistrationDeformableType();
