@@ -277,7 +277,7 @@ int main( int argc, char* argv[] )
       writer->SetFileName(value.str().c_str());
 
       writer->SetInput(extract->GetOutput());
-      writer->SetUseCompression(1);
+      writer->SetUseCompression(0);
       try
         {
         writer->SetImageIO(gdcmIO);
