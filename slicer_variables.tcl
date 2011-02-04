@@ -674,6 +674,15 @@ switch $::tcl_platform(os) {
             set ::MSSDK_PATH "c:/Program Files/Microsoft SDKs/Windows/v6.0A"
         }
 
+
+        if { [file exists "c:/Program Files (x86)/Microsoft Visual Studio 10.0/Common7/IDE/devenv.exe"] } {
+            set ::GENERATOR "Visual Studio 10 Win64"
+            set ::MAKE "c:/Program Files (x86)/Microsoft Visual Studio 10.0/Common7/IDE/devenv.exe"
+            set ::COMPILER_PATH "c:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin"
+            set ::MSSDK_PATH "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A"
+        }
+
+
         set ::COMPILER "cl"
         set ::SERIAL_MAKE $::MAKE
 
