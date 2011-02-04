@@ -443,10 +443,10 @@ int main(int argc, char** argv)
   if (writeIntermediateResults &&
       !vtksys::SystemTools::FileExists(intermediateResultsDirectory.c_str()))
     {
-    std::cerr << "Error: intermediate results directory does not exist." 
+    std::cout << "Warning: intermediate results directory does not exist. "
+              << "We will try to create it for you."
               << std::endl;
-    std::cerr << intermediateResultsDirectory << std::endl;      
-    return EXIT_FAILURE;
+    std::cout << intermediateResultsDirectory << std::endl;
     }
 
   if (!vtksys::SystemTools::FileExists(mrmlSceneFileName.c_str()))

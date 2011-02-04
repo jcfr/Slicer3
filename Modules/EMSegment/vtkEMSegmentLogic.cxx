@@ -125,6 +125,20 @@ vtkEMSegmentLogic::SaveIntermediateResults(vtkSlicerApplication* app, vtkSlicerA
 
   if (!vtksys::SystemTools::FileExists(outputDirectory.c_str()))
     {
+       // try to create directory
+       bool createdOK = true;
+       createdOK = vtksys::SystemTools::MakeDirectory(outputDirectory.c_str());
+       if (!createdOK) {
+              std::string  msg = "SaveIntermediateResults: could not create " + outputDirectory  + "!" ;
+              ErrorMsg += msg + "\n";
+              vtkErrorMacro(<< msg);
+              return false;
+       }
+    }
+
+  // check again whether or not directory exists
+  if (!vtksys::SystemTools::FileExists(outputDirectory.c_str()))
+    {
       std::string  msg = "SaveIntermediateResults: Directory " + outputDirectory  + " does not exist !" ;
       ErrorMsg += msg + "\n"; 
       vtkErrorMacro(<< msg);
