@@ -1040,6 +1040,11 @@ int main(int argc, char** argv)
       emMRMLManager->SetSaveIntermediateResults(false);
       }
 
+    if (verbose) {
+        std::cout << "=============== Print EMSegmentMRMLManager" << std::endl;
+        emMRMLManager->PrintInfo(std::cout);
+    }
+
     //
     // check parameters' node structure
     if (!emMRMLManager->CheckMRMLNodeStructure())
