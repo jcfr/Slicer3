@@ -125,14 +125,14 @@ double CompareTwoVolumes ( vtkImageData* Volume1, vtkImageData* Volume2 , int Fl
 
   double* Extrema = GenerateHistogram(histo, MathImg->GetOutput(), bins);
 
-  double return_rate = -1;
+  double error_rate = -1;
 
   int min = Extrema[0];
   int max = Extrema[1];
   if (Flag) {
     if (min == 0 && max == 0) {
       std::cout << "OK" << std::endl;
-      return_rate = 100.0;
+      error_rate = 100.0;
     } else {
       std::cout << "Failed: Minimum(" << min << ") Maximum(" << max <<")" << std::endl;
     }
@@ -155,14 +155,14 @@ double CompareTwoVolumes ( vtkImageData* Volume1, vtkImageData* Volume2 , int Fl
         VoxelError += int( data->GetScalarComponentAsFloat(i, 0, 0, 0) );
       }
     }
-    return_rate = double(VoxelError)/double(histo->GetVoxelCount())*100.0;
+    error_rate = double(VoxelError)/double(histo->GetVoxelCount())*100.0;
     std::cerr << "Sum: " << VoxelError << std::endl;
-    std::cerr << "Rate(%): " << return_rate << std::endl;
+    std::cerr << "Rate(%): " << error_rate << std::endl;
   }
   histo->Delete();
   MathImg->Delete();
 
-  return return_rate;
+  return error_rate;
 }
 
 double* GenerateHistogram (vtkImageAccumulate* Histogram, vtkImageData* InputVolume, int bins) {
