@@ -15,11 +15,25 @@ set(EMSegment_TUTORIAL2_DIR
 set(EMSegment_TESTDATA_DIR
   ${EMSegment_SOURCE_DIR}/Testing/TestData)
 
+
+#### MIDAS
+include( ../../../Applications/CLI/BRAINSTools/BuildScripts/MIDAS.cmake )
+SETIFEMPTY(MIDAS_REST_URL "http://midas.kitware.com/api/rest" CACHE STRING "The MIDAS server where testing data resides")
+set(MIDAS_KEY_DIR "${EMSegment_SOURCE_DIR}/Testing/TestData/MIDAS_Keys")
+#### MIDAS
+
+
 # Extra Tests:
 # Change these to 1 if you want to run the extra EMSegment tests.  They
 # require a testing dataset that is not distributed by default with
 # Slicer3.  NB: The extra tests may take a long time and a large
 # amount of memory!!!
+
+set(EMSEG_RUN_COMPARE_TESTS   OFF
+  CACHE BOOL "Enable EMSegment tests to compare segmentation results." FORCE
+  )
+mark_as_advanced(EMSEG_RUN_COMPARE_TESTS)
+
 set(EMSEG_RUN_VALGRIND_TESTS    OFF
   CACHE BOOL "Enable EMSegment Valgrind test." FORCE
   )
@@ -67,6 +81,18 @@ if(NOT DISABLE_CXX_TESTING)
     )
   target_link_libraries(
     vtkEMSegmentBlackBoxSegmentationTest
+    EMSegment
+    vtkCommon
+    )
+
+
+  add_executable(
+    vtkEMSegmentCompareTest
+    vtkEMSegmentCompareTest.cxx
+    vtkEMSegmentTestUtilities.cxx
+    )
+  target_link_libraries(
+    vtkEMSegmentCompareTest
     EMSegment
     vtkCommon
     )
@@ -175,17 +201,6 @@ if(NOT DISABLE_CXX_TESTING)
     PASS_REGULAR_EXPRESSION "USAGE"
     )
 
-  # Does the version argument work right?
-  add_test(
-    EMSegCL_Version
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --version
-    )
-  set_tests_properties(
-    EMSegCL_Version
-    PROPERTIES
-    PASS_REGULAR_EXPRESSION "version"
-    )
 
   if(EMSEG_RUN_REG_TESTS)
     # Does the segmenter work and give the correct answer using the
@@ -479,7 +494,7 @@ if(NOT DISABLE_CXX_TESTING)
     --resultVolumeFileName
     ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegCL_IntermediateResults_FinalResult.nrrd
     --intermediateResultsDirectory
-    ${Slicer3_BINARY_DIR}/Testing/Temporary
+    ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegCL_IntermediateResults_FinalResultsFolder
     )
   set_tests_properties(
     EMSegCL_IntermediateResults
@@ -487,6 +502,7 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "Error writing intermediate results"
     )
+
 
   # Task test - small
   add_test(
@@ -498,7 +514,7 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
     --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/small_MRIHumanBrain_T1.nrrd
+    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrain_T1_aligned.nrrd
     )
   set_tests_properties(
     EMSegCL_TaskMRIHumanBrain_small
@@ -506,6 +522,13 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "ERROR"
     )
+  if(EMSEG_RUN_COMPARE_TESTS)
+    midas_add_test(EMSegCL_TaskMRIHumanBrain_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+             ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrain_T1_aligned.nrrd
+                               MIDAS{RESULT_small_MRIHumanBrain_T1_aligned.nrrd.md5}
+    )
+  endif(EMSEG_RUN_COMPARE_TESTS)
+
 
   # Task test - very small
   add_test(
@@ -517,7 +540,7 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/very_small_MRIHumanBrain_T1_aligned.nrrd
     --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/very_small_MRIHumanBrain_T1.nrrd
+    ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrain_T1_aligned.nrrd
     )
   set_tests_properties(
     EMSegCL_TaskMRIHumanBrain_very_small
@@ -525,6 +548,13 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "ERROR"
     )
+  if(EMSEG_RUN_COMPARE_TESTS)
+    midas_add_test(NAME EMSegCL_TaskMRIHumanBrain_very_smallCompareTest
+                   COMMAND ${Slicer3_EXE} --launch vtkCompareDriverTest --no-error-popup
+                   ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrain_T1_aligned.nrrd
+                                     MIDAS{RESULT_very_small_MRIHumanBrain_T1_aligned.nrrd.md5}
+    )
+  endif(EMSEG_RUN_COMPARE_TESTS)
 
 
   # Task test - small
@@ -537,7 +567,7 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/small_MRIHumanBrainParcellation_T1.nrrd
     --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/small_MRIHumanBrainParcellation_T1.nrrd
+    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainParcellation_T1.nrrd
     )
   set_tests_properties(
     EMSegCL_TaskMRIHumanBrainParcellation_small
@@ -545,6 +575,14 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "ERROR"
     )
+  if(EMSEG_RUN_COMPARE_TESTS)
+    midas_add_test(EMSegCL_TaskMRIHumanBrainParcellation_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+             ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainParcellation_T1.nrrd
+                               MIDAS{RESULT_small_MRIHumanBrainParcellation_T1.nrrd.md5}
+    )
+  endif(EMSEG_RUN_COMPARE_TESTS)
+    
+    
 
   # Task test - very small
   add_test(
@@ -556,7 +594,7 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/very_small_MRIHumanBrainParcellation_T1.nrrd
     --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/very_small_MRIHumanBrainParcellation_T1.nrrd
+    ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrainParcellation_T1.nrrd
     )
   set_tests_properties(
     EMSegCL_TaskMRIHumanBrainParcellation_very_small
@@ -564,6 +602,12 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "ERROR"
     )
+  if(EMSEG_RUN_COMPARE_TESTS)
+    midas_add_test(EMSegCL_TaskMRIHumanBrainParcellation_very_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+             ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrainParcellation_T1.nrrd
+                               MIDAS{RESULT_very_small_MRIHumanBrainParcellation_T1.nrrd.md5}
+    )
+  endif(EMSEG_RUN_COMPARE_TESTS)
 
 
   # Task test - small
@@ -576,7 +620,7 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
     --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/small_MRIHumanBrainFullParcellation_T1.nrrd
+    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainFullParcellation_T1.nrrd
     )
   set_tests_properties(
     EMSegCL_TaskMRIHumanBrainFullParcellation_small
@@ -584,6 +628,14 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "ERROR"
     )
+  if(EMSEG_RUN_COMPARE_TESTS)
+    midas_add_test(EMSegCL_TaskMRIHumanBrainFullParcellation_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+             ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainFullParcellation_T1.nrrd
+                               MIDAS{RESULT_small_MRIHumanBrainFullParcellation_T1.nrrd.md5}
+    )
+  endif(EMSEG_RUN_COMPARE_TESTS)
+
+    
 
   # Task test - very small
   add_test(
@@ -595,7 +647,7 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/very_small_MRIHumanBrain_T1_aligned.nrrd
     --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/very_small_MRIHumanBrainFullParcellation_T1.nrrd
+    ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrainFullParcellation_T1.nrrd
     )
   set_tests_properties(
     EMSegCL_TaskMRIHumanBrainFullParcellation_very_small
@@ -603,6 +655,12 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "ERROR"
     )
+  if(EMSEG_RUN_COMPARE_TESTS)
+    midas_add_test(EMSegCL_TaskMRIHumanBrainFullParcellation_very_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+             ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrainFullParcellation_T1.nrrd
+                               MIDAS{RESULT_very_small_MRIHumanBrainFullParcellation_T1.nrrd.md5}
+    )
+  endif(EMSEG_RUN_COMPARE_TESTS)
 
 
   # Task test - small
@@ -615,7 +673,7 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/small_NonHumanPrimate_T1.nrrd
     --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/small_NonHumanPrimate_T1.nrrd
+    ${EMSegment_BINARY_DIR}/RESULT_small_NonHumanPrimate_T1.nrrd
     )
   set_tests_properties(
     EMSegCL_TaskNonHumanPrimate_small
@@ -623,6 +681,14 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "ERROR"
     )
+  if(EMSEG_RUN_COMPARE_TESTS)
+    midas_add_test(NAME EMSegCL_TaskNonHumanPrimate_smallCompareTest
+                   COMMAND ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+                   ${EMSegment_BINARY_DIR}/RESULT_small_NonHumanPrimate_T1.nrrd
+                                     MIDAS{RESULT_small_NonHumanPrimate_T1.nrrd.md5}
+    )
+  endif(EMSEG_RUN_COMPARE_TESTS)
+    
 
   # Task test - very small
   add_test(
@@ -634,7 +700,7 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/very_small_NonHumanPrimate_T1.nrrd
     --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/very_small_NonHumanPrimate_T1.nrrd
+    ${EMSegment_BINARY_DIR}/RESULT_very_small_NonHumanPrimate_T1.nrrd
     )
   set_tests_properties(
     EMSegCL_TaskNonHumanPrimate_very_small
@@ -642,6 +708,12 @@ if(NOT DISABLE_CXX_TESTING)
     FAIL_REGULAR_EXPRESSION
     "ERROR"
     )
+  if(EMSEG_RUN_COMPARE_TESTS)
+    midas_add_test(EMSegCL_TaskNonHumanPrimate_very_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+             ${EMSegment_BINARY_DIR}/RESULT_very_small_NonHumanPrimate_T1.nrrd
+                               MIDAS{RESULT_very_small_NonHumanPrimate_T1.nrrd.md5}
+    )
+  endif(EMSEG_RUN_COMPARE_TESTS)
 
 
 
