@@ -159,8 +159,70 @@ void vtkEMSegmentMRMLManager::PrintSelf(ostream& os, vtkIndent indent)
          this->Node->GetID() : 
          "(none)") 
      << "\n";
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentMRMLManager::PrintInfo(ostream& os)
+{
+ vtkIndent indent(4);
+ os << "\n===== Print Manger Info ==== \n";
+ os << "MRMLScene: " <<  (this->MRMLScene ? this->MRMLScene->GetURL() : "(none)") << "\n";
+ os << "===== Node \n" ;
+ if (!Node)
+   {
+     os << indent << "Warning: No Template Node Defined " << endl;
+     return;
+   }
+ this->Node->PrintSelf(os,indent);
 
 
+ os << "===== Template Node \n" ;
+ if (!this->GetTemplateNode())
+   {
+     os << indent << "No Node Defined " << endl;
+   }
+ else
+   {
+     this->GetTemplateNode()->PrintSelf(os,indent);
+   }
+
+ os << "===== GlobalParametersNode \n" ;
+ if (!this->GetGlobalParametersNode())
+   {
+     os << indent << "Warning: No Global Parameters Node Defined " << endl;
+     return;
+   }
+ this->GetGlobalParametersNode()->PrintSelf(os,indent);
+
+ os << "===== WorkingDataNode \n" ;
+ if (!this->GetWorkingDataNode())
+   {
+     os << indent << "No Node Defined " << endl;
+   }
+ else
+   {
+     this->GetWorkingDataNode()->PrintSelf(os,indent);
+   }
+
+ os << "===== Spatial Atlas Node \n" ;
+ if (!this->GetAtlasInputNode())
+   {
+     os << indent << "No Node Defined " << endl;
+   }
+ else
+   {
+     this->GetAtlasInputNode()->PrintSelf(os,indent);
+   }
+
+ os << "===== Segmenter Node \n" ;
+ if (!this->GetSegmenterNode())
+   {
+     os << indent << "No Node Defined " << endl;
+   }
+ else
+   {
+     this->GetSegmenterNode()->PrintSelf(os,indent);
+   }
 }
 
 //----------------------------------------------------------------------------

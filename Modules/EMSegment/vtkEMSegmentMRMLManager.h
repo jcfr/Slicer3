@@ -36,6 +36,7 @@ public:
   static vtkEMSegmentMRMLManager *New();
   vtkTypeMacro(vtkEMSegmentMRMLManager,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
+  void PrintInfo(ostream& os);
 
   // Get/Set the current mrml scene
   vtkSetObjectMacro(MRMLScene, vtkMRMLScene);
