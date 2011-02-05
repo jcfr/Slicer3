@@ -64,7 +64,7 @@ void vtkMRMLHierarchyNode::UpdateReferenceID(const char *oldID, const char *newI
   Superclass::UpdateReferenceID(oldID, newID);
   if (this->ParentNodeID && !strcmp(oldID, this->ParentNodeID))
     {
-    this->SetParentNodeID(ParentNodeID);
+    this->SetParentNodeID(newID);
     }
 }
 //----------------------------------------------------------------------------
