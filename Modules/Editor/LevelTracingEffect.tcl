@@ -161,9 +161,21 @@ itcl::body LevelTracingEffect::preview {} {
     lappend _actors $o(tracingActor)
   }
 
+  set i $_layers(background,i)
+  set j $_layers(background,j) 
+  set k $_layers(background,k) 
+
+  foreach {imax jmax kmax} [[$this getInputBackground] GetDimensions] {}
+
+  if { $i < 0 || $i >= $imax ||
+       $j < 0 || $j >= $jmax ||
+       $k < 0 || $k >= $kmax } {
+    # outside of volume...
+    return
+  }
 
   $o(tracingFilter) SetInput [$this getInputBackground]
-  $o(tracingFilter) SetSeed $_layers(background,i) $_layers(background,j) $_layers(background,k) 
+  $o(tracingFilter) SetSeed $i $j $k
 
   # figure out which plane to use
   foreach {i0 j0 k0 l0} [$_layers(background,xyToIJK) MultiplyPoint $x $y 0 1] {}
@@ -176,7 +188,7 @@ itcl::body LevelTracingEffect::preview {} {
 
   $o(tracingFilter) Update
   set polyData [$o(tracingFilter) GetOutput]
-  
+
   $o(xyPoints) Reset
   $o(ijkToXY) SetMatrix $_layers(background,xyToIJK)
   $o(ijkToXY) Inverse

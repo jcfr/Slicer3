@@ -112,6 +112,10 @@ itcl::body Labeler::makeMaskImage {polyData} {
   # use the slicer2-based vtkImageFillROI filter
   #
 
+  if { [$polyData GetPoints] == "" } {
+    return
+  }
+
   #
   # Need to know the mapping from RAS into polygon space
   # so the painter can use this as a mask
