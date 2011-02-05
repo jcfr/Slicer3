@@ -630,8 +630,19 @@ int main(int argc, char** argv)
       throw std::runtime_error("ERROR: failed to import mrml scene.");
       }
 
+    if (verbose) {
+        std::cout << "=============== Print EMSegmentMRMLManager" << std::endl;
+        emMRMLManager->Print(std::cout);
+
+        std::cout << "=============== Print PrintVolumeInfo(mrmlScene)" << std::endl;
+        emMRMLManager->PrintVolumeInfo(mrmlScene);
+
+        //std::cout << "=============== Print Tree" << std::endl;
+        //emMRMLManager->PrintTree();
+    }
+
     int numParameterSets = emMRMLManager->GetNumberOfParameterSets();
-    if (verbose) std::cerr << "Imported: " << mrmlScene->GetNumberOfNodes()
+    if (verbose) std::cout << "Imported: " << mrmlScene->GetNumberOfNodes()
                            << (mrmlScene->GetNumberOfNodes() == 1 
                                ? " node" : " nodes")
                            << ", including " << numParameterSets 
