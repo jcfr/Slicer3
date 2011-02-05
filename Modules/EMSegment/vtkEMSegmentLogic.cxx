@@ -312,6 +312,8 @@ IsVolumeGeometryEqual(vtkMRMLVolumeNode* lhs,
   return equalExent && equalMatrix;
 }
 
+// loops through the faces of the image bounding box and counts all the different image values and stores them in a map
+// T represents the image data type
 template <class T>
 T
 vtkEMSegmentLogic::
@@ -474,40 +476,56 @@ GuessRegistrationBackgroundLevel(vtkImageData* imageData)
         }
       }
     }
-  
+
+  // all the information is stored in map m :  std::map<T, unsigned int>
+
   if (m.empty())
     {
+    // no image data provided?
     return 0;
     }
+  else if (m.size() == 1)
+    {
+      // Homogeneous background
+      return m.begin()->first;
+   }
   else
     {
+    // search for the largest element
     typename MapType::iterator itor = 
       std::max_element(m.begin(), m.end(),
                        MapCompare<T>::map_value_comparer);
 
+    // the iterator is pointing to the element with the largest value in the range [m.begin(), m.end()]
     T backgroundLevel = itor->first;
+
+    // how many counts?
     double percentageOfVoxels = 
       100.0 * static_cast<double>(itor->second)/totalVoxelsCounted;
+
+    std::cout << "   Background level guess : "<< std::endl
+              << "   first place: "
+              << static_cast<int>(backgroundLevel) << " (" << percentageOfVoxels << "%) "
+              << std::endl;
+
+
+    // erase largest element
     m.erase(itor);
 
+
+    // again, search for the largest element (second place)
     typename MapType::iterator itor2 = 
       std::max_element(m.begin(), m.end(),
                        MapCompare<T>::map_value_comparer);
 
-    std::cout << "   Background level guess : " 
-              << static_cast<int>(backgroundLevel) << " (" << percentageOfVoxels << "%) "
-              << std::endl;
+    T backgroundLevel_second_place = itor2->first;
 
-    /*
-    //ATTENTION: commented out because of a Windows runtime bug if accessing "static_cast<int>(itor2->first)"
-
-    int second_place = static_cast<int>(itor2->first);
     double percentageOfVoxels_secondplace =
       100.0 * static_cast<double>(itor2->second)/totalVoxelsCounted;
 
-    std::cout << "second place: " << second_place << " (" << percentageOfVoxels_secondplace << "%)"
+    std::cout << "   second place: "
+              << static_cast<int>(backgroundLevel_second_place) << " (" << percentageOfVoxels_secondplace << "%)"
               << std::endl;
-    */
 
     return backgroundLevel;
     }
