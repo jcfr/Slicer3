@@ -15,7 +15,7 @@
 #include "vtkImageEMGeneral.h"
 #include "vtkMRMLEMSAtlasNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
-
+#include "vtkMRMLEMSTargetNode.h"
 
 #include "vtkMatrix4x4.h"
 #include "vtkMath.h"
@@ -674,32 +674,6 @@ GetTreeNodeDistributionLogCovarianceCorrection(vtkIdType nodeID,
     }
   return this->GetTreeParametersLeafNode(nodeID)->GetLogCovarianceCorrection(rowIndex, columnIndex);
 }
-
-//----------------------------------------------------------------------------
-// void
-// vtkEMSegmentMRMLManager::SetTreeNodeDistributionLogCovarianceCorrection(vtkIdType nodeID, vtkstd::vector<vtkstd::vector<double> > covCor)
-//  {
-//    vtkMRMLEMSTreeParametersLeafNode* node = this->GetTreeParametersLeafNode(nodeID);
-//   if (node == NULL)
-//     {
-//     vtkErrorMacro("Leaf parameters node is null for nodeID: " << nodeID);
-//     return;
-//     }
-// 
-//   unsigned int n = node->GetNumberOfTargetInputChannels();
-//   if (covCor.size() != n)
-//     {
-//     vtkErrorMacro("Dimension of input matrix not correct for nodeID: " << nodeID);
-//     return;
-//     } 
-//   for (unsigned int i = 0 ; i < n ; i++)
-//     { 
-//       for (unsigned int j = 0 ; j < n ; j++)
-//     {
-//           node->SetLogCovarianceCorrection(i, j, covCor[i][j]);
-//     }
-//     }
-// }
 
 //----------------------------------------------------------------------------
 int
@@ -3914,6 +3888,10 @@ RegisterMRMLNodesWithScene()
   this->GetMRMLScene()->RegisterNodeClass(emsSegmenterNode);
   emsSegmenterNode->Delete();
 
+  vtkMRMLEMSTargetNode* emsTargetNode = vtkMRMLEMSTargetNode::New();
+  this->GetMRMLScene()->RegisterNodeClass(emsTargetNode);
+  emsTargetNode->Delete();
+
   // -----------------------
   // Updated Structure 
   // -----------------------
@@ -4932,38 +4910,32 @@ void vtkEMSegmentMRMLManager::RemoveLegacyNodes()
   /// cout << "vtkEMSegmentMRMLManager::RemoveLegacyNodes Start "  << endl;
 
    int n = this->GetMRMLScene()->GetNumberOfNodesByClass("vtkMRMLEMSNode");
-   if (!n) 
-     {
-       // cout << " ... nothing to do ! "  << endl;
-       return ;
-     }
-
    // now go through all of them and transfer information 
    for (int i = 0 ; i < n ; i++) 
      {
        // cout << "Remove " << i << endl; 
        vtkMRMLNode* mrmlNode = this->GetMRMLScene()->GetNthNodeByClass(i, "vtkMRMLEMSNode");
        if (!mrmlNode)
-     {
+       {
            continue;
-     }
+       }
        vtkMRMLEMSNode* emsNode = vtkMRMLEMSNode::SafeDownCast(mrmlNode);
        if (!emsNode)
-    { 
-      continue;
-    }
+       { 
+         continue;
+       }
        vtkMRMLEMSSegmenterNode* segNode = emsNode->GetSegmenterNode(); 
        if (!segNode) 
-     {
+       {
            continue;
-     }
+       }
  
        // Nothing usefull defined in the node if not temNode is 
        vtkMRMLEMSTemplateNode* temNode = segNode->GetTemplateNode();
        if (!temNode)
-     {
+       {
            continue;
-     }
+       }
 
        // Update Nodes with info from SegNode and EMSNode 
        temNode->SetName(emsNode->GetName());
@@ -4971,48 +4943,82 @@ void vtkEMSegmentMRMLManager::RemoveLegacyNodes()
         
         vtkMRMLEMSWorkingDataNode* worNode = segNode->GetWorkingDataNode();
         if (worNode && segNode->GetOutputVolumeNode())
-      {
-        worNode->SetOutputSegmentationNodeID(segNode->GetOutputVolumeNodeID());
-      }
+        {
+           worNode->SetOutputSegmentationNodeID(segNode->GetOutputVolumeNodeID());
+        }
 
         vtkMRMLEMSGlobalParametersNode* parNode = temNode->GetGlobalParametersNode(); 
         if (parNode)
-      {
-        parNode->SetTemplateFileName(emsNode->GetTemplateFilename());
-        parNode->SetTemplateSaveAfterSegmentation(emsNode->GetSaveTemplateAfterSegmentation());
+        {
+            parNode->SetTemplateFileName(emsNode->GetTemplateFilename());
+            parNode->SetTemplateSaveAfterSegmentation(emsNode->GetSaveTemplateAfterSegmentation());
             parNode->SetTaskTclFileName(emsNode->GetTclTaskFilename());
             parNode->SetTaskPreProcessingSetting(emsNode->GetTaskPreprocessingSetting());
-      } 
+        } 
 
         // Transfer Infromation from worNode to segNode 
         if (worNode)
-      {
+        {
             temNode->SetSpatialAtlasNodeID(worNode->GetInputAtlasNodeID());
             worNode->RemoveInputAtlasNodeID();
             temNode->SetSubParcellationNodeID(worNode->GetInputSubParcellationNodeID());
             worNode->RemoveInputSubParcellationNodeID();
-      }
-     }  
 
+            // This is the scene vtkMRMLEMSTargetNode - so I have to copy it over to loose the tag
+            // it looks a little bit strange but the virtual functions GetNodeTagName is otherwise not changed !
+            vtkMRMLEMSVolumeCollectionNode* intNode = worNode->GetInputTargetNode();
+            if (intNode && 0)
+          {
+                // Work on this tomorrow 
+                vtkMRMLEMSVolumeCollectionNode* newINTNode = vtkMRMLEMSVolumeCollectionNode::New(); 
+                newINTNode->Copy(intNode); 
+                this->GetMRMLScene()->RemoveNode(intNode);
+                this->GetMRMLScene()->AddNode(newINTNode);
+        worNode->SetInputTargetNodeID(newINTNode->GetID());
+                newINTNode->Delete();
+          }
+            vtkMRMLEMSVolumeCollectionNode* outNode = worNode->GetAlignedTargetNode();
+           if (outNode)
+         {
+           // still have to write it 
+         }
+        }
+     }  
+  
+     // remove all EMSNodes and Segmenter nodes 
      for (int i = 0 ; i < n ; i++) 
      {
        vtkMRMLNode* mrmlNode = this->GetMRMLScene()->GetNthNodeByClass(i, "vtkMRMLEMSNode");
        if (!mrmlNode)
-     {
+       {
            continue;
-     }
+       }
        vtkMRMLEMSNode* emsNode = vtkMRMLEMSNode::SafeDownCast(mrmlNode);
        if (!emsNode)
-    { 
-      continue;
-    }
+       { 
+           continue;
+       }
 
        vtkMRMLEMSSegmenterNode* segNode = emsNode->GetSegmenterNode(); 
-       this->GetMRMLScene()->RemoveNode(emsNode);
        if (segNode) 
-     {
+       {
            this->GetMRMLScene()->RemoveNode(segNode);
-     } 
+       } 
+       this->GetMRMLScene()->RemoveNode(emsNode);
      }
+
+     n = this->GetMRMLScene()->GetNumberOfNodesByClass("vtkMRMLEMSTargetNode");
+     // Go through remaining Target nodes and remove node 
+     for (int i = 0 ; i < n ; i++) 
+       {
+           // cout << "Remove " << i << endl; 
+           vtkMRMLNode* mrmlNode = this->GetMRMLScene()->GetNthNodeByClass(i, "vtkMRMLEMSTargetNode");
+           vtkMRMLEMSTargetNode* tarNode = vtkMRMLEMSTargetNode::SafeDownCast(mrmlNode);
+           if (!tarNode)
+           { 
+              continue;
+           }
+           // Here you remove the file 
+       }
  
 } 
