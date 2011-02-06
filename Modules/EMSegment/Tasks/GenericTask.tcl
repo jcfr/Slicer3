@@ -158,7 +158,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set clonedVolumeNode [vtkMRMLScalarVolumeNode New]
         $clonedVolumeNode CopyWithScene $volumeNode
-        $clonedVolumeNode SetAndObserveStorageNodeID ""
+        # MRML interprets "" as a ID -> can cause issues when trying to do a UpdateScene
+        # $clonedVolumeNode SetAndObserveStorageNodeID ""
         $clonedVolumeNode SetName "$name"
         $clonedVolumeNode SetAndObserveDisplayNodeID $dispID
 
@@ -618,6 +619,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "Run: RemoveNegativeValues failed !"
             return 1
         }
+
         if { [UpdateVolumeCollectionNode $inputTargetNode "$inputTargetPositiveCollectionNode"] } {
             PrintError "UpdateVolumeCollectionNode failed !"
             return 1
@@ -1738,7 +1740,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Start thresholding target image - start"
 
             # Define output
-            set outputNode [CreateVolumeNode $inputNode "[$inputNode GetName]_positive"]
+            set outputNode [CreateVolumeNode $inputNode "[$inputNode GetName]_pos"]
             set outputVolume [vtkImageData New]
             $outputNode SetAndObserveImageData $outputVolume
             $outputVolume Delete

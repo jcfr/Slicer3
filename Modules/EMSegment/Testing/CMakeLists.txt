@@ -500,7 +500,7 @@ if(NOT DISABLE_CXX_TESTING)
     EMSegCL_IntermediateResults
     PROPERTIES
     FAIL_REGULAR_EXPRESSION
-    "Error writing intermediate results"
+    "ERROR;Error writing intermediate results"
     )
 
 
