@@ -4295,7 +4295,6 @@ int vtkEMSegmentMRMLManager::CreateTemplateFile()
   if (workingNode)
     {
       this->Node->SetEMSWorkingDataNodeID("");
-      this->GetMRMLScene()->RemoveNode(workingNode);
     }
 
   if (this->GetGlobalParametersNode()) 
