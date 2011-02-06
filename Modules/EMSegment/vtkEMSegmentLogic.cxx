@@ -1572,10 +1572,6 @@ ConvertGUIEnumToAlgorithmEnumInterpolationType(int guiEnumValue)
 //----------------------------------------------------------------------------
 vtksys_stl::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication* app)
 {
-  // Later do automatically
-  vtksys_stl::string orig_task_dir = this->GetModuleShareDirectory() + vtksys_stl::string("/Tasks");
-
-
   //workaround for the mrml library, we need to have write access to this folder
   const char* tmp_dir = app->GetTemporaryDirectory();
   if (tmp_dir)
@@ -1588,10 +1584,12 @@ vtksys_stl::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication*
         * always copied.  If it is false, only files that have changed or
         * are new are copied.
         */
-      // copy not always, only new files
+       // copy not always, only new files
+       // Later do automatically
+      vtksys_stl::string orig_task_dir = this->GetModuleShareDirectory() + vtksys_stl::string("/Tasks");
       if (!vtksys::SystemTools::CopyADirectory(orig_task_dir.c_str(), copied_task_dir.c_str(), false, true) )
       {
-    vtkErrorMacro("GetTclTaskDirectory:: Couldn't copy task directory " << orig_task_dir.c_str() << " to " << copied_task_dir.c_str());
+          vtkErrorMacro("GetTclTaskDirectory:: Couldn't copy task directory " << orig_task_dir.c_str() << " to " << copied_task_dir.c_str());
           return vtksys::SystemTools::ConvertToOutputPath("");
       }
       return vtksys::SystemTools::ConvertToOutputPath(copied_task_dir.c_str());

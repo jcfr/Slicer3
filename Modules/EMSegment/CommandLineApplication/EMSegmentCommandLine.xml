@@ -49,7 +49,6 @@
     <directory multiple="false">
       <name>intermediateResultsDirectory</name>
       <longflag>intermediateResultsDirectory</longflag>
-
       <description>Directory where EMSegmenter will write intermediate data (e.g., aligned atlas data).</description>
       <label>Intermediate Results Directory</label>      
       <channel>input</channel>
@@ -141,6 +140,23 @@
       <label>Disable compression.</label>
       <default>false</default>
     </boolean>
+
+     <file multiple="true">
+      <name>atlasVolumeFileNames</name>
+      <longflag>atlasVolumeFileNames</longflag>
+      <description>Use an alternative atlas to the one that is specified by the mrml file - note the order matters ! </description>
+      <label>Aligned Spatial Atlas Volumes</label>      
+      <channel>input</channel>
+    </file>
+
+    <boolean>
+      <name>disableRegistration</name>
+      <longflag>disableRegistration</longflag>
+      <description>Skip registration in the preprocessing.</description>
+      <label>Skip Registration</label>
+      <default>false</default>
+    </boolean>
+
 
   </parameters>
 </executable>
