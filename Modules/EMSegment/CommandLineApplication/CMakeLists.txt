@@ -60,13 +60,6 @@ set(CLP_MODULE EMSegmentTclInterpreter)
 set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
 generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
 
-set(CLP_MODULE EMSegmentTransformToNewFormat)
-set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
-generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
-
-# --------------------------------------------------------------------------
-# Build and install the exe
-
 add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
 slicer3_set_plugins_output_path(${CLP_MODULE})
 target_link_libraries(
@@ -74,4 +67,20 @@ target_link_libraries(
   EMSegment
   vtkCommon
   )
+
+set(CLP_MODULE EMSegmentTransformToNewFormat)
+set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
+generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
+add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
+slicer3_set_plugins_output_path(${CLP_MODULE})
+target_link_libraries(
+  ${CLP_MODULE}
+  EMSegment
+  vtkCommon
+  )
+
+# --------------------------------------------------------------------------
+# Build and install the exe
+
+
 

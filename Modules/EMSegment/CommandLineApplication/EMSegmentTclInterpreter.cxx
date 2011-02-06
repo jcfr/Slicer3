@@ -9,11 +9,10 @@
 #include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentMRMLManager.h"
 
-#include "EMSegmentCommandLineCLP.h"
-
 #include <vtksys/SystemTools.hxx>
 #include <stdexcept>
 
+#include "EMSegmentTclInterpreterCLP.h"
 #include "vtkImageMathematics.h"
 #include "vtkImageAccumulate.h"
 #include "vtkITKArchetypeImageSeriesReader.h"
