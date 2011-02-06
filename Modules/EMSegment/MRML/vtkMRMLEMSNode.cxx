@@ -121,29 +121,29 @@ void vtkMRMLEMSNode::ReadXMLAttributes(const char** attrs)
       {
       
       this->SetSegmenterNodeID(val);
-      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes: EMSNode is outdated since Slicer 3.6.3  - please update file" << endl;
+      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
       }
     else if (!strcmp(key, "TemplateFilename"))
       {
       this->SetTemplateFilename(val);
-      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update file" << endl;
+      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
       }
     else if (!strcmp(key, "SaveTemplateAfterSegmentation"))
       {
-      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update file"<< endl;
+      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
       vtksys_stl::stringstream ss;
       ss << val;
       ss >> this->SaveTemplateAfterSegmentation;
       }
     else if (!strcmp(key, "TclTaskFilename"))
       {
-    cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update file"<<endl;
-        this->SetTclTaskFilename(val);
+      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
+      this->SetTclTaskFilename(val);
       }
     else if (!strcmp(key, "TaskPreprocessingSetting"))
       {
-        cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update file"<<endl;
-        this->SetTaskPreprocessingSetting(val);
+      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
+      this->SetTaskPreprocessingSetting(val);
       }
     }
 }

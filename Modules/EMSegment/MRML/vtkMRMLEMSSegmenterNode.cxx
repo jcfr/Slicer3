@@ -134,22 +134,22 @@ void vtkMRMLEMSSegmenterNode::ReadXMLAttributes(const char** attrs)
     if (!strcmp(key, "TemplateNodeID"))
       {
       this->SetTemplateNodeID(val);
-      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update file" << endl;
+      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
       }
     else if (!strcmp(key, "OutputVolumeNodeID"))
       {
       this->SetOutputVolumeNodeID(val);
-      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update file" << endl;
+      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
       }
     else if (!strcmp(key, "WorkingDataNodeID"))
       {
       this->SetWorkingDataNodeID(val);
-      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update file" << endl;
+      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
       }
     else if (!strcmp(key, "WorkingDirectory"))
       {
       this->SetWorkingDirectory(val);
-      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update file" << endl;
+      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update your MRML file" << endl;
       }
     }
 }
