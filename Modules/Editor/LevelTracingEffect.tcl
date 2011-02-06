@@ -155,7 +155,7 @@ itcl::body LevelTracingEffect::preview {} {
     $o(tracingActor) SetMapper $o(tracingMapper)
     $o(tracingMapper) SetInput $o(tracingPolyData)
     set property [$o(tracingActor) GetProperty]
-    $property SetColor [expr 107/255.] [expr 190/255.] [expr 99/255.]
+    $property SetColor 1 1 0
     $property SetLineWidth 1
     [$_renderWidget GetRenderer] AddActor2D $o(tracingActor)
     lappend _actors $o(tracingActor)
