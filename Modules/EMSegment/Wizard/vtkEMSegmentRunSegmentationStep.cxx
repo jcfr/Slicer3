@@ -22,7 +22,7 @@
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerVolumesGUI.h"
 #include "vtkSlicerVolumesLogic.h"
-#include "vtkMRMLEMSTargetNode.h"
+#include "vtkMRMLEMSVolumeCollectionNode.h"
 
 #include <vtksys/SystemTools.hxx>
 #include "vtkSlicerModuleCollapsibleFrame.h"
@@ -36,7 +36,6 @@
 #include "vtkSlicerROIDisplayWidget.h"
 #include "vtkObserverManager.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkMRMLEMSTargetNode.h"
 #include "vtkSlicerApplication.h"
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkKWScale.h"
@@ -718,7 +717,7 @@ void vtkEMSegmentRunSegmentationStep::StartSegmentationCallback()
   // make sure that data types are the same,
   // it is ok if the 'input target node' and the 'atlas node' are using different types,
   // but the 'aligned atlas node'(after register/resample/cast) has to be of the same type as the 'input target node'
-  vtkMRMLEMSTargetNode* targetNode =
+  vtkMRMLEMSVolumeCollectionNode* targetNode =
     mrmlManager->GetWorkingDataNode()->GetInputTargetNode();
   vtkMRMLEMSAtlasNode* alignedAtlasNode =
     mrmlManager->GetWorkingDataNode()->GetAlignedAtlasNode();

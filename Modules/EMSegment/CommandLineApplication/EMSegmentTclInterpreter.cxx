@@ -8,8 +8,6 @@
 #include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentMRMLManager.h"
-#include "vtkMRMLEMSSegmenterNode.h"
-#include "vtkMRMLEMSNode.h"
 
 #include "EMSegmentCommandLineCLP.h"
 

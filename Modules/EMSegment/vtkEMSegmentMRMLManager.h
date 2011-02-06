@@ -5,11 +5,8 @@
 #include "vtkEMSegment.h"
 #include <vtkSetGet.h>
 
-class vtkMRMLEMSNode;
 class vtkMRMLEMSGlobalParametersNode;
-class vtkMRMLEMSSegmenterNode;
 class vtkMRMLEMSTemplateNode;
-class vtkMRMLEMSTargetNode;
 class vtkMRMLEMSAtlasNode;
 class vtkMRMLEMSTreeNode;
 class vtkMRMLEMSTreeParametersNode;
@@ -21,7 +18,6 @@ class vtkMRMLVolumeNode;
 class vtkMRMLEMSVolumeCollectionNode;
 // need enum values
 #include "MRML/vtkMRMLEMSTreeParametersLeafNode.h"
-#include "MRML/vtkMRMLEMSClassInteractionMatrixNode.h"
 
 class vtkMRMLScene;
 
@@ -36,6 +32,8 @@ public:
   static vtkEMSegmentMRMLManager *New();
   vtkTypeMacro(vtkEMSegmentMRMLManager,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
+
+  // Prints out important info about the current template / task 
   void PrintInfo(ostream& os);
 
   // Get/Set the current mrml scene
@@ -45,8 +43,8 @@ public:
   // Get/Set MRML node storing parameter values
   // Be very carefull when setting the node this way - should only be done if you know what you are doing 
   // otherwise use a version of  SetLoadedParameterSetIndex which tests that all volumes are defined correctly 
-  virtual void SetNode(vtkMRMLEMSNode*);
-  vtkGetObjectMacro(Node, vtkMRMLEMSNode);
+  virtual void SetNode(vtkMRMLEMSTemplateNode*);
+  vtkGetObjectMacro(Node, vtkMRMLEMSTemplateNode);
 
   // this will be be passed along by the logic node 
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
@@ -67,7 +65,7 @@ public:
   // MRML scene.
   virtual void        CreateAndObserveNewParameterSet();
   virtual int         SetLoadedParameterSetIndex(int i);
-  virtual int         CheckEMSVolumeNodes(vtkMRMLEMSNode* emsNode);
+  virtual int         CheckEMSTemplateVolumeNodes(vtkMRMLEMSTemplateNode* emsTemplateNode);
 
   //
   // functions for manipulating the tree structure
@@ -193,25 +191,6 @@ public:
   virtual void     SetTreeNodeExcludeFromIncompleteEStep(vtkIdType nodeID, 
                                                          int shouldExclude);
 
-  //BTX
-  enum 
-    {
-      DirectionWest  = vtkMRMLEMSClassInteractionMatrixNode::DirectionWest, 
-      DirectionNorth = vtkMRMLEMSClassInteractionMatrixNode::DirectionNorth,
-      DirectionUp    = vtkMRMLEMSClassInteractionMatrixNode::DirectionUp, 
-      DirectionEast  = vtkMRMLEMSClassInteractionMatrixNode::DirectionEast, 
-      DirectionSouth = vtkMRMLEMSClassInteractionMatrixNode::DirectionSouth, 
-      DirectionDown  = vtkMRMLEMSClassInteractionMatrixNode::DirectionDown
-    };
-  //ETX
-  virtual double   GetTreeNodeClassInteraction(vtkIdType nodeID, 
-                                               int direction,
-                                               int row, int column);
-  virtual void     SetTreeNodeClassInteraction(vtkIdType nodeID, 
-                                               int direction,
-                                               int row, int column,
-                                               double value);
-
   virtual double   GetTreeNodeAlpha(vtkIdType nodeID);
   virtual void     SetTreeNodeAlpha(vtkIdType nodeID, double value);
   
@@ -327,86 +306,7 @@ public:
   virtual void        MoveTargetSelectedVolume(vtkIdType volumeID,
                                                int toIndex);
 
-  virtual bool        DoTargetAndAtlasDataTypesMatch( vtkMRMLEMSTargetNode* targetNode, vtkMRMLEMSAtlasNode* atlasNode ); 
-
-  //
-  // target volume normalization
-  virtual void  
-    SetNthTargetVolumeIntensityNormalizationToDefaultT1SPGR(int n);
-  virtual void  
-    SetTargetVolumeIntensityNormalizationToDefaultT1SPGR(vtkIdType volumeID);
-  virtual void  
-    SetNthTargetVolumeIntensityNormalizationToDefaultT2(int n);
-  virtual void  
-    SetTargetVolumeIntensityNormalizationToDefaultT2(vtkIdType volumeID);
-  virtual void  
-    SetNthTargetVolumeIntensityNormalizationToDefaultT2_2(int n);
-  virtual void  
-    SetTargetVolumeIntensityNormalizationToDefaultT2_2(vtkIdType volumeID);
-
-  virtual void 
-    SetNthTargetVolumeIntensityNormalizationNormValue(int n, double d);
-  virtual void 
-    SetTargetVolumeIntensityNormalizationNormValue(vtkIdType volumeID, 
-                                                   double d);
-  virtual double
-    GetNthTargetVolumeIntensityNormalizationNormValue(int n);
-  virtual double
-    GetTargetVolumeIntensityNormalizationNormValue(vtkIdType volumeID);
-
-  virtual void 
-    SetNthTargetVolumeIntensityNormalizationNormType(int n, int i);
-  virtual void 
-    SetTargetVolumeIntensityNormalizationNormType(vtkIdType volumeID, int i);
-  virtual int
-    GetNthTargetVolumeIntensityNormalizationNormType(int n);
-  virtual int
-    GetTargetVolumeIntensityNormalizationNormType(vtkIdType volumeID);
-
-  virtual void 
-    SetNthTargetVolumeIntensityNormalizationInitialHistogramSmoothingWidth(int n, int i);
-  virtual void 
-    SetTargetVolumeIntensityNormalizationInitialHistogramSmoothingWidth(vtkIdType volumeID, int i);
-  virtual int 
-    GetNthTargetVolumeIntensityNormalizationInitialHistogramSmoothingWidth(int n);
-  virtual int 
-    GetTargetVolumeIntensityNormalizationInitialHistogramSmoothingWidth(vtkIdType volumeID);
-
-  virtual void 
-    SetNthTargetVolumeIntensityNormalizationMaxHistogramSmoothingWidth(int n, int i);
-  virtual void 
-    SetTargetVolumeIntensityNormalizationMaxHistogramSmoothingWidth(vtkIdType volumeID, int i);
-  virtual int 
-    GetNthTargetVolumeIntensityNormalizationMaxHistogramSmoothingWidth(int n);
-  virtual int 
-    GetTargetVolumeIntensityNormalizationMaxHistogramSmoothingWidth(vtkIdType volumeID);
-
-  virtual void 
-    SetNthTargetVolumeIntensityNormalizationRelativeMaxVoxelNum(int n, float f);
-  virtual void 
-    SetTargetVolumeIntensityNormalizationRelativeMaxVoxelNum(vtkIdType volumeID, float f);
-  virtual float
-    GetNthTargetVolumeIntensityNormalizationRelativeMaxVoxelNum(int n);
-  virtual float
-    GetTargetVolumeIntensityNormalizationRelativeMaxVoxelNum(vtkIdType volumeID);
-
-  virtual void 
-    SetNthTargetVolumeIntensityNormalizationPrintInfo(int n, int i);
-  virtual void 
-    SetTargetVolumeIntensityNormalizationPrintInfo(vtkIdType volumeID, int i);
-  virtual int 
-    GetNthTargetVolumeIntensityNormalizationPrintInfo(int n);
-  virtual int 
-    GetTargetVolumeIntensityNormalizationPrintInfo(vtkIdType volumeID);
-
-  virtual void 
-    SetNthTargetVolumeIntensityNormalizationEnabled(int n, int i);
-  virtual void 
-    SetTargetVolumeIntensityNormalizationEnabled(vtkIdType volumeID, int i);
-  virtual int 
-    GetNthTargetVolumeIntensityNormalizationEnabled(int n);
-  virtual int 
-    GetTargetVolumeIntensityNormalizationEnabled(vtkIdType volumeID);
+  virtual bool        DoTargetAndAtlasDataTypesMatch( vtkMRMLEMSVolumeCollectionNode* targetNode, vtkMRMLEMSAtlasNode* atlasNode ); 
 
   //
   // registration parameters
@@ -525,8 +425,7 @@ public:
   //
   // convenience functions for managing MRML nodes
   //
-  virtual vtkMRMLEMSTemplateNode*         GetTemplateNode();
-  virtual vtkMRMLEMSTargetNode*           GetTargetInputNode();
+  virtual vtkMRMLEMSVolumeCollectionNode*           GetTargetInputNode();
   virtual vtkMRMLEMSAtlasNode*            GetAtlasInputNode();
   virtual vtkMRMLEMSVolumeCollectionNode*  GetSubParcellationInputNode();
 
@@ -541,21 +440,18 @@ public:
     GetTreeParametersLeafNode(vtkIdType);  
   virtual vtkMRMLEMSTreeParametersParentNode* 
     GetTreeParametersParentNode(vtkIdType);  
-  virtual vtkMRMLEMSClassInteractionMatrixNode* 
-    GetTreeClassInteractionNode(vtkIdType);  
-  virtual vtkMRMLEMSNode*                 GetEMSNode();
-  virtual vtkMRMLEMSSegmenterNode*        GetSegmenterNode();
+
   virtual vtkMRMLVolumeNode*              GetVolumeNode(vtkIdType);
   virtual vtkMRMLEMSWorkingDataNode*       GetWorkingDataNode();
 
-  virtual vtkMRMLEMSTargetNode* CloneTargetNode(vtkMRMLEMSTargetNode* target,
+  virtual vtkMRMLEMSVolumeCollectionNode* CloneTargetNode(vtkMRMLEMSVolumeCollectionNode* target,
                                                 const char* name);
 
   virtual vtkMRMLEMSAtlasNode*  CloneAtlasNode(vtkMRMLEMSAtlasNode* target, const char* name);
   virtual vtkMRMLEMSVolumeCollectionNode*  CloneSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* target, const char* name);
 
-  virtual void SynchronizeTargetNode(const vtkMRMLEMSTargetNode* templateNode,
-                                     vtkMRMLEMSTargetNode* changingNode,
+  virtual void SynchronizeTargetNode(const vtkMRMLEMSVolumeCollectionNode* templateNode,
+                                     vtkMRMLEMSVolumeCollectionNode* changingNode,
                                      const char* name);
   virtual void SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode, vtkMRMLEMSAtlasNode* changingNode, const char* name);
   virtual void SynchronizeSubParcellationNode(const vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name);
@@ -573,16 +469,6 @@ public:
 
   void RemoveNodesFromMRMLScene(vtkMRMLNode* node);
 
-  // Note, that this function is currently dangerous to call
-  // bc ReferencedNodeID stack is cleared when doing an import so that 
-  // that you can not rely on it anymore after import as they point to the wrong nodes which can cause a seg fault !   
-  void RemoveAllEMSNodes();
-
-  // Note, that this function is currently dangerous to call
-  // bc ReferencedNodeID stack is cleared when doing an import so that 
-  // that you can not rely on it anymore after import as they point to the wrong nodes which can cause a seg fault !   
-  void RemoveAllEMSNodesButOne(vtkMRMLNode* saveNode);
-
   //BTX
   vtksys_stl::string TurnDefaultMRMLFileIntoTaskName(const char* fileName);
   vtksys_stl::string TurnDefaultTclFileIntoPreprocessingName(const char* fileName);
@@ -595,7 +481,7 @@ public:
 
   virtual void CopyEMRelatedNodesToMRMLScene(vtkMRMLScene* newScene);
 
-
+  virtual  void RemoveLegacyNodes();
 
 private:
   vtkEMSegmentMRMLManager();
@@ -640,7 +526,7 @@ private:
   //
   // parameters node that is currently under consideration
   //
-  vtkMRMLEMSNode* Node;
+  vtkMRMLEMSTemplateNode* Node;
   
   // global switch to hide EM segment parameters from MRML tree
   // editors

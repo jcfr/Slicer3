@@ -4,13 +4,14 @@
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkEMSegment.h"
-#include "vtkMRMLEMSTemplateNode.h"
-#include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkMRMLEMSAtlasNode.h"
-#include "vtkMRMLEMSTargetNode.h"
-
+class vtkMRMLEMSTemplateNode;
+class vtkMRMLEMSWorkingDataNode;
 class vtkMRMLScalarVolumeNode;
 
+
+//
+// LEGACY CODE - please do not add any new functions 
+//
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSSegmenterNode : 
   public vtkMRMLNode
 {
@@ -48,19 +49,15 @@ public:
 
   // associated nodes
   vtkGetStringMacro(TemplateNodeID);
-  vtkSetReferenceStringMacro(TemplateNodeID);
   vtkMRMLEMSTemplateNode* GetTemplateNode();
 
   vtkGetStringMacro(OutputVolumeNodeID);
-  vtkSetReferenceStringMacro(OutputVolumeNodeID);
   vtkMRMLScalarVolumeNode* GetOutputVolumeNode();
 
   vtkGetStringMacro         (WorkingDataNodeID);
-  vtkSetReferenceStringMacro(WorkingDataNodeID);
   vtkMRMLEMSWorkingDataNode* GetWorkingDataNode();
 
   vtkGetStringMacro(WorkingDirectory);
-  vtkSetStringMacro(WorkingDirectory);
 
 protected:
   vtkMRMLEMSSegmenterNode();
@@ -73,6 +70,11 @@ protected:
   char*                               WorkingDataNodeID;
 
   char*                               WorkingDirectory;
+
+  vtkSetStringMacro(TemplateNodeID);
+  vtkSetStringMacro(OutputVolumeNodeID);
+  vtkSetStringMacro(WorkingDataNodeID);
+  vtkSetStringMacro(WorkingDirectory);
 };
 
 #endif

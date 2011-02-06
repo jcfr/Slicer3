@@ -28,7 +28,7 @@
 #define EMSEG_PRINT_FREQUENCY_MAX 20
 
 #include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkMRMLEMSTargetNode.h"
+#include "vtkMRMLEMSVolumeCollectionNode.h"
 #include "vtkEMSegmentLogic.h"
 
 //----------------------------------------------------------------------------
@@ -2329,7 +2329,7 @@ void vtkEMSegmentNodeParametersStep::ClassWeightChangedCallback(vtkIdType  sel_c
 void vtkEMSegmentNodeParametersStep::DefineInputChannelWeightOverviewWindow(int enabled) 
 {
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  vtkMRMLEMSTargetNode *inputNodes = mrmlManager->GetTargetInputNode();
+  vtkMRMLEMSVolumeCollectionNode *inputNodes = mrmlManager->GetTargetInputNode();
   vtkMRMLEMSGlobalParametersNode* globalNode = mrmlManager->GetGlobalParametersNode();
   if (!inputNodes || !globalNode) 
     {

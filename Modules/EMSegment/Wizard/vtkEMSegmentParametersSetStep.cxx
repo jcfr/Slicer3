@@ -38,10 +38,10 @@
 #include "vtkKWTkUtilities.h"
 #include "vtkKWMessageDialog.h"
 #include "vtkEMSegmentLogic.h"
+#include "vtkMRMLEMSGlobalParametersNode.h"
+
 
 #include "vtkDirectory.h"
-#include "vtkMRMLEMSNode.h"
-
 #include "vtkHTTPHandler.h"
 
 // Need to include this bc otherwise cannot find std functions  for some g ++ compilers 
@@ -696,8 +696,6 @@ SelectedDefaultTaskChangedCallback(int index, bool warningFlag)
   // Create New task 
   if (index ==  int(this->pssDefaultTasksName.size() -1))
     {   
-      // Do not do it - it is dangerous 
-      // mrmlManager->RemoveAllEMSNodes(); 
       mrmlManager->CreateAndObserveNewParameterSet();
       this->PopUpRenameEntry(mrmlManager->GetNumberOfParameterSets() - 1);
       return;
@@ -731,7 +729,7 @@ SelectedPreprocessingChangedCallback(int index, bool warningFlag)
     } 
   else 
     {
-      mrmlManager->SetTclTaskFilename(vtkMRMLEMSNode::GetDefaultTclTaskFilename());
+      mrmlManager->SetTclTaskFilename(vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
     }
 
 
@@ -777,15 +775,15 @@ void vtkEMSegmentParametersSetStep::SelectedParameterSetChangedCallback(int inde
       return;
     }
 
-  // Delete all other EMS nodes 
-  vtkMRMLNode* node =  mrmlManager->GetMRMLScene()->GetNthNodeByClass(index, "vtkMRMLEMSNode");
+
+   vtkMRMLNode* node = mrmlManager->GetMRMLScene()->GetNthNodeByClass(index, "vtkMRMLEMSTemplateNode");
   if (node == NULL)
     {
     vtkErrorMacro("Did not find nth template builder node in scene: " << index);
     return;
     }
 
-   // Set the emsnode in the mrml manager 
+   // Set the template node in the mrml manager 
   if (mrmlManager->SetLoadedParameterSetIndex(index))  
     {
       vtkErrorMacro("EMS node is corrupted - the manager could not be updated with new task: " << index);
@@ -1070,9 +1068,6 @@ int vtkEMSegmentParametersSetStep::LoadDefaultData(const char *mrmlFile, bool wa
   // vtksys_stl::string mrmlFile(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication())->Script("::EMSegmenterParametersStepTcl::DefineMRMLFile"));
   scene->SetURL(mrmlFile);
  
-  // Dangerous after import see text in vtkMRMLManager.h 
-  //  mrmlManager->RemoveAllEMSNodes();
-  // bc of task file cannot do a connect ! if (!scene->Connect()) - also not as user friendly bc otherwise data gets lost that was loaded in beforehand 
   if (!scene->Import()) 
     {
       vtksys_stl::string msg= vtksys_stl::string("Could not load mrml file ") +  mrmlFile  ;
@@ -1154,7 +1149,7 @@ void vtkEMSegmentParametersSetStep::AddDefaultTasksToList(const char* FilePath)
            }
         }
       else if ((!strcmp(vtksys::SystemTools::GetFilenameExtension(filename.c_str()).c_str(), ".tcl")) && (filename.compare(0,1,"_") ) 
-                    && strcmp(filename.c_str(), vtkMRMLEMSNode::GetDefaultTclTaskFilename()))
+                    && strcmp(filename.c_str(), vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName()))
         {
               // Generate Name of Task from File name
               vtksys_stl::string taskName = this->GetGUI()->GetMRMLManager()->TurnDefaultTclFileIntoPreprocessingName(filename.c_str());

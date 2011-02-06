@@ -300,10 +300,6 @@ AddChildNode(const char* childNodeID)
     {
     this->GetLeafParametersNode()->AddChildNode(childNodeID);
     }
-  if (this->GetParentParametersNode() != NULL)
-    {
-    this->GetParentParametersNode()->AddChildNode(childNodeID);
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -318,10 +314,6 @@ RemoveNthChildNode(int n)
     {
     this->GetLeafParametersNode()->RemoveNthChildNode(n);
     }
-  if (this->GetParentParametersNode() != NULL)
-    {
-    this->GetParentParametersNode()->RemoveNthChildNode(n);
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -335,10 +327,6 @@ MoveNthChildNode(int fromIndex, int toIndex)
   if (this->GetLeafParametersNode() != NULL)
     {
     this->GetLeafParametersNode()->MoveNthChildNode(fromIndex, toIndex);
-    }
-  if (this->GetParentParametersNode() != NULL)
-    {
-    this->GetParentParametersNode()->MoveNthChildNode(fromIndex, toIndex);
     }
 }
 

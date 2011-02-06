@@ -4,7 +4,7 @@
 #include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentTestUtilities.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkMRMLEMSTargetNode.h"
+#include "vtkMRMLEMSVolumeCollectionNode.h"
 #include <stdexcept>
 #include <stdlib.h>
 #include "vtkSlicerApplication.h"
@@ -121,11 +121,11 @@ int main(int vtkNotUsed(argc), char** argv)
     emLogic->StartPreprocessingInitializeInputData();
     
     // should start with only input target node
-    vtkMRMLEMSTargetNode* inTargetNode = 
+    vtkMRMLEMSVolumeCollectionNode* inTargetNode = 
       m->GetWorkingDataNode()->GetInputTargetNode();
-    vtkMRMLEMSTargetNode* alignedTargetNode = 
+    vtkMRMLEMSVolumeCollectionNode* alignedTargetNode = 
       m->GetWorkingDataNode()->GetAlignedTargetNode();
-    //vtkMRMLEMSTargetNode* workingTargetNode =
+    //vtkMRMLEMSVolumeCollectionNode* workingTargetNode =
     //  m->GetWorkingDataNode()->GetWorkingTargetNode();
 
     if (inTargetNode == NULL)

@@ -9,6 +9,11 @@
 
 class vtkMRMLEMSSegmenterNode;
 
+//
+// LEGACY CODE - please do not add any new functions  
+//
+
+
 // Description: 
 // The scripted module node is simply a MRMLNode container for 
 // an arbitrary keyword value pair map
@@ -50,20 +55,15 @@ public:
   virtual void UpdateReferenceID(const char *oldID, const char *newID);
   
   vtkGetStringMacro (SegmenterNodeID);
-  vtkSetReferenceStringMacro (SegmenterNodeID);
   vtkMRMLEMSSegmenterNode* GetSegmenterNode();
 
   vtkGetStringMacro(TemplateFilename);
-  vtkSetStringMacro(TemplateFilename);
 
   vtkGetMacro(SaveTemplateAfterSegmentation, int);
-  vtkSetMacro(SaveTemplateAfterSegmentation, int);
 
   vtkGetStringMacro(TclTaskFilename);
-  vtkSetStringMacro(TclTaskFilename);
 
   vtkGetStringMacro(TaskPreprocessingSetting);
-  vtkSetStringMacro(TaskPreprocessingSetting);
 
   static const char* GetDefaultTclTaskFilename() { return "GenericTask.tcl"; }
 
@@ -78,6 +78,11 @@ protected:
 
   char* TaskPreprocessingSetting; 
 
+  vtkSetStringMacro (SegmenterNodeID);
+  vtkSetStringMacro(TemplateFilename);
+  vtkSetMacro(SaveTemplateAfterSegmentation, int);
+  vtkSetStringMacro(TclTaskFilename);
+  vtkSetStringMacro(TaskPreprocessingSetting);
 
 
 private:
@@ -85,6 +90,8 @@ private:
   ~vtkMRMLEMSNode();
   vtkMRMLEMSNode(const vtkMRMLEMSNode&);
   void operator=(const vtkMRMLEMSNode&);
+
+
 
 };
 

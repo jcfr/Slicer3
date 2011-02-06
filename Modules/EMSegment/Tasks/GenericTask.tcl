@@ -236,7 +236,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     proc GetEntryValueFromMRML { Type ID } {
         variable mrmlManager
-        set TEXT [string range [string map { "|" "\} \{" } "[[$mrmlManager GetNode] GetTaskPreprocessingSetting]"] 1 end]
+        set TEXT [string range [string map { "|" "\} \{" } "[[$mrmlManager GetGlobalParametersNode] GetTaskPreProcessingSetting]"] 1 end]
         set TEXT "${TEXT}\}"
         set index 0
         foreach ARG $TEXT {
@@ -638,7 +638,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # -----------------------------------------------------------
         # Define Atlas
         # -----------------------------------------------------------
-        set inputAtlasNode [$workingDN GetInputAtlasNode]
+        set inputAtlasNode [$mrmlManager GetAtlasInputNode]
         if {$inputAtlasNode == "" } {
             PrintError "InitPreProcessing: InputAtlas not defined"
             return 1
@@ -646,7 +646,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set outputAtlasNode [$workingDN GetAlignedAtlasNode]
 
-        set inputSubParcellationNode [$workingDN GetInputSubParcellationNode]
+        set inputSubParcellationNode [$mrmlManager GetSubParcellationInputNode]
         if {$inputSubParcellationNode == "" } {
             PrintError "InitPreProcessing: InputSubParcellation not defined"
             return 1

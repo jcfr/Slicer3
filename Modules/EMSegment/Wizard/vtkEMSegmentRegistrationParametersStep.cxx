@@ -12,7 +12,7 @@
 #include "vtkKWWizardStep.h"
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
-#include "vtkMRMLEMSTargetNode.h"
+#include "vtkMRMLEMSVolumeCollectionNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 
 //----------------------------------------------------------------------------
@@ -355,7 +355,7 @@ void vtkEMSegmentRegistrationParametersStep::PrintSelf(ostream& os, vtkIndent in
 void vtkEMSegmentRegistrationParametersStep::AssignAtlasScansToInputChannels(int enabled) 
 {
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  vtkMRMLEMSTargetNode *inputNodes = mrmlManager->GetTargetInputNode();
+  vtkMRMLEMSVolumeCollectionNode *inputNodes = mrmlManager->GetTargetInputNode();
   vtkMRMLEMSGlobalParametersNode* globalNode = mrmlManager->GetGlobalParametersNode();
 
   if (!inputNodes || !globalNode) 

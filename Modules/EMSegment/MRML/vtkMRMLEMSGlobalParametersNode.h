@@ -4,7 +4,6 @@
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkEMSegment.h"
-#include "vtkMRMLEMSIntensityNormalizationParametersNode.h"
 
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSGlobalParametersNode : 
   public vtkMRMLNode
@@ -19,11 +18,11 @@ public:
   // Description:
   // Updates this node if it depends on other nodes
   // when the node is deleted in the scene
-  virtual void UpdateReferences();
+  // virtual void UpdateReferences();
 
   // Description:
   // Update the stored reference to another node in the scene
-  virtual void UpdateReferenceID(const char *oldID, const char *newID);
+  // virtual void UpdateReferenceID(const char *oldID, const char *newID);
 
   // Description:
   // Set node attributes
@@ -100,12 +99,6 @@ public:
   //
   // intensity normlaization parameters
   //
-  vtkMRMLEMSIntensityNormalizationParametersNode*
-    GetNthIntensityNormalizationParametersNode(int n);
-  virtual const char* GetNthIntensityNormalizationParametersNodeID(int n);
-  virtual void 
-    SetNthIntensityNormalizationParametersNodeID(int n, 
-                                                 const char* nodeID);
 
   vtkSetMacro(EnableTargetToTargetRegistration, int);
   vtkGetMacro(EnableTargetToTargetRegistration, int);
@@ -122,20 +115,47 @@ public:
   virtual const char* GetNthTargetInputChannelName(vtkIdType n);
   virtual void SetNthTargetInputChannelName(vtkIdType n, const char* targetName);
 
+  vtkGetMacro(TemplateSaveAfterSegmentation, int);
+  vtkSetMacro(TemplateSaveAfterSegmentation, int);
+
+  vtkGetStringMacro(TemplateFileName);
+  vtkSetStringMacro(TemplateFileName);
+
+  vtkGetStringMacro(TaskTclFileName);
+  vtkSetStringMacro(TaskTclFileName);
+
+  vtkGetStringMacro(TaskPreProcessingSetting);
+  vtkSetStringMacro(TaskPreProcessingSetting);
+
+  static const char* GetDefaultTaskTclFileName() { return "GenericTask.tcl"; }
+
+
 protected:
   vtkMRMLEMSGlobalParametersNode();
   ~vtkMRMLEMSGlobalParametersNode();
   vtkMRMLEMSGlobalParametersNode(const vtkMRMLEMSGlobalParametersNode&);
   void operator=(const vtkMRMLEMSGlobalParametersNode&);
 
+  // 
+  // Preprocessing 
+  // 
   int                                 RegistrationAffineType;
   int                                 RegistrationDeformableType;
   int                                 RegistrationInterpolationType;
+  char*                               TaskTclFileName;
+  char*                               TaskPreProcessingSetting; 
+  int                                 EnableTargetToTargetRegistration;
+
+  // --- Kilian Should be looked at if still is used 
   //BTX
   vtkstd::vector<std::string>         RegistrationAtlasVolumeKey;
   //ETX
   char*                               RegistrationTargetVolumeKey;
+   // ---
 
+  //
+  // EM 
+  //  
   char*                               WorkingDirectory;
   
   int                                 SaveIntermediateResults;
@@ -149,22 +169,24 @@ protected:
 
   int                                 NumberOfTargetInputChannels;
 
-  int                                 EnableTargetToTargetRegistration;
-
   char*                               Colormap;
 
-  int                                 EnableSubParcellation;
-  int                                 MinimumIslandSize;
-
-
   //BTX
-  typedef vtkstd::vector<std::string>  IntensityNormalizationParameterListType;
-  typedef IntensityNormalizationParameterListType::iterator 
-  IntensityNormalizationParameterListIterator;
-  IntensityNormalizationParameterListType IntensityNormalizationParameterList;
   std::vector<std::string>   InputChannelNames; 
   void SetNumberOfTargetInputChannels(vtkIdType num);
   //ETX
+
+  // 
+  // Postprocessing
+  //
+  int                                 MinimumIslandSize;
+
+  int                                 TemplateSaveAfterSegmentation;
+  char*                               TemplateFileName;
+
+  int                                 EnableSubParcellation;
+
+
 };
 
 #endif

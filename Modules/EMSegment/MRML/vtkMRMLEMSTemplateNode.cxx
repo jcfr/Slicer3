@@ -1,5 +1,9 @@
 #include "vtkMRMLEMSTemplateNode.h"
 #include "vtkMRMLScene.h"
+#include "vtkMRMLEMSAtlasNode.h"
+#include "vtkMRMLEMSGlobalParametersNode.h"
+#include "vtkMRMLEMSTreeNode.h"
+#include "vtkMRMLEMSWorkingDataNode.h"
 
 //-----------------------------------------------------------------------------
 vtkMRMLEMSTemplateNode* 
@@ -38,6 +42,9 @@ vtkMRMLEMSTemplateNode::vtkMRMLEMSTemplateNode()
 {
   this->TreeNodeID           = NULL;
   this->GlobalParametersNodeID   = NULL;
+  this->SpatialAtlasNodeID                 = NULL;
+  this->SubParcellationNodeID       = NULL;
+  this->EMSWorkingDataNodeID        = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -45,6 +52,9 @@ vtkMRMLEMSTemplateNode::~vtkMRMLEMSTemplateNode()
 {
   this->SetTreeNodeID(NULL);
   this->SetGlobalParametersNodeID(NULL);
+  this->SetSpatialAtlasNodeID(NULL);
+  this->SetSubParcellationNodeID(NULL);
+  this->SetEMSWorkingDataNodeID(NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -58,6 +68,16 @@ void vtkMRMLEMSTemplateNode::WriteXML(ostream& of, int nIndent)
   of << indent << "GlobalParametersNodeID=\"" 
      << (this->GlobalParametersNodeID ? this->GlobalParametersNodeID : "NULL" )
      << "\" ";
+  of << indent << "SpatialAtlasNodeID=\"" 
+     << (this->SpatialAtlasNodeID ? this->SpatialAtlasNodeID : "NULL")
+     << "\" ";
+  of << indent << "SubParcellationNodeID=\"" 
+     << (this->SubParcellationNodeID ? this->SubParcellationNodeID : "NULL")
+     << "\" ";
+  of << indent << "EMSWorkingDataNodeID=\"" 
+     << (this->EMSWorkingDataNodeID ? this->EMSWorkingDataNodeID : "NULL") 
+     << "\" ";
+
 }
 
 //-----------------------------------------------------------------------------
@@ -74,6 +94,20 @@ UpdateReferenceID(const char* oldID, const char* newID)
     {
     this->SetGlobalParametersNodeID(newID);
     }
+  if (this->SpatialAtlasNodeID && 
+      !strcmp(oldID, this->SpatialAtlasNodeID))
+    {
+    this->SetSpatialAtlasNodeID(newID);
+    }
+  if (this->SubParcellationNodeID && 
+      !strcmp(oldID, this->SubParcellationNodeID))
+    {
+    this->SetSubParcellationNodeID(newID);
+    }
+  if (this->EMSWorkingDataNodeID && !strcmp(oldID, this->EMSWorkingDataNodeID))
+    {
+    this->SetEMSWorkingDataNodeID(newID);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -87,6 +121,24 @@ UpdateReferences()
       this->Scene->GetNodeByID(this->GlobalParametersNodeID) == NULL)
     {
     this->SetGlobalParametersNodeID(NULL);
+    }
+
+  if (this->SpatialAtlasNodeID != NULL && 
+      this->Scene->GetNodeByID(this->SpatialAtlasNodeID) == NULL)
+    {
+    this->SetSpatialAtlasNodeID(NULL);
+    }
+
+  if (this->SubParcellationNodeID != NULL && 
+      this->Scene->GetNodeByID(this->SubParcellationNodeID) == NULL)
+    {
+    this->SetSubParcellationNodeID(NULL);
+    }
+
+  if (this->EMSWorkingDataNodeID != NULL && 
+      this->Scene->GetNodeByID(this->EMSWorkingDataNodeID) == NULL)
+    {
+    this->SetEMSWorkingDataNodeID(NULL);
     }
 }
 
@@ -115,6 +167,19 @@ void vtkMRMLEMSTemplateNode::ReadXMLAttributes(const char** attrs)
       this->SetGlobalParametersNodeID(val);
       //this->Scene->AddReferencedNodeID(this->GlobalParametersNodeID, this);
       }
+    else if (!strcmp(key, "SpatialAtlasNodeID"))
+      {
+      this->SetSpatialAtlasNodeID(val);
+      }
+    else if (!strcmp(key, "SubParcellationNodeID"))
+      {
+      this->SetSubParcellationNodeID(val);
+      }
+    else if (!strcmp(key, "EMSWorkingDataNodeID"))
+      {
+      this->SetEMSWorkingDataNodeID(val);
+      //this->Scene->AddReferencedNodeID(this->EMSWorkingDataNodeID, this);
+      }
     }
 }
 
@@ -126,6 +191,9 @@ void vtkMRMLEMSTemplateNode::Copy(vtkMRMLNode *rhs)
 
   this->SetTreeNodeID(node->TreeNodeID);
   this->SetGlobalParametersNodeID(node->GlobalParametersNodeID);
+  this->SetSpatialAtlasNodeID(node->SpatialAtlasNodeID);
+  this->SetSubParcellationNodeID(node->SubParcellationNodeID);
+  this->SetEMSWorkingDataNodeID(node->EMSWorkingDataNodeID);
 }
 
 //-----------------------------------------------------------------------------
@@ -138,6 +206,15 @@ void vtkMRMLEMSTemplateNode::PrintSelf(ostream& os, vtkIndent indent)
   
   os << indent << "GlobalParametersNodeID: " <<
     (this->GlobalParametersNodeID ? this->GlobalParametersNodeID : "(none)")
+     << "\n";
+  os << indent << "SpatialAtlasNodeID: " <<
+    (this->SpatialAtlasNodeID ? this->SpatialAtlasNodeID : "(none)") 
+     << "\n";
+  os << indent << "SubParcellationNodeID: " <<
+    (this->SubParcellationNodeID ? this->SubParcellationNodeID : "(none)") 
+     << "\n";
+   os << indent << "EMSWorkingDataNodeID: " 
+     << (this->EMSWorkingDataNodeID ? this->EMSWorkingDataNodeID : "(none)" )
      << "\n";
 }
 
@@ -169,3 +246,44 @@ GetGlobalParametersNode()
     }
   return node;
 }
+//-----------------------------------------------------------------------------
+vtkMRMLEMSAtlasNode* 
+vtkMRMLEMSTemplateNode::GetSpatialAtlasNode()
+{
+  vtkMRMLEMSAtlasNode* node = NULL;
+  if (this->GetScene() && this->SpatialAtlasNodeID )
+    {
+    vtkMRMLNode* snode = 
+      this->GetScene()->GetNodeByID(this->SpatialAtlasNodeID);
+    node = vtkMRMLEMSAtlasNode::SafeDownCast(snode);
+    }
+  return node;
+}
+
+//-----------------------------------------------------------------------------
+vtkMRMLEMSVolumeCollectionNode*
+vtkMRMLEMSTemplateNode::
+GetSubParcellationNode()
+{
+  vtkMRMLEMSVolumeCollectionNode* node = NULL;
+  if (this->GetScene() && this->SubParcellationNodeID )
+    {
+    vtkMRMLNode* snode = 
+      this->GetScene()->GetNodeByID(this->SubParcellationNodeID);
+    node = vtkMRMLEMSVolumeCollectionNode::SafeDownCast(snode);
+    }
+  return node;
+}
+
+vtkMRMLEMSWorkingDataNode* vtkMRMLEMSTemplateNode::GetEMSWorkingDataNode()
+{
+  vtkMRMLEMSWorkingDataNode* node = NULL;
+  if (this->GetScene() && this->GetEMSWorkingDataNodeID() )
+    {
+    vtkMRMLNode* snode = 
+      this->GetScene()->GetNodeByID(this->EMSWorkingDataNodeID);
+    node = vtkMRMLEMSWorkingDataNode::SafeDownCast(snode);
+    }
+  return node;
+}
+

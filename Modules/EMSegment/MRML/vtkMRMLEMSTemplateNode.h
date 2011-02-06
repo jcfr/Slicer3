@@ -4,8 +4,13 @@
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkEMSegment.h"
-#include "vtkMRMLEMSTreeNode.h"
-#include "vtkMRMLEMSGlobalParametersNode.h"
+#include "vtkMRMLScene.h"
+
+class vtkMRMLEMSGlobalParametersNode;
+class vtkMRMLEMSTreeNode;
+class vtkMRMLEMSAtlasNode;
+class vtkMRMLEMSVolumeCollectionNode;
+class vtkMRMLEMSWorkingDataNode;
 
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSTemplateNode : 
   public vtkMRMLNode
@@ -51,6 +56,30 @@ public:
   vtkSetReferenceStringMacro(GlobalParametersNodeID);
   vtkMRMLEMSGlobalParametersNode* GetGlobalParametersNode();
 
+  vtkGetStringMacro(SpatialAtlasNodeID);
+  //BTX
+  vtkSetReferenceStringMacro(SpatialAtlasNodeID);
+  //ETX
+  void SetReferenceSpatialAtlasNodeID(const char* name)
+  {
+    this->SetSpatialAtlasNodeID(name);
+  } 
+  vtkMRMLEMSAtlasNode* GetSpatialAtlasNode();
+  
+  vtkGetStringMacro(SubParcellationNodeID);
+  //BTX
+  vtkSetReferenceStringMacro(SubParcellationNodeID);
+  //ETX
+  void SetReferenceSubParcellationNodeID(const char* name)
+  {
+    this->SetSubParcellationNodeID(name);
+  } 
+  vtkMRMLEMSVolumeCollectionNode* GetSubParcellationNode();
+
+  vtkGetStringMacro         (EMSWorkingDataNodeID);
+  vtkSetReferenceStringMacro(EMSWorkingDataNodeID);
+  vtkMRMLEMSWorkingDataNode* GetEMSWorkingDataNode();
+
 protected:
   vtkMRMLEMSTemplateNode();
   ~vtkMRMLEMSTemplateNode();
@@ -59,6 +88,9 @@ protected:
 
   char*                               TreeNodeID;
   char*                               GlobalParametersNodeID;
+  char*                               SpatialAtlasNodeID;
+  char*                               SubParcellationNodeID;
+  char*                               EMSWorkingDataNodeID;
 };
 
 #endif

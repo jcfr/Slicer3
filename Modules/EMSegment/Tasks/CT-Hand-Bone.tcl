@@ -100,7 +100,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set inputTargetNode [$workingDN GetInputTargetNode]
         set alignedTargetNode [$workingDN GetAlignedTargetNode]
-        set inputAtlasNode [$workingDN GetInputAtlasNode]
+        set inputAtlasNode [$mrmlManager GetInputAtlasNode]
         set alignedAtlasNode [$workingDN GetAlignedAtlasNode]
 
         if { $inputTargetNode != "" } {

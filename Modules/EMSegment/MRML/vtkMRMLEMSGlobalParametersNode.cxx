@@ -73,6 +73,13 @@ vtkMRMLEMSGlobalParametersNode::vtkMRMLEMSGlobalParametersNode()
   this->MinimumIslandSize = 1;
          
   this->InputChannelNames.clear();
+
+  this->TemplateFileName = NULL;
+  this->TemplateSaveAfterSegmentation = 0;
+  this->TaskTclFileName = NULL;
+  this->TaskPreProcessingSetting = NULL;
+  this->SetTaskTclFileName(this->GetDefaultTaskTclFileName());
+
 }
 
 //-----------------------------------------------------------------------------
@@ -82,40 +89,10 @@ vtkMRMLEMSGlobalParametersNode::~vtkMRMLEMSGlobalParametersNode()
   this->SetRegistrationTargetVolumeKey(NULL);
   this->RegistrationAtlasVolumeKey.clear(); 
   this->SetColormap(NULL);
-}
-
-//-----------------------------------------------------------------------------
-void
-vtkMRMLEMSGlobalParametersNode::
-UpdateReferenceID(const char* oldID, const char* newID)
-{
-  for (IntensityNormalizationParameterListIterator i = 
-         this->IntensityNormalizationParameterList.begin(); 
-       i != this->IntensityNormalizationParameterList.end(); ++i)
-    {
-    if (oldID && newID && *i == vtksys_stl::string(oldID))
-      {
-      *i = newID;
-      }
-    }
-}
-
-//-----------------------------------------------------------------------------
-void 
-vtkMRMLEMSGlobalParametersNode::
-UpdateReferences()
-{
-  Superclass::UpdateReferences();
-
-  for (IntensityNormalizationParameterListIterator i = 
-         this->IntensityNormalizationParameterList.begin(); 
-       i != this->IntensityNormalizationParameterList.end(); ++i)
-    {
-    if (this->Scene->GetNodeByID((*i).c_str()) == NULL)
-      {
-      *i = "NULL";
-      }
-    }
+  
+  this->SetTemplateFileName(NULL);
+  this->SetTaskTclFileName(NULL);
+  this->SetTaskPreProcessingSetting(NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -185,19 +162,19 @@ void vtkMRMLEMSGlobalParametersNode::WriteXML(ostream& of, int nIndent)
     of << indent << " UpdateIntermediateData=\"" 
        << this->UpdateIntermediateData << "\" ";
 
-    of << indent << " IntensityNormalizationParameterNodeIDs=\"";
-    vtksys_stl::copy(this->IntensityNormalizationParameterList.begin(),
-                     this->IntensityNormalizationParameterList.end(),
-                     vtksys_stl::
-                     ostream_iterator<vtksys_stl::string>(of, " "));
-    of << "\" ";
-
     of << indent << " EnableSubParcellation=\"" << this->EnableSubParcellation << "\" ";
     of << indent << " MinimumIslandSize=\"" << this->MinimumIslandSize << "\" ";
 
     of << indent << " Colormap=\"" << (this->Colormap ? this->Colormap : "NULL") << "\" ";
 
-    
+    of << indent << "TemplateFileName=\"" 
+     << (this->TemplateFileName ? this->TemplateFileName : "NULL") << "\" ";
+    of << indent << "TemplateSaveAfterSegmentation=\"" 
+     << this->TemplateSaveAfterSegmentation << "\" ";
+    of << indent << "TaskTclFileName=\"" 
+     << (this->TaskTclFileName ? this->TaskTclFileName  : "NULL") << "\" ";
+    of << indent << "TaskPreProcessingSetting=\"" 
+     << (this->TaskPreProcessingSetting ? this->TaskPreProcessingSetting : "NULL") << "\" ";
 }
 
 //-----------------------------------------------------------------------------
@@ -313,23 +290,6 @@ void vtkMRMLEMSGlobalParametersNode::ReadXMLAttributes(const char** attrs)
       ss << val;
       ss >> this->UpdateIntermediateData;
       }
-    else if (!strcmp(key, "IntensityNormalizationParameterNodeIDs"))
-      {
-      vtksys_stl::stringstream ss;
-      ss << val;
-      vtksys_stl::string s;
-
-      int index = 0;
-      while (ss >> s)
-        {
-        this->IntensityNormalizationParameterList.push_back(s);
-        if (s != "NULL")
-          {
-          this->Scene->AddReferencedNodeID(s.c_str(), this);
-          }
-        ++index;
-        }
-      }
     else if (!strcmp(key, "EnableSubParcellation")) 
       {
         vtksys_stl::stringstream ss;
@@ -363,7 +323,24 @@ void vtkMRMLEMSGlobalParametersNode::ReadXMLAttributes(const char** attrs)
            index ++;
         }
       }
-
+    else if (!strcmp(key, "TemplateFileName"))
+      {
+        this->SetTemplateFileName(val);
+      }
+    else if (!strcmp(key, "TemplateSaveAfterSegmentation"))
+      {
+         vtksys_stl::stringstream ss;
+         ss << val;
+         ss >> this->TemplateSaveAfterSegmentation;
+      }
+    else if (!strcmp(key, "TaskTclFileName"))
+      {
+        this->SetTaskTclFileName(val);
+      }
+    else if (!strcmp(key, "TaskPreProcessingSetting"))
+      {
+        this->SetTaskPreProcessingSetting(val);
+      }
     }
 }
 
@@ -393,14 +370,17 @@ void vtkMRMLEMSGlobalParametersNode::Copy(vtkMRMLNode *rhs)
   this->SetMultithreadingEnabled(node->MultithreadingEnabled);
   this->SetUpdateIntermediateData(node->UpdateIntermediateData);
 
-  this->IntensityNormalizationParameterList = 
-    node->IntensityNormalizationParameterList;
-  
   this->SetColormap(node->Colormap);
   this->EnableSubParcellation = node->EnableSubParcellation;
   this->MinimumIslandSize = node->MinimumIslandSize;
 
   this->InputChannelNames= node->InputChannelNames;
+
+  this->SetTemplateFileName(node->TemplateFileName);
+  this->SetTemplateSaveAfterSegmentation(node->TemplateSaveAfterSegmentation);
+  this->SetTaskTclFileName(node->TaskTclFileName);
+  this->SetTaskPreProcessingSetting(node->TaskPreProcessingSetting);
+
 }
 
 //-----------------------------------------------------------------------------
@@ -461,49 +441,21 @@ void vtkMRMLEMSGlobalParametersNode::PrintSelf(ostream& os,
   os << indent << "UpdateIntermediateData: " 
      << this->UpdateIntermediateData << "\n";
 
-  os << indent << "IntensityNormalizationParameterNodeIDs: ";
-  vtksys_stl::copy(this->IntensityNormalizationParameterList.begin(),
-                   this->IntensityNormalizationParameterList.end(),
-                   vtksys_stl::ostream_iterator<vtksys_stl::string>(os, " "));
-  os << "\n";
-
   os << indent << "EnableSubParcellation: " << this->EnableSubParcellation << "\n";
   os << indent << "MinimumIslandSize:     " << this->MinimumIslandSize << "\n";
 
   os << indent << "Colormap: " 
      << (this->Colormap ? this->Colormap : "(none)") << "\n";
-}
 
-const char*
-vtkMRMLEMSGlobalParametersNode::
-GetNthIntensityNormalizationParametersNodeID(int n)
-{
-  return this->IntensityNormalizationParameterList[n].c_str();
-}
+  os << indent << "TemplateFileName: " <<
+    (this->TemplateFileName ? this->TemplateFileName : "(none)") << "\n";
+  os << indent << "TemplateSaveAfterSegmentation: " 
+     << this->TemplateSaveAfterSegmentation << "\n";
+  os << indent << "TaskTclFileName: " <<
+    (this->TaskTclFileName ? this->TaskTclFileName : "(none)") << "\n";
+  os << indent << "TaskPreProcessingSetting: " <<
+    (this->TaskPreProcessingSetting ? this->TaskPreProcessingSetting : "(none)") << "\n";  
 
-
-vtkMRMLEMSIntensityNormalizationParametersNode*
-vtkMRMLEMSGlobalParametersNode::
-GetNthIntensityNormalizationParametersNode(int n)
-{
-  vtkMRMLEMSIntensityNormalizationParametersNode* node = NULL;
-  if (this->GetScene() && 
-      this->GetNthIntensityNormalizationParametersNodeID(n))
-    {
-      vtkMRMLNode* snode = this->GetScene()->
-        GetNodeByID(this->GetNthIntensityNormalizationParametersNodeID(n));
-      node = 
-        vtkMRMLEMSIntensityNormalizationParametersNode::SafeDownCast(snode);
-    }
-  return node;  
-}
-
-void
-vtkMRMLEMSGlobalParametersNode::
-SetNthIntensityNormalizationParametersNodeID(int n, const char* id)
-{
-  this->IntensityNormalizationParameterList[n] = id;
-  this->Scene->AddReferencedNodeID(id, this);  
 }
 
 void
@@ -514,21 +466,6 @@ AddTargetInputChannel()
 
   this->InputChannelNames.resize(this->NumberOfTargetInputChannels);
   this->InputChannelNames[this->NumberOfTargetInputChannels-1] = "";
-
-  // create intensity normalization parameter node
-  vtkMRMLEMSIntensityNormalizationParametersNode* intensityNormalizationNode
-    = vtkMRMLEMSIntensityNormalizationParametersNode::New();
-  intensityNormalizationNode->SetScene(this->GetScene());
-  this->GetScene()->AddNode(intensityNormalizationNode);
-
-  // add it to the scene
-  this->IntensityNormalizationParameterList.
-    push_back(intensityNormalizationNode->GetID());
-  this->GetScene()->
-    AddReferencedNodeID(intensityNormalizationNode->GetID(), this);
-
-  // clean up
-  intensityNormalizationNode->Delete();
 
 }
 
@@ -542,8 +479,7 @@ RemoveNthTargetInputChannel(int n)
       return;
     }  
   --this->NumberOfTargetInputChannels;
-  this->IntensityNormalizationParameterList.
-    erase(this->IntensityNormalizationParameterList.begin() + n);
+
   for (int i = n ; i < int(this->InputChannelNames.size() -1); i ++)
     {
       this->InputChannelNames[i]  = this->InputChannelNames[i+1]; 
@@ -560,11 +496,8 @@ MoveNthTargetInputChannel(int n, int toIndex)
     {
     return;
     }
-  IntensityNormalizationParameterListIterator b = 
-    this->IntensityNormalizationParameterList.begin();
-  std::string movingParam = this->IntensityNormalizationParameterList[n];
-  this->IntensityNormalizationParameterList.erase(b + n);
-  this->IntensityNormalizationParameterList.insert(b + toIndex, movingParam);
+
+  cout << "MoveNthTargetInputChannel: Function still has to change name " << endl;  
 }
 
 void vtkMRMLEMSGlobalParametersNode::SetRegistrationAtlasVolumeKey(vtkIdType inputID, const char* key)

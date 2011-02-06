@@ -1,6 +1,6 @@
 #include "vtkEMSegmentGUI.h"
 #include "vtkEMSegmentLogic.h"
-#include "vtkMRMLEMSNode.h"
+#include "vtkMRMLEMSTemplateNode.h"
 #include "vtkMRMLScene.h"
 
 #include "vtkSlicerApplication.h"
@@ -38,7 +38,7 @@
 #include <vtksys/stl/string>
 #include <vtksys/SystemTools.hxx>
 
-vtkCxxSetObjectMacro(vtkEMSegmentGUI,Node,vtkMRMLEMSNode);
+vtkCxxSetObjectMacro(vtkEMSegmentGUI,Node,vtkMRMLEMSTemplateNode);
 vtkCxxSetObjectMacro(vtkEMSegmentGUI,Logic,vtkEMSegmentLogic);
 vtkCxxSetObjectMacro(vtkEMSegmentGUI,MRMLManager,vtkEMSegmentMRMLManager);
 
@@ -289,8 +289,8 @@ void vtkEMSegmentGUI::ProcessMRMLEvents(vtkObject *caller,
   //vtksys_stl::cout << "ProcessMRMLEvents()" << vtksys_stl::endl;
   // if parameter node has been changed externally, update GUI widgets
   // with new values 
-  vtkMRMLEMSNode* node
-    = vtkMRMLEMSNode::SafeDownCast(caller);
+  vtkMRMLEMSTemplateNode* node
+    = vtkMRMLEMSTemplateNode::SafeDownCast(caller);
   if (node != NULL && this->GetNode() == node) 
     {
     this->UpdateGUI();
@@ -303,7 +303,7 @@ void vtkEMSegmentGUI::ProcessMRMLEvents(vtkObject *caller,
     || event == vtkMRMLScene::NodeRemovedEvent ) )
     {
     vtkMRMLNode *mrmlNode = (vtkMRMLNode*)(callData);
-    if (mrmlNode != NULL && mrmlNode->IsA("vtkMRMLEMSNode"))
+    if (mrmlNode != NULL && mrmlNode->IsA("vtkMRMLEMSTemplateNode"))
       {
       // current node removed
       if(mrmlNode == this->GetNode() && event == vtkMRMLScene::NodeRemovedEvent)
@@ -653,8 +653,7 @@ void vtkEMSegmentGUI::PopulateTestingData()
       this->MRMLManager->GetVolumeNthID(1));
 
     this->MRMLManager->SetSaveWorkingDirectory(file_path.c_str());
-    this->MRMLManager->
-      SetSaveTemplateFilename(file_path.append("EMSTemplate.mrml").c_str());
+    this->MRMLManager->SetSaveTemplateFilename(file_path.append("EMSTemplate.mrml").c_str());
     }
 } 
 

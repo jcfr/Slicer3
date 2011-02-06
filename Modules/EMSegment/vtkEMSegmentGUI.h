@@ -6,7 +6,6 @@
 
 class vtkEMSegmentLogic;
 class vtkEMSegmentMRMLManager;
-class vtkMRMLEMSNode;
 class vtkKWWizardWidget;
 class vtkEMSegmentParametersSetStep;
 class vtkEMSegmentIntensityImagesStep;
@@ -20,6 +19,7 @@ class vtkEMSegmentInputChannelsStep;
 class vtkEMSegmentPreProcessingStep;
 class vtkKWWizardStep;
 class vtkKWLabel;
+class vtkMRMLEMSTemplateNode;
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentGUI : 
   public vtkSlicerModuleGUI
@@ -47,8 +47,8 @@ public:
 
   // Description: 
   // Get/Set MRML node
-  vtkGetObjectMacro(Node, vtkMRMLEMSNode);
-  virtual void SetNode(vtkMRMLEMSNode*);
+  vtkGetObjectMacro(Node, vtkMRMLEMSTemplateNode);
+  virtual void SetNode(vtkMRMLEMSTemplateNode*);
 
   // Description: 
   // Get wizard widget
@@ -159,7 +159,7 @@ private:
 
   vtkEMSegmentLogic       *Logic;
   vtkEMSegmentMRMLManager *MRMLManager;
-  vtkMRMLEMSNode          *Node;
+  vtkMRMLEMSTemplateNode          *Node;
   
   char *ModuleName;
 

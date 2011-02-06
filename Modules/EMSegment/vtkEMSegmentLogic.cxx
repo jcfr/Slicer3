@@ -12,18 +12,14 @@
 
 #include "vtkMRMLScene.h"
 
-#include "vtkMRMLEMSNode.h"
-#include "vtkMRMLEMSSegmenterNode.h"
 #include "vtkMRMLEMSTemplateNode.h"
 #include "vtkMRMLEMSTreeNode.h"
 #include "vtkMRMLEMSTreeParametersLeafNode.h"
 #include "vtkMRMLEMSTreeParametersParentNode.h"
 #include "vtkMRMLEMSTreeParametersNode.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkMRMLEMSIntensityNormalizationParametersNode.h"
 #include "vtkImageEMLocalSegmenter.h"
 #include "vtkImageEMLocalSuperClass.h"
-#include "vtkImageMeanIntensityNormalization.h"
 #include "vtkMath.h"
 #include "vtkImageReslice.h"
 #include "vtkRigidRegistrator.h"
@@ -32,6 +28,9 @@
 #include "vtkIdentityTransform.h"
 #include "vtkSlicerApplication.h"
 #include "vtkKWTkUtilities.h"
+
+#include "vtkMRMLEMSAtlasNode.h"
+#include "vtkMRMLEMSGlobalParametersNode.h"
 
 #include "vtkSlicerApplicationLogic.h"
 #include "vtkDataIOManagerLogic.h"
@@ -170,7 +169,7 @@ int vtkEMSegmentLogic::SourceTclFile(vtkSlicerApplication*app,const char *tclFil
 //----------------------------------------------------------------------------
 
 int vtkEMSegmentLogic::SourceTaskFiles(vtkSlicerApplication* app) { 
-  vtksys_stl::string generalFile = this->DefineTclTaskFullPathName(app, vtkMRMLEMSNode::GetDefaultTclTaskFilename());
+  vtksys_stl::string generalFile = this->DefineTclTaskFullPathName(app, vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
   vtksys_stl::string specificFile = this->DefineTclTaskFileFromMRML(app);
   cout << "Sourcing general Task file : " << generalFile.c_str() << endl;
   // Have to first source the default file to set up the basic structure"
@@ -842,9 +841,9 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
 
 
   // find output volume
-  if (!this->MRMLManager->GetSegmenterNode())
+  if (!this->MRMLManager->GetNode())
     {
-    ErrorMsg     = "Segmenter node is null---aborting segmentation.";
+    ErrorMsg     = "Template node is null---aborting segmentation.";
     vtkErrorMacro( << ErrorMsg );
     return EXIT_FAILURE;
     }
@@ -1190,7 +1189,7 @@ vtkEMSegmentLogic::
 CopyTargetDataToSegmenter(vtkImageEMLocalSegmenter* segmenter)
 {
   // !!! todo: TESTING HERE!!!
-  vtkMRMLEMSTargetNode* workingTarget = 
+  vtkMRMLEMSVolumeCollectionNode* workingTarget = 
     this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNode();
   unsigned int numTargetImages = workingTarget->GetNumberOfVolumes();
   std::cout << "Setting number of target images: " << numTargetImages 
@@ -1315,24 +1314,16 @@ CopyTreeDataToSegmenter(vtkImageEMLocalSuperClass* node, vtkIdType nodeID)
                     << " they sum to " << totalProbability);
     }
 
-  // update Markov matrices
+  // Set Markov matrices
   const unsigned int numDirections = 6;
-  bool nodeHasMatrix = 
-    this->MRMLManager->GetTreeClassInteractionNode(nodeID) != NULL;
-  if (!nodeHasMatrix)
-    {
-    vtkWarningMacro("CIM not available, using identity.");
-    }
   for (unsigned int d = 0; d < numDirections; ++d)
     {
     for (unsigned int r = 0; r < numChildren; ++r)
       {
       for (unsigned int c = 0; c < numChildren; ++c)
         {
-        double val = nodeHasMatrix 
-          ? this->MRMLManager->GetTreeNodeClassInteraction(nodeID, d, r, c)
-          : (r == c ? 1.0 : 0.0);
-        node->SetMarkovMatrix(val, d, c, r);
+          double val = (r == c ? 1.0 : 0.0);
+          node->SetMarkovMatrix(val, d, c, r);
         }
       }
     }
@@ -1637,7 +1628,7 @@ std::string vtkEMSegmentLogic::DefineTclTaskFileFromMRML(vtkSlicerApplication *a
 
   cout << "vtkEMSegmentLogic::DefineTclTaskFileFromMRML: " << tclFile.c_str() << " does not exist - using default file" << endl;
 
-  tclFile = this->DefineTclTaskFullPathName(app, vtkMRMLEMSNode::GetDefaultTclTaskFilename()); 
+  tclFile = this->DefineTclTaskFullPathName(app, vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName()); 
   return tclFile;  
 }
 
@@ -1713,7 +1704,7 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkKWApplication* app, v
   }
 
   // get working node 
-  vtkMRMLEMSTargetNode* workingTarget = NULL;
+  vtkMRMLEMSVolumeCollectionNode* workingTarget = NULL;
   if (this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNode() &&
       this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNodeIsValid())
     {
@@ -2026,17 +2017,16 @@ CreatePackageFilenames(vtkMRMLScene* scene,
   // set up mrml manager for this new scene
   vtkEMSegmentMRMLManager* newSceneManager = vtkEMSegmentMRMLManager::New();
   newSceneManager->SetMRMLScene(scene);
-  vtkMRMLEMSNode* newEMSNode = dynamic_cast<vtkMRMLEMSNode*>
-    (scene->GetNthNodeByClass(0, "vtkMRMLEMSNode"));
-  if (newEMSNode == NULL)
+  vtkMRMLEMSTemplateNode* newEMSTemplateNode = dynamic_cast<vtkMRMLEMSTemplateNode*>(scene->GetNthNodeByClass(0, "vtkMRMLEMSTemplateNode"));
+  if (newEMSTemplateNode == NULL)
     {
-    vtkWarningMacro("CreatePackageFilenames: no EMS node!");
+    vtkWarningMacro("CreatePackageFilenames: no EMSSegmenter node!");
     newSceneManager->Delete();
     return;
     }
   else
     {
-    newSceneManager->SetNode(newEMSNode);
+    newSceneManager->SetNode(newEMSTemplateNode);
     }
   vtkMRMLEMSWorkingDataNode* workingDataNode = 
     newSceneManager->GetWorkingDataNode();
@@ -2051,17 +2041,23 @@ CreatePackageFilenames(vtkMRMLScene* scene,
     {
     if (workingDataNode->GetInputTargetNode()->GetNumberOfVolumes() > 0)
       {
-      vtkMRMLStorageNode* firstTargetStorageNode =
-        workingDataNode->GetInputTargetNode()->GetNthVolumeNode(0)->
-        GetStorageNode();
-      vtkMRMLVolumeArchetypeStorageNode* firstTargetVolumeStorageNode =
-        dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*>
-        (firstTargetStorageNode);
-      if (firstTargetVolumeStorageNode != NULL)
-        {
-        centerImages = firstTargetVolumeStorageNode->GetCenterImage();
-        }
+    if (!workingDataNode->GetInputTargetNode()->GetNthVolumeNode(0)) 
+      {
+              vtkErrorMacro("CreatePackageFilenames: the first InputTagetNode is not defined!");
+              vtkIndent ind;
+          workingDataNode->GetInputTargetNode()->PrintSelf(cerr,ind);
+              cout << endl;
+      } 
+        else 
+          {
+            vtkMRMLStorageNode* firstTargetStorageNode = workingDataNode->GetInputTargetNode()->GetNthVolumeNode(0)->GetStorageNode();
+            vtkMRMLVolumeArchetypeStorageNode* firstTargetVolumeStorageNode = dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*> (firstTargetStorageNode);
+            if (firstTargetVolumeStorageNode != NULL)
+            { 
+             centerImages = firstTargetVolumeStorageNode->GetCenterImage();
+            }
       }
+       }
     }
 
    // get the full path to the scene
@@ -2219,12 +2215,12 @@ CreatePackageFilenames(vtkMRMLScene* scene,
     GetNumberOfVolumes();
 
   // input atlas volumes
-  if (workingDataNode->GetInputAtlasNode())
+  if (newSceneManager->GetAtlasInputNode())
     {
     for (int i = 0; i < numAtlasVolumes; ++i)
       {
       vtkMRMLVolumeNode* volumeNode =
-        workingDataNode->GetInputAtlasNode()->GetNthVolumeNode(i);
+         newSceneManager->GetAtlasInputNode()->GetNthVolumeNode(i);
       if (volumeNode != NULL)
         {
         vtkMRMLStorageNode* storageNode = volumeNode->GetStorageNode();

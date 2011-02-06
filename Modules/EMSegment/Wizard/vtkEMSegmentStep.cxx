@@ -14,8 +14,7 @@
 #include "vtkKWEntryWithLabel.h"
 #include "vtkKWFrameWithLabel.h"
 #include "vtkEMSegmentLogic.h"
-#include "vtkMRMLEMSNode.h"
-
+#include "vtkMRMLEMSGlobalParametersNode.h"
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentStep);
 vtkCxxRevisionMacro(vtkEMSegmentStep, "$Revision: 1.2 $");
@@ -469,12 +468,12 @@ const char* vtkEMSegmentStep::GetTextEntryValue(vtkIdType ID)
 void vtkEMSegmentStep::SetButtonsFromMRML()
 {
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (!mrmlManager)
+  if (!mrmlManager || !mrmlManager->GetGlobalParametersNode())
     {
       return;
     }
   
-  const char *defTextChar =  mrmlManager->GetNode()->GetTaskPreprocessingSetting();
+  const char *defTextChar =  mrmlManager->GetGlobalParametersNode()->GetTaskPreProcessingSetting();
   int cIndex = 0; 
   int eIndex = 0; 
   int vIndex = 0; 

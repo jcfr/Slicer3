@@ -1,20 +1,19 @@
 #ifndef __vtkMRMLEMSWorkingDataNode_h
 #define __vtkMRMLEMSWorkingDataNode_h
 
-#include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkEMSegment.h"
-#include "vtkMRMLEMSVolumeCollectionNode.h"
+#include "vtkMRMLScene.h"
 
-class vtkMRMLEMSTargetNode;
 class vtkMRMLEMSAtlasNode;
+class vtkMRMLScalarVolumeNode;
+class vtkMRMLEMSVolumeCollectionNode;
 
-class VTK_EMSEGMENT_EXPORT vtkMRMLEMSWorkingDataNode : 
-  public vtkMRMLEMSVolumeCollectionNode
+class VTK_EMSEGMENT_EXPORT vtkMRMLEMSWorkingDataNode :  public vtkMRMLNode 
 {
 public:
   static vtkMRMLEMSWorkingDataNode *New();
-  vtkTypeMacro(vtkMRMLEMSWorkingDataNode,vtkMRMLEMSVolumeCollectionNode);
+  vtkTypeMacro(vtkMRMLEMSWorkingDataNode,vtkMRMLNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();
@@ -53,7 +52,7 @@ public:
   {
     this->SetInputTargetNodeID(input);
   }
-  vtkMRMLEMSTargetNode* GetInputTargetNode();
+  vtkMRMLEMSVolumeCollectionNode* GetInputTargetNode();
 
   vtkGetStringMacro(AlignedTargetNodeID);
   //BTX
@@ -63,18 +62,8 @@ public:
   {
     this->SetAlignedTargetNodeID(name);
   } 
-  vtkMRMLEMSTargetNode* GetAlignedTargetNode();
+  vtkMRMLEMSVolumeCollectionNode* GetAlignedTargetNode();
   
-  vtkGetStringMacro(InputAtlasNodeID);
-  //BTX
-  vtkSetReferenceStringMacro(InputAtlasNodeID);
-  //ETX
-  void SetReferenceInputAtlasNodeID(const char* name)
-  {
-    this->SetInputAtlasNodeID(name);
-  } 
-  vtkMRMLEMSAtlasNode* GetInputAtlasNode();
-
   vtkGetStringMacro(AlignedAtlasNodeID);
   //BTX
   vtkSetReferenceStringMacro(AlignedAtlasNodeID);
@@ -84,16 +73,6 @@ public:
     this->SetAlignedAtlasNodeID(name);
   } 
   vtkMRMLEMSAtlasNode* GetAlignedAtlasNode();
-
-  vtkGetStringMacro(InputSubParcellationNodeID);
-  //BTX
-  vtkSetReferenceStringMacro(InputSubParcellationNodeID);
-  //ETX
-  void SetReferenceInputSubParcellationNodeID(const char* name)
-  {
-    this->SetInputSubParcellationNodeID(name);
-  } 
-  vtkMRMLEMSVolumeCollectionNode* GetInputSubParcellationNode();
 
   vtkGetStringMacro(AlignedSubParcellationNodeID);
   //BTX
@@ -117,6 +96,24 @@ public:
   vtkGetMacro(AlignedAtlasNodeIsValid, int);
   vtkSetMacro(AlignedAtlasNodeIsValid, int);
 
+  vtkGetStringMacro(OutputSegmentationNodeID);
+  vtkSetReferenceStringMacro(OutputSegmentationNodeID);
+  vtkMRMLScalarVolumeNode* GetOutputSegmentationNode();
+
+  // For legacy - to be complient with older mrml files  - please do not add functions for these variables 
+  vtkGetStringMacro(InputAtlasNodeID);
+  vtkGetStringMacro(InputSubParcellationNodeID);
+
+  void RemoveInputSubParcellationNodeID()
+    {
+      this->SetInputSubParcellationNodeID(NULL);
+    }
+
+  void RemoveInputAtlasNodeID()
+    {
+      this->SetInputAtlasNodeID(NULL);
+    }
+
 protected:
   vtkMRMLEMSWorkingDataNode();
   ~vtkMRMLEMSWorkingDataNode();
@@ -124,16 +121,27 @@ protected:
   void operator=(const vtkMRMLEMSWorkingDataNode&);
 
   char*                InputTargetNodeID;
+
   char*                AlignedTargetNodeID;
-  char*                InputAtlasNodeID;
   char*                AlignedAtlasNodeID;
-  char*                InputSubParcellationNodeID;
   char*                AlignedSubParcellationNodeID;
 
   int                  InputTargetNodeIsValid;
   int                  AlignedTargetNodeIsValid;  
   int                  InputAtlasNodeIsValid;  
   int                  AlignedAtlasNodeIsValid;  
+
+  char*                OutputSegmentationNodeID;
+
+  // For legacy - to be complient with older mrml files 
+  char*                InputAtlasNodeID;
+  char*                InputSubParcellationNodeID;
+
+  //BTX
+  vtkSetReferenceStringMacro(InputAtlasNodeID);
+  vtkSetReferenceStringMacro(InputSubParcellationNodeID);
+  //ETX
+  
 };
 
 #endif

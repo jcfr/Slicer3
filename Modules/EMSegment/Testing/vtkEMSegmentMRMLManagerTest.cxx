@@ -4,7 +4,7 @@
 #include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentTestUtilities.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkMRMLEMSTargetNode.h"
+#include "vtkMRMLEMSVolumeCollectionNode.h"
 #include "vtkMRMLEMSTreeNode.h"
 #include <stdexcept>
 #include <stdlib.h>
@@ -348,58 +348,6 @@ int main(int vtkNotUsed(argc), char** argv)
                             TreeNodeStoppingConditionMFAIterations,
                             MAGIC_INT, treeNodeID);
      
-    // normalization parameters
-    int numTargets = m->GetTargetNumberOfSelectedVolumes();
-    vtkIdType targetID = m->GetTargetSelectedVolumeNthID(numTargets-1);
-    
-    vtkTestSetGetMacroIndex(pass, m, 
-                            NthTargetVolumeIntensityNormalizationNormValue, 
-                            MAGIC_DOUBLE, numTargets-1);
-    vtkTestSetGetMacroIndex(pass, m, 
-                            TargetVolumeIntensityNormalizationNormValue,
-                            MAGIC_DOUBLE, targetID);
-      
-      vtkTestSetGetMacroIndex(pass, m,
-                              NthTargetVolumeIntensityNormalizationNormType,
-                              MAGIC_INT, numTargets-1);
-      vtkTestSetGetMacroIndex(pass, m,
-                              TargetVolumeIntensityNormalizationNormType,
-                              MAGIC_INT, targetID);
-
-      vtkTestSetGetMacroIndex(pass, m,
-                              NthTargetVolumeIntensityNormalizationInitialHistogramSmoothingWidth,
-                              MAGIC_INT, numTargets-1);
-      vtkTestSetGetMacroIndex(pass, m,
-                              TargetVolumeIntensityNormalizationInitialHistogramSmoothingWidth,
-                              MAGIC_INT, targetID);
-
-      vtkTestSetGetMacroIndex(pass, m,
-                              NthTargetVolumeIntensityNormalizationMaxHistogramSmoothingWidth,
-                              MAGIC_INT, numTargets-1);
-      vtkTestSetGetMacroIndex(pass, m,
-                              TargetVolumeIntensityNormalizationMaxHistogramSmoothingWidth,
-                              MAGIC_INT, targetID);
-
-      vtkTestSetGetMacroIndex(pass, m,
-                              NthTargetVolumeIntensityNormalizationRelativeMaxVoxelNum,
-                              MAGIC_INT, numTargets-1);
-      vtkTestSetGetMacroIndex(pass, m,
-                              TargetVolumeIntensityNormalizationRelativeMaxVoxelNum,
-                              MAGIC_INT, targetID);
-
-      vtkTestSetGetMacroIndex(pass, m,
-                              NthTargetVolumeIntensityNormalizationPrintInfo,
-                              MAGIC_INT, numTargets-1);
-      vtkTestSetGetMacroIndex(pass, m,
-                              TargetVolumeIntensityNormalizationPrintInfo,
-                              MAGIC_INT, targetID);
-
-      vtkTestSetGetMacroIndex(pass, m,
-                              NthTargetVolumeIntensityNormalizationEnabled,
-                              MAGIC_INT, numTargets-1);
-      vtkTestSetGetMacroIndex(pass, m,
-                              TargetVolumeIntensityNormalizationEnabled,
-                              MAGIC_INT, targetID);
 
       // registration parameters
       vtkTestSetGetMacro(pass, m,
@@ -480,47 +428,7 @@ int main(int vtkNotUsed(argc), char** argv)
         localPass = false;
         }
       
-      // check CIM sizes
-      if (m->GetTreeClassInteractionNode(rootID)->GetNumberOfClasses() != 3 ||
-          m->GetTreeClassInteractionNode(idA)->GetNumberOfClasses() != 2 ||
-          m->GetTreeClassInteractionNode(idB)->GetNumberOfClasses() != 1 ||
-          m->GetTreeClassInteractionNode(idC)->GetNumberOfClasses() != 0 ||
-          m->GetTreeClassInteractionNode(idD)->GetNumberOfClasses() != 0)
-        {
-        std::cerr << "Error adding child nodes: CIM size error" << std::endl;
-
-        std::cerr 
-          << "Root:" 
-          << m->GetTreeClassInteractionNode(rootID)->GetNumberOfClasses()
-          << " A:" 
-          << m->GetTreeClassInteractionNode(idA)->GetNumberOfClasses()
-          << " B:" 
-          << m->GetTreeClassInteractionNode(idB)->GetNumberOfClasses()
-          << " C:" 
-          << m->GetTreeClassInteractionNode(idC)->GetNumberOfClasses()
-          << " D:" 
-          << m->GetTreeClassInteractionNode(idD)->GetNumberOfClasses()
-          << std::endl;
-
-        pass = false;
-        localPass = false;
-        }
       
-      // check CIM entries
-      for (unsigned int direction = 0; direction < 6; ++direction)
-        {
-        if (m->GetTreeNodeClassInteraction(idA, direction, 0, 0) != 1 ||
-            m->GetTreeNodeClassInteraction(idA, direction, 1, 1) != 1 ||
-            m->GetTreeNodeClassInteraction(idA, direction, 0, 1) != 0 ||
-            m->GetTreeNodeClassInteraction(idA, direction, 1, 0) != 0 ||
-            m->GetTreeNodeClassInteraction(idB, direction, 0, 0) != 1)
-          {
-          std::cerr << "Error adding child nodes: CIM size error" << std::endl;
-          pass = false;
-          localPass = false;
-          }
-        }
-
       // move node D to node C
       std::cerr << "Moving D to C...";
       m->SetTreeNodeParentNodeID(idD, idC);
@@ -555,42 +463,6 @@ int main(int vtkNotUsed(argc), char** argv)
         localPass = false;
         }
       
-      // check CIM sizes
-      if (m->GetTreeClassInteractionNode(rootID)->GetNumberOfClasses() != 3 ||
-          m->GetTreeClassInteractionNode(idA)->GetNumberOfClasses() != 1 ||
-          m->GetTreeClassInteractionNode(idC)->GetNumberOfClasses() != 1 ||
-          m->GetTreeClassInteractionNode(idD)->GetNumberOfClasses() != 0)
-        {
-        std::cerr << "Error moving child nodes: CIM size error" << std::endl;
-
-        std::cerr 
-          << "Root:" 
-          << m->GetTreeClassInteractionNode(rootID)->GetNumberOfClasses()
-          << " A:" 
-          << m->GetTreeClassInteractionNode(idA)->GetNumberOfClasses()
-          << " C:" 
-          << m->GetTreeClassInteractionNode(idC)->GetNumberOfClasses()
-          << " D:" 
-          << m->GetTreeClassInteractionNode(idD)->GetNumberOfClasses()
-          << std::endl;
-
-        pass = false;
-        localPass = false;
-        }
-      
-      // check CIM entries
-      for (unsigned int direction = 0; direction < 6; ++direction)
-        {
-        if (m->GetTreeNodeClassInteraction(rootID, direction, 0, 0) != 1 ||
-            m->GetTreeNodeClassInteraction(idC, direction, 0, 0) != 1 ||
-            m->GetTreeNodeClassInteraction(idA, direction, 0, 0) != 1)
-          {
-          std::cerr << "Error moving child nodes: CIM size error" << std::endl;
-          pass = false;
-          localPass = false;
-          }
-        }
-
       // remove node A
       std::cerr << "Removing A...";
       m->RemoveTreeNode(idA);
@@ -683,11 +555,6 @@ int main(int vtkNotUsed(argc), char** argv)
       m->SetTreeNodeInputChannelWeight(treeNodeID, 3, MAGIC_DOUBLE4);
       m->SetTreeNodeInputChannelWeight(treeNodeID, 4, MAGIC_DOUBLE5);
 
-      m->SetNthTargetVolumeIntensityNormalizationNormValue(0, MAGIC_DOUBLE);
-      m->SetNthTargetVolumeIntensityNormalizationNormValue(1, MAGIC_DOUBLE2);
-      m->SetNthTargetVolumeIntensityNormalizationNormValue(2, MAGIC_DOUBLE3);
-      m->SetNthTargetVolumeIntensityNormalizationNormValue(3, MAGIC_DOUBLE4);
-      m->SetNthTargetVolumeIntensityNormalizationNormValue(4, MAGIC_DOUBLE5);
 
       // remove a target
       std::cerr << "Removing a target...";
@@ -781,15 +648,6 @@ int main(int vtkNotUsed(argc), char** argv)
         localPass = false;
         }
 
-      if (m->GetNthTargetVolumeIntensityNormalizationNormValue(0) != MAGIC_DOUBLE5 ||
-          m->GetNthTargetVolumeIntensityNormalizationNormValue(1) != MAGIC_DOUBLE ||
-          m->GetNthTargetVolumeIntensityNormalizationNormValue(2) != MAGIC_DOUBLE4 ||
-          m->GetNthTargetVolumeIntensityNormalizationNormValue(3) != MAGIC_DOUBLE2)
-        {
-        std::cerr << "Error moving normalization parameters" << std::endl;
-        pass = false;
-        localPass = false;
-        }
       std::cerr << (localPass ? "OK" : "FAILED") << std::endl;
     }
   catch(...)

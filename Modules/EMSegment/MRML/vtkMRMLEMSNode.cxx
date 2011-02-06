@@ -119,26 +119,31 @@ void vtkMRMLEMSNode::ReadXMLAttributes(const char** attrs)
     
     if (!strcmp(key, "SegmenterNodeID"))
       {
+      
       this->SetSegmenterNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->SegmenterNodeID, this);
+      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes: EMSNode is outdated since Slicer 3.6.3  - please update file" << endl;
       }
     else if (!strcmp(key, "TemplateFilename"))
       {
       this->SetTemplateFilename(val);
+      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update file" << endl;
       }
     else if (!strcmp(key, "SaveTemplateAfterSegmentation"))
       {
+      cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update file"<< endl;
       vtksys_stl::stringstream ss;
       ss << val;
       ss >> this->SaveTemplateAfterSegmentation;
       }
     else if (!strcmp(key, "TclTaskFilename"))
       {
-    this->SetTclTaskFilename(val);
+    cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update file"<<endl;
+        this->SetTclTaskFilename(val);
       }
     else if (!strcmp(key, "TaskPreprocessingSetting"))
       {
-    this->SetTaskPreprocessingSetting(val);
+        cout << "WARNING: vtkMRMLEMSNode::ReadXMLAttributes:EMSNode is outdated since Slicer 3.6.3  - please update file"<<endl;
+        this->SetTaskPreprocessingSetting(val);
       }
     }
 }

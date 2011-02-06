@@ -60,6 +60,10 @@ set(CLP_MODULE EMSegmentTclInterpreter)
 set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
 generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
 
+set(CLP_MODULE EMSegmentTransformToNewFormat)
+set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
+generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
+
 # --------------------------------------------------------------------------
 # Build and install the exe
 

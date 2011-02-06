@@ -2,33 +2,24 @@
 #define __vtkMRMLEMSVolumeCollectionNode_h
 
 #include "vtkMRML.h"
-#include "vtkMRMLNode.h"
+#include "vtkMRMLEMSCollectionNode.h"
 #include "vtkEMSegment.h"
 #include "vtkMRMLVolumeNode.h"
 #include <list>
 #include <map>
 
+// Most things are kept for legacy 
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSVolumeCollectionNode : 
-  public vtkMRMLNode
+  public vtkMRMLEMSCollectionNode
 {
 public:
   static vtkMRMLEMSVolumeCollectionNode *New();
   vtkTypeMacro(vtkMRMLEMSVolumeCollectionNode,vtkMRMLNode);
-  void PrintSelf(ostream& os, vtkIndent indent);
-
   virtual vtkMRMLNode* CreateNodeInstance();
 
   // Description:
-  // Set node attributes
+  // Set node attributes - for legacy purposes 
   virtual void ReadXMLAttributes(const char** atts);
-
-  // Description:
-  // Write this node's information to a MRML file in XML format.
-  virtual void WriteXML(ostream& of, int indent);
-
-  // Description:
-  // Copy the node's attributes to this object
-  virtual void Copy(vtkMRMLNode *node);
 
   // Description:
   // clone the volumes of rhs
@@ -38,37 +29,63 @@ public:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "EMSVolumeCollection";}
 
-  // Description:
-  // Updates this node if it depends on other nodes
-  // when the node is deleted in the scene
-  virtual void UpdateReferences();
-
-  // Description:
-  // Update the stored reference to another node in the scene
-  virtual void UpdateReferenceID(const char *oldID, const char *newID);
-
   // Returns 1 if volume was added or 0 if the mapping between key and volumeNodeID existed 
-  virtual int   AddVolume(const char* key, const char* volumeNodeID);
-  virtual int    GetNumberOfVolumes() const;
+  virtual int   AddVolume(const char* key, const char* volumeNodeID)
+  {
+    return this->AddNode(key,volumeNodeID);
+  }
+  virtual int    GetNumberOfVolumes() const  
+  {
+    return this->GetNumberOfNodes();
+  }
 
-  virtual void   RemoveAllVolumes();
-  virtual void   RemoveVolumeByKey(const char* key);
-  virtual void   RemoveVolumeByNodeID(const char* key);
-  virtual void   RemoveNthVolume(int n);
+  virtual void   RemoveAllVolumes()
+  {
+    this->RemoveAllNodes();
+  }
+  virtual void   RemoveVolumeByKey(const char* key) 
+  {
+    this->RemoveNodeByKey(key);
+  }
+  virtual void   RemoveVolumeByNodeID(const char* key)
+  {
+    this->RemoveNodeByNodeID(key);
+  }
+  virtual void   RemoveNthVolume(int n)
+  {
+    this->RemoveNthNode(n);
+  }
 
-  virtual const char*        GetVolumeNodeIDByKey(const char* key) const;
-  virtual const char*        GetKeyByVolumeNodeID(const char* nodeID) const;
+  virtual const char*        GetVolumeNodeIDByKey(const char* key) const
+  {
+    return this->GetNodeIDByKey(key);
+  }
+  virtual const char*        GetKeyByVolumeNodeID(const char* nodeID) const
+  {
+    return this->GetKeyByVolumeNodeID(nodeID);
+  }
 
-  virtual int                GetIndexByKey(const char* key) const;
-  virtual int                GetIndexByVolumeNodeID(const char* nodeID) const;
+  virtual int                GetIndexByVolumeNodeID(const char* nodeID) const
+  {
+    return this->GetIndexByNodeID(nodeID);
+  }
 
-  virtual const char*        GetNthVolumeNodeID(int n) const;
-  virtual void               SetNthVolumeNodeID(int n, const char* nodeID);
+  virtual const char*        GetNthVolumeNodeID(int n) const
+  {
+    return this->GetNthNodeID(n);
+  }
 
-  virtual const char*        GetNthKey(int n) const;
+  virtual void               SetNthVolumeNodeID(int n, const char* nodeID)
+  {
+    this->SetNthNodeID(n, nodeID);
+  }
+
   virtual vtkMRMLVolumeNode* GetNthVolumeNode(int n) const;
 
-  virtual void  MoveNthVolume(int n, int toIndex);
+  virtual void  MoveNthVolume(int n, int toIndex)
+  {
+    this->MoveNthNode(n, toIndex);
+  }
 
 protected:
   vtkMRMLEMSVolumeCollectionNode();
@@ -76,20 +93,6 @@ protected:
   vtkMRMLEMSVolumeCollectionNode(const vtkMRMLEMSVolumeCollectionNode&);
   void operator=(const vtkMRMLEMSVolumeCollectionNode&);
 
-  //BTX
-  // provide mapping key->value and value->key
-  typedef vtkstd::string                    KeyType;
-  typedef vtkstd::string                    ValueType;
-  typedef vtkstd::map<KeyType, ValueType>   MapType;
-  mutable MapType                           KeyToVolumeNodeIDMap;
-  mutable MapType                           VolumeNodeIDToKeyMap;
-
-  // maintain order of keys
-  typedef vtkstd::list<KeyType>             KeyListType;
-  typedef KeyListType::iterator             KeyIterator;
-  typedef KeyListType::const_iterator       KeyConstIterator;  
-  mutable KeyListType                       KeyList;
-  //ETX
 };
 
 #endif

@@ -3,6 +3,7 @@
 #include "vtkMRMLScene.h"
 #include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
+#include "vtkMRMLEMSTemplateNode.h"
 
 //-----------------------------------------------------------------------------
 vtkMRMLEMSSegmenterNode* 
@@ -133,21 +134,22 @@ void vtkMRMLEMSSegmenterNode::ReadXMLAttributes(const char** attrs)
     if (!strcmp(key, "TemplateNodeID"))
       {
       this->SetTemplateNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->TemplateNodeID, this);
+      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update file" << endl;
       }
     else if (!strcmp(key, "OutputVolumeNodeID"))
       {
       this->SetOutputVolumeNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->OutputVolumeNodeID, this);
+      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update file" << endl;
       }
     else if (!strcmp(key, "WorkingDataNodeID"))
       {
       this->SetWorkingDataNodeID(val);
-      //this->Scene->AddReferencedNodeID(this->WorkingDataNodeID, this);
+      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update file" << endl;
       }
     else if (!strcmp(key, "WorkingDirectory"))
       {
       this->SetWorkingDirectory(val);
+      cout << "WARNING: vtkMRMLEMSSegmenterNode::ReadXMLAttributes:EMSSegmenterNode is outdated since Slicer 3.6.3  - please update file" << endl;
       }
     }
 }

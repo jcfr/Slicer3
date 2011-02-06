@@ -10,12 +10,13 @@
 #include "vtkKWWizardWorkflow.h"
 #include "vtkKWFrameWithLabel.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkMRMLEMSNode.h"
 #include "vtkKWCheckButtonWithLabel.h"
 #include "vtkKWEntryWithLabel.h"
 #include "vtkKWProgressDialog.h"
 #include "vtkSlicerSliceControllerWidget.h"
-#include "vtkMRMLEMSTargetNode.h"
+#include "vtkMRMLEMSVolumeCollectionNode.h"
+#include "vtkMRMLEMSGlobalParametersNode.h"
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentPreProcessingStep);
 vtkCxxRevisionMacro(vtkEMSegmentPreProcessingStep, "$Revision: 1.2 $");
@@ -157,7 +158,7 @@ vtkEMSegmentPreProcessingStep::Validate()
     mrmlManager->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(1);
     mrmlManager->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(1);
 
-    vtkMRMLEMSTargetNode* targetNode = this->GetGUI()->GetMRMLManager()->GetWorkingDataNode()->GetInputTargetNode();
+    vtkMRMLEMSVolumeCollectionNode* targetNode = this->GetGUI()->GetMRMLManager()->GetWorkingDataNode()->GetInputTargetNode();
     if (targetNode) 
       {
         vtkMRMLVolumeNode* output =  targetNode->GetNthVolumeNode(0);
@@ -181,12 +182,7 @@ void
 vtkEMSegmentPreProcessingStep::SetTaskPreprocessingSetting()
 {
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (!mrmlManager)
-    {
-      return;
-    }
-
-  if (! mrmlManager->GetNode())
+  if (!mrmlManager || !mrmlManager->GetGlobalParametersNode())
     {
       return;
     }
@@ -233,7 +229,7 @@ vtkEMSegmentPreProcessingStep::SetTaskPreprocessingSetting()
     } 
     }
 
-  mrmlManager->GetNode()->SetTaskPreprocessingSetting(defText.str().c_str());
+  mrmlManager->GetGlobalParametersNode()->SetTaskPreProcessingSetting(defText.str().c_str());
 }
 
 

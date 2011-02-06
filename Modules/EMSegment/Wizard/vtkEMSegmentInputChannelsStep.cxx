@@ -14,8 +14,7 @@
 #include "vtkKWCheckButtonWithLabel.h"
 #include "vtkKWEntryWithLabel.h"
 #include "vtkSlicerNodeSelectorWidget.h"
-#include "vtkMRMLEMSTargetNode.h"
-#include "vtkMRMLEMSNode.h"
+#include "vtkMRMLEMSVolumeCollectionNode.h"
 #include "vtkEMSegmentPreProcessingStep.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
@@ -310,7 +309,7 @@ void vtkEMSegmentInputChannelsStep::Validate()
   //-----------------------------------------------
   // General 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  vtkMRMLEMSTargetNode *inputNodes = mrmlManager->GetTargetInputNode();
+  vtkMRMLEMSVolumeCollectionNode *inputNodes = mrmlManager->GetTargetInputNode();
   vtkMRMLEMSGlobalParametersNode* globalNode = mrmlManager->GetGlobalParametersNode();
   if (!inputNodes || !globalNode) 
     {
@@ -677,7 +676,7 @@ void vtkEMSegmentInputChannelsStep::UpdateInputChannelsfromMRML()
     return;
     }
 
-  vtkMRMLEMSTargetNode *inputNodes = mrmlManager->GetTargetInputNode();
+  vtkMRMLEMSVolumeCollectionNode *inputNodes = mrmlManager->GetTargetInputNode();
   vtkMRMLEMSGlobalParametersNode* globalNode = mrmlManager->GetGlobalParametersNode();
   if (!inputNodes || !globalNode) 
     {
@@ -704,7 +703,7 @@ int vtkEMSegmentInputChannelsStep::GetNumberOfInputChannels()
 void vtkEMSegmentInputChannelsStep::UpdateTaskPreprocessingSetting()
 {
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (!mrmlManager)
+  if (!mrmlManager || !mrmlManager->GetGlobalParametersNode())
     {
       return;
     }
@@ -712,9 +711,9 @@ void vtkEMSegmentInputChannelsStep::UpdateTaskPreprocessingSetting()
 
   std::string oldText;
 
-  if ( mrmlManager->GetNode()->GetTaskPreprocessingSetting() ) 
+  if ( mrmlManager->GetGlobalParametersNode()->GetTaskPreProcessingSetting() ) 
     {
-      oldText = std::string(mrmlManager->GetNode()->GetTaskPreprocessingSetting());
+      oldText = std::string(mrmlManager->GetGlobalParametersNode()->GetTaskPreProcessingSetting());
     }
 
   vtksys_stl::stringstream defText;
@@ -807,5 +806,5 @@ void vtkEMSegmentInputChannelsStep::UpdateTaskPreprocessingSetting()
     endPos =oldText.find("|",startPos); 
       }
     }
-  mrmlManager->GetNode()->SetTaskPreprocessingSetting(defText.str().c_str());
+  mrmlManager->GetGlobalParametersNode()->SetTaskPreProcessingSetting(defText.str().c_str());
 }
