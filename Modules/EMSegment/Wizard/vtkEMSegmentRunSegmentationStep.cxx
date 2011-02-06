@@ -590,18 +590,18 @@ void vtkEMSegmentRunSegmentationStep::SelectTemplateFileCallback()
    vtksys_stl::string filename = this->RunSegmentationSaveTemplateButton->GetFileName();
    vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
    if (mrmlManager)
+     {
+        mrmlManager->SetSaveTemplateFilename(filename.c_str());
+        if (mrmlManager->CreateTemplateFile())
         {
-         mrmlManager->SetSaveTemplateFilename(filename.c_str());
-         if (mrmlManager->CreateTemplateFile())
-       {
               vtkKWMessageDialog::PopupMessage(this->GetApplication(),
                                      NULL,
                                      "Create Template Error",
-                                     "Could not create template bc probably the directy file name of the template was not the same as scene",
+                                     "Could not create template - the filename of the template was probably not in the same directory as the scene",
                                      vtkKWMessageDialog::ErrorIcon | 
                                      vtkKWMessageDialog::InvokeAtPointer); 
-       }
         }
+     }
 }
 
 //----------------------------------------------------------------------------
