@@ -102,7 +102,7 @@ vtkSlicerModulesStep::vtkSlicerModulesStep()
 
   this->Messages["WORKING"] = "Searching for compatible extensions...";
   this->Messages["READY"] = "Select extensions, then click uninstall to remove them from\nyour version of 3D Slicer, or click download to retrieve them.";
-  this->Messages["DOWNLOAD"] = "Download in progress... Clicking the cancel button will stop\nthe process after the current extension operation is finished.";
+  this->Messages["DOWNLOAD"] = "Download in progress...";
   this->Messages["FINISHED"] = "Continue selecting extensions for download or removal,\nor click finish to complete the operation.";
 
   this->ActionTaken = vtkSlicerModulesStep::ActionIsEmpty;
