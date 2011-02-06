@@ -41,16 +41,14 @@ public:
   vtkGetObjectMacro(MRMLScene, vtkMRMLScene);
 
   // Get/Set MRML node storing parameter values
-  // Be very carefull when setting the node this way - should only be done if you know what you are doing 
-  // otherwise use a version of  SetLoadedParameterSetIndex which tests that all volumes are defined correctly 
-  virtual void SetNode(vtkMRMLEMSTemplateNode*);
+  virtual int SetNodeWithCheck(vtkMRMLEMSTemplateNode*);
   vtkGetObjectMacro(Node, vtkMRMLEMSTemplateNode);
 
   // this will be be passed along by the logic node 
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
                                    void *callData );
 
-  void CreateTemplateFile();
+  int CreateTemplateFile();
 
   //
   // functions for getting and setting the current template builder
@@ -406,7 +404,21 @@ public:
   virtual void      GetSegmentationBoundaryMax(int maxPoint[3]);
   virtual void      SetSegmentationBoundaryMax(int maxPoint[3]);
 
-  virtual int       CheckMRMLNodeStructure(int ignoreOutputFlag = 0);
+  // If flag is set then only checks the template for nodes that are essential for GUI
+  // If flag = 0 then checks the existence of all nodes essential for processing 
+  virtual   int     CheckTemplateMRMLStructure(vtkMRMLEMSTemplateNode *emsTemp, int guiFlag);
+
+  // checks the entire tree if all nodes are defined so we can start segmentation
+  virtual int     CheckMRMLNodeStructureForProcessing()
+  {
+    return this->CheckTemplateMRMLStructure(this->Node,0);
+  }
+
+  // adds important nodes to the tree that are needed for using the gui 
+  virtual void      CompleteTemplateMRMLStructureForGUI(vtkMRMLEMSTemplateNode *emsTemp);
+
+
+ 
 
   //
   // this functions registers all of the MRML nodes needed by this
@@ -467,8 +479,6 @@ public:
   virtual const char* GetTclTaskFilename();
   virtual void SetTclTaskFilename(const char* fileName);
 
-  void RemoveNodesFromMRMLScene(vtkMRMLNode* node);
-
   //BTX
   vtksys_stl::string TurnDefaultMRMLFileIntoTaskName(const char* fileName);
   vtksys_stl::string TurnDefaultTclFileIntoPreprocessingName(const char* fileName);
@@ -488,6 +498,9 @@ private:
   ~vtkEMSegmentMRMLManager();
   vtkEMSegmentMRMLManager(const vtkEMSegmentMRMLManager&);
   void operator=(const vtkEMSegmentMRMLManager&);
+
+  // Should only be used within  this structure as it does not check 
+  virtual void SetNode(vtkMRMLEMSTemplateNode*);
 
   virtual vtkIdType                       AddNewTreeNode();
   virtual vtkIdType                       GetNewVTKNodeID();

@@ -30,10 +30,10 @@
     </file>
 
     <boolean>
-      <name>taskFlag</name>
-      <longflag>taskFlag</longflag>
-      <description>Set to true if the transformed mrml file should be used as task file </description>
-      <label>Create Task file</label>
+      <name>templateFlag</name>
+      <longflag>templateFlag</longflag>
+      <description>Set to true if the transformed mrml file should be used as template file </description>
+      <label>Create Template file</label>
       <default>false</default>
     </boolean>
 

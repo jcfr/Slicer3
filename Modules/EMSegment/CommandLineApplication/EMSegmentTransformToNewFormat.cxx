@@ -146,7 +146,7 @@ int main(int argc, char** argv)
         //
         // Write results back
         // 
-        if (taskFlag)
+        if (templateFlag)
       {
         // As a Template
               std::cout << "Using default parameter set named: " 

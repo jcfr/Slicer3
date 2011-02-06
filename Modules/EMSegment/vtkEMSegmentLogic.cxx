@@ -2020,14 +2020,17 @@ CreatePackageFilenames(vtkMRMLScene* scene,
   vtkMRMLEMSTemplateNode* newEMSTemplateNode = dynamic_cast<vtkMRMLEMSTemplateNode*>(scene->GetNthNodeByClass(0, "vtkMRMLEMSTemplateNode"));
   if (newEMSTemplateNode == NULL)
     {
-    vtkWarningMacro("CreatePackageFilenames: no EMSSegmenter node!");
-    newSceneManager->Delete();
-    return;
+      vtkWarningMacro("CreatePackageFilenames: no EMSSegmenter node!");
+      newSceneManager->Delete();
+      return;
     }
-  else
+  if (newSceneManager->SetNodeWithCheck(newEMSTemplateNode))
     {
-    newSceneManager->SetNode(newEMSTemplateNode);
+       vtkWarningMacro("CreatePackageFilenames: not a valid template node!");
+       newSceneManager->Delete();
+       return;
     }
+   
   vtkMRMLEMSWorkingDataNode* workingDataNode = 
     newSceneManager->GetWorkingDataNode();
 

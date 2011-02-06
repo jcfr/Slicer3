@@ -790,6 +790,10 @@ void vtkEMSegmentParametersSetStep::SelectedParameterSetChangedCallback(int inde
       return; 
     }
 
+  cout << "=======================kkkk";
+  mrmlManager->PrintInfo(cout);
+  cout << "=======================";
+
   vtkEMSegmentAnatomicalStructureStep *anat_step =
     this->GetGUI()->GetAnatomicalStructureStep();
 

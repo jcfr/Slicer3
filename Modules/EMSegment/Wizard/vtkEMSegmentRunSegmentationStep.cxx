@@ -591,10 +591,16 @@ void vtkEMSegmentRunSegmentationStep::SelectTemplateFileCallback()
    vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
    if (mrmlManager)
         {
-          mrmlManager->SetSaveTemplateFilename(filename.c_str());
-          // vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
-          // app->GetTemporaryDirectory()
-          mrmlManager->CreateTemplateFile();
+         mrmlManager->SetSaveTemplateFilename(filename.c_str());
+         if (mrmlManager->CreateTemplateFile())
+       {
+              vtkKWMessageDialog::PopupMessage(this->GetApplication(),
+                                     NULL,
+                                     "Create Template Error",
+                                     "Could not create template bc probably the directy file name of the template was not the same as scene",
+                                     vtkKWMessageDialog::ErrorIcon | 
+                                     vtkKWMessageDialog::InvokeAtPointer); 
+       }
         }
 }
 

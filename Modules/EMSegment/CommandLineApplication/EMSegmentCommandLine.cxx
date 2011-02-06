@@ -1043,62 +1043,19 @@ int main(int argc, char** argv)
 
     //
     // check parameters' node structure
-    if (!emMRMLManager->CheckMRMLNodeStructure())
+    if (!emMRMLManager->CheckMRMLNodeStructureForProcessing())
       {
-      throw std::
-        runtime_error("ERROR: EMSegment invalid parameter node structure");
+        throw std::runtime_error("ERROR: EMSegment invalid parameter node structure");
       }
 
 
     progressReporter.ReportProgress("Running Segmentation...", 
                                      currentStep++ / totalSteps);
     
-    // 
-    // Setting up everything for new semgnetation mode with sourcing tcl file 
-    //
+    // -----------------------------------
+    // Start processing
 
-      
-       // =======================================================================
-       //
-       //  NEW VERSION
-       // 
-       // =======================================================================
-
-       cout << "===== New Version =======" << endl;
- 
-       // -----------------------------------
-       // Check Data 
-
-       vtkMRMLEMSVolumeCollectionNode* inputNode =  emMRMLManager->GetTargetInputNode(); 
-       if (inputNode == NULL)
-      {
-        cout << "Input target node is null, aborting!" << endl;
-          return EXIT_FAILURE; 
-      }
-
-       for (int i=0;  i < inputNode->GetNumberOfVolumes(); i++)
-     {
-       vtkMRMLVolumeNode* cNode = inputNode->GetNthVolumeNode(i);
-       if (!cNode)
-         {
-           cout << "Input Channel Error: Please assign an volume to each input channel" << endl;
-           return EXIT_FAILURE; 
-         }
-       if (!cNode->GetImageData()) 
-         {
-           cout << "Input Channel Error: Volume of " << i + 1 << "th Input channel is empty !" << endl;
-                 return EXIT_FAILURE; 
-         }
-       if (cNode->GetImageData()->GetScalarRange()[0] < 0 )
-         {
-           cout << "WARNING: Input Channel warning: Volume " << i + 1 << " contains negative values - negative values will be set to 0 !" << endl;
-         }
-
-     }
-       // -----------------------------------
-       // Start processing
-
-       try
+    try
        {
          if (verbose) std::cout << "Starting preprocessing ..." << std::endl;
 

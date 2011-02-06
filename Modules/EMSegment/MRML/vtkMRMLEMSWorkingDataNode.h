@@ -121,7 +121,6 @@ protected:
   void operator=(const vtkMRMLEMSWorkingDataNode&);
 
   char*                InputTargetNodeID;
-
   char*                AlignedTargetNodeID;
   char*                AlignedAtlasNodeID;
   char*                AlignedSubParcellationNodeID;
