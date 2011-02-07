@@ -1570,7 +1570,7 @@ ConvertGUIEnumToAlgorithmEnumInterpolationType(int guiEnumValue)
 }
 
 //----------------------------------------------------------------------------
-vtksys_stl::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication* app)
+std::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication* app)
 {
   //workaround for the mrml library, we need to have write access to this folder
   const char* tmp_dir = app->GetTemporaryDirectory();
@@ -1592,7 +1592,7 @@ vtksys_stl::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication*
           vtkErrorMacro("GetTclTaskDirectory:: Couldn't copy task directory " << orig_task_dir.c_str() << " to " << copied_task_dir.c_str());
           return vtksys::SystemTools::ConvertToOutputPath("");
       }
-      return vtksys::SystemTools::ConvertToOutputPath(copied_task_dir.c_str());
+      return copied_task_dir.c_str();
     }
   else
     {
@@ -1803,23 +1803,27 @@ vtksys_stl::string vtkEMSegmentLogic::GetTemporaryTaskDirectory(vtkSlicerApplica
 // cannot be moved to vtkEMSEgmentGUI bc of command line interface !
 std::string vtkEMSegmentLogic::DefineTclTaskFullPathName(vtkSlicerApplication* app, const char* TclFileName)
 {
+
+//  std::string task_dir = this->GetTclTaskDirectory(app);
+//  cout << "TEST 1" << task_dir << " " << vtksys::SystemTools::FileExists(task_dir.c_str()) << endl;
+
   vtksys_stl::string tmp_full_file_path = this->GetTclTaskDirectory(app) + vtksys_stl::string("/") + vtksys_stl::string(TclFileName);
-  vtksys_stl::string full_file_path = vtksys::SystemTools::ConvertToOutputPath(tmp_full_file_path.c_str());
-  if (vtksys::SystemTools::FileExists(full_file_path.c_str()))
+//  vtksys_stl::string full_file_path = vtksys::SystemTools::ConvertToOutputPath(tmp_full_file_path.c_str());
+  if (vtksys::SystemTools::FileExists(tmp_full_file_path.c_str()))
     {
-      return full_file_path;
+      return tmp_full_file_path;
     }
 
   tmp_full_file_path = this->GetTemporaryTaskDirectory(app) + vtksys_stl::string("/") + vtksys_stl::string(TclFileName);
-  full_file_path = vtksys::SystemTools::ConvertToOutputPath(tmp_full_file_path.c_str());
-  if (vtksys::SystemTools::FileExists(full_file_path.c_str()))
+//  full_file_path = vtksys::SystemTools::ConvertToOutputPath(tmp_full_file_path.c_str());
+  if (vtksys::SystemTools::FileExists(tmp_full_file_path.c_str()))
     {
-       return full_file_path;
+       return tmp_full_file_path;
     }
 
   vtkErrorMacro("DefineTclTaskFullPathName : could not find tcl file with name  " << TclFileName ); 
-  full_file_path = vtksys_stl::string("");
-  return  full_file_path;
+  tmp_full_file_path = vtksys_stl::string("");
+  return  tmp_full_file_path;
 }
 
 //-----------------------------------------------------------------------------
