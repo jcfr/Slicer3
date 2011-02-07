@@ -62,7 +62,7 @@ protected:
   vtkKWLabel                 *NodeParametersLabel;
   vtkKWLabel                 *NodeParametersLabel2;
 
-  virtual void AddIntensityDistributionSamplePoint(double ras[3]);
+  virtual void AddIntensityDistributionSamplePoint(vtkIdType sel_vol_id, double ras[3]);
 
   vtkKWPushButton           *ShowGraphButton;
   vtkKWPushButton           *ResetIntensityButton;

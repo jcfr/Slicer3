@@ -320,7 +320,7 @@ void vtkEMSegmentIntensityDistributionsStep::ShowUserInterface()
     this->IntensityDistributionManualSamplingList->Create();
     this->IntensityDistributionManualSamplingList->SetLabelPositionToTop();
     this->IntensityDistributionManualSamplingList->SetLabelText(
-      "Control+Click in a slice window to pick a sample.");
+      "left mouse Click in a slice window to pick a sample.");
     this->IntensityDistributionManualSamplingList->GetWidget()->
       HorizontalScrollbarVisibilityOff();
 
@@ -677,54 +677,20 @@ vtkEMSegmentIntensityDistributionsStep::IntensityDistributionCovarianceChangedCa
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentIntensityDistributionsStep::AddIntensityDistributionSamplePoint(
-  double ras[3])
+void vtkEMSegmentIntensityDistributionsStep::AddIntensityDistributionSamplePoint(vtkIdType sel_vol_id, double ras[3])
 {
-  // Since it is not a callback, make sure we are really allowed to add
-  // a sample point now
-
-  vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
-
-  if (!wizard_widget ||
-      wizard_widget->GetWizardWorkflow()->GetCurrentStep() != 
-      this)
-    {
-    return;
-    }
-
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
   if (!mrmlManager)
     {
     return;
     }
-  vtkEMSegmentAnatomicalStructureStep *anat_step = 
-    this->GetGUI()->GetAnatomicalStructureStep();
-  if (!anat_step)
-    {
-    return;
-    }
-  vtkKWTree *tree = anat_step->GetAnatomicalStructureTree()->GetWidget();
-  vtksys_stl::string sel_node;
-  vtkIdType sel_vol_id;
-  if (tree->HasSelection())
-    {
-    sel_node = tree->GetSelection();
-    sel_vol_id = tree->GetNodeUserDataAsInt(sel_node.c_str());
-    if (sel_node.size() &&
-        mrmlManager->GetTreeNodeIsLeaf(sel_vol_id) &&
-        mrmlManager->GetTreeNodeDistributionSpecificationMethod(sel_vol_id) ==
-        vtkEMSegmentMRMLManager::
-        DistributionSpecificationManuallySample)
-      {
-      mrmlManager->AddTreeNodeDistributionSamplePoint(sel_vol_id, ras);
-      this->DisplaySelectedNodeIntensityDistributionsCallback();
-      int nb_samples = 
-        mrmlManager->GetTreeNodeDistributionNumberOfSamples(sel_vol_id);
-      vtkKWMultiColumnList *list = 
-       this->IntensityDistributionManualSamplingList->GetWidget()->GetWidget();
-      list->SeeRow(nb_samples - 1);
-      }
-    }
+
+  mrmlManager->AddTreeNodeDistributionSamplePoint(sel_vol_id, ras);
+  this->DisplaySelectedNodeIntensityDistributionsCallback();
+  // Highlight sample 
+  int nb_samples = mrmlManager->GetTreeNodeDistributionNumberOfSamples(sel_vol_id);
+  vtkKWMultiColumnList *list =  this->IntensityDistributionManualSamplingList->GetWidget()->GetWidget();
+  list->SeeRow(nb_samples - 1);
 }
 
 //----------------------------------------------------------------------------
@@ -883,59 +849,74 @@ void vtkEMSegmentIntensityDistributionsStep::RemoveManualIntensitySamplingGUIObs
 }
 
 //---------------------------------------------------------------------------
+// This function is only called when IntensityDistribution is active 
 void vtkEMSegmentIntensityDistributionsStep::ProcessManualIntensitySamplingGUIEvents(
   vtkObject *caller,
   unsigned long event,
-  void *vtkNotUsed(callData)) 
+  void* vtkNotUsed(callData)) 
 {
   vtkSlicerInteractorStyle *s = vtkSlicerInteractorStyle::SafeDownCast(caller);
-
-  if (s && 
-      event == vtkCommand::LeftButtonPressEvent &&
-      s->GetInteractor()->GetControlKey())
+  if (!s ||  event != vtkCommand::LeftButtonPressEvent)
     {
-    // Slice GUI 0
+      return; 
+    }
 
-    vtkSlicerSliceGUI *sliceGUI0 = vtkSlicerApplicationGUI::SafeDownCast(
-      this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI("Red");
+  // Do not go any further if current event is not active - I think it is not called anyway but it cannot hurt 
+  vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
+   if (!wizard_widget || wizard_widget->GetWizardWorkflow()->GetCurrentStep() != this)
+    {
+    return;
+    }
 
-    vtkRenderWindowInteractor *rwi0 = sliceGUI0->GetSliceViewer()->
-      GetRenderWidget()->GetRenderWindowInteractor();
 
-    // Slice GUI 1
+  vtkEMSegmentAnatomicalStructureStep *anat_step =  this->GetGUI()->GetAnatomicalStructureStep();
+  if (!anat_step)
+    {
+    return;
+    }
 
-    vtkSlicerSliceGUI *sliceGUI1 = vtkSlicerApplicationGUI::SafeDownCast(
-      this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI("Yellow");
+  vtkKWTree *tree = anat_step->GetAnatomicalStructureTree()->GetWidget();
+  if (!tree->HasSelection())
+    {
+      return;
+    }
 
-    vtkRenderWindowInteractor *rwi1 = sliceGUI1->GetSliceViewer()->
-      GetRenderWidget()->GetRenderWindowInteractor();
+  vtksys_stl::string sel_node = tree->GetSelection();
+  if (!sel_node.size())
+    {
+      return;
+    }
+ 
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+  if (!mrmlManager)
+    {
+    return;
+    }
 
-    // Slice GUI 2
+ vtkIdType sel_vol_id = tree->GetNodeUserDataAsInt(sel_node.c_str());
+ if (!mrmlManager->GetTreeNodeIsLeaf(sel_vol_id) || mrmlManager->GetTreeNodeDistributionSpecificationMethod(sel_vol_id) != vtkEMSegmentMRMLManager::DistributionSpecificationManuallySample)
+   {
+     return;
+   }
 
-    vtkSlicerSliceGUI *sliceGUI2 = vtkSlicerApplicationGUI::SafeDownCast(
-      this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI("Green");
-
-    vtkRenderWindowInteractor *rwi2 =  sliceGUI2->GetSliceViewer()->
-      GetRenderWidget()->GetRenderWindowInteractor();
-
-    vtkSlicerSliceGUI *sliceGUI = NULL;
-    vtkRenderWindowInteractor *rwi = NULL;
-    if (s == rwi0->GetInteractorStyle())
-      {
-      sliceGUI = sliceGUI0;
-      rwi = rwi0;
-      }
-    else if (s == rwi1->GetInteractorStyle())
-      {
-      sliceGUI = sliceGUI1;
-      rwi = rwi1;
-      }
-    else if (s == rwi2->GetInteractorStyle())
-      {
-      sliceGUI = sliceGUI2;
-      rwi = rwi2;
-      }
-
+ 
+    vtkSlicerSliceGUI *sliceGUI = vtkSlicerApplicationGUI::SafeDownCast(this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI("Red");
+    vtkRenderWindowInteractor *rwi = sliceGUI->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
+    if (s != rwi->GetInteractorStyle())
+    {
+       sliceGUI = vtkSlicerApplicationGUI::SafeDownCast(this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI("Green");
+       rwi = sliceGUI->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
+       if (s != rwi->GetInteractorStyle())
+     {
+           sliceGUI = vtkSlicerApplicationGUI::SafeDownCast(this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI("Yellow");
+           rwi = sliceGUI->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
+           if (s != rwi->GetInteractorStyle())
+           {
+         return; 
+           }
+     }
+    }
+   
     int point[2];
     rwi->GetLastEventPosition(point);
     double inPt[4] = {point[0], point[1], 0, 1};
@@ -943,9 +924,8 @@ void vtkEMSegmentIntensityDistributionsStep::ProcessManualIntensitySamplingGUIEv
     vtkMatrix4x4 *matrix = sliceGUI->GetLogic()->GetSliceNode()->GetXYToRAS();
     matrix->MultiplyPoint(inPt, outPt); 
     double ras[3] = {outPt[0], outPt[1], outPt[2]};
-
-    this->AddIntensityDistributionSamplePoint(ras);
-    }
+    this->AddIntensityDistributionSamplePoint(sel_vol_id, ras);
+  
 }
 
 //----------------------------------------------------------------------------
