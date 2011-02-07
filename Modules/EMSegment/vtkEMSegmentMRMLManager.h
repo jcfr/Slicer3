@@ -462,11 +462,11 @@ public:
   virtual vtkMRMLEMSAtlasNode*  CloneAtlasNode(vtkMRMLEMSAtlasNode* target, const char* name);
   virtual vtkMRMLEMSVolumeCollectionNode*  CloneSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* target, const char* name);
 
-  virtual void SynchronizeTargetNode(const vtkMRMLEMSVolumeCollectionNode* templateNode,
+  virtual void SynchronizeTargetNode(vtkMRMLEMSVolumeCollectionNode* templateNode,
                                      vtkMRMLEMSVolumeCollectionNode* changingNode,
                                      const char* name);
-  virtual void SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode, vtkMRMLEMSAtlasNode* changingNode, const char* name);
-  virtual void SynchronizeSubParcellationNode(const vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name);
+  virtual void SynchronizeAtlasNode(vtkMRMLEMSAtlasNode* templateNode, vtkMRMLEMSAtlasNode* changingNode, const char* name);
+  virtual void SynchronizeSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name);
 
 
   virtual vtkIdType    MapMRMLNodeIDToVTKNodeID(const char* MRMLNodeID);

@@ -3120,17 +3120,10 @@ CloneTargetNode(vtkMRMLEMSVolumeCollectionNode* targetNode, const char* name)
   // clone the target node
   vtkMRMLEMSVolumeCollectionNode* clonedTarget = vtkMRMLEMSVolumeCollectionNode::New();
   clonedTarget->CopyWithScene(targetNode);
-  clonedTarget->SetName(name);
-  clonedTarget->CloneVolumes(targetNode);
-
-  // replace image names
-  for (int i = 0; i < clonedTarget->GetNumberOfVolumes(); ++i)
-  {    
-    vtksys_stl::stringstream volumeName;
-    volumeName << targetNode->GetNthVolumeNode(i)->GetName()
-               << " (" << name << ")";
-    clonedTarget->GetNthVolumeNode(i)->SetName(volumeName.str().c_str());
-  }
+  vtksys_stl::string postFix = vtksys_stl::string("(") +  vtksys_stl::string(name) + vtksys_stl::string(")");
+  vtksys_stl::string newName = vtksys_stl::string(targetNode->GetName()) + postFix; 
+  clonedTarget->SetName(newName.c_str());
+  clonedTarget->CloneVolumes(targetNode,postFix.c_str());
 
   // add the target node to the scene
   this->MRMLScene->AddNode(clonedTarget);
@@ -3144,7 +3137,7 @@ CloneTargetNode(vtkMRMLEMSVolumeCollectionNode* targetNode, const char* name)
 //----------------------------------------------------------------------------
 void
 vtkEMSegmentMRMLManager::
-SynchronizeTargetNode(const vtkMRMLEMSVolumeCollectionNode* templateNode, 
+SynchronizeTargetNode(vtkMRMLEMSVolumeCollectionNode* templateNode, 
                       vtkMRMLEMSVolumeCollectionNode* changingNode,
                       const char* name)
 {
@@ -3165,17 +3158,10 @@ SynchronizeTargetNode(const vtkMRMLEMSVolumeCollectionNode* templateNode,
     }
 
   // replace each image with a cloned image
-  changingNode->SetName(name);
-  changingNode->CloneVolumes(templateNode);
-
-  // replace image names
-  for (int i = 0; i < changingNode->GetNumberOfVolumes(); ++i)
-  {    
-    vtksys_stl::stringstream volumeName;
-    volumeName << templateNode->GetNthVolumeNode(i)->GetName()
-               << " (" << name << ")";
-    changingNode->GetNthVolumeNode(i)->SetName(volumeName.str().c_str());
-  }
+  vtksys_stl::string postFix = vtksys_stl::string("(") +  vtksys_stl::string(name) + vtksys_stl::string(")");
+  vtksys_stl::string newName =  templateNode->GetName() + postFix;
+  changingNode->SetName(newName.c_str());
+  changingNode->CloneVolumes(templateNode,postFix.c_str());
 }
 
 //----------------------------------------------------------------------------
@@ -3189,17 +3175,10 @@ vtkMRMLEMSAtlasNode* vtkEMSegmentMRMLManager::CloneAtlasNode(vtkMRMLEMSAtlasNode
   // clone the atlas node
   vtkMRMLEMSAtlasNode* clonedAtlas = vtkMRMLEMSAtlasNode::New();
   clonedAtlas->CopyWithScene(atlasNode);
-  clonedAtlas->SetName(name);
-  clonedAtlas->CloneVolumes(atlasNode);
-
-  // replace names
-  for (int i = 0; i < clonedAtlas->GetNumberOfVolumes(); ++i)
-  {
-    vtksys_stl::stringstream volumeName;
-    volumeName << atlasNode->GetNthVolumeNode(i)->GetName()
-               << " (" << name << ")";
-    clonedAtlas->GetNthVolumeNode(i)->SetName(volumeName.str().c_str());
-  }
+  vtksys_stl::string postFix = vtksys_stl::string("(") +  vtksys_stl::string(name) + vtksys_stl::string(")");
+  vtksys_stl::string newName = vtksys_stl::string(atlasNode->GetName()) + postFix; 
+  clonedAtlas->SetName(newName.c_str());
+  clonedAtlas->CloneVolumes(atlasNode,postFix.c_str());
 
   // add the atlas node to the scene
   this->MRMLScene->AddNode(clonedAtlas);
@@ -3221,17 +3200,10 @@ vtkMRMLEMSVolumeCollectionNode* vtkEMSegmentMRMLManager::CloneSubParcellationNod
   // clone the atlas node
   vtkMRMLEMSVolumeCollectionNode* clonedSubParcellation = vtkMRMLEMSVolumeCollectionNode::New();
   clonedSubParcellation->CopyWithScene(subParcellationNode);
-  clonedSubParcellation->SetName(name);
-  clonedSubParcellation->CloneVolumes(subParcellationNode);
-
-  // replace names
-  for (int i = 0; i < clonedSubParcellation->GetNumberOfVolumes(); ++i)
-  {
-    vtksys_stl::stringstream volumeName;
-    volumeName << subParcellationNode->GetNthVolumeNode(i)->GetName()
-               << " (" << name << ")";
-    clonedSubParcellation->GetNthVolumeNode(i)->SetName(volumeName.str().c_str());
-  }
+  vtksys_stl::string postFix = vtksys_stl::string("(") +  vtksys_stl::string(name) + vtksys_stl::string(")");
+  vtksys_stl::string newName = vtksys_stl::string(subParcellationNode->GetName()) + postFix; 
+  clonedSubParcellation->SetName(newName.c_str());
+  clonedSubParcellation->CloneVolumes(subParcellationNode,postFix.c_str());
 
   // add the subParcellation node to the scene
   this->MRMLScene->AddNode(clonedSubParcellation);
@@ -3245,7 +3217,7 @@ vtkMRMLEMSVolumeCollectionNode* vtkEMSegmentMRMLManager::CloneSubParcellationNod
 //----------------------------------------------------------------------------
 void
 vtkEMSegmentMRMLManager::
-SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode, 
+SynchronizeAtlasNode(vtkMRMLEMSAtlasNode* templateNode, 
                      vtkMRMLEMSAtlasNode* changingNode,
                      const char* name)
 {
@@ -3265,18 +3237,12 @@ SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode,
     this->GetMRMLScene()->RemoveNode(volumeNode);
     }
 
-  // replace each image with a cloned image
-  changingNode->SetName(name);
-  changingNode->CloneVolumes(templateNode);
+   // replace each image with a cloned image
+   vtksys_stl::string postFix = vtksys_stl::string("(") +  vtksys_stl::string(name) + vtksys_stl::string(")");
+   vtksys_stl::string newName = vtksys_stl::string(templateNode->GetName()) + postFix; 
 
-  // replace image names
-  for (int i = 0; i < changingNode->GetNumberOfVolumes(); ++i)
-  {    
-    vtksys_stl::stringstream volumeName;
-    volumeName << templateNode->GetNthVolumeNode(i)->GetName()
-               << " (" << name << ")";
-    changingNode->GetNthVolumeNode(i)->SetName(volumeName.str().c_str());
-  }
+   changingNode->SetName(newName.c_str());
+   changingNode->CloneVolumes(templateNode,postFix.c_str());
 
   // copy over number of training samples
   changingNode->SetNumberOfTrainingSamples
@@ -3285,7 +3251,7 @@ SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode,
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentMRMLManager::SynchronizeSubParcellationNode(const vtkMRMLEMSVolumeCollectionNode* templateNode,  vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name)
+void vtkEMSegmentMRMLManager::SynchronizeSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* templateNode,  vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name)
 {
   if (templateNode == NULL || changingNode == NULL)
     {
@@ -3304,17 +3270,10 @@ void vtkEMSegmentMRMLManager::SynchronizeSubParcellationNode(const vtkMRMLEMSVol
     }
 
   // replace each image with a cloned image
-  changingNode->SetName(name);
-  changingNode->CloneVolumes(templateNode);
-
-  // replace image names
-  for (int i = 0; i < changingNode->GetNumberOfVolumes(); ++i)
-  {    
-    vtksys_stl::stringstream volumeName;
-    volumeName << templateNode->GetNthVolumeNode(i)->GetName()
-               << " (" << name << ")";
-    changingNode->GetNthVolumeNode(i)->SetName(volumeName.str().c_str());
-  }
+  vtksys_stl::string postFix = vtksys_stl::string("(") +  vtksys_stl::string(name) + vtksys_stl::string(")");
+  vtksys_stl::string newName = vtksys_stl::string(templateNode->GetName()) + postFix; 
+  changingNode->SetName(newName.c_str());
+  changingNode->CloneVolumes(templateNode,postFix.c_str());
 
 }
 

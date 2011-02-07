@@ -23,7 +23,7 @@ public:
 
   // Description:
   // clone the volumes of rhs
-  virtual void CloneVolumes(const vtkMRMLNode *node);
+  virtual void CloneVolumes(const vtkMRMLNode *node, const char* addPostFix);
 
   // Description:
   // Get node XML tag name (like Volume, Model)

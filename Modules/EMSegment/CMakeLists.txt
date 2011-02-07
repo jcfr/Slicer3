@@ -152,9 +152,9 @@ set(EMSegment_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Tasks/vtkCTHandBoneClass.cxx
 
   # module
+  vtkEMSegmentMRMLManager.cxx 
   vtkEMSegmentGUI.cxx
   vtkEMSegmentLogic.cxx 
-  vtkEMSegmentMRMLManager.cxx 
   # wizard
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentParametersSetStep.cxx

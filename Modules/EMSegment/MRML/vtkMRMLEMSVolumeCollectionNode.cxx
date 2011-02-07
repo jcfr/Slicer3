@@ -77,7 +77,7 @@ void vtkMRMLEMSVolumeCollectionNode::ReadXMLAttributes(const char** attrs)
 }
 
 
-void vtkMRMLEMSVolumeCollectionNode::CloneVolumes(const vtkMRMLNode *rhs)
+void vtkMRMLEMSVolumeCollectionNode::CloneVolumes(const vtkMRMLNode *rhs, const char* addPostFix)
 {
   const vtkMRMLEMSVolumeCollectionNode* node = 
     (const vtkMRMLEMSVolumeCollectionNode*) rhs;
@@ -99,8 +99,15 @@ void vtkMRMLEMSVolumeCollectionNode::CloneVolumes(const vtkMRMLNode *rhs)
       volumeLogic->Delete();
       return;
     }
- 
-    vtkMRMLScalarVolumeNode* clonedVolume = volumeLogic->CloneVolume(this->GetScene(),vnode, vnode->GetName());
+
+    vtksys_stl::string cloneName(vnode->GetName());
+    
+    if (addPostFix) 
+      {
+    cloneName +=  vtksys_stl::string(addPostFix);
+      }
+    // If you change name later than it is not correctly shown in the volume list of the viewers  
+    vtkMRMLScalarVolumeNode* clonedVolume = volumeLogic->CloneVolume(this->GetScene(),vnode, cloneName.c_str());
     this->SetNthNodeID(i, clonedVolume->GetID());
   }
   volumeLogic->Delete();
