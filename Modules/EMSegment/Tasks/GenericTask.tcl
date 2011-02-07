@@ -73,7 +73,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        set CMD "mktemp [$GUI GetTemporaryDirectory]/XXXXXX"
+        set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX\""
         
         set basefilename [ eval exec $CMD ]
 
@@ -103,7 +103,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable GUI
     variable LOGIC
 
-        set CMD "mktemp [$GUI GetTemporaryDirectory]/XXXXXX"
+        set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX\""
 
         set basefilename [ eval exec $CMD ]
 
@@ -132,7 +132,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set dirname ""
 
         if { $type == "xform" } {
-            set CMD "mktemp -d [$GUI GetTemporaryDirectory]/XXXXXX"
+            set CMD "mktemp -d \"[$GUI GetTemporaryDirectory]/XXXXXX\""
             set dirname $basedirname.xform
         } else {
             PrintError "CreateDirName: Unknown type"
@@ -693,9 +693,9 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
         set CMDdeform "${PLUGINS_DIR}/BSplineToDeformationField"
-        set CMDdeform "$CMDdeform --refImage $tmpReferenceVolumeFileName" 
-        set CMDdeform "$CMDdeform --tfm $tmpTransformFileName"
-        set CMDdeform "$CMDdeform --defImage $deformationFieldFilename"
+        set CMDdeform "$CMDdeform --refImage \"$tmpReferenceVolumeFileName\"" 
+        set CMDdeform "$CMDdeform --tfm \"$tmpTransformFileName\""
+        set CMDdeform "$CMDdeform --defImage \"$deformationFieldFilename\""
 
         $LOGIC PrintText "TCL: Executing $CMDdeform"
         catch { eval exec $CMDdeform } errmsg
@@ -729,12 +729,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         set tmpInputVolumeFileName [WriteImageDataToTemporaryDir $inputVolumeNode ]
         if { $tmpInputVolumeFileName == "" } { return 1 }
         set RemoveFiles "$tmpInputVolumeFileName"
-        set CMD "$CMD --inputVolume $tmpInputVolumeFileName"
+        set CMD "$CMD --inputVolume \"$tmpInputVolumeFileName\""
 
         set tmpReferenceVolumeFileName [WriteImageDataToTemporaryDir $referenceVolumeNode ]
         if { $tmpReferenceVolumeFileName == "" } { return 1 }
-        set RemoveFiles "$RemoveFiles $tmpReferenceVolumeFileName"
-        set CMD "$CMD --referenceVolume $tmpReferenceVolumeFileName"
+        set RemoveFiles "$RemoveFiles \"$tmpReferenceVolumeFileName\""
+        set CMD "$CMD --referenceVolume \"$tmpReferenceVolumeFileName\""
 
         if { $transformationNode == "" } {
             PrintError "BRAINSResampleCLI: transformation node not correctly defined"
@@ -745,16 +745,16 @@ namespace eval EMSegmenterPreProcessingTcl {
             # use a BSpline transformation
             set tmpTransformFileName [WriteDataToTemporaryDir $transformationNode Transform]
             if { $tmpTransformFileName == "" } { return 1 }
-            set RemoveFiles "$RemoveFiles $tmpTransformFileName"
-            set CMD "$CMD --warpTransform $tmpTransformFileName"
+            set RemoveFiles "$RemoveFiles \"$tmpTransformFileName\""
+            set CMD "$CMD --warpTransform \"$tmpTransformFileName\""
         } else {
             #            set DFVolumeFileName [WriteImageDataToTemporaryDir $transformationNode]
             #            if { $DFVolumeFileName == "" } { return 1 }
-            #            set RemoveFiles "$RemoveFiles $DFVolumeFileName"
-            #            set CMD "$CMD --deformationVolume $DFVolumeFileName"
+            #            set RemoveFiles "$RemoveFiles \"$DFVolumeFileName\""
+            #            set CMD "$CMD --deformationVolume \"$DFVolumeFileName\""
 
             # it is a filename
-            set CMD "$CMD --deformationVolume $transformationNode"
+            set CMD "$CMD --deformationVolume \"$transformationNode\""
 
         }
 
@@ -764,9 +764,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
         set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
         if { $outVolumeFileName == "" } { return 1 }
-        set CMD "$CMD --outputVolume $outVolumeFileName"
+        set CMD "$CMD --outputVolume \"$outVolumeFileName\""
 
-        set CMD "$CMD --defaultValue $backgroundLevel"
+        set CMD "$CMD --defaultValue \"$backgroundLevel\""
 
         set CMD "$CMD --pixelType"
         set referenceVolume [$referenceVolumeNode GetImageData]
@@ -795,8 +795,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Write results back to scene
         # This does not work $::slicer3::ApplicationLogic RequestReadData [$outVolumeNode GetID] $outVolumeFileName 0 1
-        ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume
-        file delete -force $outVolumeFileName
+        ReadDataFromDisk $outVolumeNode \"$outVolumeFileName\" Volume
+        file delete -force \"$outVolumeFileName\"
 
         return 0
     }
@@ -851,23 +851,23 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
             set linearTransformFileName [CreateFileName "LinearTransform"]
-            if { $linearTransformFileName == "" } {
+            if { \"$linearTransformFileName\" == "" } {
                 PrintError "it is empty"
             }
 
             set oArgument [CreateFileName "Volume"]
-            if { $oArgument == "" } {
+            if { \"$oArgument\" == "" } {
                 PrintError "it is empty"
             }
 
             set deformationfield [CreateFileName "Volume"]
-            if { $deformationfield == "" } {
+            if { \"$deformationfield\" == "" } {
                 PrintError "it is empty"
             }
 
 
-            set fixedVolumeFileName $tmpInputFileName
-            set movingVolumeFileName $non_skull_stripped_atlas
+            set fixedVolumeFileName \"$tmpInputFileName\"
+            set movingVolumeFileName \"$non_skull_stripped_atlas\"
 
             set outputVolumeFileName [CreateFileName "Volume"]
             if { $outputVolumeFileName == "" } {
@@ -876,10 +876,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # LINEAR REGISTRATION
             set CMD "${PLUGINS_DIR}/BRAINSFit"
-            set CMD "$CMD --fixedVolume $fixedVolumeFileName"
-            set CMD "$CMD --movingVolume $movingVolumeFileName"
-            set CMD "$CMD --outputVolume $outputVolumeFileName"
-            set CMD "$CMD --outputTransform $linearTransformFileName"
+            set CMD "$CMD --fixedVolume \"$fixedVolumeFileName\""
+            set CMD "$CMD --movingVolume \"$movingVolumeFileName\""
+            set CMD "$CMD --outputVolume \"$outputVolumeFileName\""
+            set CMD "$CMD --outputTransform \"$linearTransformFileName\""
             set CMD "$CMD --initializeTransformMode useMomentsAlign --transformType Rigid,Affine"
 
             $LOGIC PrintText "TCL: Executing $CMD"
@@ -889,10 +889,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # NON-LINEAR REGISTRATION
             set CMD "${PLUGINS_DIR}/BRAINSDemonWarp"
-            set CMD "$CMD -m $movingVolumeFileName"
-            set CMD "$CMD -f $fixedVolumeFileName"
-            set CMD "$CMD --initializeWithTransform $linearTransformFileName"
-            set CMD "$CMD -o $oArgument -O $deformationfield"
+            set CMD "$CMD -m \"$movingVolumeFileName\""
+            set CMD "$CMD -f \"$fixedVolumeFileName\""
+            set CMD "$CMD --initializeWithTransform \"$linearTransformFileName\""
+            set CMD "$CMD -o $oArgument -O \"$deformationfield\""
             #set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
             # fast - for debugging
             set CMD "$CMD -i 1,5,2,1,1 -n 5 -e --numberOfMatchPoints 16"
@@ -904,10 +904,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # WARP(=Resample) mask
             set CMD "${PLUGINS_DIR}/BRAINSResample"
-            set CMD "$CMD --inputVolume $atlas_mask"
-            set CMD "$CMD --referenceVolume $fixedVolumeFileName"
-            set CMD "$CMD --deformationVolume $deformationfield"
-            set CMD "$CMD --outputVolume $atlas_mask_deformed"
+            set CMD "$CMD --inputVolume \"$atlas_mask\""
+            set CMD "$CMD --referenceVolume \"$fixedVolumeFileName\""
+            set CMD "$CMD --deformationVolume \"$deformationfield\""
+            set CMD "$CMD --outputVolume \"$atlas_mask_deformed\""
             #        set CMD "$CMD --defaultValue $backgroundLevel"
             set CMD "$CMD --pixelType"
 
@@ -939,7 +939,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # MASK input volume
             set CMD "${PLUGINS_DIR}/Mask"
-            set CMD "$CMD --label 1 --replace 0 $tmpInputFileName $atlas_mask_deformed $outputVolumeFileName"
+            set CMD "$CMD --label 1 --replace 0 \"$tmpInputFileName\" \"$atlas_mask_deformed\" \"$outputVolumeFileName\""
 
             $LOGIC PrintText "TCL: Executing $CMD"
             catch { eval exec $CMD } errmsg
@@ -985,11 +985,11 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # WARP(=Resample) mask
             set CMD "${PLUGINS_DIR}/BRAINSResample"
-            set CMD "$CMD --inputVolume $tmpAtlasFileName"
-            set CMD "$CMD --referenceVolume $fixedVolumeFileName"
-            set CMD "$CMD --deformationVolume $deformationfield"
-            set CMD "$CMD --outputVolume $outputAtlasVolumeFileName"
-            #        set CMD "$CMD --defaultValue $backgroundLevel"
+            set CMD "$CMD --inputVolume \"$tmpAtlasFileName\""
+            set CMD "$CMD --referenceVolume \"$fixedVolumeFileName\""
+            set CMD "$CMD --deformationVolume \"$deformationfield\""
+            set CMD "$CMD --outputVolume \"$outputAtlasVolumeFileName\""
+            #        set CMD "$CMD --defaultValue \"$backgroundLevel\""
             set CMD "$CMD --pixelType"
 
 
@@ -1219,7 +1219,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: =========================================="
 
         set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
-        set CMD "${PLUGINS_DIR}/BRAINSFit "
+        set CMD "\"${PLUGINS_DIR}/BRAINSFit\""
 
         if { $fixedVolumeNode == "" || [$fixedVolumeNode GetImageData] == "" } {
             PrintError "AlignInputImages: fixed volume node not correctly defined"
@@ -1227,12 +1227,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         set tmpFileName [WriteDataToTemporaryDir $fixedVolumeNode Volume]
-        set RemoveFiles "$tmpFileName"
+        set RemoveFiles "\"$tmpFileName\""
 
         if { $tmpFileName == "" } {
             return ""
         }
-        set CMD "$CMD --fixedVolume $tmpFileName"
+        set CMD "$CMD --fixedVolume \"$tmpFileName\""
 
         if { $movingVolumeNode == "" || [$movingVolumeNode GetImageData] == "" } {
             PrintError "AlignInputImages: moving volume node not correctly defined"
@@ -1243,7 +1243,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set RemoveFiles "$RemoveFiles $tmpFileName"
 
         if { $tmpFileName == "" } { return 1 }
-        set CMD "$CMD --movingVolume $tmpFileName"
+        set CMD "$CMD --movingVolume \"$tmpFileName\""
 
         #  still define this
         if { $outVolumeNode == "" } {
@@ -1255,9 +1255,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         if { $outVolumeFileName == "" } {
             return ""
         }
-        set CMD "$CMD --outputVolume $outVolumeFileName"
+        set CMD "$CMD --outputVolume \"$outVolumeFileName\""
 
-        set RemoveFiles "$RemoveFiles $outVolumeFileName"
+        set RemoveFiles "$RemoveFiles \"$outVolumeFileName\""
 
         # Do no worry about fileExtensions=".mat" type="linear" reference="movingVolume"
         # these are set in vtkCommandLineModuleLogic.cxx automatically
@@ -1268,7 +1268,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set transID [$transformNode GetID]
             set outTransformFileName [CreateTemporaryFileNameForNode $transformNode]
             $transformNode Delete
-            set CMD "$CMD --bsplineTransform $outTransformFileName --maxBSplineDisplacement 10.0"
+            set CMD "$CMD --bsplineTransform \"$outTransformFileName\" --maxBSplineDisplacement 10.0"
         } else {
             set transformNode [vtkMRMLLinearTransformNode New]
             $transformNode SetName "EMSegmentLinearTransform"
@@ -1277,9 +1277,9 @@ namespace eval EMSegmenterPreProcessingTcl {
             set outTransformFileName [CreateTemporaryFileNameForNode $transformNode]
 
             $transformNode Delete
-            set CMD "$CMD --outputTransform $outTransformFileName"
+            set CMD "$CMD --outputTransform \"$outTransformFileName\""
         }
-        set RemoveFiles "$RemoveFiles $outTransformFileName"
+        set RemoveFiles "$RemoveFiles \"$outTransformFileName\""
 
         # -- still define this End
 
@@ -1616,7 +1616,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # Need to download file to temp directory
-        set CMD "mktemp [$GUI GetTemporaryDirectory]/XXXXXX"
+        set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX\""
         catch { set basefilename [ eval exec $CMD ] } errmsg
         set NAME "_[file tail $URI]"
         set filename $basefilename$NAME
@@ -1819,14 +1819,14 @@ namespace eval EMSegmenterPreProcessingTcl {
             if { $tmpFileName == "" } {
                 return 1
             }
-            set CMD "$CMD --inputimage $tmpFileName"
+            set CMD "$CMD --inputimage \"$tmpFileName\""
 
             # set tmpFileName [WriteDataToTemporaryDir $subjectICCMaskNode Volume ]
             # set RemoveFiles "$RemoveFiles \"$tmpFileName\""
             # if { $tmpFileName == "" } { 
             # return 1
             #     }
-            # set CMD "$CMD --maskimag $tmpFileName"
+            # set CMD "$CMD --maskimag \"$tmpFileName\""
 
             # create a new node for our output-list
             set outputVolumeNode [CreateVolumeNode $inputVolumeNode "[$inputVolumeNode GetName]_N4corrected"]
@@ -1849,7 +1849,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # if { $outbiasVolumeFileName == "" } {
             #     return 1
             # }
-            # set CMD "$CMD --outputbiasfield $outbiasVolumeFileName"
+            # set CMD "$CMD --outputbiasfield \"$outbiasVolumeFileName\""
 
             # execute algorithm
             $LOGIC PrintText "TCL: Executing $CMD"
