@@ -795,7 +795,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Write results back to scene
         # This does not work $::slicer3::ApplicationLogic RequestReadData [$outVolumeNode GetID] $outVolumeFileName 0 1
-        ReadDataFromDisk $outVolumeNode \"$outVolumeFileName\" Volume
+        ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume
         file delete -force \"$outVolumeFileName\"
 
         return 0
@@ -1070,7 +1070,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         if { $tmpFileName == "" } {
             return 1
         }
-        set CMD "$CMD --floating $tmpFileName"
+        set CMD "$CMD --floating \"$tmpFileName\""
 
         set tmpFileName [WriteDataToTemporaryDir $referenceVolumeNode Volume]
         set RemoveFiles "$RemoveFiles $tmpFileName"
