@@ -100,8 +100,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     #
     proc CreateFileName { type } {
-    variable GUI
-    variable LOGIC
+        variable GUI
+        variable LOGIC
 
         set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX\""
 
@@ -126,17 +126,17 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     #
     proc CreateDirName { type } {
-    variable GUI
-    variable LOGIC
+        variable GUI
+        variable LOGIC
 
         set dirname ""
 
         if { $type == "xform" } {
-            set CMD "mktemp -d \"[$GUI GetTemporaryDirectory]/XXXXXX\""
-            set dirname $basedirname.xform
+            set CMD "mktemp -d \"[$GUI GetTemporaryDirectory]/XXXXXX.xform\""
+            set dirname [ eval exec $CMD ]
         } else {
             PrintError "CreateDirName: Unknown type"
-    }
+        }
 
         $LOGIC PrintText "TCL: Create directory: $dirname"
 
@@ -814,7 +814,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: == BRAINSSkullStripper"
 
         set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
-   
+        
         # initialize
         set inputNode_SkullStripped ""
         set atlasNode_SkullStripped ""
@@ -961,7 +961,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: List of volume nodes: $inputNode_SkullStripped"
 
 
-###
+            ###
             set atlasVolumeNode [$atlasNode GetNthVolumeNode $i]
             set atlasVolumeData [$atlasVolumeNode GetImageData]
             if { $atlasVolumeData == "" } {
@@ -981,7 +981,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             if { $outputAtlasVolumeFileName == "" } {
                 PrintError "it is empty"
             }
-#
+            #
 
             # WARP(=Resample) mask
             set CMD "${PLUGINS_DIR}/BRAINSResample"
@@ -1017,7 +1017,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
 
-#
+            #
 
 
             # create a new node for our output-list
@@ -1051,19 +1051,19 @@ namespace eval EMSegmenterPreProcessingTcl {
         set CMD "[$::slicer3::Application GetExtensionsInstallPath]"
         set svnrevision [$::slicer3::Application GetSvnRevision]
         if { $svnrevision == "" } {
-            set CMD "$CMD/15383"
+            set CMD "$CMD/15964"
         } else {
             set CMD "$CMD/$svnrevision"
         }
-        set CMD "$CMD/CMTK4Slicer/warp"
+        set CMD "$CMD/CMTK4Slicer/reformatx"
 
-        set bgValue 0
-        set CMD "$CMD -v --linear --pad-out $bgValue"
+        #set bgValue 0
+        #set CMD "$CMD -v --linear --pad-out $bgValue"
 
 
         set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
         if { $outVolumeFileName == "" } { return 1 }
-        set CMD "$CMD -o $outVolumeFileName"
+        set CMD "$CMD -o \"$outVolumeFileName\""
 
         set tmpFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
         set RemoveFiles "$tmpFileName"
@@ -1075,9 +1075,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         set tmpFileName [WriteDataToTemporaryDir $referenceVolumeNode Volume]
         set RemoveFiles "$RemoveFiles $tmpFileName"
         if { $tmpFileName == "" } { return 1 }
-        set CMD "$CMD $tmpFileName"
+        set CMD "$CMD \"$tmpFileName\""
 
-        set CMD "$CMD $transformDirName"
+        set CMD "$CMD \"$transformDirName\""
 
         $LOGIC PrintText "TCL: Executing $CMD"
         catch { eval exec $CMD } errmsg
@@ -1415,11 +1415,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         set CMD "[$::slicer3::Application GetExtensionsInstallPath]"
         set svnrevision [$::slicer3::Application GetSvnRevision]
         if { $svnrevision == "" } {
-            set CMD "$CMD/15383"
+            set CMD "$CMD/15964"
         } else {
             set CMD "$CMD/$svnrevision"
         }
-        set CMD "$CMD/CMTK4Slicer/registration "
+        set CMD "$CMD/CMTK4Slicer/registration"
 
         set CMD "$CMD --verbose --initxlate --exploration 8.0 --dofs 6 --dofs 9"
 
@@ -1452,10 +1452,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set outTransformDirName $outLinearTransformDirName
 
-        set CMD "$CMD -o $outLinearTransformDirName"
-        set CMD "$CMD --write-reformatted $outVolumeFileName"
-        set CMD "$CMD $fixedVolumeFileName"
-        set CMD "$CMD $movingVolumeFileName"
+        set CMD "$CMD -o \"$outLinearTransformDirName\""
+        set CMD "$CMD --write-reformatted \"$outVolumeFileName\""
+        set CMD "$CMD \"$fixedVolumeFileName\""
+        set CMD "$CMD \"$movingVolumeFileName\""
 
 
         ## execute affine registration
@@ -1469,7 +1469,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set CMD "[$::slicer3::Application GetExtensionsInstallPath]"
             set svnrevision [$::slicer3::Application GetSvnRevision]
             if { $svnrevision == "" } {
-                set CMD "$CMD/15383"
+                set CMD "$CMD/15964"
             } else {
                 set CMD "$CMD/$svnrevision"
             }
@@ -1479,15 +1479,20 @@ namespace eval EMSegmenterPreProcessingTcl {
             set outNonLinearTransformDirName [CreateDirName "xform"]
             set outTransformDirName $outNonLinearTransformDirName
 
-            set CMD "$CMD --delay-refine --grid-spacing 40 --refine 4"
-            set CMD "$CMD --exact-spacing --energy-weight 5e-2"
-            set CMD "$CMD --exploration 16 --accuracy 0.1 --coarsest 1.5"
-
-            set CMD "$CMD --initial $outLinearTransformDirName"
-            set CMD "$CMD -o $outNonLinearTransformDirName"
-            set CMD "$CMD --write-reformatted $outVolumeFileName"
-            set CMD "$CMD $fixedVolumeFileName"
-            set CMD "$CMD $movingVolumeFileName"
+            if {$fastFlag} {
+                set CMD "$CMD --grid-spacing 40 --refine 1"
+                set CMD "$CMD --energy-weight 5e-2"
+                set CMD "$CMD --accuracy 1 --coarsest 1.5"
+            } else {
+                set CMD "$CMD --delay-refine --grid-spacing 40 --refine 4"
+                set CMD "$CMD --exact-spacing --energy-weight 5e-2"
+                set CMD "$CMD --exploration 16 --accuracy 0.1 --coarsest 1.5"
+            }
+            set CMD "$CMD --initial \"$outLinearTransformDirName\""
+            set CMD "$CMD -o \"$outNonLinearTransformDirName\""
+            set CMD "$CMD --write-reformatted \"$outVolumeFileName\""
+            set CMD "$CMD \"$fixedVolumeFileName\""
+            set CMD "$CMD \"$movingVolumeFileName\""
 
             ## execute bspline registration
 
@@ -2038,25 +2043,21 @@ namespace eval EMSegmenterPreProcessingTcl {
         set transformNodeType ""  
 
         if { $UseBRAINS } {
-            # 0 =  debugging 
-            if {1} {
-                set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
-                if { $BSplineNode == "" } {
-                    PrintError "RegisterAtlas: BSpline Transform node is null"
-                    return 1
-                }
-                set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
-                if { $transformNode == "" } {
-                    PrintError "RegisterAtlas: Deformation Field Transform node is null"
-                    return 1
-                }
-            } else {
-                # for debugging 
-                set transformNode /home/pohl/Slicer3pohl/4879_vtkMRMLScalarVolumeNode36.nrrd
+            set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
+            if { $BSplineNode == "" } {
+                PrintError "RegisterAtlas: BSpline Transform node is null"
+                return 1
+            }
+            set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
+            if { $transformNode == "" } {
+                PrintError "RegisterAtlas: Deformation Field Transform node is null"
+                return 1
             }
             set transformNodeType "DeformVolumeTransform"  
         } else {
             set bSplineFlag 1
+            #TODO
+            set fastFlag 1
             set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $bSplineFlag $fastFlag]
             if { $transformDirName == "" } {
                 PrintError "RegisterAtlas: Transform node is null"
@@ -2083,7 +2084,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
         }
- 
+        
         # Sub parcelation
         for { set i 0 } { $i < [$outputSubParcellationNode GetNumberOfVolumes] } { incr i } {
             $LOGIC PrintText "TCL: Resampling subparcallation map  $i ..."
