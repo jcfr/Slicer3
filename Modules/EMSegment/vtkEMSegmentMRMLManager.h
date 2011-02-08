@@ -345,6 +345,17 @@ public:
   virtual void      SetRegistrationInterpolationType(int interpolationType);
   int GetInterpolationTypeFromString(const char* type);
 
+  //BTX
+  enum
+    {
+    CMTK = 0,
+    BRAINS = 1,
+    };
+  //ETX
+  virtual int       GetRegistrationPackageType();
+  virtual void      SetRegistrationPackageType(int packageType);
+  int               GetPackageTypeFromString(const char* type);
+
   virtual vtkIdType GetRegistrationAtlasVolumeID();
   virtual void      SetRegistrationAtlasVolumeID(vtkIdType volumeID);
 

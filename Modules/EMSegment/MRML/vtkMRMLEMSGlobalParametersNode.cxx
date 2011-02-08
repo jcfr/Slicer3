@@ -46,6 +46,7 @@ vtkMRMLEMSGlobalParametersNode::vtkMRMLEMSGlobalParametersNode()
   this->RegistrationAffineType        = 0;
   this->RegistrationDeformableType    = 0;
   this->RegistrationInterpolationType = 0; // !!! this needs to be specified
+  this->RegistrationPackageType       = 0;
 
   this->RegistrationAtlasVolumeKey.clear(); 
   this->RegistrationTargetVolumeKey = NULL;
@@ -137,6 +138,8 @@ void vtkMRMLEMSGlobalParametersNode::WriteXML(ostream& of, int nIndent)
        << this->RegistrationDeformableType << "\" ";
     of << indent << " RegistrationInterpolationType=\"" 
        << this->RegistrationInterpolationType << "\" ";
+    of << indent << " RegistrationPackageType=\""
+       << this->RegistrationPackageType << "\" ";
 
     of << indent << " RegistrationAtlasVolumeKey=\""; 
     for (vtkIdType i =0 ; i < (vtkIdType) this->RegistrationAtlasVolumeKey.size(); i++)
@@ -251,6 +254,12 @@ void vtkMRMLEMSGlobalParametersNode::ReadXMLAttributes(const char** attrs)
       ss << val;
       ss >> this->RegistrationInterpolationType;
       }
+    else if (!strcmp(key, "RegistrationPackageType"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << val;
+      ss >> this->RegistrationPackageType;
+      }
     else if (!strcmp(key, "RegistrationAtlasVolumeKey"))
       {
         vtksys_stl::stringstream ss;
@@ -361,6 +370,7 @@ void vtkMRMLEMSGlobalParametersNode::Copy(vtkMRMLNode *rhs)
   this->SetRegistrationAffineType(node->RegistrationAffineType);
   this->SetRegistrationDeformableType(node->RegistrationDeformableType);
   this->SetRegistrationInterpolationType(node->RegistrationInterpolationType);
+  this->SetRegistrationPackageType(node->RegistrationPackageType);
 
   this->RegistrationAtlasVolumeKey = node->RegistrationAtlasVolumeKey;
   this->SetRegistrationTargetVolumeKey(node->RegistrationTargetVolumeKey);
@@ -421,6 +431,8 @@ void vtkMRMLEMSGlobalParametersNode::PrintSelf(ostream& os,
      << this->RegistrationDeformableType << "\n";
   os << indent << "RegistrationInterpolationType: " 
      << this->RegistrationInterpolationType << "\n";
+  os << indent << "RegistrationPackageType: "
+     << this->RegistrationPackageType << "\n";
 
   os << indent << "RegistrationAtlasVolumeKey: " ;
   for (vtkIdType i = 0 ; i < (vtkIdType) this->RegistrationAtlasVolumeKey.size(); i++ ) 

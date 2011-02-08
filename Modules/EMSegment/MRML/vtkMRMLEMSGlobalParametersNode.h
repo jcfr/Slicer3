@@ -66,6 +66,9 @@ public:
   vtkSetMacro(RegistrationInterpolationType, int);
   vtkGetMacro(RegistrationInterpolationType, int);
 
+  vtkSetMacro(RegistrationPackageType, int);
+  vtkGetMacro(RegistrationPackageType, int);
+
   void SetRegistrationAtlasVolumeKey(const char* key) {this->SetRegistrationAtlasVolumeKey(0,key);}
   void SetRegistrationAtlasVolumeKey(vtkIdType inputID, const char* key) ;
 
@@ -97,7 +100,7 @@ public:
   vtkSetStringMacro(WorkingDirectory);
 
   //
-  // intensity normlaization parameters
+  // intensity normalization parameters
   //
 
   vtkSetMacro(EnableTargetToTargetRegistration, int);
@@ -142,6 +145,7 @@ protected:
   int                                 RegistrationAffineType;
   int                                 RegistrationDeformableType;
   int                                 RegistrationInterpolationType;
+  int                                 RegistrationPackageType;
   char*                               TaskTclFileName;
   char*                               TaskPreProcessingSetting; 
   int                                 EnableTargetToTargetRegistration;

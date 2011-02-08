@@ -30,6 +30,7 @@ vtkEMSegmentRegistrationParametersStep::vtkEMSegmentRegistrationParametersStep()
   this->RegistrationParametersAffineMenuButton        = NULL;
   this->RegistrationParametersDeformableMenuButton    = NULL;
   this->RegistrationParametersInterpolationMenuButton = NULL;
+  this->RegistrationParametersPackageMenuButton       = NULL;
   this->RegistrationAtlasInputFrame = NULL;
 }
 
@@ -65,6 +66,13 @@ vtkEMSegmentRegistrationParametersStep::~vtkEMSegmentRegistrationParametersStep(
     this->RegistrationParametersInterpolationMenuButton->SetParent(NULL);
     this->RegistrationParametersInterpolationMenuButton->Delete();
     this->RegistrationParametersInterpolationMenuButton = NULL;
+    }
+
+  if (this->RegistrationParametersPackageMenuButton)
+    {
+    this->RegistrationParametersPackageMenuButton->SetParent(NULL);
+    this->RegistrationParametersPackageMenuButton->Delete();
+    this->RegistrationParametersPackageMenuButton = NULL;
     }
 
   if (this->RegistrationParametersFrame)
@@ -276,6 +284,62 @@ void vtkEMSegmentRegistrationParametersStep::ShowUserInterface()
       SetEnabled(mrmlManager->HasGlobalParametersNode() ? enabled : 0);
     }
 
+
+    // Create the package menu button
+
+    if (!this->RegistrationParametersPackageMenuButton)
+      {
+      this->RegistrationParametersPackageMenuButton =
+        vtkKWMenuButtonWithLabel::New();
+      }
+    if (!this->RegistrationParametersPackageMenuButton->IsCreated())
+      {
+      this->RegistrationParametersPackageMenuButton->SetParent(
+        this->RegistrationParametersFrame->GetFrame());
+      this->RegistrationParametersPackageMenuButton->Create();
+      this->RegistrationParametersPackageMenuButton->GetWidget()->
+        SetWidth(EMSEG_MENU_BUTTON_WIDTH);
+      this->RegistrationParametersPackageMenuButton->GetLabel()->
+        SetWidth(EMSEG_WIDGETS_LABEL_WIDTH);
+      this->RegistrationParametersPackageMenuButton->
+        SetLabelText("Package:");
+      this->RegistrationParametersPackageMenuButton->SetBalloonHelpString(
+        "Select interpolation package.");
+
+      sprintf(buffer, "RegistrationPackageCallback %d",
+              vtkEMSegmentMRMLManager::CMTK);
+      this->RegistrationParametersPackageMenuButton->
+        GetWidget()->GetMenu()->AddRadioButton("CMTK", this, buffer);
+      sprintf(buffer, "RegistrationPackageCallback %d",
+              vtkEMSegmentMRMLManager::BRAINS);
+      this->RegistrationParametersPackageMenuButton->
+        GetWidget()->GetMenu()->AddRadioButton("BRAINS", this, buffer);
+      }
+
+
+    this->Script(
+      "pack %s -side top -anchor nw -padx 2 -pady 2",
+      this->RegistrationParametersPackageMenuButton->GetWidgetName());
+
+      {
+      vtksys_stl::string value;
+      int v = mrmlManager->GetRegistrationPackageType();
+      if (v == vtkEMSegmentMRMLManager::CMTK)
+        {
+        value = "CMTK";
+        }
+      else if (v == vtkEMSegmentMRMLManager::BRAINS)
+        {
+        value = "BRAINS";
+        }
+      this->RegistrationParametersPackageMenuButton->
+        GetWidget()->SetValue(value.c_str());
+      this->RegistrationParametersPackageMenuButton->
+        SetEnabled(mrmlManager->HasGlobalParametersNode() ? enabled : 0);
+      }
+
+
+
     {
       int v = mrmlManager->GetRegistrationAffineType();
       vtksys_stl::string value = RegistrationTypeValueToString(v);
@@ -342,6 +406,19 @@ void vtkEMSegmentRegistrationParametersStep::RegistrationInterpolationCallback(
   if (mrmlManager)
     {
     mrmlManager->SetRegistrationInterpolationType(type);
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentRegistrationParametersStep::RegistrationPackageCallback(
+  int type)
+{
+  // The package type has changed because of user interaction
+
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+  if (mrmlManager)
+    {
+    mrmlManager->SetRegistrationPackageType(type);
     }
 }
 

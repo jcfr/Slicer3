@@ -2455,6 +2455,27 @@ SetRegistrationInterpolationType(int interpolationType)
     }
 }
 
+//----------------------------------------------------------------------------
+int
+vtkEMSegmentMRMLManager::
+GetRegistrationPackageType()
+{
+  return this->GetGlobalParametersNode() ?
+    this->GetGlobalParametersNode()->GetRegistrationPackageType() : 0;
+}
+
+//----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
+SetRegistrationPackageType(int packageType)
+{
+  if (this->GetGlobalParametersNode())
+    {
+    this->GetGlobalParametersNode()->
+      SetRegistrationPackageType(packageType);
+    }
+}
+
 //----------------------------------------------------------------------------  
 int
 vtkEMSegmentMRMLManager::
@@ -4599,6 +4620,22 @@ void vtkEMSegmentMRMLManager::SetTreeNodeDistributionLogCovarianceWithCorrection
         }
      }
    node->SetLogCovarianceCorrection(rowIndex,columnIndex, value);
+}
+
+//----------------------------------------------------------------------------
+int  vtkEMSegmentMRMLManager::GetPackageTypeFromString(const char* type)
+{
+  if (!strcmp(type,"CMTK"))
+    {
+      return vtkEMSegmentMRMLManager::CMTK;
+    }
+
+  if (!strcmp(type,"BRAINS"))
+    {
+      return vtkEMSegmentMRMLManager::BRAINS;
+    }
+
+  return -1;
 }
 
 //----------------------------------------------------------------------------
