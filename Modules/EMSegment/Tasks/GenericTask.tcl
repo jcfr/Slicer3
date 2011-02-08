@@ -267,6 +267,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable outputAtlasNode
         variable inputSubParcellationNode
         variable outputSubParcellationNode
+        variable preferredRegistrationPackage
+        variable selectedRegistrationPackage
+        variable CMTKFOLDER
         
         set GUI $::slicer3::Application
         if { $GUI == "" } {
@@ -295,7 +298,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: == Init Variables"
         $LOGIC PrintText "TCL: =========================================="
         
-
+        
         if { $initManager == "" } {
             set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
             if {$MOD == ""} {
@@ -340,7 +343,39 @@ namespace eval EMSegmenterPreProcessingTcl {
         } else {
             set preGUI $initPreGUI
         }
+        
+        if { [$mrmlManager GetRegistrationPackageType] == [$mrmlManager GetPackageTypeFromString CMTK] } {
+            set preferredRegistrationPackage CMTK
+            $LOGIC PrintText "TCL: User selected CMTK"
+        } elseif { [$mrmlManager GetRegistrationPackageType] == [$mrmlManager GetPackageTypeFromString BRAINS] } {
+            set preferredRegistrationPackage BRAINS
+            $LOGIC PrintText "TCL: User selected BRAINS"
+        }
 
+        switch -exact "$preferredRegistrationPackage" {
+            "CMTK" {
+                # search for directories , sorted with the highest svn first
+                set dirs [lsort -decreasing [glob -directory [$::slicer3::Application GetExtensionsInstallPath] -type d * ] ]
+                foreach dir $dirs {
+                    set filename $dir\/CMTK4Slicer/registration
+                    if { [file exists $filename] } {
+                        set CMTKFOLDER  $dir\/CMTK4Slicer
+                        $LOGIC PrintText "TCL: Found CMTK in $dir\/CMTK4Slicer"
+                        set selectedRegistrationPackage "CMTK"
+                        break
+                    }
+                }
+            }
+            "BRAINS" {
+                set selectedRegistrationPackage "BRAINS"
+            }
+            default {
+                PrintError "registration package not known"
+                set selectedRegistrationPackage "BRAINS"
+                return 1
+            }
+        }
+        
         # All other Variables are defined when running the pipeline as they are the volumes
         # Define alignedTargetNode when initializing pipeline
         set alignedTargetNode ""
@@ -1043,19 +1078,13 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformDirName } {
         variable SCENE
         variable LOGIC
+        variable CMTKFOLDER
+        
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Resample Image CLI : CMTKResampleCLI "
         $LOGIC PrintText "TCL: =========================================="
 
-
-        set CMD "[$::slicer3::Application GetExtensionsInstallPath]"
-        set svnrevision [$::slicer3::Application GetSvnRevision]
-        if { $svnrevision == "" } {
-            set CMD "$CMD/15964"
-        } else {
-            set CMD "$CMD/$svnrevision"
-        }
-        set CMD "$CMD/CMTK4Slicer/reformatx"
+        set CMD "$CMTKFOLDER/reformatx"
 
         #set bgValue 0
         #set CMD "$CMD -v --linear --pad-out $bgValue"
@@ -1180,6 +1209,9 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     proc ReadDataFromDisk { Node FileName Type } {
         variable SCENE
+        variable LOGIC
+
+        $LOGIC PrintText "TCL: ReadDataFromDisk: Try to read $FileName"
         if { [file exists $FileName] == 0 } {
             PrintError "ReadDataFromDisk: $FileName does not exist"
             return 0
@@ -1365,6 +1397,8 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc CMTKRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel bSplineFlag fastFlag} {
         variable SCENE
         variable LOGIC
+        variable CMTKFOLDER
+        
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Image Alignment CommandLine: $bSplineFlag "
         $LOGIC PrintText "TCL: =========================================="
@@ -1409,19 +1443,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
         set RemoveFiles "$RemoveFiles $outVolumeFileName"
 
-
         ## CMTK specific arguments
 
-        set CMD "[$::slicer3::Application GetExtensionsInstallPath]"
-        set svnrevision [$::slicer3::Application GetSvnRevision]
-        if { $svnrevision == "" } {
-            set CMD "$CMD/15964"
-        } else {
-            set CMD "$CMD/$svnrevision"
-        }
-        set CMD "$CMD/CMTK4Slicer/registration"
+        set CMD "$CMTKFOLDER/registration"
 
-        set CMD "$CMD --verbose --initxlate --exploration 8.0 --dofs 6 --dofs 9"
+        set CMD "$CMD --initxlate --exploration 8.0 --dofs 6 --dofs 9"
 
         if {$fastFlag} {
             set CMD "$CMD --accuracy 0.5"
@@ -1466,15 +1492,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         if { $bSplineFlag } {
 
-            set CMD "[$::slicer3::Application GetExtensionsInstallPath]"
-            set svnrevision [$::slicer3::Application GetSvnRevision]
-            if { $svnrevision == "" } {
-                set CMD "$CMD/15964"
-            } else {
-                set CMD "$CMD/$svnrevision"
-            }
-            set CMD "$CMD/CMTK4Slicer/warp"
-
+            set CMD "$CMTKFOLDER/warp"
+            
             # BSpline
             set outNonLinearTransformDirName [CreateDirName "xform"]
             set outTransformDirName $outNonLinearTransformDirName
@@ -1915,7 +1934,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable outputAtlasNode
         variable inputSubParcellationNode
         variable outputSubParcellationNode
-        variable UseBRAINS
+        variable selectedRegistrationPackage
 
 
         set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
@@ -2040,30 +2059,39 @@ namespace eval EMSegmenterPreProcessingTcl {
         set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingAtlasVolumeNode]
         set transformDirName "" 
         set transformNode ""
-        set transformNodeType ""  
-
-        if { $UseBRAINS } {
-            set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
-            if { $BSplineNode == "" } {
-                PrintError "RegisterAtlas: BSpline Transform node is null"
+        set transformNodeType ""
+        
+        switch -exact "$selectedRegistrationPackage" {
+            "CMTK" {
+                set bSplineFlag 1
+                #TODO
+                set fastFlag 1
+                set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $bSplineFlag $fastFlag]
+                if { $transformDirName == "" } {
+                    PrintError "RegisterAtlas: Transform node is null"
+                    return 1
+                }
+                set transformNodeType "CMTKTransform"  
+            }
+            "BRAINS" {
+                set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
+                if { $BSplineNode == "" } {
+                    PrintError "RegisterAtlas: BSpline Transform node is null"
+                    return 1
+                }
+                $LOGIC PrintText "TCL: RegisterAtlas: calcDFVolumeNode START"
+                set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
+                $LOGIC PrintText "TCL: RegisterAtlas: calcDFVolumeNode DONE, succesfull? FIXME, TODO"
+                if { $transformNode == "" } {
+                    PrintError "RegisterAtlas: Deformation Field Transform node is null"
+                    return 1
+                }
+                set transformNodeType "DeformVolumeTransform"  
+            }
+            default {
+                PrintError "registration package not known"
                 return 1
             }
-            set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
-            if { $transformNode == "" } {
-                PrintError "RegisterAtlas: Deformation Field Transform node is null"
-                return 1
-            }
-            set transformNodeType "DeformVolumeTransform"  
-        } else {
-            set bSplineFlag 1
-            #TODO
-            set fastFlag 1
-            set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $bSplineFlag $fastFlag]
-            if { $transformDirName == "" } {
-                PrintError "RegisterAtlas: Transform node is null"
-                return 1
-            }
-            set transformNodeType "CMTKTransform"  
         }
         
 

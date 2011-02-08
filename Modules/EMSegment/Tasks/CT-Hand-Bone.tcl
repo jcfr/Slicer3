@@ -28,7 +28,6 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable CheckButtonSize 3
     variable VolumeMenuButtonSize 0
     variable TextEntrySize 0
-    variable UseBRAINS 1
 
     # Check Button
     variable atlasAlignedFlagID 0
