@@ -23,7 +23,7 @@ Version:   $Revision: 1.2 $
 
 #include "vtkMRMLIGTLConnectorNode.h"
 
-#include "vtkZFrameRobotToImageRegistration2.h"
+#include "vtkZFrameRobotToImageRegistration.h"
 
 #include "vtkProstateNavTargetDescriptor.h"
 
@@ -1039,7 +1039,7 @@ const char* vtkMRMLTransPerinealProstateTemplateNode::AddNeedleModel(const char*
 //----------------------------------------------------------------------------
 int vtkMRMLTransPerinealProstateTemplateNode::PerformRegistration(vtkMRMLScalarVolumeNode* volumeNode)
 {
-  vtkZFrameRobotToImageRegistration2* registration = vtkZFrameRobotToImageRegistration2::New();
+  vtkZFrameRobotToImageRegistration* registration = vtkZFrameRobotToImageRegistration::New();
   registration->SetFiducialVolume(volumeNode);
 
   vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(this->Scene->GetNodeByID(this->GetZFrameTransformNodeID()));
@@ -1056,7 +1056,7 @@ int vtkMRMLTransPerinealProstateTemplateNode::PerformRegistration(vtkMRMLScalarV
 //----------------------------------------------------------------------------
 int vtkMRMLTransPerinealProstateTemplateNode::PerformRegistration(vtkMRMLScalarVolumeNode* volumeNode, int param1, int param2)
 {
-  vtkZFrameRobotToImageRegistration2* registration = vtkZFrameRobotToImageRegistration2::New();
+  vtkZFrameRobotToImageRegistration* registration = vtkZFrameRobotToImageRegistration::New();
   registration->SetFiducialVolume(volumeNode);
 
   vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(this->Scene->GetNodeByID(this->GetZFrameTransformNodeID()));

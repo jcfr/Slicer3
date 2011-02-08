@@ -18,8 +18,8 @@
  */
 
 
-#ifndef __vtkZFrameRobotToImageRegistration2_h
-#define __vtkZFrameRobotToImageRegistration2_h
+#ifndef __vtkZFrameRobotToImageRegistration_h
+#define __vtkZFrameRobotToImageRegistration_h
 
 #include "vtkObject.h"
 #include "vtkProstateNavWin32Header.h" 
@@ -33,13 +33,13 @@
 #include "newmatap.h"
 #include "newmat.h"
 
-class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration2 : public vtkRobotToImageRegistration
+class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration : public vtkRobotToImageRegistration
 {
 
  public:
 
-  static vtkZFrameRobotToImageRegistration2 *New();
-  vtkTypeRevisionMacro(vtkZFrameRobotToImageRegistration2,vtkRobotToImageRegistration);
+  static vtkZFrameRobotToImageRegistration *New();
+  vtkTypeRevisionMacro(vtkZFrameRobotToImageRegistration,vtkRobotToImageRegistration);
 
   void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -48,8 +48,8 @@ class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration2 : public vtkRobo
   void SetSliceRange(int param1, int param2);
 
  protected:
-  vtkZFrameRobotToImageRegistration2();
-  ~vtkZFrameRobotToImageRegistration2();
+  vtkZFrameRobotToImageRegistration();
+  ~vtkZFrameRobotToImageRegistration();
 
   //BTX
   typedef float  Matrix4x4[4][4];
@@ -114,4 +114,4 @@ class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration2 : public vtkRobo
 };
 
 
-#endif //__vtkZFrameRobotToImageRegistration2_h
+#endif //__vtkZFrameRobotToImageRegistration_h
