@@ -16,7 +16,8 @@ class vtkKWLabelWithLabel;
 class vtkKWMenuButtonWithLabel;
 class vtkKWEntryWithLabel;
 class vtkSlicerApplication;
-#include <vector>
+#include <vtkstd/vector>
+#include <vtkstd/string>
 
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentStep : public vtkKWWizardStep

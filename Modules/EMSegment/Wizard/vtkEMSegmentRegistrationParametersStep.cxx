@@ -509,7 +509,7 @@ void vtkEMSegmentRegistrationParametersStep::RegistrationAtlasImageCallback(vtkI
 //----------------------------------------------------------------------------
 vtkstd::string vtkEMSegmentRegistrationParametersStep::RegistrationTypeValueToString(int v)
 {
-    vtksys_stl::string value = "None";
+    vtkstd::string value = "None";
     if (v == vtkEMSegmentMRMLManager::RegistrationFast)
       {
       value = "Fast";
