@@ -45,6 +45,9 @@ class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration : public vtkRobot
 
   virtual int DoRegistration();
 
+  vtkSetObjectMacro( ZFrameBaseOrientation, vtkMatrix4x4 );
+  vtkGetObjectMacro( ZFrameBaseOrientation, vtkMatrix4x4 );
+
   void SetSliceRange(int param1, int param2);
 
  protected:
@@ -54,12 +57,15 @@ class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration : public vtkRobot
   //BTX
   typedef float  Matrix4x4[4][4];
 
+
   // Methods related to finding the fiducial artifacts in the MR images.
   void Init(int xsize, int ysize);
+
+
   int  ZFrameRegistration(vtkMRMLScalarVolumeNode* volumeNode,
                           vtkMRMLLinearTransformNode* transformNode, int slindex_s, int slindex_e);
   int  ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
-                                    //Matrix& srcImage, int xsize, int ysize);
+                                    float ZquaternionBase[4],
                                     Matrix& srcImage, int dimension[3], float spacing[3]);
   bool LocateFiducials(Matrix &image, int xsize, int ysize, 
                        int Zcoordinates[7][2], float tZcoordinates[7][2]);
@@ -92,6 +98,8 @@ class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration : public vtkRobot
   //ETX
   
  protected:
+
+  vtkMatrix4x4 * ZFrameBaseOrientation;
 
   short  *InputImage;
   int    imgxsize;

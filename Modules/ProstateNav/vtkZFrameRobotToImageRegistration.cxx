@@ -49,14 +49,18 @@ vtkCxxRevisionMacro(vtkZFrameRobotToImageRegistration, "$Revision: 8267 $");
 //---------------------------------------------------------------------------
 vtkZFrameRobotToImageRegistration::vtkZFrameRobotToImageRegistration()
 {
-  SliceRangeLow = -1;
-  SliceRangeHigh = -1;
+  this->SliceRangeLow = -1;
+  this->SliceRangeHigh = -1;
+  this->ZFrameBaseOrientation = vtkMatrix4x4::New();
+  this->ZFrameBaseOrientation->Identity();
 }
 
 
 //---------------------------------------------------------------------------
 vtkZFrameRobotToImageRegistration::~vtkZFrameRobotToImageRegistration()
 {
+  this->ZFrameBaseOrientation->Delete();
+  this->ZFrameBaseOrientation = NULL;
 }
 
 
@@ -222,10 +226,7 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
 
   //simond debug frame delay
   // Get the image size attributes from the event.
-  /*
-  xsize=event.getAttribute(string("xsize"),0);
-  ysize=event.getAttribute(string("ysize"),0);
-  */
+
   vtkImageData* image = volumeNode->GetImageData();
   int dimensions[3];
   image->GetDimensions(dimensions);
@@ -285,6 +286,25 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
 
   float position[3];
   float quaternion[4];
+
+  // Default orientation of Z-frame
+  float ZquaternionBase[4];
+  Matrix4x4 ZmatrixBase;
+
+  ZmatrixBase[0][0] = (float) this->ZFrameBaseOrientation->GetElement(0, 0);
+  ZmatrixBase[1][0] = (float) this->ZFrameBaseOrientation->GetElement(1, 0);
+  ZmatrixBase[2][0] = (float) this->ZFrameBaseOrientation->GetElement(2, 0);
+  ZmatrixBase[0][1] = (float) this->ZFrameBaseOrientation->GetElement(0, 1);
+  ZmatrixBase[1][1] = (float) this->ZFrameBaseOrientation->GetElement(1, 1);
+  ZmatrixBase[2][1] = (float) this->ZFrameBaseOrientation->GetElement(2, 1);
+  ZmatrixBase[0][2] = (float) this->ZFrameBaseOrientation->GetElement(0, 2);
+  ZmatrixBase[1][2] = (float) this->ZFrameBaseOrientation->GetElement(1, 2);
+  ZmatrixBase[2][2] = (float) this->ZFrameBaseOrientation->GetElement(2, 2);
+  ZmatrixBase[0][3] = (float) this->ZFrameBaseOrientation->GetElement(0, 3);
+  ZmatrixBase[1][3] = (float) this->ZFrameBaseOrientation->GetElement(1, 3);
+  ZmatrixBase[2][3] = (float) this->ZFrameBaseOrientation->GetElement(2, 3);
+
+  MatrixToQuaternion(ZmatrixBase, ZquaternionBase);
 
   for (int slindex = slindex_s; slindex < slindex_e; slindex ++)
     {
@@ -356,7 +376,10 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
     spacing[0] = psi;
     spacing[1] = psj;
     spacing[2] = psk;
-    if (ZFrameRegistrationQuaternion(position, quaternion, SourceImage, dimensions, spacing))
+
+    if (ZFrameRegistrationQuaternion(position, quaternion,
+                                     ZquaternionBase,
+                                     SourceImage, dimensions, spacing))
       {
       P[0] += position[0];
       P[1] += position[1];
@@ -537,11 +560,13 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
 
 
 int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
+                                                                    float ZquaternionBase[4],
                                                                     Matrix& srcImage, int dimension[3], float spacing[3])
 {
 
   Column3Vector Zposition;
   Quaternion    Zorientation;
+  Quaternion    ZorientationBase;
   static Column3Vector Iposition;
   static Quaternion Iorientation;
   int           Zcoordinates[7][2];
@@ -550,24 +575,19 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float positi
   //float         pixel_size=FORCE_FOV/FORCE_SIZEX;
 
   // Get current position and orientation of the imaging plane.
-  // SPL OpenTracker events always contain Position and Orientation attributes.
   Iposition.setX( position[0] );
   Iposition.setY( position[1] );
   Iposition.setZ( position[2] );
+
   Iorientation.setX( quaternion[0] );
   Iorientation.setY( quaternion[1] );
   Iorientation.setZ( quaternion[2] );
   Iorientation.setW( quaternion[3] );
 
-  /*
-  FILE* fp;
-  fp = fopen("dump_before.txt", "w");
-  for(i=0; i<xsize; i++)
-    for(j=0; j<ysize; j++)
-      fprintf(fp, "%.2f\n", SourceImage.element(i,j));
-  fclose(fp);
-  */
-
+  ZorientationBase.setX( ZquaternionBase[0] );
+  ZorientationBase.setY( ZquaternionBase[1] );
+  ZorientationBase.setZ( ZquaternionBase[2] );
+  ZorientationBase.setW( ZquaternionBase[3] );
 
   // Find the 7 Z-frame fiducial intercept artifacts in the image.
   std::cerr << "ZTrackerTransform - Searching fiducials...\n" << std::endl;
@@ -625,6 +645,9 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float positi
 
   if (frame_lock)
     {
+    // Calculate rotation from the base orientation
+    Zorientation = Zorientation / ZorientationBase;
+
     position[0] = Zposition.getX();
     position[1] = Zposition.getY();
     position[2] = Zposition.getZ();
