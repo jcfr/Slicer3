@@ -43,6 +43,36 @@ set ::WINDOWS "win32"
 set ::WINDOWS_64 "win64"
 
 #
+# set the compiler and bitness variables for the sake of versioner.tcl
+#
+if { ![info exists ::come_from_versioner]} {
+    set have_compiler [info exists ::GETBUILDTEST(compiler)]
+    puts "have_compiler from GETBUILDTEST value: $have_compiler"
+    if {$have_compiler == 1} {
+        set ::GENLIB(compiler) $::GETBUILDTEST(compiler)
+        set ::env(COMPILER) $::GETBUILDTEST(compiler)
+    } else { 
+        set ::GETBUILDTEST(compiler) $::GENLIB(compiler)
+        set ::env(COMPILER) $::GENLIB(compiler)
+    }
+    set have_bitness [info exists GETBUILDTEST(bitness)]
+    if {$have_bitness == 1} {
+        set GENLIB(bitness) $::GETBUILDTEST(bitness)
+        set ::env(BITNESS) $::GETBUILDTEST(bitness)
+    } else {
+        set GETBUILDTEST(bitness) $::GENLIB(bitness)
+        set ::env(BITNESS) $::GENLIB(bitness)
+    }
+    puts "PRE-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
+} else {
+    set ::GETBUILDTEST(compiler) $::env(COMPILER)
+    set ::GENLIB(compiler) $::env(COMPILER)
+    set ::GETBUILDTEST(bitness) $::env(BITNESS)
+    set ::GENLIB(bitness) $::env(BITNESS)
+    puts "POST-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
+}
+
+#
 # set the default locations for the main components
 #
 switch $::tcl_platform(os) {
@@ -378,8 +408,14 @@ switch $::tcl_platform(os) {
         if { $::USE_SYSTEM_PYTHON } {
           error "need to define system python path for $::tcl_platform(os)"
         }
-        set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/python.exe
-        set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/python26.lib
+
+        if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
+            set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/python.exe
+            set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/python26.lib
+        } else {
+            set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/python.exe
+            set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/python26.lib
+        }
 
         set ::PYTHON_INCLUDE $::PYTHON_BIN_DIR/include
 
@@ -411,49 +447,12 @@ switch $::tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::Slicer3_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.so
         set ::GENERATOR "Unix Makefiles"
 
-        #
-        # set the compiler and bitness variables for the sake of versioner.tcl
-        #
-        if { ![info exists ::come_from_versioner]} {
-            set have_compiler [info exists ::GETBUILDTEST(compiler)]
-            puts "have_compiler from GETBUILDTEST value: $have_compiler"
-            if {$have_compiler == 1} {
-              set ::GENLIB(compiler) $::GETBUILDTEST(compiler)
-              set ::env(COMPILER) $::GETBUILDTEST(compiler)
-            } else { 
-              set ::GETBUILDTEST(compiler) $::GENLIB(compiler)
-              set ::env(COMPILER) $::GENLIB(compiler)
-            }
-            set have_bitness [info exists GETBUILDTEST(bitness)]
-            if {$have_bitness == 1} {
-                set GENLIB(bitness) $::GETBUILDTEST(bitness)
-                set ::env(BITNESS) $::GETBUILDTEST(bitness)
-            } else {
-                set GETBUILDTEST(bitness) $::GENLIB(bitness)
-                set ::env(BITNESS) $::GENLIB(bitness)
-            }
-            puts "PRE-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
-           } else {
-              set ::GETBUILDTEST(compiler) $::env(COMPILER)
-              set ::GENLIB(compiler) $::env(COMPILER)
-              set ::GETBUILDTEST(bitness) $::env(BITNESS)
-              set ::GENLIB(bitness) $::env(BITNESS)
-              puts "POST-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
-           }
+        
 
 # The next section is for the sake of versioner.tcl :)
 # We're in trouble here, as versioner.tcl sources slicer.variables.tcl again, but at that time we don't have 
 # neither of the above two ...(compiler) variables set, as they are not on the global namespace.
 # So we set an empty variable for the first "run" of slicer_variables.tcl, and then we change it.
-
-
-#        set have_versioner_compiler [info exists ::GETBUILDTEST(compiler)]
-#        puts "have_compiler from GETBUILDTEST value: $have_compiler"
-#        if {$have_compiler == 1} {
-#          set ::GENLIB(compiler) $::GETBUILDTEST(compiler)
-#        } else { 
-#          set ::GETBUILDTEST(compiler) $::GENLIB(compiler)
-#        }        
 
         if {$::GETBUILDTEST(compiler) == "suncc" || $::GENLIB(compiler) == "suncc"} {
           set ::COMPILER_PATH "/ufsbckp2/Studio/solstudioex1006/bin"
@@ -544,16 +543,6 @@ switch $::tcl_platform(os) {
         # different windows machines say different things, so assume
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
-        
-        set have_bitness [info exists GETBUILDTEST(bitness)]
-        if {$have_bitness == 1} {
-          set GENLIB(bitness) $::GETBUILDTEST(bitness)
-          set ::env(BITNESS) $::GETBUILDTEST(bitness)
-        } else {
-          set GETBUILDTEST(bitness) $::GENLIB(bitness)
-          set ::env(BITNESS) $::GENLIB(bitness)
-        }
-
 
         set ::VTKSLICERBASE_BUILD_LIB $::Slicer3_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBase.lib
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::Slicer3_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBaseTCL.lib
