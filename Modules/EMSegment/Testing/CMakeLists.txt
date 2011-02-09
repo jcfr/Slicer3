@@ -716,6 +716,169 @@ if(NOT DISABLE_CXX_TESTING)
   endif(EMSEG_RUN_COMPARE_TESTS)
 
 
+#====CMTK============================
+
+  # Task test - small
+  add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_small_MRIHumanBrain_T1_aligned.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+
+
+  # Task test - small
+  add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrainParcellation_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain-Parcellation_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/small_MRIHumanBrainParcellation_T1.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainParcellation_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrainParcellation_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - small
+  add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrainFullParcellation_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain-Full-Parcellation_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainFullParcellation_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrainFullParcellation_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - small
+  add_test(
+    EMSegCL_Task_CMTK_NonHumanPrimate_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_Non-Human-Primate_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/small_NonHumanPrimate_T1.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_small_NonHumanPrimate_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_NonHumanPrimate_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+#==================================
+
+#====BRAINS============================
+
+  # Task test - small
+  add_test(
+    EMSegCL_Task_BRAINS_MRIHumanBrain_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/BRAINS_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_small_MRIHumanBrain_T1_aligned.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_BRAINS_MRIHumanBrain_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+
+
+  # Task test - small
+  add_test(
+    EMSegCL_Task_BRAINS_MRIHumanBrainParcellation_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/BRAINS_MRI-Human-Brain-Parcellation_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/small_MRIHumanBrainParcellation_T1.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_small_MRIHumanBrainParcellation_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_BRAINS_MRIHumanBrainParcellation_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - small
+  add_test(
+    EMSegCL_Task_BRAINS_MRIHumanBrainFullParcellation_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/BRAINS_MRI-Human-Brain-Full-Parcellation_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_small_MRIHumanBrainFullParcellation_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_BRAINS_MRIHumanBrainFullParcellation_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - small
+  add_test(
+    EMSegCL_Task_BRAINS_NonHumanPrimate_small
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/BRAINS_Non-Human-Primate_small.mrml
+    --targetVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/small_NonHumanPrimate_T1.nrrd
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_small_NonHumanPrimate_T1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_BRAINS_NonHumanPrimate_small
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+#==================================
+
+
 
   # Does it fail elegently when a bogus result standard is specified?
   add_test(

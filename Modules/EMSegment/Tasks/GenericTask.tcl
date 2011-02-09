@@ -73,23 +73,22 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX\""
-        
-        set basefilename [ eval exec $CMD ]
-
         set filename ""
+        set NAME ""
 
         if { [$Node GetClassName] == "vtkMRMLScalarVolumeNode" } {
             set NAME "_[$Node GetID].nrrd"
-            set filename $basefilename$NAME
         } elseif { [$Node GetClassName] == "vtkMRMLScene"  } {
             set NAME "_[file tail [$Node GetURL]]"
-            set filename $basefilename$NAME
         } else {
             #TODO,FIXME: need a elseif here
             # Transform node - check also for bspline
             set NAME "_[$Node GetID].mat"
-            set filename $basefilename$NAME
+        }
+
+        if { $NAME != ""} {       
+            set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX$NAME\""
+            set filename [ eval exec $CMD ]
         }
 
         $LOGIC PrintText "TCL: Create file: $filename"
@@ -103,22 +102,24 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX\""
-
-        set basefilename [ eval exec $CMD ]
-
         set filename ""
+        set NAME ""
 
         if { $type == "Volume" } {
-            set filename $basefilename.nrrd
+            set NAME .nrrd
         } elseif { $type == "LinearTransform"  } {
-            set filename $basefilename.mat
+            set NAME .mat
         } elseif { $type == "BSplineTransform"  } {
-            set filename $basefilename.mat
+            set NAME .mat
         } elseif { $type == "Text"  } {
-            set filename $basefilename.txt
+            set NAME .txt
         }
-
+        
+        if { $NAME != ""} {   
+            set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX$NAME\""
+            set filename [ eval exec $CMD ]
+        }
+        
         $LOGIC PrintText "TCL: Create file: $filename"
 
         return $filename
@@ -350,8 +351,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         } elseif { [$mrmlManager GetRegistrationPackageType] == [$mrmlManager GetPackageTypeFromString BRAINS] } {
             set preferredRegistrationPackage BRAINS
             $LOGIC PrintText "TCL: User selected BRAINS"
+        } else {
+            PrintError "InitVariables: RegistrationPackage [$mrmlManager GetRegistrationPackageType] not defined"
+            return 1        
         }
-
+        
+        set selectedRegistrationPackage ""
         switch -exact "$preferredRegistrationPackage" {
             "CMTK" {
                 # search for directories , sorted with the highest svn first
@@ -364,6 +369,10 @@ namespace eval EMSegmenterPreProcessingTcl {
                         set selectedRegistrationPackage "CMTK"
                         break
                     }
+                }
+                if { $selectedRegistrationPackage != "CMTK" } {
+                    $LOGIC PrintText "TCL: WARNING: Couldn't find CMTK"
+                    set selectedRegistrationPackage "BRAINS"
                 }
             }
             "BRAINS" {
@@ -476,7 +485,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 set outVolumeNode $outputVolumeNode($i)
                 set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingVolumeNode]
 
-                # Using BRAINS suite
+                # Using BRAINS suite, TODO: is affine=off here?
                 set transformNode [BRAINSRegistration $fixedVolumeNode $movingVolumeNode $outVolumeNode $backgroundLevel "Rigid" 0]
                 if { $transformNode == "" } {
                     PrintError "Transform node is null"
@@ -1243,9 +1252,18 @@ namespace eval EMSegmenterPreProcessingTcl {
     }
 
     # returns a transformation Node
-    proc BRAINSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel RegistrationType fastFlag } {
+    proc BRAINSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel deformableType affineType } {
         variable SCENE
         variable LOGIC
+        variable mrmlManager
+        
+        set RegistrationType "Rigid ScaleVersor3D ScaleSkewVersor3D Affine"
+        
+        if { $deformableType != 0 } {
+            set RegistrationType "${RegistrationType} BSpline"
+        }
+        
+        
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Image Alignment CommandLine: $RegistrationType "
         $LOGIC PrintText "TCL: =========================================="
@@ -1342,11 +1360,18 @@ namespace eval EMSegmenterPreProcessingTcl {
             set CMD "$CMD --use${TYPE}"
         }
 
-        if {$fastFlag} {
+        
+        if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
             set CMD "$CMD --numberOfSamples 100000  --splineGridSize 7,5,12 --projectedGradientTolerance  1e-4"
-        } else {
+        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
+            set CMD "$CMD --numberOfSamples 1000 --splineGridSize 7,5,12 --projectedGradientTolerance 1e-1"
+        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
             set CMD "$CMD --numberOfSamples 100000 --splineGridSize 28,20,24 --projectedGradientTolerance 1e-5"
+        } else {
+            PrintError "BRAINSRegistration: Unknown affineType: $affineType"
+            return ""
         }
+        
 
         set CMD "$CMD --numberOfIterations 1500 --minimumStepLength 0.005 --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0  --fixedVolumeTimeIndex 0 --movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --maximumStepLength 0.2 --failureExitCode -1 --debugNumberOfThreads -1 --debugLevel 0 --costFunctionConvergenceFactor 1e+9 --costMetric MMI"
 
@@ -1394,13 +1419,14 @@ namespace eval EMSegmenterPreProcessingTcl {
         return [$SCENE GetNodeByID $transID]
     }
 
-    proc CMTKRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel bSplineFlag fastFlag} {
+    proc CMTKRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel deformableType affineType} {
         variable SCENE
         variable LOGIC
         variable CMTKFOLDER
+        variable mrmlManager
         
         $LOGIC PrintText "TCL: =========================================="
-        $LOGIC PrintText "TCL: == Image Alignment CommandLine: $bSplineFlag "
+        $LOGIC PrintText "TCL: == Image Alignment CommandLine: $deformableType "
         $LOGIC PrintText "TCL: =========================================="
 
         ## check arguments
@@ -1449,11 +1475,18 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set CMD "$CMD --initxlate --exploration 8.0 --dofs 6 --dofs 9"
 
-        if {$fastFlag} {
+
+        if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
             set CMD "$CMD --accuracy 0.5"
-        } else {
+        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
+            set CMD "$CMD --accuracy 5"
+        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
             set CMD "$CMD --accuracy 0.1"
+        } else {
+            PrintError "CMTKRegistration: Unknown affineType: $affineType"
+            return ""
         }
+        
 
         #        # Write Parameters
         #        set fixedVolume [$fixedVolumeNode GetImageData]
@@ -1490,7 +1523,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         catch { eval exec $CMD } errmsg
         $LOGIC PrintText "TCL: $errmsg"
 
-        if { $bSplineFlag } {
+        if { $deformableType != 0 } {
 
             set CMD "$CMTKFOLDER/warp"
             
@@ -1498,15 +1531,22 @@ namespace eval EMSegmenterPreProcessingTcl {
             set outNonLinearTransformDirName [CreateDirName "xform"]
             set outTransformDirName $outNonLinearTransformDirName
 
-            if {$fastFlag} {
+
+            if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
                 set CMD "$CMD --grid-spacing 40 --refine 1"
                 set CMD "$CMD --energy-weight 5e-2"
                 set CMD "$CMD --accuracy 1 --coarsest 1.5"
-            } else {
+            } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
+                set CMD "$CMD --fast"
+            } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
                 set CMD "$CMD --delay-refine --grid-spacing 40 --refine 4"
                 set CMD "$CMD --exact-spacing --energy-weight 5e-2"
                 set CMD "$CMD --exploration 16 --accuracy 0.1 --coarsest 1.5"
+            } else {
+                PrintError "CMTKRegistration: Unknown deformableType: $deformableType"
+                return ""
             }
+            
             set CMD "$CMD --initial \"$outLinearTransformDirName\""
             set CMD "$CMD -o \"$outNonLinearTransformDirName\""
             set CMD "$CMD --write-reformatted \"$outVolumeFileName\""
@@ -2037,36 +2077,17 @@ namespace eval EMSegmenterPreProcessingTcl {
         # registration
         # ----------------------------------------------------------------
 
-        set registrationType "Rigid ScaleVersor3D ScaleSkewVersor3D Affine"
-        set fastFlag 0
-        if { $affineFlag } {
-            if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
-                set fastFlag 1
-            } else {
-                set fastFlag 0
-            }
-        }
-        
-        if { $bSplineFlag } {
-            set registrationType "${registrationType} BSpline"
-            if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
-                set fastFlag 1
-            } else {
-                set fastFlag 0
-            }
-        }
         
         set backgroundLevel [$LOGIC GuessRegistrationBackgroundLevel $movingAtlasVolumeNode]
         set transformDirName "" 
         set transformNode ""
         set transformNodeType ""
         
+        
+        
         switch -exact "$selectedRegistrationPackage" {
             "CMTK" {
-                set bSplineFlag 1
-                #TODO
-                set fastFlag 1
-                set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $bSplineFlag $fastFlag]
+                set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
                 if { $transformDirName == "" } {
                     PrintError "RegisterAtlas: Transform node is null"
                     return 1
@@ -2074,7 +2095,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 set transformNodeType "CMTKTransform"  
             }
             "BRAINS" {
-                set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel "$registrationType" $fastFlag]
+                set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
                 if { $BSplineNode == "" } {
                     PrintError "RegisterAtlas: BSpline Transform node is null"
                     return 1

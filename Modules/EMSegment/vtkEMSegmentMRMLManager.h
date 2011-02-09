@@ -313,6 +313,7 @@ public:
   //BTX
   enum
     {
+    RegistrationTest = -1,
     RegistrationOff  = 0,
     RegistrationFast = 1,
     RegistrationSlow = 2
