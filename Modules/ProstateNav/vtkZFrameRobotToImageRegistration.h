@@ -76,10 +76,6 @@ class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration : public vtkRobot
   void SolveZ(Column3Vector P1, Column3Vector P2, Column3Vector P3,
               Column3Vector Oz, Column3Vector Vz, Column3Vector &P2f);
   
-  // Method for computing the imaging plane update.
-  void Update_Scan_Plane(Column3Vector &pcurrent, Quaternion &ocurrent,
-                         Column3Vector Zposition, Quaternion Zorientation);
-  
   // Methods for finding matrix maxima.
   Real ComplexMax(Matrix &realmat, Matrix &imagmat);
   Real RealMax(Matrix &realmat);

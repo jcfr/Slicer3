@@ -492,17 +492,17 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
   PrintMatrix(matrix);
 #endif // DEBUG_ZFRAME_REGISTRATION
 
-  // For experiment
-  std::ofstream fout;
-  fout.open("zframe_output.csv", std::ios::out | std::ios::app);
-
-  fout << volumeNode->GetName() << ", "
-       << n << ", "
-       << matrix[0][0] << ", " << matrix[0][1] << ", " << matrix[0][2] << ", " << matrix[0][3] << ", "
-       << matrix[1][0] << ", " << matrix[1][1] << ", " << matrix[1][2] << ", " << matrix[1][3] << ", "
-       << matrix[2][0] << ", " << matrix[2][1] << ", " << matrix[2][2] << ", " << matrix[2][3]
-       << std::endl;
-  fout.close();
+  //// For experiment
+  //std::ofstream fout;
+  //fout.open("zframe_output.csv", std::ios::out | std::ios::app);
+  //
+  //fout << volumeNode->GetName() << ", "
+  //     << n << ", "
+  //     << matrix[0][0] << ", " << matrix[0][1] << ", " << matrix[0][2] << ", " << matrix[0][3] << ", "
+  //     << matrix[1][0] << ", " << matrix[1][1] << ", " << matrix[1][2] << ", " << matrix[1][3] << ", "
+  //     << matrix[2][0] << ", " << matrix[2][1] << ", " << matrix[2][2] << ", " << matrix[2][3]
+  //     << std::endl;
+  //fout.close();
 
   vtkMatrix4x4* zMatrix = vtkMatrix4x4::New();
   zMatrix->Identity();
@@ -593,22 +593,17 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float positi
   // Compute the pose of the Z-frame only if we have a lock on the fiducial points.
   if(frame_lock)
     {
-    std::cerr << "ZTrackerTransform::onEventGenerated - frame lock." << std::endl;
-    
     // Transform pixel coordinates into spatial coordinates.
     // 1) Put the image origin at the centre of the image,
-    // 2) Re-align axes according to the IJK convention,
-    // 3) Scale by pixel size.
+    // 2) Scale by pixel size.
+    // 3) Re-align axes according to the IJK convention,
     for(int i=0; i<7; i++)
       {
       // 1) Put the image origin at the center
       tZcoordinates[i][0] = (float)(tZcoordinates[i][0]) - (float)(dimension[0]/2);
       tZcoordinates[i][1] = (float)(tZcoordinates[i][1]) - (float)(dimension[1]/2);
 
-      // 2) Re-align axes according to the IJK conversion
-      
-      
-      // 3) Scale coordinates by pixel size
+      // 2) Scale coordinates by pixel size
       tZcoordinates[i][0] *= spacing[0];
       tZcoordinates[i][1] *= spacing[1];
       }
@@ -620,30 +615,31 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float positi
       std::cerr << "ZTrackerTransform::onEventGenerated - Could not localize the frame. Skipping this one." << std::endl;
       return 0;
       }
-    }
 
-  if(frame_lock)
-    {
-    // Compute the new image position and orientation that will be centred to
-    // the Z-frame.
-    Update_Scan_Plane(Iposition, Iorientation, Zposition, Zorientation);
+    // Compute the Z-frame position in the image (RAS) coordinate system
+    Zposition = Iposition + Iorientation.RotateVector(Zposition);
+    Zorientation = Iorientation * Zorientation;
     }
   
   // Construct a new event to pass on to the child node.
-  
-  position[0] = Iposition.getX();
-  position[1] = Iposition.getY();
-  position[2] = Iposition.getZ();
-  quaternion[0] = Iorientation.getX();
-  quaternion[1] = Iorientation.getY();
-  quaternion[2] = Iorientation.getZ();
-  quaternion[3] = Iorientation.getW();
 
-  return 1;
+  if (frame_lock)
+    {
+    position[0] = Zposition.getX();
+    position[1] = Zposition.getY();
+    position[2] = Zposition.getZ();
+    quaternion[0] = Zorientation.getX();
+    quaternion[1] = Zorientation.getY();
+    quaternion[2] = Zorientation.getZ();
+    quaternion[3] = Zorientation.getW();
+    
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
 }
-
-
-
 
 
 /*----------------------------------------------------------------------------*/
@@ -666,16 +662,6 @@ bool vtkZFrameRobotToImageRegistration::LocateFiducials(Matrix &SourceImage, int
 
   // Transform the MR image to the frequency domain (k-space).
   FFT2(SourceImage, zeroimag, IFreal, IFimag);
-
-  /*
-  FILE* fp;
-  fp = fopen("dump.txt", "w");
-  for(i=0; i<xsize; i++)
-    for(j=0; j<ysize; j++)
-      fprintf(fp, "%.2f\n", SourceImage.element(i,j));
-  fclose(fp);
-  */
-
 
   // Normalize the image.
   Real maxabsolute = ComplexMax(IFreal,IFimag);
@@ -1253,8 +1239,6 @@ bool vtkZFrameRobotToImageRegistration::LocalizeFrame(float Zcoordinates[7][2],
   Pz2.setvalues( Zcoordinates[3][0], Zcoordinates[3][1], 0.0);
   Pz3.setvalues( Zcoordinates[5][0], Zcoordinates[5][1], 0.0);
   
-  //Vx = Pz2 - Pz1;
-  //Vy = Pz3 - Pz1;
   Vx = Pz1 - Pz3;
   Vy = Pz2 - Pz3;
   
@@ -1365,36 +1349,6 @@ void vtkZFrameRobotToImageRegistration::SolveZ(Column3Vector P1, Column3Vector P
    P2f = Oz + Vz*Lc;
 }
 
-/*----------------------------------------------------------------------------*/
-
-/**
- * This method computes the new image plane position and orientation that will
- * align the next image with the centre of the Z-frame.
- * @param pcurrent The current image position that is to be updated.
- * @param ocurrent The current image orientation that is to be updated.
- * @param Zposition The position correction.
- * @param Zorientation The orientation correction
- */
-void vtkZFrameRobotToImageRegistration::Update_Scan_Plane(Column3Vector &pcurrent, 
-                                          Quaternion &ocurrent, 
-                                          Column3Vector Zposition, 
-                                          Quaternion Zorientation)
-{
-   Quaternion Qcur, Qchg;
-
-   // Update the scan plane position with the calculated offset in Zposition.
-   //pcurrent = pcurrent - Zposition;
-   double x = pcurrent.getX();
-   double y = pcurrent.getY();
-   double z = pcurrent.getZ();
-   //pcurrent.setvalues(x - Zposition.getX(), y - Zposition.getY(), z + Zposition.getZ());
-   //pcurrent.setvalues(x + Zposition.getX(), y + Zposition.getY(), z + Zposition.getZ());
-
-   pcurrent.setvalues(x - Zposition.getX(), y - Zposition.getY(), z + Zposition.getZ());
-
-   // Compute the new image orientation.
-   ocurrent = Zorientation * ocurrent;
-}
 
 /*----------------------------------------------------------------------------*/
 
