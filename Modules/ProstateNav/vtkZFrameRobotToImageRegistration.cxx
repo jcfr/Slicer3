@@ -211,12 +211,6 @@ void vtkZFrameRobotToImageRegistration::Init(int xsize, int ysize)
 }
 
 /*----------------------------------------------------------------------------*/
-
-/**
- * Method called by the SPL-OpenTracker child node when an event occurs.
- * @param event The event value passed.
- * @param generator The node that generated the event.
- */
 int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNode* volumeNode,
                                                           vtkMRMLLinearTransformNode* transformNode, int slindex_s, int slindex_e)
 {
@@ -226,8 +220,7 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
   //Image         image_attrib;
   int           i,j;
 
-//simond debug frame delay
-  
+  //simond debug frame delay
   // Get the image size attributes from the event.
   /*
   xsize=event.getAttribute(string("xsize"),0);
@@ -272,7 +265,6 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
   float nny = ny / psk;
   float nnz = nz / psk;
 
-
   // Here we calculate 'average' quaternion from registration results from
   // multiple slices. The average quaternion here is defined as the eigenvector
   // corresponding to the largest eigenvalue of the sample moment of inertia
@@ -314,12 +306,12 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
     float cy = nty * hfovi + nsy * hfovj + nny * offsetk;
     float cz = ntz * hfovi + nsz * hfovj + nnz * offsetk;
     
-    matrix[0][0] = -ntx;
-    matrix[1][0] = -nty;
-    matrix[2][0] = -ntz;
-    matrix[0][1] = -nsx;
-    matrix[1][1] = -nsy;
-    matrix[2][1] = -nsz;
+    matrix[0][0] = ntx;
+    matrix[1][0] = nty;
+    matrix[2][0] = ntz;
+    matrix[0][1] = nsx;
+    matrix[1][1] = nsy;
+    matrix[2][1] = nsz;
     matrix[0][2] = nnx;
     matrix[1][2] = nny;
     matrix[2][2] = nnz;
@@ -357,10 +349,14 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
 
     for(i=0; i<xsize; i++)
       for(j=0; j<ysize; j++)
-        SourceImage.element(i,j) = InputImage[i*ysize+j];
+        SourceImage.element(i,j) = InputImage[j*xsize+i];
     
     // if Z-frame position is determined from the slice
-    if (ZFrameRegistrationQuaternion(position, quaternion, SourceImage, xsize, ysize))
+    float spacing[3];
+    spacing[0] = psi;
+    spacing[1] = psj;
+    spacing[2] = psk;
+    if (ZFrameRegistrationQuaternion(position, quaternion, SourceImage, dimensions, spacing))
       {
       P[0] += position[0];
       P[1] += position[1];
@@ -417,7 +413,6 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
 
   T.element(2, 2) = T.element(2, 2) / fn;
   T.element(2, 3) = T.element(2, 3) / fn;
-
   T.element(3, 3) = T.element(3, 3) / fn;
 
   
@@ -511,20 +506,7 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
 
   vtkMatrix4x4* zMatrix = vtkMatrix4x4::New();
   zMatrix->Identity();
-  /*
-  zMatrix->SetElement(0, 0, -matrix[0][0]);
-  zMatrix->SetElement(1, 0, -matrix[1][0]);
-  zMatrix->SetElement(2, 0, -matrix[2][0]);
-  zMatrix->SetElement(0, 1, matrix[0][1]);
-  zMatrix->SetElement(1, 1, matrix[1][1]);
-  zMatrix->SetElement(2, 1, matrix[2][1]);
-  zMatrix->SetElement(0, 2, -matrix[0][2]);
-  zMatrix->SetElement(1, 2, -matrix[1][2]);
-  zMatrix->SetElement(2, 2, -matrix[2][2]);
-  zMatrix->SetElement(0, 3, matrix[0][3]);
-  zMatrix->SetElement(1, 3, matrix[1][3]);
-  zMatrix->SetElement(2, 3, matrix[2][3]);
-  */
+
   zMatrix->SetElement(0, 0, matrix[0][0]);
   zMatrix->SetElement(1, 0, matrix[1][0]);
   zMatrix->SetElement(2, 0, matrix[2][0]);
@@ -551,14 +533,11 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistration(vtkMRMLScalarVolumeNod
     zMatrix->Delete();
     return 0;
     }
-
-  
-
 }
 
 
 int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
-                                                                    Matrix& srcImage, int xsize, int ysize)
+                                                                    Matrix& srcImage, int dimension[3], float spacing[3])
 {
 
   Column3Vector Zposition;
@@ -568,8 +547,7 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float positi
   int           Zcoordinates[7][2];
   float         tZcoordinates[7][2];
   bool          frame_lock;
-  float         pixel_size=FORCE_FOV/FORCE_SIZEX;
-  float         tmpCoord;
+  //float         pixel_size=FORCE_FOV/FORCE_SIZEX;
 
   // Get current position and orientation of the imaging plane.
   // SPL OpenTracker events always contain Position and Orientation attributes.
@@ -593,7 +571,7 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float positi
 
   // Find the 7 Z-frame fiducial intercept artifacts in the image.
   std::cerr << "ZTrackerTransform - Searching fiducials...\n" << std::endl;
-  if(LocateFiducials(SourceImage, xsize, ysize, Zcoordinates, tZcoordinates) == false)
+  if(LocateFiducials(SourceImage, dimension[0], dimension[1], Zcoordinates, tZcoordinates) == false)
   {
   std::cerr << "ZTrackerTransform::onEventGenerated - Ficudials not detected. No frame lock on this image.\n" << std::endl;
   frame_lock = false;
@@ -603,7 +581,7 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float positi
 
   // Check that the fiducial geometry makes sense.
   std::cerr << "ZTrackerTransform - Checking the fiducial geometries...\n" << std::endl;
-  if(CheckFiducialGeometry(Zcoordinates, xsize, ysize) == true)
+  if(CheckFiducialGeometry(Zcoordinates, dimension[0], dimension[1]) == true)
     frame_lock = true;
   else 
     {
@@ -614,71 +592,45 @@ int vtkZFrameRobotToImageRegistration::ZFrameRegistrationQuaternion(float positi
 
   // Compute the pose of the Z-frame only if we have a lock on the fiducial points.
   if(frame_lock)
-  {
-  std::cerr << "ZTrackerTransform::onEventGenerated - frame lock." << std::endl;
+    {
+    std::cerr << "ZTrackerTransform::onEventGenerated - frame lock." << std::endl;
     
     // Transform pixel coordinates into spatial coordinates.
     // 1) Put the image origin at the centre of the image,
     // 2) Re-align axes according to the IJK convention,
     // 3) Scale by pixel size.
     for(int i=0; i<7; i++)
-    {
-      // Move origin to centre of image and exchange axes for correct 
-      // image frame orientation.
-      tmpCoord = tZcoordinates[i][1];
-      tZcoordinates[i][1] = (float)(tZcoordinates[i][0]) - (float)(xsize/2);
-      tZcoordinates[i][0] = tmpCoord - (float)(ysize/2);
+      {
+      // 1) Put the image origin at the center
+      tZcoordinates[i][0] = (float)(tZcoordinates[i][0]) - (float)(dimension[0]/2);
+      tZcoordinates[i][1] = (float)(tZcoordinates[i][1]) - (float)(dimension[1]/2);
 
-      // Flip the x-axis for IJK coordinates. 
-      tZcoordinates[i][0] *= -1.0;
+      // 2) Re-align axes according to the IJK conversion
       
-      // Flip the y-axis for IJK coordinates. 
-      tZcoordinates[i][1] *= -1.0;
-
-      // Scale coordinates by pixel size
-      tZcoordinates[i][0] *= pixel_size;
-      tZcoordinates[i][1] *= pixel_size;
-    }
+      
+      // 3) Scale coordinates by pixel size
+      tZcoordinates[i][0] *= spacing[0];
+      tZcoordinates[i][1] *= spacing[1];
+      }
 
     // Compute relative pose between the Z-frame and the current image.
     if(LocalizeFrame(tZcoordinates, Zposition, Zorientation) == false)
-    {
-    frame_lock = 0;
-    std::cerr << "ZTrackerTransform::onEventGenerated - Could not localize the frame. Skipping this one." << std::endl;
-    return 0;
+      {
+      frame_lock = 0;
+      std::cerr << "ZTrackerTransform::onEventGenerated - Could not localize the frame. Skipping this one." << std::endl;
+      return 0;
+      }
     }
-  }
 
   if(frame_lock)
-  {
+    {
     // Compute the new image position and orientation that will be centred to
     // the Z-frame.
     Update_Scan_Plane(Iposition, Iorientation, Zposition, Zorientation);
-  }
+    }
   
   // Construct a new event to pass on to the child node.
-
-#ifdef DEBUG_ZFRAME
-  //simond Debug Image Output
-  short output_image[FORCE_SIZEX*FORCE_SIZEY];
-  if(frame_lock)
-  {
-    static int counter=7;
-    for(i=0; i<counter; i++)
-    {
-      SourceImage.element((int)(Zcoordinates[i][0]),(int)(Zcoordinates[i][1])) = 0.0;
-    }
-
-    for(i=0; i<FORCE_SIZEX; i++)
-      for(j=0; j<FORCE_SIZEY; j++)
-      {
-        output_image[i*FORCE_SIZEX+j] = (short)(SourceImage.element(i,j)*1);
-      }
-    //if(++counter >7) counter=1;
-  }
-#endif
-//end simond
-
+  
   position[0] = Iposition.getX();
   position[1] = Iposition.getY();
   position[2] = Iposition.getZ();
@@ -1212,8 +1164,8 @@ void vtkZFrameRobotToImageRegistration::OrderFidPoints(float points[7][2], float
  *        frame--expressed as a quaternion.
  */
 bool vtkZFrameRobotToImageRegistration::LocalizeFrame(float Zcoordinates[7][2],
-                                      Column3Vector &Zposition, 
-                                      Quaternion &Zorientation)
+                                                      Column3Vector &Zposition, 
+                                                      Quaternion &Zorientation)
 {
   Column3Vector       Pz1, Pz2, Pz3;
   Column3Vector       Oz;
@@ -1237,13 +1189,9 @@ bool vtkZFrameRobotToImageRegistration::LocalizeFrame(float Zcoordinates[7][2],
   Pz3.setvalues( Zcoordinates[2][0], Zcoordinates[2][1], 0.0 );
   
   // Origin and direction vector of diagonal fiducial.
-  //Oz.setvalues( -30.0, -30.0, 30.0 );
-  //Vz.setvalues( 0.0, 1.0, -1.0 );
-  //Oz.setvalues( 30.0, 30.0, -30.0 );
-  //Vz.setvalues( 0.0,  -1.0, 1.0 );
-  Oz.setvalues( -30.0, 30.0, 30.0 );
-  Vz.setvalues( 0.0, -1.0, -1.0 );
-
+  // The origin is the end of the diagonal fiducial attached to Pz3
+  Oz.setvalues( 30.0, 30.0, -30.0 );
+  Vz.setvalues( 0.0, -1.0, 1.0 );
 
   // Solve for the diagonal intercept in Z-frame coordinates.
   SolveZ(Pz1, Pz2, Pz3, Oz, Vz, P2f);
@@ -1255,12 +1203,9 @@ bool vtkZFrameRobotToImageRegistration::LocalizeFrame(float Zcoordinates[7][2],
   Pz3.setvalues( Zcoordinates[4][0], Zcoordinates[4][1], 0.0 );
   
   // Origin and direction vector of diagonal fiducial.
-  //Oz.setvalues( 30.0, -30.0, 30.0 );
-  //Vz.setvalues( -1.0, 0.0, -1.0 );
-  //Oz.setvalues( -30.0, 30.0, -30.0 );
-  //Vz.setvalues( 1.0, 0.0, 1.0 );
-  Oz.setvalues( 30.0, 30.0, 30.0 );
-  Vz.setvalues( -1.0, 0.0, -1.0 );
+  // The origin is the end of the diagonal fiducial attached to Pz3
+  Oz.setvalues( -30.0, 30.0, -30.0 );
+  Vz.setvalues( 1.0, 0.0, 1.0 );
   
   // Solve for the diagonal intercept in Z-frame coordinates.
   SolveZ(Pz1, Pz2, Pz3, Oz, Vz, P4f);
@@ -1272,49 +1217,54 @@ bool vtkZFrameRobotToImageRegistration::LocalizeFrame(float Zcoordinates[7][2],
   Pz3.setvalues( Zcoordinates[6][0], Zcoordinates[6][1], 0.0 );
   
   // Origin and direction vector of diagonal fiducial.
-  //Oz.setvalues( 30.0, 30.0, 30.0 );
-  //Vz.setvalues( 0.0, -1.0, -1.0 );
-  //Oz.setvalues( -30.0, -30.0, -30.0 );
-  //Vz.setvalues( 0.0, 1.0, 1.0 );
-  Oz.setvalues( 30.0, -30.0, 30.0 );
-  Vz.setvalues( 0.0,  1.0, -1.0 );
+  // The origin is the end of the diagonal fiducial attached to Pz3
+  Oz.setvalues( -30.0, -30.0, -30.0 );
+  Vz.setvalues( 0.0,  1.0, 1.0 );
 
   // Solve for the diagonal intercept in Z-frame coordinates.
   SolveZ(Pz1, Pz2, Pz3, Oz, Vz, P6f);
   
-  
   //--- Compute Transformation Between Image and Frame -----------
-  
   // Compute orientation component first.
   // Compute z-frame cross section coordinate frame 
-  //Vx = P4f - P2f;
-  //Vy = P6f - P2f;
-  //Vx = P4f - P6f;
-  //Vy = P2f - P6f;
+
+  Vx = P2f - P6f;
+  Vy = P4f - P6f;
+  Vz = Vx * Vy;
+  Vy = Vz * Vx;
+
+  Vx.normalize();
+  Vy.normalize();
+  Vz.normalize();
+
+  /*
   Vx = P4f - P2f;
   Vy = P6f - P2f;
 
   Vz = Vx * Vy;
   Vy = Vz * Vx;
   Vx.normalize();
+  */
   if(Qft.ComputeFromRotationMatrix(Vx, Vy, Vz) == false)
     return(false);
   
   // Compute image cross-section coordinate frame 
-  Pz1.setvalues( Zcoordinates[1][0], Zcoordinates[1][1], 0.0 );
+  Pz1.setvalues( Zcoordinates[1][0], Zcoordinates[1][1], 0.0);
   Pz2.setvalues( Zcoordinates[3][0], Zcoordinates[3][1], 0.0);
   Pz3.setvalues( Zcoordinates[5][0], Zcoordinates[5][1], 0.0);
   
   //Vx = Pz2 - Pz1;
   //Vy = Pz3 - Pz1;
-  //Vx = Pz2 - Pz3;
-  //Vy = Pz1 - Pz3;
-  Vx = Pz2 - Pz1;
-  Vy = Pz3 - Pz1;
+  Vx = Pz1 - Pz3;
+  Vy = Pz2 - Pz3;
   
   Vz = Vx * Vy;
   Vy = Vz * Vx;
+
   Vx.normalize();
+  Vy.normalize();
+  Vz.normalize();
+
   if(Qit.ComputeFromRotationMatrix(Vx, Vy, Vz) == false)
     return(false);
   
@@ -1438,11 +1388,11 @@ void vtkZFrameRobotToImageRegistration::Update_Scan_Plane(Column3Vector &pcurren
    double y = pcurrent.getY();
    double z = pcurrent.getZ();
    //pcurrent.setvalues(x - Zposition.getX(), y - Zposition.getY(), z + Zposition.getZ());
-   pcurrent.setvalues(x + Zposition.getX(), y + Zposition.getY(), z + Zposition.getZ());
+   //pcurrent.setvalues(x + Zposition.getX(), y + Zposition.getY(), z + Zposition.getZ());
 
+   pcurrent.setvalues(x - Zposition.getX(), y - Zposition.getY(), z + Zposition.getZ());
 
    // Compute the new image orientation.
-   //ocurrent = Zorientation * ocurrent;
    ocurrent = Zorientation * ocurrent;
 }
 

@@ -59,7 +59,8 @@ class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration : public vtkRobot
   int  ZFrameRegistration(vtkMRMLScalarVolumeNode* volumeNode,
                           vtkMRMLLinearTransformNode* transformNode, int slindex_s, int slindex_e);
   int  ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
-                                    Matrix& srcImage, int xsize, int ysize);
+                                    //Matrix& srcImage, int xsize, int ysize);
+                                    Matrix& srcImage, int dimension[3], float spacing[3]);
   bool LocateFiducials(Matrix &image, int xsize, int ysize, 
                        int Zcoordinates[7][2], float tZcoordinates[7][2]);
   void FindSubPixelPeak(int Zcoordinate[2], float tZcoordinate[2],
