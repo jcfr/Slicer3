@@ -63,13 +63,13 @@ if { ![info exists ::come_from_versioner]} {
         set GETBUILDTEST(bitness) $::GENLIB(bitness)
         set ::env(BITNESS) $::GENLIB(bitness)
     }
-    puts "PRE-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
+    #puts "PRE-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
 } else {
     set ::GETBUILDTEST(compiler) $::env(COMPILER)
     set ::GENLIB(compiler) $::env(COMPILER)
     set ::GETBUILDTEST(bitness) $::env(BITNESS)
     set ::GENLIB(bitness) $::env(BITNESS)
-    puts "POST-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
+    #puts "POST-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
 }
 
 #
