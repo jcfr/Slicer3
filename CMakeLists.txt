@@ -56,6 +56,12 @@ IF(WIN32)
   ENDIF(NOT BORLAND)
 ENDIF(WIN32)
 
+#-----------------------------------------------------------------------------
+# if compiling 64 bit on Windows we need to use /bigobj flag.
+if(WIN32 AND "${CMAKE_SIZEOF_VOID_P}" EQUAL 8)
+  set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} /bigobj" CACHE STRING "" FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj" CACHE STRING "" FORCE)
+endif()
 
 # include a test for endianness (used to be done by default)
 
