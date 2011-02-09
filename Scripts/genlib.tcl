@@ -385,7 +385,11 @@ if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
 
     if {$isWindows} {
       cd $::Slicer3_LIB
-      runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Binaries/Windows/$::TCL_VERSION-build tcl-build
+      if {$::GENLIB(bitness) == "64"} {
+        runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Binaries/Windows/$::TCL_VERSION-x64-build tcl-build
+      } else {
+        runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Binaries/Windows/$::TCL_VERSION-build tcl-build
+      }
     }
 
     file mkdir $Slicer3_LIB/tcl
@@ -471,13 +475,14 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
       runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/incrTcl incrTcl
     }
 
-    cd $Slicer3_LIB/tcl/incrTcl
-
-    exec chmod +x ../incrTcl/configure 
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
          # ignore, already downloaded with tcl
       } else {
+        cd $Slicer3_LIB/tcl/incrTcl
+
+        exec chmod +x ../incrTcl/configure 
+
         if { $isDarwin } {
           exec cp ../incrTcl/itcl/configure ../incrTcl/itcl/configure.orig
           exec sed -e "s/\\*\\.c | \\*\\.o | \\*\\.obj) ;;/\\*\\.c | \\*\\.o | \\*\\.obj | \\*\\.dSYM | \\*\\.gnoc ) ;;/" ../incrTcl/itcl/configure.orig > ../incrTcl/itcl/configure 

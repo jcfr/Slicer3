@@ -40,6 +40,7 @@ set ::LINUX_64 "linux-x86_64"
 set ::DARWIN "darwin-ppc"
 set ::DARWIN_X86 "darwin-x86"
 set ::WINDOWS "win32"
+set ::WINDOWS_64 "win64"
 
 #
 # set the default locations for the main components
@@ -111,7 +112,11 @@ switch $::tcl_platform(os) {
     "GNU/kFreeBSD" {
         set ::TCL_VERSION tcl85
         set ::TCL_MINOR_VERSION 5
-    }   
+    }
+    "Windows NT" {
+        set ::TCL_VERSION tcl85
+        set ::TCL_MINOR_VERSION 5
+    }
     default { 
         set ::TCL_VERSION tcl
         set ::TCL_MINOR_VERSION 4
@@ -362,8 +367,8 @@ switch $::tcl_platform(os) {
         set ::Teem_BIN_DIR  $::Teem_BUILD_DIR/bin/$::VTK_BUILD_TYPE
 
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
-        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
+        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
+        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish85.exe
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itclConfig.sh
         set ::INCR_TCL_LIB $::TCL_LIB_DIR/lib/itcl3.2/itcl32.lib
         set ::INCR_TK_LIB $::TCL_LIB_DIR/lib/itk3.2/itk32.lib
@@ -384,9 +389,9 @@ switch $::tcl_platform(os) {
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::KWWidgets_TEST_FILE $::KWWidgets_BUILD_DIR/bin/$::env(VTK_BUILD_SUBDIR)/KWWidgets.lib
         set ::OpenCV_TEST_FILE $::OpenCV_DIR/lib/$::VTK_BUILD_TYPE/CV.lib
-        set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
-        set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
-        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl85.lib
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/tk85.lib
+        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh85.exe
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$::VTK_BUILD_TYPE/ITKCommon.dll
         set ::OPENIGTLINK_TEST_FILE $::OpenIGTLink_DIR/bin/$::VTK_BUILD_TYPE/OpenIGTLink.lib
         set ::BatchMake_TEST_FILE $::BatchMake_BUILD_DIR/bin/$::VTK_BUILD_TYPE/BatchMake.lib
@@ -539,6 +544,15 @@ switch $::tcl_platform(os) {
         # different windows machines say different things, so assume
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
+        
+        set have_bitness [info exists GETBUILDTEST(bitness)]
+        if {$have_bitness == 1} {
+          set GENLIB(bitness) $::GETBUILDTEST(bitness)
+          set ::env(BITNESS) $::GETBUILDTEST(bitness)
+        } else {
+          set GETBUILDTEST(bitness) $::GENLIB(bitness)
+          set ::env(BITNESS) $::GENLIB(bitness)
+        }
 
 
         set ::VTKSLICERBASE_BUILD_LIB $::Slicer3_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBase.lib
@@ -643,11 +657,11 @@ switch $::tcl_platform(os) {
             set ::COMPILER_PATH "c:/Program Files (x86)/Microsoft Visual Studio 8/VC/bin"
             set ::MSSDK_PATH "c:/Program Files (x86)/Microsoft Visual Studio 8/SDK/v2.0"
         }
-        #
+
         ## for Visual Studio 9
-        if { [file exists "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"] } {
-            set ::GENERATOR "Visual Studio 9 2008" 
-            set ::MAKE "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"
+        if { [file exists "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"] } {
+            set ::GENERATOR "Visual Studio 9 2008"
+            set ::MAKE "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"
             set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
             set ::MSSDK_PATH "c:/Program Files/Microsoft SDKs/Windows/v6.0A"
         }
@@ -659,21 +673,38 @@ switch $::tcl_platform(os) {
             set ::MSSDK_PATH "c:/Program Files/Microsoft SDKs/Windows/v6.0A"
         }
 
+        # Visual Studio 9 Express
+        if { [file exists "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"] } {
+            set ::GENERATOR "Visual Studio 9 2008" 
+            set ::MAKE "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"
+            set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
+            set ::MSSDK_PATH "c:/Program Files/Microsoft SDKs/Windows/v6.0A"
+        }
+        
         if { [file exists "c:/Program Files (x86)/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"] } {
             set ::GENERATOR "Visual Studio 9 2008" 
             set ::MAKE "c:/Program Files (x86)/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"
             set ::COMPILER_PATH "c:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin"
             set ::MSSDK_PATH "c:/Program Files/Microsoft SDKs/Windows/v6.0A"
         }
+         
+        # Windows 64 is only supported with commercial Visual Studio
+        if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
 
-
-        if { [file exists "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"] } {
-            set ::GENERATOR "Visual Studio 9 2008"
+          if { [file exists "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"] } {
+            set ::GENERATOR "Visual Studio 9 2008 Win64"
             set ::MAKE "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"
-            set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
+            set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 9.0/VC/bin/x86_amd64"
             set ::MSSDK_PATH "c:/Program Files/Microsoft SDKs/Windows/v6.0A"
-        }
+          }
 
+          if { [file exists "c:/Program Files (x86)/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"] } {
+            set ::GENERATOR "Visual Studio 9 2008 Win64"
+            set ::MAKE "c:/Program Files (x86)/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"
+            set ::COMPILER_PATH "c:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin/x86_amd64"
+            set ::MSSDK_PATH "c:/Program Files/Microsoft SDKs/Windows/v6.0A"
+          }
+        }
 
         if { [file exists "c:/Program Files (x86)/Microsoft Visual Studio 10.0/Common7/IDE/devenv.exe"] } {
             set ::GENERATOR "Visual Studio 10 Win64"
@@ -682,20 +713,19 @@ switch $::tcl_platform(os) {
             set ::MSSDK_PATH "c:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A"
         }
 
-
         set ::COMPILER "cl"
         set ::SERIAL_MAKE $::MAKE
 
         set windowsNotXP 0
         if { $::tcl_platform(os) == "Windows NT" } {
-          if { [string index $::tcl_platform(osVersion) 0] != "5" } {
+          if { [string index $::tcl_platform(osVersion) 0] != 5 } {
             set windowsNotXP 1
           }
         }
         if { ![string match "Visual Studio 9*" $::GENERATOR] || 
                 [string match "*Express*" $::MAKE] || $windowsNotXP } {
           if { $::USE_PYTHON == "ON" }  {
-            puts "\n\n\nWarning: Python can only be built on windows XP with Visual Studio 9 (2008) Professional for windows.\n\nSlicer will be built with Python turned off\n\n"
+            puts "\n\n\nWarning: Python can only be built on windows XP (or later) with Visual Studio 9 (2008) Professional for windows.\n\nSlicer will be built with Python turned off\n\n"
             set ::USE_PYTHON "OFF"
           }
         }
