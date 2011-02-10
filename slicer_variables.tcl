@@ -168,8 +168,13 @@ switch $::tcl_platform(os) {
         set ::TCL_MINOR_VERSION 5
     }
     "Windows NT" {
-        set ::TCL_VERSION tcl85
-        set ::TCL_MINOR_VERSION 5
+        if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
+            set ::TCL_VERSION tcl85
+            set ::TCL_MINOR_VERSION 5
+        } else {
+            set ::TCL_VERSION tcl
+            set ::TCL_MINOR_VERSION 4
+        }
     }
     default { 
         set ::TCL_VERSION tcl
