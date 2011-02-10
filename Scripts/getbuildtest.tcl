@@ -208,9 +208,11 @@ for {set i 0} {$i < $argc} {incr i} {
         }
         "-64" {
             set ::GETBUILDTEST(bitness) "64"
+            set ::env(BITNESS) $::GETBUILDTEST(bitness)
         }
         "-32" {
             set ::GETBUILDTEST(bitness) "32"
+            set ::env(BITNESS) $::GETBUILDTEST(bitness)
         }
         "--suncc" {
           set ::GETBUILDTEST(compiler) "suncc"
@@ -562,6 +564,7 @@ runcmd $::CMAKE \
 #
 
 set cmd "sh $::Slicer3_HOME/Scripts/versioner.tcl"
+
 set retval [catch "eval runcmd $cmd" res]
 if {$retval == 1} {
   puts "ERROR: failed to run versioner script: $cmd"

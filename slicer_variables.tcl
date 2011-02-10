@@ -42,34 +42,58 @@ set ::DARWIN_X86 "darwin-x86"
 set ::WINDOWS "win32"
 set ::WINDOWS_64 "win64"
 
+if { ![info exists ::Slicer3_BUILD] } {
+    if { [info exists ::env(Slicer3_BUILD)] } {
+        set ::Slicer3_BUILD $::env(Slicer3_BUILD)
+    } else {
+        set wd [pwd]
+        cd $::Slicer3_HOME/../Slicer3-build
+        set ::Slicer3_BUILD [pwd]
+        cd $wd
+    }
+}
+
 #
 # set the compiler and bitness variables for the sake of versioner.tcl
 #
-if { ![info exists ::come_from_versioner]} {
-    set have_compiler [info exists ::GETBUILDTEST(compiler)]
-    puts "have_compiler from GETBUILDTEST value: $have_compiler"
-    if {$have_compiler == 1} {
-        set ::GENLIB(compiler) $::GETBUILDTEST(compiler)
-        set ::env(COMPILER) $::GETBUILDTEST(compiler)
-    } else { 
-        set ::GETBUILDTEST(compiler) $::GENLIB(compiler)
-        set ::env(COMPILER) $::GENLIB(compiler)
-    }
-    set have_bitness [info exists GETBUILDTEST(bitness)]
-    if {$have_bitness == 1} {
-        set GENLIB(bitness) $::GETBUILDTEST(bitness)
-        set ::env(BITNESS) $::GETBUILDTEST(bitness)
-    } else {
-        set GETBUILDTEST(bitness) $::GENLIB(bitness)
-        set ::env(BITNESS) $::GENLIB(bitness)
-    }
-    #puts "PRE-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
-} else {
-    set ::GETBUILDTEST(compiler) $::env(COMPILER)
-    set ::GENLIB(compiler) $::env(COMPILER)
-    set ::GETBUILDTEST(bitness) $::env(BITNESS)
-    set ::GENLIB(bitness) $::env(BITNESS)
-    #puts "POST-VERSIONER.TCL --- slicer_variables.tcl: GENLIB(compiler): $::GENLIB(compiler) GETBUILDTEST(compiler): $::GETBUILDTEST(compiler) \n ::env(COMPILER) is $::env(COMPILER) \n ::env(BITNESS) is $::env(BITNESS) ::GENLIB(bitness) is $::GENLIB(bitness) and ::GETBUILDTEST(bitness) is $::GETBUILDTEST(bitness)"
+set have_compiler 0
+if { [info exists ::GETBUILDTEST(compiler)] } {
+  set comp $::GETBUILDTEST(compiler)
+  set have_compiler 1
+}
+if { [info exists ::GENLIB(compiler)] } {
+  set comp $::GENLIB(compiler)
+  set have_compiler 1
+}
+if { [info exists ::env(COMPILER)] } {
+  set comp $::env(COMPILER)
+  set have_compiler 1
+}
+
+if { $have_compiler == 1} {
+  set ::GETBUILDTEST(compiler) $comp
+  set ::GENLIB(compiler) $comp
+  set ::env(COMPILER) $comp
+}
+
+set have_bitness 0
+if { [info exists ::GETBUILDTEST(bitness)] } {
+  set bit $::GETBUILDTEST(bitness)
+  set have_bitness 1
+}
+if { [info exists ::GENLIB(bitness)] } {
+  set bit $::GENLIB(bitness)
+  set have_bitness 1
+}
+if { [info exists ::env(BITNESS)] } {
+  set bit $::env(BITNESS)
+  set have_bitness 1
+}
+
+if { $have_bitness == 1} {
+  set ::GETBUILDTEST(bitness) $bit
+  set ::GENLIB(bitness) $bit
+  set ::env(BITNESS) $bit
 }
 
 #
