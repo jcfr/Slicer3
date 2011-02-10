@@ -578,6 +578,12 @@ if {$retval == 1} {
 
 if { $isWindows } {
 
+    if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
+          set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild/amd64
+      } else {
+          set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild
+      }
+
     # TODO: this needs to be touched when upgrading python versions
     # Here we put a copy of the python dll into a spot we know will be in
     # the runtime path for GenerateCLP (which depends on python).
@@ -588,7 +594,7 @@ if { $isWindows } {
       if { ![file exists bin] } { file mkdir bin }
       if { ![file exists bin/$::VTK_BUILD_TYPE] } { file mkdir bin/$::VTK_BUILD_TYPE }
       if { ![file exists bin/$::VTK_BUILD_TYPE/python26.dll] } { 
-        file copy $::Slicer3_LIB/python-build/PCbuild/python26.dll bin/$::VTK_BUILD_TYPE 
+        file copy $::PYTHON_BUILD_DIR/python26.dll bin/$::VTK_BUILD_TYPE 
       }
     }
 

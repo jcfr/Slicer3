@@ -423,7 +423,6 @@ if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
 }
 
 if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
-    cd $Slicer3_LIB/tcl
 
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
@@ -459,12 +458,13 @@ if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
 
 if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
 
-    cd $Slicer3_LIB/tcl
-
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
          # ignore, already downloaded with tcl
       } else {
+
+        cd $Slicer3_LIB/tcl
+
         runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/incrTcl incrTcl
 
         cd $Slicer3_LIB/tcl/incrTcl
@@ -505,12 +505,13 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
 #
 
 if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
-    cd $Slicer3_LIB/tcl
 
     if {$::GENLIB(buildit)} {
         if {$isWindows} {
             # is present in the windows binary download
         } else {
+
+            cd $Slicer3_LIB/tcl
             runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/iwidgets iwidgets
 
             cd $Slicer3_LIB/tcl/iwidgets
@@ -528,13 +529,12 @@ if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
 #
 
 if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
-    cd $Slicer3_LIB/tcl
 
     if {$::GENLIB(buildit)} {
         if { $isWindows } { 
             # is present in the windows binary download
         } elseif { $isDarwin } {
-            
+            cd $Slicer3_LIB/tcl
             runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/blt blt
             runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt blt
       
@@ -626,7 +626,8 @@ if {  [BuildThis $::PYTHON_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [stri
            runcmd $::MAKE PCbuild/pcbuild.sln /Upgrade
          } 
       }
-      runcmd $::MAKE PCbuild/pcbuild.sln /out buildlog.txt /build Release
+
+      runcmd $::MAKE PCbuild/pcbuild.sln /out buildlog.txt /build $::PYTHON_CONFIG
 
       # fix distutils to ignore it's hardcoded python version info
       replaceStringInFile Lib/distutils/msvccompiler.py "raise DistutilsPlatformError," "print"
@@ -635,19 +636,20 @@ if {  [BuildThis $::PYTHON_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [stri
       # copy the lib so that numpy and slicer can find it easily
       # copy the socket shared library so python can find it
       # TODO: perhaps we need an installer step here
-      set ret [catch "file copy -force $::Slicer3_LIB/python-build/PCbuild/python26.lib $::Slicer3_LIB/python-build/Lib/python26.lib "]
+      
+      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/python26.lib $::Slicer3_LIB/python-build/Lib/python26.lib "]
       if {$ret == 1} {
-          puts "ERROR: couldn't copy $::Slicer3_LIB/python-build/PCbuild/python26.lib to $::Slicer3_LIB/python-build/Lib/"
+          puts "ERROR: couldn't copy $::PYTHON_BUILD_DIR/python26.lib to $::Slicer3_LIB/python-build/Lib/"
           exit 1
       }
-      set ret [catch "file copy -force $::Slicer3_LIB/python-build/PCbuild/_socket.pyd $::Slicer3_LIB/python-build/Lib/_socket.pyd"]
+      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/_socket.pyd $::Slicer3_LIB/python-build/Lib/_socket.pyd"]
       if {$ret == 1} {
-         puts "ERROR: failed to copy $::Slicer3_LIB/python-build/PCbuild/_socket.pyd to $::Slicer3_LIB/python-build/Lib/_socket.pyd"
+         puts "ERROR: failed to copy $::PYTHON_BUILD_DIR/_socket.pyd to $::Slicer3_LIB/python-build/Lib/_socket.pyd"
          exit 1
        }
-      set ret [catch "file copy -force $::Slicer3_LIB/python-build/PCbuild/_ctypes.pyd $::Slicer3_LIB/python-build/Lib/_ctypes.pyd"]
+      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/_ctypes.pyd $::Slicer3_LIB/python-build/Lib/_ctypes.pyd"]
       if {$ret == 1} {
-        puts "ERROR: failed to copy $::Slicer3_LIB/python-build/PCbuild/_ctypes.pyd to $::Slicer3_LIB/python-build/Lib/_ctypes.pyd"
+        puts "ERROR: failed to copy $::PYTHON_BUILD_DIR/_ctypes.pyd to $::Slicer3_LIB/python-build/Lib/_ctypes.pyd"
         exit 1
       }
 
@@ -713,7 +715,7 @@ if { [BuildThis $::NETLIB_TEST_FILE "netlib"] && !$::USE_SYSTEM_PYTHON && [strin
     runcmd $::SVN co $::BLAS_TAG BLAS
 
     if { $isWindows } {
-        # don't build these - they won't work here
+        # build c lapack
     } else {
 
         cd $::Slicer3_LIB/netlib-build/BLAS-build
@@ -797,7 +799,7 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
           set devenvdir /cygdrive/$devenvdir
           set vcbindir /cygdrive/$vcbindir
           set ::env(PATH) $devenvdir:$vcbindir:$::env(PATH)
-          regsub -all ":" $::Slicer3_LIB/python-build/PCbuild "" pcbuildpath
+          regsub -all ":" $::PYTHON_BUILD_DIR "" pcbuildpath
           set ::env(PATH) /cygdrive/$pcbuildpath:$::env(PATH)
           regsub -all ":" $::MSSDK_PATH/Bin "" sdkpath
           set ::env(PATH) /cygdrive/$sdkpath:$::env(PATH)
@@ -806,7 +808,7 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
           set devenvdir [file dirname $::MAKE]
           set vcbindir $::COMPILER_PATH
           set ::env(PATH) $devenvdir\;$vcbindir\;$::env(PATH)
-          set ::env(PATH) $::env(PATH)\;$::Slicer3_LIB/python-build/PCbuild
+          set ::env(PATH) $::env(PATH)\;$::PYTHON_BUILD_DIR
         }
         set ::env(INCLUDE) [file dirname $::COMPILER_PATH]/include
         set ::env(INCLUDE) $::MSSDK_PATH/Include\;$::env(INCLUDE)
@@ -815,7 +817,7 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
         set ::env(LIBPATH) $devenvdir
 
         cd $::Slicer3_LIB/python/numpy
-        runcmd $::Slicer3_LIB/python-build/PCbuild/python.exe ./setup.py --verbose install
+        runcmd $::PYTHON_BUILD_DIR/python.exe ./setup.py --verbose install
 
         # numpy dlls do not have embeded manifests by default, need to add them here
         # - only required for newer versions of visual studio.  Assume that
