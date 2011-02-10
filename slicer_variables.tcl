@@ -434,14 +434,20 @@ switch $::tcl_platform(os) {
         }
 
         if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
-            set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/python.exe
-            set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/python26.lib
+            set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/amd64/python.exe
+            set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/amd64/python26.lib
+            set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild/amd64
+            set ::PYTHON_CONFIG "Release|x64"
         } else {
             set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/python.exe
             set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/python26.lib
+            set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild
+            set ::PYTHON_CONFIG "Release|Win32"
         }
 
         set ::PYTHON_INCLUDE $::PYTHON_BIN_DIR/include
+        
+        set ::NUMPY_TAG "http://svn.scipy.org/svn/numpy/branches/1.5.x"
 
         set ::NETLIB_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/numpy/core/numeric.pyc
         set ::NUMPY_TEST_FILE $::PYTHON_BIN_DIR/lib/site-packages/numpy/core/numeric.pyc
@@ -731,7 +737,7 @@ switch $::tcl_platform(os) {
 
         set windowsNotXP 0
         if { $::tcl_platform(os) == "Windows NT" } {
-          if { [string index $::tcl_platform(osVersion) 0] != 5 } {
+          if { [string index $::tcl_platform(osVersion) 0] < 5 } {
             set windowsNotXP 1
           }
         }
