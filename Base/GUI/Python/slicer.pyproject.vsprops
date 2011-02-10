@@ -90,7 +90,7 @@
 	/>
 	<UserMacro
 		Name="tcltk64Dir"
-		Value="$(externalsDir)\tcltk64"
+		Value="$(externalsDir)\tcl-build"
 	/>
 	<UserMacro
 		Name="tcltkLib"
@@ -106,6 +106,6 @@
 	/>
 	<UserMacro
 		Name="tcltk64LibDebug"
-		Value="$(tcltk64Dir)\lib\tcl85g.lib $(tcltk64Dir)\lib\tk85g.lib"
+		Value="$(tcltk64Dir)\lib\tcl85.lib $(tcltk64Dir)\lib\tk85.lib"
 	/>
 </VisualStudioPropertySheet>
