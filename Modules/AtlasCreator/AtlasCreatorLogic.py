@@ -1,264 +1,652 @@
 from Slicer import slicer
-import os, glob
+import os
+import glob
+import time
+
+from AtlasCreatorConfiguration import AtlasCreatorConfiguration
+from AtlasCreatorGridConfiguration import AtlasCreatorGridConfiguration
+from AtlasCreatorSkipRegistrationConfiguration import AtlasCreatorSkipRegistrationConfiguration
+from AtlasCreatorHelper import AtlasCreatorHelper
 
 class AtlasCreatorLogic(object):
-
-    def __init__(self,parentClass):
-
+    '''
+        The logic class for the Atlas Creator
+        
+        In this class, all files are passed as lists of filepaths to enable possible parallelized
+        computation in a grid environment 
+    '''
+    
+    
+    
+    '''=========================================================================================='''
+    def __init__(self, parentClass):
+        '''
+            Initialize this class
+            
+            parentClass
+                a pointer to the parentClass
+                
+            Returns
+                n/a
+        '''
+        
         self._parentClass = parentClass
-
-    def GenerateAtlas(self,inputOriginalsPath,inputManualSegmentationsPath,outputPath,defCase,onlyAffineReg,saveTransforms,saveDeformationFields):
-        self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
-        self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
-        self._parentClass.GetHelper().debug("AtlasCreator: GenerateAtlas() called")
-        self._parentClass.GetHelper().debug("Path to Original Images: " + str(inputOriginalsPath))
-        self._parentClass.GetHelper().debug("Path to Manual Segmentations: " + str(inputManualSegmentationsPath))
-        self._parentClass.GetHelper().debug("Output path: " + str(outputPath))
-        self._parentClass.GetHelper().debug("Default case: " + str(defCase))
-        self._parentClass.GetHelper().debug("Use only affine registration: " + str(onlyAffineReg))
-        self._parentClass.GetHelper().debug("Save Transforms: " + str(saveTransforms))
-        self._parentClass.GetHelper().debug("Save Deformation Fields: " + str(saveDeformationFields))
-        self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
-
-        if not inputOriginalsPath or not inputManualSegmentationsPath or not outputPath:
-            self._parentClass.GetHelper().debug("Input paths for the original images and the manual segmentations are required.")
-            return 0
-
-        # find default case
-        if defCase:
-            defaultCase = os.path.join(inputOriginalsPath, defCase)
-            defaultCaseSeg = os.path.join(inputManualSegmentationsPath, defCase)
-
-        # get the extension of the default case, we will use to find all other cases
-        extension = os.path.splitext(defCase)[1]
-
-        # get the label values of the default case
-        reader = slicer.vtkNRRDReader()
-        reader.SetFileName(defaultCaseSeg)
-        reader.Update()
-        defCaseImage = slicer.vtkImageData()
-        defCaseImage.DeepCopy(reader.GetOutput())
-        labels = self.GetLabels(defCaseImage)
-        self._parentClass.GetHelper().debug("LabelMap values found in default case: "+str(labels))
-
-        # get the Slicer paths without environment variables
-        slicerDir = os.path.normpath(str(slicer.Application.GetBinDir()))+"/../"
-        slicerLauncher = os.path.normpath(slicerDir+"/Slicer3")
-        slicerBinDir = os.path.normpath(str(slicer.Application.GetBinDir()))+"/"
-        slicerPluginsDir = os.path.normpath(slicerDir+"lib/Slicer3/Plugins")+"/"
-        slicerTempDir = os.path.normpath(str(slicer.Application.GetTemporaryDirectory()))
-
-        #
-        # registration stage
-        #
-        self._parentClass.GetHelper().debug("*** (1) Registration Stage ***")
-
-        for origFile in glob.glob(os.path.join(inputOriginalsPath, '*'+extension)):
-
-            if origFile!=defaultCase:
-                self._parentClass.GetHelper().debug("Registering "+origFile+" to default case..")
-
-                caseFile = os.path.basename(origFile)
-                caseName = caseFile.rstrip('.nrrd')
-                if saveTransforms:
-                    outputTransform = outputPath+"/"+caseName+".mat"
-                else:
-                    outputTransform = slicerTempDir+"/"+caseName+".mat"
-
-                os.system(slicerLauncher+" --launch "+slicerPluginsDir+self.Register(defaultCase,origFile,outputTransform,onlyAffineReg))
+        
+        self.__dryRun = 0
 
 
-        #
-        # resample stage
-        #
-        self._parentClass.GetHelper().debug("*** (2) Resample Stage ***")
 
-        for segmentfile in glob.glob(os.path.join(inputManualSegmentationsPath, '*'+extension)):
-
-            if segmentfile!=defaultCaseSeg:
-                self._parentClass.GetHelper().debug("Resampling "+segmentfile+" using the calculated transform..")
-
-                caseFile = os.path.basename(segmentfile)
-                caseName = caseFile.rstrip('.nrrd')
-                origFile = inputOriginalsPath+"/"+caseFile
-                if saveTransforms:
-                    inputTransform = outputPath+"/"+caseName+".mat"
-                else:
-                    inputTransform = slicerTempDir+"/"+caseName+".mat"
-                outputRegisteredSegmentation = slicerTempDir+"/"+caseName+".nrrd"
-
-                os.system(slicerLauncher+" --launch "+slicerPluginsDir+self.Resample(segmentfile,origFile,inputTransform,outputRegisteredSegmentation))
-
-
-        #
-        # save deformationfield stage
-        #
-        self._parentClass.GetHelper().debug("*** (3) Save Deformationfields ***")
-
-        if not saveDeformationFields or onlyAffineReg:
-            self._parentClass.GetHelper().debug("Saving was disabled or only affine registration was selected.")
+    '''=========================================================================================='''
+    def Helper(self):
+        '''
+            Return the helper
+            
+            Returns
+                the helper
+        '''
+        if not self._parentClass:
+            # no parentClass, we have to create our own helper
+            # this is not normal behavior
+            return AtlasCreatorHelper(self)
         else:
-            for origFile in glob.glob(os.path.join(inputOriginalsPath, '*'+extension)):
+            # return the helper of the parentClass
+            return self._parentClass.GetHelper()
 
-                if origFile!=defaultCase:
-                    self._parentClass.GetHelper().debug("Saving the deformation field for "+origFile+"..")
 
-                    caseFile = os.path.basename(origFile)
-                    caseName = caseFile.rstrip('.nrrd')
-                    if saveTransforms:
-                        inputTransform = outputPath+"/"+caseName+".mat"
-                    else:
-                        inputTransform = slicerTempDir+"/"+caseName+".mat"
-                    outputDeformationField = outputPath+"/"+caseName+"DeformationField.nrrd"
 
-                    os.system(slicerLauncher+" --launch "+slicerPluginsDir+self.SaveDeformationField(origFile,inputTransform,outputDeformationField))
+    '''=========================================================================================='''
+    def Start(self, configuration):
+        '''
+            Entry point for the Atlas Creation
+            
+            configuration
+                the configuration for the Atlas Creator task
+                
+            Returns
+                TRUE or FALSE
+        '''
+                
+                
+        result = False
+        
+        if (isinstance(configuration, AtlasCreatorGridConfiguration)):
+            # Cluster Mode
+            self.Helper().info("We will run in Cluster Mode")
+        elif (isinstance(configuration, AtlasCreatorSkipRegistrationConfiguration)):
+            # Skip Registration mode
+            self.Helper().info("We will run in Skip Registration Mode")
+        elif (isinstance(configuration, AtlasCreatorConfiguration)):
+            # Standard Mode
+            self.Helper().info("--------------------------------------------------------------------------------")
+            self.Helper().info("Starting Atlas Creator Normal Mode")
+            result = self.StartNormalMode(configuration)
+        else:
+            self.Helper().info("ERROR! Invalid Configuration.. Aborting..")
+            return - 1
+    
+        
+        
+        # if skip registration and !clusterMode -> Resample 
+        # if dynamic registration
+        #    -> GetMeanImage
+        #    if clusterMode, -> SetAndObserveClusterNodes
+        #    else if -> Register
+        #    loop until AreWeDone
+        # else if fixed registration
+        #    if clusterMode, -> SetAndObserveClusterNodes
+        #    else if -> Register
+        
+        # -> Resample
+        # -> SaveDeformationField
+        # -> FinalizeAtlases
+        #    includes Save
+        
+        return result
+    
+    
+    
+    '''=========================================================================================='''
+    def StartNormalMode(self, configuration):
+    
+        self.Helper().info("Configuration for Atlas Creator:\n" + str(configuration.GetConfigurationAsString()))
+        
+        clusterMode = isinstance(configuration, AtlasCreatorGridConfiguration)
+        
+        if configuration.GetSaveDeformationFieldsAndTransforms():
+            # save the transforms, so use the custom outputDirectory
+            outputDirectory = configuration.GetOutputDirectory()
+        else:
+            # do not save, so use the temporary directory
+            outputDirectory = self.Helper().GetSlicerTemporaryDirectory()        
+        
+        # quickly check if the temp directory has old content
+        # if yes, this is dangerous and we will abort
+        # it can be dangerous because we use this to check if the registration is complete
+        for originalImage in configuration.GetOriginalImagesFilePathList():
+            
+            originalImageFileName = os.path.basename(originalImage)
+            originalImageName = os.path.splitext(originalImageFileName)[0]
+            potentialOutputPath = self.Helper().GetSlicerTemporaryDirectory() + originalImageName + ".nrrd" 
+            
+            if os.path.isfile(potentialOutputPath):
+                # there is old content
+                # abort immediately
+                self.Helper().info("ERROR: There are already aligned images in the temporary directory: " + str(self.Helper().GetSlicerTemporaryDirectory()))
+                self.Helper().info("ERROR: This is extremely dangerous. Please move " + str(potentialOutputPath) + "!!!")
+                self.Helper().info("ERROR: Aborting now!!!")
+                return False
+                
+        
+        #
+        #
+        # REGISTRATION STAGE
+        #
+        #
+        self.Helper().info("Entering Registration Stage..")
+        
+        # check if it is cluster mode, if yes change the launcher for the registration
+        slicerLaunchPrefixForRegistration = self.Helper().GetSlicerLaunchPrefix()
+        
+        if clusterMode:
+            # if this is a cluster mode, add the schedulerCommand
+            self.Helper().info("Found cluster configuration..")
+            self.Helper().debug("Scheduler Command: " + str(configuration.GetSchedulerCommand()))
+            slicerLaunchPrefixForRegistration = configuration.GetSchedulerCommand() + " " + str(slicerLaunchPrefixForRegistration)
+                
+        #
+        # FIXED REGISTRATION
+        #
+        if configuration.GetTemplateType()=="fixed":
+            # fixed registration.. only register once against the defaultCase
+            
+            defaultCase = configuration.GetFixedTemplateDefaultCaseFilePath()
+            
+            self.Helper().info("Fixed registration against " + str(defaultCase))
+            
+            self.Register(slicerLaunchPrefixForRegistration,
+                          configuration.GetOriginalImagesFilePathList(),
+                          defaultCase,
+                          outputDirectory,
+                          configuration.GetRegistrationType())
+            
+        #
+        # DYNAMIC REGISTRATION
+        #
+        elif configuration.GetTemplateType()=="dynamic":
+            # dynamic registration.. register against mean until number of iterations reached
+            
+            alignedImages = configuration.GetOriginalImagesFilePathList()
+            
+            self.Helper().info("Dynamic registration with " + str(configuration.GetDynamicTemplateIterations()) + " iterations")
+                
+            for i in range(0,configuration.GetDynamicTemplateIterations()):
+                
+                self.Helper().info("Starting iteration " + str(i+1) + "...")
+                
+                # we generate the current meanImage
+                meanImage = slicer.vtkImageData()
+                if not self.__dryRun:
+                    meanImage.DeepCopy(self.GetMeanImage(alignedImages))
+                meanImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + "tmpMeanImage.nrrd"
+                if not self.__dryRun:
+                    self.Helper().SaveImage(meanImageFilePath,meanImage)
+                
+                # we register the original images against the meanImage
+                # we then set the alignedImages and start over..
+                alignedImages = self.Register(slicerLaunchPrefixForRegistration,
+                                              configuration.GetOriginalImagesFilePathList(),
+                                              meanImageFilePath,
+                                              outputDirectory,
+                                              configuration.GetRegistrationType()) 
+
+            # now we point the defaultCase to the meanImageFilePath
+            defaultCase = meanImageFilePath
+            
+            self.Helper().info("End of Dynamic registration..")
 
         #
-        # create atlas stage
         #
-        self._parentClass.GetHelper().debug("*** (4) Create Atlas Stage ***")
+        # RESAMPLING STAGE
+        #
+        #
+        self.Helper().info("Entering Resampling Stage..")
+                
+        self.Resample(self.Helper().GetSlicerLaunchPrefix(),
+                      configuration.GetSegmentationsFilePathList(),
+                      defaultCase,
+                      outputDirectory,
+                      self.Helper().GetSlicerTemporaryDirectory())
+        
+        if configuration.GetSaveDeformationFieldsAndTransforms() and configuration.GetRegistrationType()=="Non-Rigid":
+            
+            self.SaveDeformationFields(self.Helper().GetSlicerLaunchPrefix(),
+                                       configuration.GetSegmentationsFilePathList(),
+                                       outputDirectory,
+                                       configuration.GetOutputDirectory())
+            
+        #
+        #
+        # COMBINE TO ATLAS STAGE
+        #
+        #
+        self.Helper().info("Entering Combine-To-Atlas Stage..")
+                    
+        self.CombineToAtlas(configuration.GetSegmentationsFilePathList(),
+                            configuration.GetLabelsList(),
+                            configuration.GetOutputCast(),
+                            configuration.GetNormalizeAtlases(),
+                            configuration.GetOutputDirectory())
+        
+        
+        self.Helper().info("--------------------------------------------------------------------------------")        
+        self.Helper().info("                             All Done, folks!                                   ")
+        self.Helper().info("--------------------------------------------------------------------------------")
+        
+        return True
 
+
+
+    '''=========================================================================================='''
+    def GetMeanImage(self, filePathsList):
+        '''
+            Get the mean image of a set of images
+            
+            filePathsList
+                list of file paths to the images
+                
+            Returns
+                vtkImageData after the mean image was computed
+        '''
+        newMeanImage = slicer.vtkImageData()
+        
+        firstRun = 1
+        
+        # first, add up all images
+        for filePath in filePathsList:
+            
+            # we load the image from filePath
+            image = slicer.vtkImageData()
+            image.DeepCopy(self.Helper().LoadImage(filePath))
+            
+            if firstRun:
+                newMeanImage.DeepCopy(image)
+                firstRun = 0
+            else:
+                # now add'em all up
+                newMeanImage.DeepCopy(self.Helper().AddImages(image, newMeanImage))
+                
+        # second, divide by the number of images added
+        # this automatically casts to float
+        newMeanImage.DeepCopy(self.Helper().DivideImage(newMeanImage, len(filePathsList)))
+    
+        # now return the mean image
+        return newMeanImage
+    
+
+    
+    '''=========================================================================================='''
+    def Register(self, launchCommandPrefix, filePathsList, templateFilePath, outputDirectory, registrationType):
+        '''
+            Register a set of images, get a transformation and save it
+            
+            launchCommandPrefix
+                prefix for the actual registration command
+            filePathsList
+                list of existing filepaths to images
+            templateFilePath
+                file path to the template
+            outputDirectory
+                directory to save the generated transformation
+            registrationType
+                type of registration as String, could be "affine" and "non-rigid"
+                if the value is invalid, affine registration is assumed
+                
+            Returns
+                A list of filepaths to the aligned Images or None depending on success
+        '''
+        
+        # sanity checks
+        if len(filePathsList) == 0:
+            self.Helper().info("Empty filePathsList for Register() command. Aborting..")
+            return None
+        
+        if not templateFilePath:
+            self.Helper().info("Empty templateFilePath for Register() command. Aborting..")
+            return None
+        
+        if not outputDirectory:
+            self.Helper().info("Empty outputDirectory for Register() command. Aborting..")
+            return None
+        
+        if registrationType == "Affine":
+            onlyAffineReg = 1
+        elif registrationType == "Non-Rigid":
+            onlyAffineReg = 0
+        else:
+            # assume only affine registration if wrong value
+            onlyAffineReg = 1
+            
+        outputAlignedImages = []
+            
+        # loop through filePathsList and start registration command
+        for movingImageFilePath in filePathsList:
+            
+            # do not register the same file
+            if movingImageFilePath == templateFilePath:
+                continue
+            
+            movingImageName = os.path.splitext(os.path.basename(movingImageFilePath))[0]
+            
+            # generate file path to save output transformation
+            # by getting the filename of the case and appending it to the outputDirectory
+            outputTransformFilePath = outputDirectory + str(movingImageName) + ".mat"
+            
+            # generate file path to save aligned output image
+            # by getting the filename of the case and appending it to the outputDirectory
+            outputAlignedImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + str(movingImageName) + ".nrrd"
+            
+            command = str(launchCommandPrefix) + self.Helper().GetRegistrationCommand(templateFilePath,
+                                                                                      movingImageFilePath,
+                                                                                      outputTransformFilePath,
+                                                                                      outputAlignedImageFilePath,
+                                                                                      onlyAffineReg)
+            
+            self.Helper().debug("Register command: " + str(command))
+            
+            
+            if self.__dryRun:
+                self.Helper().info("DRYRUN - skipping execution..")            
+            else:
+                os.system(command)
+                
+            outputAlignedImages.append(str(outputAlignedImageFilePath))
+            
+        
+        # at this point:
+        # either the registration was completed if the os.system call did not send it to the background
+        # or the registration still runs in the background
+        # latter is possible, if a cluster scheduler was specified
+        # now, we will wait until all output images exist
+        
+        allOutputsExist = False
+        
+        while not allOutputsExist:
+            # not all outputs exist yet
+            self.Helper().debug("Check if all outputs exist..")
+            
+            # wait 5 secs and then check again
+            time.sleep(5)
+            
+            # we assume everything exists
+            allOutputsExist = True
+
+            # but now we really check if it is so            
+            for file in outputAlignedImages:
+                
+                if not os.path.isfile(file):
+                    self.Helper().debug("Output does not exist: " + str(file))
+                    # if only one file does not exist,
+                    # we know we have to wait longer
+                    allOutputsExist = False
+                    break
+                
+        self.Helper().debug("All outputs exist!")        
+                
+        return outputAlignedImages
+
+
+    
+    '''=========================================================================================='''
+    def Resample(self, launchCommandPrefix, filePathsList, templateFilePath, transformDirectory, outputSegmentationDirectory):
+        '''
+            Resample a set of segmentations using exising transforms
+            
+            launchCommandPrefix
+                prefix for the actual registration command
+            filePathsList
+                list of existing filepaths to segmentations
+            templateFilePath
+                file path to the template
+            transformDirectory
+                directory to existing transformations
+                the transformation has to be named after the basename of the filepaths with a .mat extension 
+            outputSegmentationDirectory
+                directory to save the resampled images
+                
+            Returns
+                TRUE or FALSE depending on success
+        '''
+        
+        # sanity checks
+        if len(filePathsList) == 0:
+            self.Helper().info("Empty filePathsList for Resample() command. Aborting..")
+            return False
+        
+        if not templateFilePath:
+            self.Helper().info("Empty templateFilePath for Resample() command. Aborting..")
+            return False
+
+        if not transformDirectory:
+            self.Helper().info("Empty transformDirectory for Resample() command. Aborting..")
+            return False
+        
+        if not outputSegmentationDirectory:
+            self.Helper().info("Empty outputSegmentationDirectory for Resample() command. Aborting..")
+            return False
+
+        # loop through filePathsList and start resample command
+        for segmentationFilePath in filePathsList:
+
+            # do not resample the same file
+            if os.path.basename(segmentationFilePath) == os.path.basename(templateFilePath):
+                continue
+
+            segmentationName = os.path.splitext(os.path.basename(segmentationFilePath))[0]
+
+            # generate file path to existing transformation
+            # by getting the filename of the case and appending it to the transformDirectory
+            transformFilePath = transformDirectory + str(segmentationName) + ".mat"
+            
+            # generate file path to output segmentation
+            # by getting the filename of the case and appending it to the outputSegmentationDirectory
+            outputSegmentationFilePath = outputSegmentationDirectory + str(segmentationName) + ".nrrd"
+
+            command = str(launchCommandPrefix) + self.Helper().GetResampleCommand(segmentationFilePath,
+                                                                                  templateFilePath,
+                                                                                  transformFilePath,
+                                                                                  outputSegmentationFilePath)
+
+            self.Helper().debug("Resample command: " + str(command))
+            
+            if self.__dryRun:
+                self.Helper().info("DRYRUN - skipping execution..")
+            else:
+                os.system(command)
+
+        return True
+
+
+    
+    '''=========================================================================================='''
+    def SaveDeformationFields(self, launchCommandPrefix, filePathsList, transformDirectory, outputDeformationFieldsDirectory):
+        '''
+            Save Deformation Fields for a list of files using existing transforms
+            This only works if the transforms are BSpline based
+            
+            launchCommandPrefix
+                prefix for the actual registration command
+            filePathsList
+                list of existing filepaths to segmentations
+            transformDirectory
+                directory to existing transformations
+                the transformation has to be named after the basename of the filepaths with a .mat extension 
+            outputDeformationFieldsDirectory
+                directory to save the Deformation Fields
+                
+            Returns
+                TRUE or FALSE depending on success
+        '''
+        
+        # sanity checks
+        if len(filePathsList) == 0:
+            self.Helper().info("Empty filePathsList for SaveDeformationFields() command. Aborting..")
+            return False
+
+        if not transformDirectory:
+            self.Helper().info("Empty transformDirectory for SaveDeformationFields() command. Aborting..")
+            return False
+        
+        if not outputDeformationFieldsDirectory:
+            self.Helper().info("Empty outputDeformationFieldsDirectory for SaveDeformationFields() command. Aborting..")
+            return False
+
+        # loop through filePathsList, get deformation fields and save it
+        for movingImageFilePath in filePathsList:
+
+            # generate file path to existing transformation
+            # by getting the filename of the case and appending it to the transformDirectory
+            transformFilePath = transformDirectory + str(os.path.basename(movingImageFilePath)) + ".mat"
+            
+            # generate file path to output deformation field
+            # by getting the filename of the case and appending it to the outputDeformationFieldsDirectory
+            outputDeformationFieldFilePath = outputDeformationFieldsDirectory + str(os.path.basename(movingImageFilePath)) + ".nrrd"
+
+            command = str(launchCommandPrefix) + self.Helper().GetSaveDeformationFieldCommand(movingImageFilePath,
+                                                                                              transformFilePath,
+                                                                                              outputDeformationFieldFilePath)
+
+            self.Helper().debug("SaveDeformationFields command: " + str(command))
+            
+            if self.__dryRun:
+                self.Helper().info("DRYRUN - skipping execution..")
+            else:
+                os.system(command)
+
+        return True
+    
+    
+    
+    '''=========================================================================================='''
+    def CombineToAtlas(self, filePathsList, labelsList, reCastString, useNormalization, outputAtlasDirectory):
+        '''
+            Combine segmentations to an Atlas based on labels. For each label an Atlas gets created. Additionally,
+            a combined Atlas is generated. All output is saved.
+            
+            filePathsList
+                list of existing filepaths to segmentations
+            labelsList
+                list of labels to analyze and build Atlases for
+            reCastString
+                re-Cast the Atlases to a certain type defined as a String
+                "Char"
+                "Unsigned Char"
+                "Double"
+                "Float"
+                "Int"
+                "Unsigned Int"
+                "Long"
+                "Unsigned Long"
+                "Short"
+                "Unsigned Short"
+                other values will result in "Short"
+            useNormalization
+                flag to enable the normalization of Atlas values between 0 and 1
+                0: disable
+                1: enable
+            outputAtlasDirectory
+                directory to save the Atlases
+                
+            Returns
+                TRUE or FALSE depending on success
+        '''
+
+        # sanity checks
+        if len(filePathsList) == 0:
+            self.Helper().info("Empty filePathsList for CombineToAtlas() command. Aborting..")
+            return False
+        
+        if len(labelsList) == 0:
+            self.Helper().info("Empty labelsList for CombineToAtlas() command. Aborting..")
+            return False
+
+        if useNormalization == 1:
+            normalize = True
+        else:
+            normalize = False
+            
+        if not outputAtlasDirectory:
+            self.Helper().info("Empty outputAtlasDirectory for CombineToAtlas() command. Aborting..")
+            return False
+        
+        # the combined atlas imageData
         atlas = slicer.vtkImageData()
-        imageDataBuffer = slicer.vtkImageData()
-        firstAtlas = True
+        
+        firstAtlasRun = True
 
-        for label in labels:
+        # loop through all labels
+        for label in labelsList:
             
             # for each label, we create an atlas using all manual segmentations
             currentLabelAtlas = slicer.vtkImageData()
-            firstrun = True        
+            firstRun = True        
 
-            for segmentfile in glob.glob(os.path.join(inputManualSegmentationsPath, '*'+extension)):
+            # loop through all segmentations
+            for segmentationFilePath in filePathsList:
                 
                 # read the manual segmentation
-                reader = slicer.vtkNRRDReader()
-                reader.SetFileName(segmentfile)
-                reader.Update()
-
                 currentSegmentation = slicer.vtkImageData()
-                currentSegmentation.DeepCopy(reader.GetOutput())
+                currentSegmentation.DeepCopy(self.Helper().LoadImage(segmentationFilePath))
                 
-                # threshold for current label
-                threshold = slicer.vtkImageThreshold()
-                threshold.SetInput(currentSegmentation)
-                threshold.ThresholdBetween(label,label)
-                threshold.ReplaceInOn()
-                threshold.ReplaceOutOn()
-                threshold.SetInValue(1)
-                threshold.SetOutValue(0)
-                threshold.Update()
+                # binarize the current segmentation
+                currentSegmentation.DeepCopy(self.Helper().BinarizeImageByLabel(currentSegmentation, label))
 
-                if firstrun:
-                    # copy just the first segmentation
-                    currentLabelAtlas.DeepCopy(threshold.GetOutput())
-                    firstrun = False
+                if firstRun:
+                    # binarize an image by a label to the currentLabelAtlas
+                    currentLabelAtlas.DeepCopy(currentSegmentation)
+                    firstRun = False
                 else:
-                    # copy the combined segmentation
-                    add = slicer.vtkImageMathematics()
-                    add.SetInput1(threshold.GetOutput())
-                    add.SetInput2(currentLabelAtlas)
-                    add.SetOperationToAdd()
-                    add.Update()
-                    currentLabelAtlas.DeepCopy(add.GetOutput())
-    
-             #numberOfManualSegmentations = len(glob.glob(os.path.join(inputManualSegmentationsPath, '*.nrrd')))
-    
-#            # now we divide our label atlas by the number of manual segmentations
-#            divide = slicer.vtkImageMathematics()
-#            divide.SetInput(currentLabelAtlas)
-#            divide.SetOperationToMultiplyByK()
-#            divide.SetConstantK(1/numberOfManualSegmentations)
-#            divide.Update()
-#            
-    
+                    # combine a binarized image by the current label with the existing currentLabelAtlas
+                    currentLabelAtlas.DeepCopy(self.Helper().AddImages(currentSegmentation, currentLabelAtlas))
+
             # and combine it with the other label atlases
-            if firstAtlas:
+            if firstAtlasRun:
+                # the first atlas iteration, just copy the currentLabelAtlas
                 atlas.DeepCopy(currentLabelAtlas)
-                firstAtlas = False
+                firstAtlasRun = False
             else:
-                add = slicer.vtkImageMathematics()
-                add.SetInput1(currentLabelAtlas)
-                add.SetInput2(atlas)
-                add.SetOperationToAdd()
-                add.Update()    
-                atlas.DeepCopy(add.GetOutput())
-
-            writer = slicer.vtkNRRDWriter()
-            writer.SetFileName(os.path.normpath(outputPath+"/atlas"+str(label)+".nrrd"))
-            writer.SetInput(currentLabelAtlas)
-            writer.Update()
-
-        writer = slicer.vtkNRRDWriter()
-        writer.SetFileName(os.path.normpath(outputPath+"/atlas.nrrd"))
-        writer.SetInput(atlas)
-        writer.Update()
+                # all other runs, add the currentLabelAtlas to the existing atlas
+                atlas.DeepCopy(self.Helper().AddImages(currentLabelAtlas, atlas))
+                
+            # now we copied the currentLabelAtlas to the atlas
+            # so we can modify currentLabelAtlas before saving..
             
-        #
-        # done creating the atlas
-        #
-        self._parentClass.GetHelper().debug("Atlas was created and saved to "+os.path.normpath(outputPath+"/atlas.nrrd")+".")
-        self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
-        self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
-        self._parentClass.GetHelper().debug("--------------------------------------------------------------------------------")
+            # normalize the currentLabelAtlas, if requested
+            if normalize:
+                self.Helper().info("Normalizing atlas for label " + str(label) + " to 0..1")
+                currentLabelAtlas.DeepCopy(self.Helper().DivideImage(currentLabelAtlas, len(filePathsList)))
+            else:
+                # re-Cast, only if not normalized
+                self.Helper().info("Re-Casting atlas for label " + str(label) + " to " + str(reCastString))
+                currentLabelAtlas.DeepCopy(self.Helper().ReCastImage(currentLabelAtlas, str(reCastString)))
+
+            # now save the currentLabelAtlas
+            self.Helper().SaveImage(str(outputAtlasDirectory) + "atlas" + str(label) + ".nrrd", currentLabelAtlas)
+            
+        # now we attack the combined atlas   
         
-        return labels
+        # normalize the combined Atlas, if requested 
+        if normalize:
+            self.Helper().info("Normalizing combined atlas to 0..1")
+            atlas.DeepCopy(self.Helper().DivideImage(atlas, len(filePathsList)))
+        else:
+            # re-Cast, only if not normalized
+            self.Helper().info("Re-Casting atlas to " + str(reCastString))
+            atlas.DeepCopy(self.Helper().ReCastImage(atlas, str(reCastString)))
+            
+        # now save the atlas
+        self.Helper().SaveImage(str(outputAtlasDirectory) + "atlas.nrrd", atlas)
+            
+        return True
 
-    def GetLabels(self,labelMap):
-        accum = slicer.vtkImageAccumulate()
-        accum.SetInput(labelMap)
-        accum.UpdateWholeExtent()
-        accum.Update()
-        data = accum.GetOutput()
-        numBins = accum.GetComponentExtent()[1]
-        nonZeroLabels = []
-        for i in range(1, numBins + 1):
-            numVoxels = data.GetScalarComponentAsDouble(i,0,0,0)
-            if (numVoxels>0):
-                nonZeroLabels.append(i)
-        return nonZeroLabels
-
-    def Register(self,defaultCase,origFile,outputTransform,onlyAffineReg):
-        registrationCommand = "BRAINSFit"
-        registrationCommand += " --fixedVolume "+os.path.normpath(defaultCase)
-        registrationCommand += " --movingVolume "+os.path.normpath(origFile)
-        registrationCommand += " --outputTransform "+os.path.normpath(outputTransform)
-        registrationCommand += " --maxBSplineDisplacement 10.0 --outputVolumePixelType short --backgroundFillValue 0.0 --interpolationMode Linear"
-        #registrationCommand += " --maskProcessingMode  ROIAUTO --ROIAutoDilateSize 3.0 --maskInferiorCutOffFromCenter 65.0"
-        registrationCommand += " --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
-        #registrationCommand += " --initializeTransformMode useCenterOfHeadAlign --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
-        registrationCommand += " --useAffine"
-
-        if not onlyAffineReg:
-            registrationCommand += " --useBSpline"
-
-        registrationCommand += " --numberOfSamples 100000 --numberOfIterations 1500"
-        registrationCommand += " --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --splineGridSize 28,20,24 --fixedVolumeTimeIndex 0"
-        registrationCommand += " --movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON"
-        registrationCommand += " --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --failureExitCode -1 --debugNumberOfThreads -1"
-        registrationCommand += " --debugLevel 0 --costFunctionConvergenceFactor 1e+9 --projectedGradientTolerance 1e-5"
-
-
-        return registrationCommand
-
-
-    def Resample(self,segmentFile,origFile,inputTransform,outputRegisteredSegmentation):
-        resampleCommand = "BRAINSResample"
-        resampleCommand += " --inputVolume "+os.path.normpath(segmentFile)
-        resampleCommand += " --referenceVolume "+os.path.normpath(origFile)
-        resampleCommand += " --warpTransform "+os.path.normpath(inputTransform)
-        resampleCommand += " --outputVolume "+os.path.normpath(outputRegisteredSegmentation)
-        resampleCommand += " --defaultValue 8.0 --pixelType short --interpolationMode NearestNeighbor"
-
-        return resampleCommand
-
-
-    def SaveDeformationField(self,origFile,inputTransform,outputDeformationField):
-    
-        saveDefFieldCommand = "BSplineToDeformationField"
-        saveDefFieldCommand += " --refImage "+os.path.normpath(origFile)
-        saveDefFieldCommand += " --tfm "+os.path.normpath(inputTransform)
-        saveDefFieldCommand += " --defImage "+os.path.normpath(outputDeformationField)
-
-        return saveDefFieldCommand
 
 
