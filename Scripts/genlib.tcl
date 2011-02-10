@@ -133,9 +133,11 @@ for {set i 0} {$i < $argc} {incr i} {
         }
         "-64" {
             set ::GENLIB(bitness) "64"
+            set ::env(BITNESS) $::GENLIB(bitness)
         }
         "-32" {
             set ::GENLIB(bitness) "32"
+            set ::env(BITNESS) $::GENLIB(bitness)
         }
         "--suncc" {
             set ::GENLIB(compiler) "suncc"
@@ -390,16 +392,12 @@ if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
       } else {
         runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Binaries/Windows/$::TCL_VERSION-build tcl-build
       }
-    }
-
-    file mkdir $Slicer3_LIB/tcl
-    cd $Slicer3_LIB/tcl
-    if { $::TCL_VERSION == "tcl85" } {
-      runcmd $::CVS -d:pserver:anonymous:@tcl.cvs.sourceforge.net:/cvsroot/tcl login 
-      runcmd $::CVS -z3 -d:pserver:anonymous@tcl.cvs.sourceforge.net:/cvsroot/tcl co -r core-8-5-6 tcl
     } else {
+      file mkdir $Slicer3_LIB/tcl
+      cd $Slicer3_LIB/tcl
       runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/tcl tcl
     }
+    
 
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
@@ -427,17 +425,12 @@ if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
 if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
     cd $Slicer3_LIB/tcl
 
-    if { $::TCL_VERSION == "tcl85" } {
-      runcmd $::CVS -d:pserver:anonymous:@tktoolkit.cvs.sourceforge.net:/cvsroot/tktoolkit login 
-      runcmd $::CVS -z3 -d:pserver:anonymous@tktoolkit.cvs.sourceforge.net:/cvsroot/tktoolkit co -r core-8-5-6 tk
-    } else {
-      runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/tk tk
-    }
-
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
          # ignore, already downloaded with tcl
       } else {
+        runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/tk tk
+         
         cd $Slicer3_LIB/tcl/tk/unix
 
         if {$tcl_platform(os) == "SunOS" && $tcl_platform(osVersion) == "5.10"} {
@@ -468,17 +461,12 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
 
     cd $Slicer3_LIB/tcl
 
-    if { $::TCL_VERSION == "tcl85" } {
-      runcmd $::CVS -d:pserver:anonymous:@incrtcl.cvs.sourceforge.net:/cvsroot/incrtcl login
-      runcmd $::CVS -z3 -d:pserver:anonymous@incrtcl.cvs.sourceforge.net:/cvsroot/incrtcl co -r HEAD incrTcl
-    } else {
-      runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/incrTcl incrTcl
-    }
-
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
          # ignore, already downloaded with tcl
       } else {
+        runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/incrTcl incrTcl
+
         cd $Slicer3_LIB/tcl/incrTcl
 
         exec chmod +x ../incrTcl/configure 
@@ -519,17 +507,12 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
 if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
     cd $Slicer3_LIB/tcl
 
-    if { $::TCL_VERSION == "tcl85" } {
-      runcmd $::CVS -d:pserver:anonymous:@incrtcl.cvs.sourceforge.net:/cvsroot/incrtcl login
-      runcmd $::CVS -z3 -d:pserver:anonymous@incrtcl.cvs.sourceforge.net:/cvsroot/incrtcl co -r HEAD iwidgets
-    } else {
-      runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/iwidgets iwidgets
-    }
-
     if {$::GENLIB(buildit)} {
         if {$isWindows} {
             # is present in the windows binary download
         } else {
+            runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/iwidgets iwidgets
+
             cd $Slicer3_LIB/tcl/iwidgets
             runcmd ../iwidgets/configure --with-tcl=$Slicer3_LIB/tcl-build/lib --with-tk=$Slicer3_LIB/tcl-build/lib --with-itcl=$Slicer3_LIB/tcl/incrTcl --prefix=$Slicer3_LIB/tcl-build
             # make all doesn't do anything...
@@ -547,19 +530,14 @@ if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
 if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
     cd $Slicer3_LIB/tcl
 
-
-    if { $::TCL_VERSION == "tcl85" } {
-      runcmd $::CVS -d:pserver:anonymous:@blt.cvs.sourceforge.net:/cvsroot/blt login
-      runcmd $::CVS -z3 -d:pserver:anonymous@blt.cvs.sourceforge.net:/cvsroot/blt co -r HEAD blt
-    } else {
-      runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/blt blt
-      runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt blt
-    }
-
     if {$::GENLIB(buildit)} {
         if { $isWindows } { 
             # is present in the windows binary download
         } elseif { $isDarwin } {
+            
+            runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/blt blt
+            runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt blt
+      
             if { ![file exists $Slicer3_LIB/tcl/isPatchedBLT] } { 
               puts "Patching..." 
               runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch 
