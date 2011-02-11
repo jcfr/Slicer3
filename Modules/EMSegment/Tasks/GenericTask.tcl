@@ -73,6 +73,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
+        # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
+        set CMD "mktemp -u \"[$GUI GetTemporaryDirectory]/XXXXXX\""
+        set basefilename [ eval exec $CMD ]
+
         set filename ""
         set NAME ""
 
@@ -86,12 +90,14 @@ namespace eval EMSegmenterPreProcessingTcl {
             set NAME "_[$Node GetID].mat"
         }
 
-        if { $NAME != ""} {       
-            set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX$NAME\""
-            set filename [ eval exec $CMD ]
+        if { $NAME != "" } {
+            set filename $basefilename$NAME
+            $LOGIC PrintText "TCL: Create file: $filename"
+            set CMD "touch \"$filename\""
+            eval exec $CMD
+        } else {
+            PrintError "Could not create file: $basefilename$NAME"
         }
-
-        $LOGIC PrintText "TCL: Create file: $filename"
 
         return $filename
     }
@@ -101,6 +107,10 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc CreateFileName { type } {
         variable GUI
         variable LOGIC
+
+        # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
+        set CMD "mktemp -u \"[$GUI GetTemporaryDirectory]/XXXXXX\""
+        set basefilename [ eval exec $CMD ]
 
         set filename ""
         set NAME ""
@@ -115,13 +125,15 @@ namespace eval EMSegmenterPreProcessingTcl {
             set NAME .txt
         }
         
-        if { $NAME != ""} {   
-            set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX$NAME\""
-            set filename [ eval exec $CMD ]
+        if { $NAME != ""} {
+            set filename $basefilename$NAME
+            $LOGIC PrintText "TCL: Create file: $filename"
+            set CMD "touch \"$filename\""
+            eval exec $CMD
+        } else {
+            PrintError "Could not create file: $basefilename$NAME"
         }
         
-        $LOGIC PrintText "TCL: Create file: $filename"
-
         return $filename
     }
 
@@ -130,13 +142,26 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
+        # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
+        set CMD "mktemp -u -d \"[$GUI GetTemporaryDirectory]/XXXXXX\""
+        set basefilename [ eval exec $CMD ]
+
         set dirname ""
+        set NAME ""
 
         if { $type == "xform" } {
-            set CMD "mktemp -d \"[$GUI GetTemporaryDirectory]/XXXXXX.xform\""
-            set dirname [ eval exec $CMD ]
+            set NAME .xform
         } else {
             PrintError "CreateDirName: Unknown type"
+        }
+
+        if { $NAME != ""} {
+            set dirname $basefilename$NAME
+            $LOGIC PrintText "TCL: Create file: $dirname"
+            set CMD "mkdir \"$dirname\""
+            eval exec $CMD
+        } else {
+            PrintError "Could not create file: $basefilename$NAME"
         }
 
         $LOGIC PrintText "TCL: Create directory: $dirname"
@@ -353,7 +378,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: User selected BRAINS"
         } else {
             PrintError "InitVariables: RegistrationPackage [$mrmlManager GetRegistrationPackageType] not defined"
-            return 1        
+            return 1
         }
         
         set selectedRegistrationPackage ""
@@ -384,7 +409,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
         }
-        
+
         # All other Variables are defined when running the pipeline as they are the volumes
         # Define alignedTargetNode when initializing pipeline
         set alignedTargetNode ""
@@ -1680,7 +1705,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # Need to download file to temp directory
-        set CMD "mktemp \"[$GUI GetTemporaryDirectory]/XXXXXX\""
+        # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
+        set CMD "mktemp -u \"[$GUI GetTemporaryDirectory]/XXXXXX\""
         catch { set basefilename [ eval exec $CMD ] } errmsg
         set NAME "_[file tail $URI]"
         set filename $basefilename$NAME
@@ -1976,6 +2002,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable outputSubParcellationNode
         variable selectedRegistrationPackage
 
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == Register Atlas"
+        $LOGIC PrintText "TCL: =========================================="
+
 
         set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
         set bSplineFlag [expr ([$mrmlManager GetRegistrationDeformableType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
@@ -1984,8 +2014,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             return [SkipAtlasRegistration]
         }
 
-        $LOGIC PrintText "TCL: =========================================="
-        $LOGIC PrintText "TCL: == Register Atlas ($affineFlag / $bSplineFlag) "
+        $LOGIC PrintText "TCL: == ($affineFlag / $bSplineFlag) "
         $LOGIC PrintText "TCL: =========================================="
 
 
