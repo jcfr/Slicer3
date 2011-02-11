@@ -906,6 +906,15 @@ int vtkMRMLTransPerinealProstateRobotNode::PerformRegistration(vtkMRMLScalarVolu
     registration->SetRobotToImageTransform(transformNode);
     registration->SetSliceRange(param1, param2);
     registration->DoRegistration();
+
+    std::cerr << "Sending Z-frame Data" << std::endl;
+    if (this->GetRobotCommandNode()==NULL)
+      {
+      return 0;
+      }
+    this->GetRobotCommandNode()->SetZFrameTransformNodeID(transformNode->GetID());
+    this->GetRobotCommandNode()->PushOutgoingCommand("SET_Z_FRAME");
+    this->GetRobotCommandNode()->InvokeEvent(vtkCommand::ModifiedEvent);
     }
 
   return 1;
