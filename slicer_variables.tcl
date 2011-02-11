@@ -424,10 +424,7 @@ switch $::tcl_platform(os) {
 
         set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE
         set ::Teem_BIN_DIR  $::Teem_BUILD_DIR/bin/$::VTK_BUILD_TYPE
-
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
-        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish85.exe
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itclConfig.sh
         set ::INCR_TCL_LIB $::TCL_LIB_DIR/lib/itcl3.2/itcl32.lib
         set ::INCR_TK_LIB $::TCL_LIB_DIR/lib/itk3.2/itk32.lib
@@ -439,11 +436,15 @@ switch $::tcl_platform(os) {
         }
 
         if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
+            set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
+            set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish85.exe
             set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/amd64/python.exe
             set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/amd64/python26.lib
             set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild/amd64
             set ::PYTHON_CONFIG "Release|x64"
         } else {
+            set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
+            set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
             set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/python.exe
             set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/python26.lib
             set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild
