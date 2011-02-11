@@ -1519,15 +1519,12 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set CMD "$CMTKFOLDER/registration"
 
-        set CMD "$CMD --initxlate --exploration 8.0 --dofs 6 --dofs 9"
-
-
-        if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
-            set CMD "$CMD --accuracy 0.5"
-        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
-            set CMD "$CMD --accuracy 5"
+        if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
+            set CMD "$CMD --dofs 0"
+        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
+            set CMD "$CMD --accuracy 0.5 --initxlate --exploration 8.0 --dofs 6 --dofs 9"
         } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
-            set CMD "$CMD --accuracy 0.1"
+            set CMD "$CMD --accuracy 0.1 --initxlate --exploration 8.0 --dofs 6 --dofs 9"
         } else {
             PrintError "CMTKRegistration: Unknown affineType: $affineType"
             return ""
@@ -1578,12 +1575,12 @@ namespace eval EMSegmenterPreProcessingTcl {
             set outTransformDirName $outNonLinearTransformDirName
 
 
-            if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
+            if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
+                set CMD "$CMD --delta-f-threshold 1"
+            } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
                 set CMD "$CMD --grid-spacing 40 --refine 1"
                 set CMD "$CMD --energy-weight 5e-2"
                 set CMD "$CMD --accuracy 1 --coarsest 1.5"
-            } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
-                set CMD "$CMD --fast"
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
                 set CMD "$CMD --delay-refine --grid-spacing 40 --refine 4"
                 set CMD "$CMD --exact-spacing --energy-weight 5e-2"
