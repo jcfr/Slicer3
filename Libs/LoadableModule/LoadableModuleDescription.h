@@ -21,6 +21,7 @@
 
 #include <string>
 #include <vector>
+#include <iterator>
 
 class vtkSlicerModuleGUI;
 class vtkSlicerModuleLogic;
