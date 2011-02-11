@@ -552,6 +552,26 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
+     # Create Voronoi diagram with correct scalar type from aligned subparcellation 
+     proc GeneratedVoronoi { input } {
+ 
+            set output [vtkImageData New]
+            $output DeepCopy $input 
+
+            set voronoi [vtkImageLabelPropagation New]
+            $voronoi SetInput $output 
+            $voronoi Update 
+
+            set voronoiCast [vtkImageCast New]
+            $voronoiCast SetInput [$voronoi GetPropagatedMap] 
+            $voronoiCast SetOutputScalarType  [$output GetScalarType]
+            $voronoiCast Update
+
+            $input DeepCopy [$voronoiCast GetOutput]
+            $voronoiCast Delete
+            $voronoi Delete
+            $output Delete
+     }
 
     #------------------------------------------------------
     # from StartPreprocessingTargetToTargetRegistration
@@ -622,6 +642,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set movingVolumeNode [$inputSubParcellationNode GetNthVolumeNode $i]
             set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]
             $LOGIC StartPreprocessingResampleAndCastToTarget $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode
+            GeneratedVoronoi [$outputVolumeNode GetImageData]
         }
 
 
@@ -2173,22 +2194,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             }
 
             # Create Voronoi diagram with correct scalar type from aligned subparcellation 
-            set output [vtkImageData New]
-            $output DeepCopy [$outputVolumeNode GetImageData]
-
-            set voronoi [vtkImageLabelPropagation New]
-            $voronoi SetInput $output 
-            $voronoi Update 
-
-            set voronoiCast [vtkImageCast New]
-            $voronoiCast SetInput [$voronoi GetPropagatedMap] 
-            $voronoiCast SetOutputScalarType  [$output GetScalarType]
-            $voronoiCast Update
-
-            [$outputVolumeNode GetImageData] DeepCopy [$voronoiCast GetOutput]
-            $voronoiCast Delete
-            $voronoi Delete
-            $output Delete
+            GeneratedVoronoi [$outputVolumeNode GetImageData]
         }
 
         $LOGIC PrintText "TCL: Atlas-to-target registration complete."
@@ -2196,8 +2202,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
-
-
+    
     # output: outputVolumeNode
     # no side effects
     proc Resample { inputVolumeNode referenceVolumeNode transformNode transformDirName transformType interpolationType backgroundLevel outputVolumeNode } {
