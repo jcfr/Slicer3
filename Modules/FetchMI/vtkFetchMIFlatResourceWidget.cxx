@@ -175,6 +175,7 @@ void vtkFetchMIFlatResourceWidget::ProcessWidgetEvents(vtkObject *caller,
       //--- Methods produce error message for user and abort if not.
       if ( this->Logic->CheckConnectionAndServer() == false )
         {
+        vtkErrorMacro ( "Download aborted because network or server was not reachable." );
         return;
         }
       //--- check for enough cache to do the work.
