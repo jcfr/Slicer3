@@ -46,7 +46,7 @@ vtkFetchMIServerCollection::vtkFetchMIServerCollection ( )
 //----------------------------------------------------------------------------
 int vtkFetchMIServerCollection::InferrableURI ( const char *webserviceType )
 {
-  std::map<std::string, std::vector<int>>::iterator iter;
+  std::map<std::string, std::vector<int> >::iterator iter;
   
   for ( iter = this->WebServiceTypesAndParameters.begin();
         iter != this->WebServiceTypesAndParameters.end();
