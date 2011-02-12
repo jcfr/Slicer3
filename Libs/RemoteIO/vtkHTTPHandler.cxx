@@ -220,10 +220,6 @@ void vtkHTTPHandler::StageFileRead(const char * source, const char * destination
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, this->LocalFile);
-
-//  curl_easy_setopt(this->CurlHandle, CURLOPT_PROGRESSDATA, NULL);
-//  curl_easy_setopt(this->CurlHandle, CURLOPT_PROGRESSFUNCTION, ProgressCallback);
-
   // quick timeout during connection phase if URL is not accessible (e.g. blocked by a firewall)
   curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 5); // in seconds (type long)
 
@@ -320,6 +316,7 @@ void vtkHTTPHandler::StageFileWrite(const char * source, const char * destinatio
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_READFUNCTION, read_callback);
   curl_easy_setopt(this->CurlHandle, CURLOPT_READDATA, this->LocalFile);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10);  
   CURLcode retval = curl_easy_perform(this->CurlHandle);
 
    if (retval == CURLE_OK)
@@ -402,8 +399,8 @@ const char *vtkHTTPHandler::CheckServerStatus ( const char *uri )
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_HEADER, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_NOBODY, true);  
-  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 30 );
-  curl_easy_setopt(this->CurlHandle, CURLOPT_TIMEOUT, 30 );
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10 );
+  curl_easy_setopt(this->CurlHandle, CURLOPT_TIMEOUT, 10 );
   retval = curl_easy_perform(this->CurlHandle);
 
 /*

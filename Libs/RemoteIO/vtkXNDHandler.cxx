@@ -211,7 +211,7 @@ void vtkXNDHandler::StageFileRead(const char * source,
   curl_easy_setopt(this->CurlHandle, CURLOPT_NOPROGRESS, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
-  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 5);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, this->LocalFile);    
 
   vtkDebugMacro("StageFileRead: about to do the curl download... source = " << source << ", dest = " << destination);
@@ -319,6 +319,7 @@ void vtkXNDHandler::StageFileWrite(const char *source,
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_READFUNCTION, xnd_read_callback);
   curl_easy_setopt(this->CurlHandle, CURLOPT_READDATA, this->LocalFile);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10);  
   curl_easy_setopt(this->CurlHandle, CURLOPT_INFILESIZE, lSize);
   CURLcode retval = curl_easy_perform(this->CurlHandle);
   
@@ -415,6 +416,7 @@ int vtkXNDHandler::PostTag ( const char *svr, const char *label,
   curl_easy_setopt(this->CurlHandle, CURLOPT_POSTFIELDS, pf );  
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10);    
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, responseFile);
   
   CURLcode retval = curl_easy_perform(this->CurlHandle);
@@ -527,6 +529,7 @@ int vtkXNDHandler::PostMetadata( const char *serverPath,
   curl_easy_setopt(this->CurlHandle, CURLOPT_READDATA, this->LocalFile);
   curl_easy_setopt(this->CurlHandle, CURLOPT_POSTFIELDS, NULL );
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10);    
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, returnURIFile);
 
   CURLcode retval = curl_easy_perform(this->CurlHandle);
@@ -602,6 +605,7 @@ int vtkXNDHandler::DeleteResource ( const char *uri, const char *temporaryRespon
   curl_easy_setopt(this->CurlHandle, CURLOPT_NOPROGRESS, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_VERBOSE, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10);    
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, responseFile);
   
   CURLcode retval = curl_easy_perform(this->CurlHandle);
@@ -678,6 +682,7 @@ const char *vtkXNDHandler::QueryServer( const char *uri, const char *destination
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEFUNCTION, NULL); // write_callback);
   curl_easy_setopt(this->CurlHandle, CURLOPT_WRITEDATA, this->LocalFile);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10);    
   CURLcode retval = curl_easy_perform(this->CurlHandle);
 
   if (retval == CURLE_OK)
@@ -790,6 +795,8 @@ const char *vtkXNDHandler::CheckServerStatus ( const char *uri )
   curl_easy_setopt(this->CurlHandle, CURLOPT_HTTPGET, 1);
   curl_easy_setopt(this->CurlHandle, CURLOPT_URL, uri);
   curl_easy_setopt(this->CurlHandle, CURLOPT_FOLLOWLOCATION, true);
+  curl_easy_setopt(this->CurlHandle, CURLOPT_CONNECTTIMEOUT, 10 );
+  curl_easy_setopt(this->CurlHandle, CURLOPT_TIMEOUT, 10 );
   CURLcode retval = curl_easy_perform(this->CurlHandle);
   const char *returnString;
 
