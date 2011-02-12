@@ -27,7 +27,7 @@ class AtlasCreatorConfiguration(object):
         
         self.__registrationType = "Affine"
         
-        self.__saveDeformationFieldsAndTransforms = 1
+        self.__saveTransforms = 1
         self.__normalizeAtlases = 0
         
         self.__outputCast = "Short" 
@@ -48,7 +48,7 @@ class AtlasCreatorConfiguration(object):
         output += "Fixed Template Default Case: " + str(self.__fixedTemplateDefaultCaseFilePath) + "\n"
         output += "Labels: " + str(self.__labelsList) + "\n"
         output += "Registration Type: " + str(self.__registrationType) + "\n"
-        output += "Save Deformation Fields and Transforms: " + str(self.__saveDeformationFieldsAndTransforms) + "\n"
+        output += "Save Transforms: " + str(self.__saveTransforms) + "\n"
         output += "Normalize Atlases: " + str(self.__normalizeAtlases) + "\n"
         output += "Output Cast: " + str(self.__outputCast) + "\n"
         
@@ -281,19 +281,19 @@ class AtlasCreatorConfiguration(object):
         
                 
     '''=========================================================================================='''
-    def GetSaveDeformationFieldsAndTransforms(self):
+    def GetSaveTransforms(self):
         '''
             Returns
-                the flag for saving Deformation Fields and Transforms
+                the flag for saving Transforms
         '''
-        return self.__saveDeformationFieldsAndTransforms
+        return self.__saveTransforms
 
 
 
     '''=========================================================================================='''
-    def SetSaveDeformationFieldsAndTransforms(self, value):
+    def SetSaveTransforms(self, value):
         '''
-            Sets the flag for saving Deformation Fields and Transforms
+            Sets the flag for saving Transforms
             
             value
                 the flag as 0 or 1
@@ -302,9 +302,9 @@ class AtlasCreatorConfiguration(object):
                 n/a
         '''
         if value != 0 and value != 1:
-            self.__saveDeformationFieldsAndTransforms = 1
+            self.__saveTransforms = 1
         else:
-            self.__saveDeformationFieldsAndTransforms = int(value)
+            self.__saveTransforms = int(value)
         
         
                 

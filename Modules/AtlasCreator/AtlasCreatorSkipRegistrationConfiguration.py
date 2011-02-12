@@ -4,7 +4,7 @@ from AtlasCreatorConfiguration import AtlasCreatorConfiguration
 class AtlasCreatorSkipRegistrationConfiguration(AtlasCreatorConfiguration):
     '''
         This class reflects a parameter configuration for using the Atlas Creator
-        with existing Deformation Fields
+        with existing Transforms
     '''
     
     
@@ -22,33 +22,73 @@ class AtlasCreatorSkipRegistrationConfiguration(AtlasCreatorConfiguration):
         AtlasCreatorConfiguration.__init__(self)
         
         # also, initialize custom fields now
-        self.__deformationFieldsFilePathList = []
+        self.__transformsDirectory = ""
+        
+        self.__existingTemplate = ""
         
         
         
     '''=========================================================================================='''
-    def GetDeformationFieldsFilePathList(self):
+    def GetConfigurationAsString(self):
         '''
             Returns
-                a list of filePaths pointing to Deformation Fields
+                the current configuration as a String
         '''
-        return self.__originalImagesFilePathList
+        output = AtlasCreatorConfiguration.GetConfigurationAsString(self)
+        output += "Existing Transforms Directory: " + str(self.__transformsDirectory) + "\n"
+        
+        return output
+    
+    
+        
+    '''=========================================================================================='''
+    def GetTransformDirectory(self):
+        '''
+            Returns
+                a list of filePaths pointing to Transforms
+        '''
+        return self.__transformsDirectory
 
 
 
     '''=========================================================================================='''
-    def SetDeformationFieldsFilePathList(self,value):
+    def SetTransformDirectory(self,value):
         '''
-            Sets the list of filePaths for the Deformations Fields
+            Sets the directory for the existing transforms
             
             value
-                a list of at least 1 filePaths pointing to existing original images
+                a filePath to a directory containing existing transforms
                 
             Returns
                 n/a
         '''
-        if type(value).__name__=='list' and len(value) >= 1:
-            # we have at least one filePath in the list
-            self.__originalImagesFilePathList = value
+        if value:
+            self.__transformsDirectory = value
+
+
+
+    '''=========================================================================================='''
+    def GetExistingTemplate(self):
+        '''
+            Returns
+                the filePath to an existing template
+        '''
+        return self.__existingTemplate
+
+
+
+    '''=========================================================================================='''
+    def SetExistingTemplate(self,value):
+        '''
+            Sets the filePath to an existing template
+            
+            value
+                a filePath to an existing template
+                
+            Returns
+                n/a
+        '''
+        if value:
+            self.__existingTemplate = value
 
 

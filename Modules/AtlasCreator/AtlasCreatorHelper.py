@@ -75,6 +75,39 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
+    def CheckTemporaryDirectory(self,filePathList):
+        ''' 
+            Check if the temporary directory contains any filenames which
+            may block the Atlas Creator logic
+            
+            filePathList
+                the list of file paths to check
+            
+            Returns
+                TRUE if the tempDir is ok and FALSE if not
+        '''         
+        # quickly check if the temp directory has old content
+        # if yes, this is dangerous and we will abort
+        # it can be dangerous because we use this to check if the registration is complete
+        for originalImage in filePathList:
+            
+            originalImageFileName = os.path.basename(originalImage)
+            originalImageName = os.path.splitext(originalImageFileName)[0]
+            potentialOutputPath = self.GetSlicerTemporaryDirectory() + originalImageName + ".nrrd" 
+            
+            if os.path.isfile(potentialOutputPath):
+                # there is old content
+                # abort immediately
+                self.info("ERROR: There are already aligned images in the temporary directory: " + str(self.GetSlicerTemporaryDirectory()))
+                self.info("ERROR: This is extremely dangerous. Please move " + str(potentialOutputPath) + "!!!")
+                self.info("ERROR: Aborting now!!!")
+                return False
+
+        return True
+    
+
+
+    '''=========================================================================================='''
     def GetSlicerLaunchPrefix(self):
         '''
             Get the path to the 3D Slicer launcher ready to start a plugin. (OS independent)
@@ -316,8 +349,8 @@ class AtlasCreatorHelper(object):
         registrationCommand += " --outputVolume "+os.path.normpath(outputImageFilePath)
         registrationCommand += " --maxBSplineDisplacement 10.0 --outputVolumePixelType short --backgroundFillValue 0.0 --interpolationMode Linear"
         #registrationCommand += " --maskProcessingMode  ROIAUTO --ROIAutoDilateSize 3.0 --maskInferiorCutOffFromCenter 65.0"
-        registrationCommand += " --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
-        #registrationCommand += " --initializeTransformMode useCenterOfHeadAlign --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
+        #registrationCommand += " --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
+        registrationCommand += " --initializeTransformMode useCenterOfHeadAlign --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
         registrationCommand += " --useAffine"
 
         if not onlyAffineReg:
@@ -344,7 +377,7 @@ class AtlasCreatorHelper(object):
             templateFilePath
                 the file path to the template used to define the output space
             transformFilePath
-                the file path to the existing transformation
+                the file path to the existing transformation          
             outputSegmentationFilePath
                 the file path to the resampled segmentation output
                 

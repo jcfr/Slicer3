@@ -40,9 +40,10 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._segDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
         self._outDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
         
-        self._defFieldFrame = slicer.vtkKWFrameWithLabel()
-        self._defFieldDirCheckBox = slicer.vtkKWCheckButtonWithLabel()
-        self._defFieldDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
+        self._transformsFrame = slicer.vtkKWFrameWithLabel()
+        self._transformsDirCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._transformsDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
+        self._transformsTemplateButton = slicer.vtkKWLoadSaveButtonWithLabel()
 
         self._secondFrame = slicer.vtkSlicerModuleCollapsibleFrame()
 
@@ -58,7 +59,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._regTypeRadios = slicer.vtkKWRadioButtonSetWithLabel()
 
-        self._saveDeformationFieldCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._saveTransformsCheckBox = slicer.vtkKWCheckButtonWithLabel()
 
         self._thirdFrame = slicer.vtkSlicerModuleCollapsibleFrame()
 
@@ -70,6 +71,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         self._fourthFrame = slicer.vtkSlicerModuleCollapsibleFrame()
 
+        self._clusterCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._schedulerEntry = slicer.vtkKWEntryWithLabel()
 
         self._generateButton = slicer.vtkKWPushButton()
@@ -101,6 +103,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._dynamicRadioTag = self.AddObserverByNumber(self._dynamicRadio,vtkKWRadioButton_SelectedStateChangedEvent)
         self._normalizeAtlasCheckBoxTag = self.AddObserverByNumber(self._normalizeAtlasCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
         self._defaultCaseEntryTag = self.AddObserverByNumber(self._defaultCaseEntry.GetWidget(),vtkKWEntry_EntryValueChangedEvent)
+        self._transformsTemplateButtonTag = self.AddObserverByNumber(self._transformsTemplateButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
 
     def RemoveGUIObservers(self):
         pass
@@ -122,6 +125,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self.ToggleNormalize()
             elif caller == self._defaultCaseEntry.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
                 self.GetHelper().debug("defaultCaseEntry changed")
+                self.UpdateLabelList()
+            elif caller == self._transformsTemplateButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
                 self.UpdateLabelList()
                 
                 
@@ -198,8 +203,16 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                     
     def UpdateLabelList(self):
         if not self._updating:
-            caseFile = self._defaultCaseEntry.GetWidget().GetValue()
-            defaultCaseSegmentationFilePath = self._segDirButton.GetWidget().GetFileName() + os.sep + caseFile
+            if self._transformsDirCheckBox.GetWidget().GetSelectedState():
+                # use existing transforms mode
+                listOfSegmentations = self.GetHelper().ConvertDirectoryToList(self._segDirButton.GetWidget().GetFileName())
+                
+                if len(listOfSegmentations) > 1:
+                    defaultCaseSegmentationFilePath = listOfSegmentations[0]
+            else:
+                caseFile = self._defaultCaseEntry.GetWidget().GetValue()
+                defaultCaseSegmentationFilePath = self._segDirButton.GetWidget().GetFileName() + os.sep + caseFile
+                
             labelList = self.ReadLabelsFromImage(defaultCaseSegmentationFilePath)
             
             labelListAsString = ""
@@ -212,16 +225,45 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
     def GenerateAtlas(self):
         ''' call the logic '''
 
+        # sanity checks
+        if not self._origDirButton.GetWidget().GetFileName() and not self._transformsDirCheckBox.GetWidget().GetSelectedState():
+            # we only need the original images if we do not skip the registration
+            self.GetHelper().info("ERROR! The Original Images Directory was not set.. Aborting..")
+            return False
+        
+        if not self._segDirButton.GetWidget().GetFileName():
+            self.GetHelper().info("ERROR! The Segmentation Directory was not set.. Aborting..")
+            return False                
+            
+        if not self._outDirButton.GetWidget().GetFileName():
+            self.GetHelper().info("ERROR! The Output Directory was not set.. Aborting..")
+            return False            
+
         # create a configuration container
-        if self._defFieldDirCheckBox.GetWidget().GetSelectedState():
+        configuration = AtlasCreatorConfiguration()
+
+        # if we have a special scenario, create a specific container
+        if self._transformsDirCheckBox.GetWidget().GetSelectedState():
             # use the existing deformation field mode and skip the registration
             configuration = AtlasCreatorSkipRegistrationConfiguration()
             
-            # now set the directory to the deformation fields
-            configuration.SetDeformationFieldsFilePathList(self.GetHelper().ConvertDirectoryToList(self._defFieldDirButton.GetWidget().GetFileName()))
-        else:
-            # use the standard mode
-            configuration = AtlasCreatorConfiguration()
+            # now set the directory to the transforms
+            configuration.SetTransformDirectory(os.path.normpath(self._transformsDirButton.GetWidget().GetFileName())+os.sep)
+        
+            if not self._transformsTemplateButton.GetWidget().GetFileName():
+                # we need an existing template here
+                self.GetHelper().info("ERROR! There was no template set.. Aborting..")
+                return False
+            
+            configuration.SetExistingTemplate(self._transformsTemplateButton.GetWidget().GetFileName())
+        
+        elif self._clusterCheckBox.GetWidget().GetSelectedState():
+            # cluster mode
+            configuration = AtlasCreatorGridConfiguration()
+            
+            #now set the scheduler command
+            schedCommand = self._schedulerEntry.GetWidget().GetValue()
+            configuration.SetSchedulerCommand(schedCommand)
         
         # set the list of original images    
         configuration.SetOriginalImagesFilePathList(self.GetHelper().ConvertDirectoryToList(self._origDirButton.GetWidget().GetFileName()))
@@ -229,7 +271,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         # set the list of segmentations
         configuration.SetSegmentationsFilePathList(self.GetHelper().ConvertDirectoryToList(self._segDirButton.GetWidget().GetFileName()))
         
-        # set the output directory
+        # set the output directory        
         configuration.SetOutputDirectory(os.path.normpath(self._outDirButton.GetWidget().GetFileName())+os.sep)
         
         # set the template type
@@ -243,10 +285,11 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         # set the default case
         defCaseFileName = self._defaultCaseEntry.GetWidget().GetValue()
-        defCaseFilePath = os.path.join(self._origDirButton.GetWidget().GetFileName(),defCaseFileName)
-        # ... normalize it and set it
-        configuration.SetFixedTemplateDefaultCaseFilePath(os.path.normpath(defCaseFilePath))
-        
+        if not self._transformsDirCheckBox.GetWidget().GetSelectedState():     
+            defCaseFilePath = os.path.join(self._origDirButton.GetWidget().GetFileName(),defCaseFileName)
+            # ... normalize it and set it
+            configuration.SetFixedTemplateDefaultCaseFilePath(os.path.normpath(defCaseFilePath))
+            
         labels = self._labelsEntry.GetWidget().GetValue()
         configuration.SetLabelsList(labels)
             
@@ -259,7 +302,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             configuration.SetRegistrationType("Non-Rigid")
             
         # set save deformation fields and transforms
-        configuration.SetSaveDeformationFieldsAndTransforms(self._saveDeformationFieldCheckBox.GetWidget().GetSelectedState())
+        configuration.SetSaveTransforms(self._saveTransformsCheckBox.GetWidget().GetSelectedState())
 
         # set normalize atlases
         configuration.SetNormalizeAtlases(self._normalizeAtlasCheckBox.GetWidget().GetSelectedState())
@@ -365,23 +408,29 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._outDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._outDirButton.GetWidgetName())
 
-        self._defFieldFrame.SetParent(self._topFrame.GetFrame())
-        self._defFieldFrame.Create()
-        self._defFieldFrame.SetLabelText("Optional Input")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._defFieldFrame.GetWidgetName())
+        self._transformsFrame.SetParent(self._topFrame.GetFrame())
+        self._transformsFrame.Create()
+        self._transformsFrame.SetLabelText("Optional Input")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsFrame.GetWidgetName())
 
-        self._defFieldDirCheckBox.SetParent(self._defFieldFrame.GetFrame())
-        self._defFieldDirCheckBox.Create()
-        self._defFieldDirCheckBox.SetLabelText("Skip Registration and use Existing:")
-        self._defFieldDirCheckBox.GetWidget().SetSelectedState(0)
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._defFieldDirCheckBox.GetWidgetName())
+        self._transformsDirCheckBox.SetParent(self._transformsFrame.GetFrame())
+        self._transformsDirCheckBox.Create()
+        self._transformsDirCheckBox.SetLabelText("Skip Registration and use Existing:")
+        self._transformsDirCheckBox.GetWidget().SetSelectedState(0)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsDirCheckBox.GetWidgetName())
 
-        self._defFieldDirButton.SetParent(self._defFieldFrame.GetFrame())
-        self._defFieldDirButton.Create()
-        self._defFieldDirButton.GetWidget().SetText("Click to pick a directory")
-        self._defFieldDirButton.SetLabelText("Deformation Fields directory:")
-        self._defFieldDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._defFieldDirButton.GetWidgetName())
+        self._transformsDirButton.SetParent(self._transformsFrame.GetFrame())
+        self._transformsDirButton.Create()
+        self._transformsDirButton.GetWidget().SetText("Click to pick a directory")
+        self._transformsDirButton.SetLabelText("Transforms directory:")
+        self._transformsDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsDirButton.GetWidgetName())
+
+        self._transformsTemplateButton.SetParent(self._transformsFrame.GetFrame())
+        self._transformsTemplateButton.Create()
+        self._transformsTemplateButton.GetWidget().SetText("Click to pick a template")
+        self._transformsTemplateButton.SetLabelText("Existing Template:")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsTemplateButton.GetWidgetName())
 
         self._secondFrame.SetParent(self._moduleFrame.GetFrame())
         self._secondFrame.Create()
@@ -440,11 +489,11 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._regTypeRadios.GetWidget().GetWidget(0).SetSelectedState(1)
 
-        self._saveDeformationFieldCheckBox.SetParent(self._secondFrame.GetFrame())
-        self._saveDeformationFieldCheckBox.Create()
-        self._saveDeformationFieldCheckBox.SetLabelText("Save Deformation Fields and Transforms:")
-        self._saveDeformationFieldCheckBox.GetWidget().SetSelectedState(1)
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._saveDeformationFieldCheckBox.GetWidgetName())
+        self._saveTransformsCheckBox.SetParent(self._secondFrame.GetFrame())
+        self._saveTransformsCheckBox.Create()
+        self._saveTransformsCheckBox.SetLabelText("Save Transforms:")
+        self._saveTransformsCheckBox.GetWidget().SetSelectedState(1)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._saveTransformsCheckBox.GetWidgetName())
 
         self._thirdFrame.SetParent(self._moduleFrame.GetFrame())
         self._thirdFrame.Create()
@@ -487,6 +536,12 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._fourthFrame.SetLabelText("Cluster Configuration")
         self._fourthFrame.CollapseFrame()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._fourthFrame.GetWidgetName())
+
+        self._clusterCheckBox.SetParent(self._fourthFrame.GetFrame())
+        self._clusterCheckBox.Create()
+        self._clusterCheckBox.SetLabelText("Use Cluster:")
+        self._clusterCheckBox.GetWidget().SetSelectedState(0)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._clusterCheckBox.GetWidgetName())
 
         self._schedulerEntry.SetParent(self._fourthFrame.GetFrame())
         self._schedulerEntry.Create()

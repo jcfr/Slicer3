@@ -25,6 +25,19 @@ class AtlasCreatorGridConfiguration(AtlasCreatorConfiguration):
         
         
     '''=========================================================================================='''
+    def GetConfigurationAsString(self):
+        '''
+            Returns
+                the current configuration as a String
+        '''
+        output = AtlasCreatorConfiguration.GetConfigurationAsString(self)
+        output += "Scheduler Command: " + str(self.__schedulerCommand) + "\n"
+        
+        return output
+    
+    
+        
+    '''=========================================================================================='''
     def GetSchedulerCommand(self):
         '''
             Returns

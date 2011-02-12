@@ -66,143 +66,142 @@ class AtlasCreatorLogic(object):
                 TRUE or FALSE
         '''
                 
-                
-        result = False
-        
+        clusterMode = 0
+        skipRegistrationMode = 0
+
         if (isinstance(configuration, AtlasCreatorGridConfiguration)):
+            
             # Cluster Mode
-            self.Helper().info("We will run in Cluster Mode")
+            self.Helper().info("--------------------------------------------------------------------------------")
+            self.Helper().info("                   Starting Atlas Creator Cluster Mode                          ")
+            clusterMode = 1
+            
         elif (isinstance(configuration, AtlasCreatorSkipRegistrationConfiguration)):
+            
             # Skip Registration mode
-            self.Helper().info("We will run in Skip Registration Mode")
+            self.Helper().info("--------------------------------------------------------------------------------")
+            self.Helper().info("               Starting Atlas Creator Skip Registration Mode                    ")
+            skipRegistrationMode = 1
+            
         elif (isinstance(configuration, AtlasCreatorConfiguration)):
+            
             # Standard Mode
             self.Helper().info("--------------------------------------------------------------------------------")
-            self.Helper().info("Starting Atlas Creator Normal Mode")
-            result = self.StartNormalMode(configuration)
+            self.Helper().info("                      Starting Atlas Creator Normal Mode                        ")
+            
         else:
             self.Helper().info("ERROR! Invalid Configuration.. Aborting..")
-            return - 1
+            return False
     
-        
-        
-        # if skip registration and !clusterMode -> Resample 
-        # if dynamic registration
-        #    -> GetMeanImage
-        #    if clusterMode, -> SetAndObserveClusterNodes
-        #    else if -> Register
-        #    loop until AreWeDone
-        # else if fixed registration
-        #    if clusterMode, -> SetAndObserveClusterNodes
-        #    else if -> Register
-        
-        # -> Resample
-        # -> SaveDeformationField
-        # -> FinalizeAtlases
-        #    includes Save
-        
-        return result
-    
-    
-    
-    '''=========================================================================================='''
-    def StartNormalMode(self, configuration):
-    
+        # at this point, we have a valid configuration, let's print it
         self.Helper().info("Configuration for Atlas Creator:\n" + str(configuration.GetConfigurationAsString()))
         
-        clusterMode = isinstance(configuration, AtlasCreatorGridConfiguration)
-        
-        if configuration.GetSaveDeformationFieldsAndTransforms():
-            # save the transforms, so use the custom outputDirectory
-            outputDirectory = configuration.GetOutputDirectory()
+        # check if we want to save the transforms in a directory other than the temporary directory
+        if configuration.GetSaveTransforms():
+            # save the transforms, so use the custom transformDirectory
+            transformDirectory = configuration.GetOutputDirectory()
         else:
-            # do not save, so use the temporary directory
-            outputDirectory = self.Helper().GetSlicerTemporaryDirectory()        
+            # do not save the transforms, so use the temporary directory
+            transformDirectory = self.Helper().GetSlicerTemporaryDirectory()        
         
-        # quickly check if the temp directory has old content
-        # if yes, this is dangerous and we will abort
-        # it can be dangerous because we use this to check if the registration is complete
-        for originalImage in configuration.GetOriginalImagesFilePathList():
+        # check if the temporary directory is ok
+        # if not, abort immediately because of unsafe conditions
+        # details: we check later if all registrations are completed by checking if an output with the case name
+        #            exists in the temporary directory. Hence, already existing files will cause many problems.
+        if not self.Helper().CheckTemporaryDirectory(configuration.GetOriginalImagesFilePathList()):
+            return False
+                     
+        # check if we register or if we use existing transforms
+        if not skipRegistrationMode:
+            # we register to get fresh transforms!!
             
-            originalImageFileName = os.path.basename(originalImage)
-            originalImageName = os.path.splitext(originalImageFileName)[0]
-            potentialOutputPath = self.Helper().GetSlicerTemporaryDirectory() + originalImageName + ".nrrd" 
+            #
+            #
+            # REGISTRATION STAGE
+            #
+            #
+            self.Helper().info("Entering Registration Stage..")
             
-            if os.path.isfile(potentialOutputPath):
-                # there is old content
-                # abort immediately
-                self.Helper().info("ERROR: There are already aligned images in the temporary directory: " + str(self.Helper().GetSlicerTemporaryDirectory()))
-                self.Helper().info("ERROR: This is extremely dangerous. Please move " + str(potentialOutputPath) + "!!!")
-                self.Helper().info("ERROR: Aborting now!!!")
-                return False
+            # check if it is cluster mode, if yes change the launcher for the registration
+            slicerLaunchPrefixForRegistration = self.Helper().GetSlicerLaunchPrefix()
+            
+            if clusterMode:
+                # if this is a cluster mode, add the schedulerCommand
+                self.Helper().info("Found cluster configuration..")
+                self.Helper().debug("Scheduler Command: " + str(configuration.GetSchedulerCommand()))
+                slicerLaunchPrefixForRegistration = configuration.GetSchedulerCommand() + " " + str(slicerLaunchPrefixForRegistration)
+                    
+            #
+            # FIXED REGISTRATION
+            #
+            if configuration.GetTemplateType() == "fixed":
+                # fixed registration.. only register once against the defaultCase
                 
-        
-        #
-        #
-        # REGISTRATION STAGE
-        #
-        #
-        self.Helper().info("Entering Registration Stage..")
-        
-        # check if it is cluster mode, if yes change the launcher for the registration
-        slicerLaunchPrefixForRegistration = self.Helper().GetSlicerLaunchPrefix()
-        
-        if clusterMode:
-            # if this is a cluster mode, add the schedulerCommand
-            self.Helper().info("Found cluster configuration..")
-            self.Helper().debug("Scheduler Command: " + str(configuration.GetSchedulerCommand()))
-            slicerLaunchPrefixForRegistration = configuration.GetSchedulerCommand() + " " + str(slicerLaunchPrefixForRegistration)
+                defaultCase = configuration.GetFixedTemplateDefaultCaseFilePath()
                 
-        #
-        # FIXED REGISTRATION
-        #
-        if configuration.GetTemplateType()=="fixed":
-            # fixed registration.. only register once against the defaultCase
-            
-            defaultCase = configuration.GetFixedTemplateDefaultCaseFilePath()
-            
-            self.Helper().info("Fixed registration against " + str(defaultCase))
-            
-            self.Register(slicerLaunchPrefixForRegistration,
-                          configuration.GetOriginalImagesFilePathList(),
-                          defaultCase,
-                          outputDirectory,
-                          configuration.GetRegistrationType())
-            
-        #
-        # DYNAMIC REGISTRATION
-        #
-        elif configuration.GetTemplateType()=="dynamic":
-            # dynamic registration.. register against mean until number of iterations reached
-            
-            alignedImages = configuration.GetOriginalImagesFilePathList()
-            
-            self.Helper().info("Dynamic registration with " + str(configuration.GetDynamicTemplateIterations()) + " iterations")
+                self.Helper().info("Fixed registration against " + str(defaultCase))
                 
-            for i in range(0,configuration.GetDynamicTemplateIterations()):
+                self.Register(slicerLaunchPrefixForRegistration,
+                              configuration.GetOriginalImagesFilePathList(),
+                              defaultCase,
+                              transformDirectory,
+                              configuration.GetRegistrationType())
                 
-                self.Helper().info("Starting iteration " + str(i+1) + "...")
+            #
+            # DYNAMIC REGISTRATION
+            #
+            elif configuration.GetTemplateType() == "dynamic":
+                # dynamic registration.. register against mean until number of iterations reached
                 
-                # we generate the current meanImage
-                meanImage = slicer.vtkImageData()
-                if not self.__dryRun:
-                    meanImage.DeepCopy(self.GetMeanImage(alignedImages))
-                meanImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + "tmpMeanImage.nrrd"
-                if not self.__dryRun:
-                    self.Helper().SaveImage(meanImageFilePath,meanImage)
+                alignedImages = configuration.GetOriginalImagesFilePathList()
                 
-                # we register the original images against the meanImage
-                # we then set the alignedImages and start over..
-                alignedImages = self.Register(slicerLaunchPrefixForRegistration,
-                                              configuration.GetOriginalImagesFilePathList(),
-                                              meanImageFilePath,
-                                              outputDirectory,
-                                              configuration.GetRegistrationType()) 
-
-            # now we point the defaultCase to the meanImageFilePath
-            defaultCase = meanImageFilePath
+                self.Helper().info("Dynamic registration with " + str(configuration.GetDynamicTemplateIterations()) + " iterations")
+                    
+                for i in range(0, configuration.GetDynamicTemplateIterations()):
+                    
+                    self.Helper().info("Starting iteration " + str(i + 1) + "...")
+                    
+                    # we generate the current meanImage
+                    meanImage = slicer.vtkImageData()
+                    if not self.__dryRun:
+                        meanImage.DeepCopy(self.GetMeanImage(alignedImages))
+                    meanImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + "tmpMeanImage.nrrd"
+                    if not self.__dryRun:
+                        self.Helper().SaveImage(meanImageFilePath, meanImage)
+                    
+                    # we register the original images against the meanImage
+                    # we then set the alignedImages and start over..
+                    alignedImages = self.Register(slicerLaunchPrefixForRegistration,
+                                                  configuration.GetOriginalImagesFilePathList(),
+                                                  meanImageFilePath,
+                                                  transformDirectory,
+                                                  configuration.GetRegistrationType()) 
+    
+                # now we point the defaultCase to the meanImageFilePath
+                defaultCase = meanImageFilePath
+                
+                self.Helper().info("End of Dynamic registration..")
+                
+            if configuration.GetSaveTransforms():
+                # we will save the defaultCase, if save transforms is enabled
+                # this will ensure that we can later 
+                # use the transforms and the template to resample
+                # at this point, the defaultCase is either the meanImage or the fixed defaultCase
+                defaultCaseImageData = slicer.vtkImageData()
+                defaultCaseImageData.DeepCopy(self.Helper().LoadImage(defaultCase))
+                pathToTemplate = configuration.GetOutputDirectory() + "template.nrrd"
+                self.Helper().info("Saving template to " + str(pathToTemplate))
+                self.Helper().SaveImage(str(pathToTemplate), defaultCaseImageData)
+                    
+        else:
+            # we are skipping the registration
+            self.Helper().info("Skipping the registration and using the existing transforms..")
             
-            self.Helper().info("End of Dynamic registration..")
+            transformDirectory = configuration.GetTransformDirectory()
+            # we set the defaultCase to an existing one
+            defaultCase = configuration.GetExistingTemplate()
+            
+            
 
         #
         #
@@ -214,15 +213,8 @@ class AtlasCreatorLogic(object):
         self.Resample(self.Helper().GetSlicerLaunchPrefix(),
                       configuration.GetSegmentationsFilePathList(),
                       defaultCase,
-                      outputDirectory,
+                      transformDirectory,
                       self.Helper().GetSlicerTemporaryDirectory())
-        
-        if configuration.GetSaveDeformationFieldsAndTransforms() and configuration.GetRegistrationType()=="Non-Rigid":
-            
-            self.SaveDeformationFields(self.Helper().GetSlicerLaunchPrefix(),
-                                       configuration.GetSegmentationsFilePathList(),
-                                       outputDirectory,
-                                       configuration.GetOutputDirectory())
             
         #
         #
@@ -372,7 +364,7 @@ class AtlasCreatorLogic(object):
         
         while not allOutputsExist:
             # not all outputs exist yet
-            self.Helper().debug("Check if all outputs exist..")
+            self.Helper().info("Waiting for Registration to complete..")
             
             # wait 5 secs and then check again
             time.sleep(5)
@@ -409,7 +401,7 @@ class AtlasCreatorLogic(object):
                 file path to the template
             transformDirectory
                 directory to existing transformations
-                the transformation has to be named after the basename of the filepaths with a .mat extension 
+                the transformation has to be named after the basename of the filepaths with a .mat extension      
             outputSegmentationDirectory
                 directory to save the resampled images
                 
@@ -443,10 +435,8 @@ class AtlasCreatorLogic(object):
 
             segmentationName = os.path.splitext(os.path.basename(segmentationFilePath))[0]
 
-            # generate file path to existing transformation
-            # by getting the filename of the case and appending it to the transformDirectory
-            transformFilePath = transformDirectory + str(segmentationName) + ".mat"
-            
+            transformFilePath = transformDirectory + str(segmentationName) + ".mat"                
+                
             # generate file path to output segmentation
             # by getting the filename of the case and appending it to the outputSegmentationDirectory
             outputSegmentationFilePath = outputSegmentationDirectory + str(segmentationName) + ".nrrd"
