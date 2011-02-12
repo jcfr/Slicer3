@@ -58,7 +58,8 @@ bool vtkFetchMIWebServicesClientXND::CheckConnectionAndServer ( )
     {
     if ( this->FetchMINode != NULL )
       {
-      this->FetchMINode->SetErrorMessage (errorString );
+     // this->FetchMINode->SetErrorMessage (errorString );
+      this->FetchMINode->SetErrorMessage ( "Remote I/O operation failed. The network or web server appears unavailable." );
       this->FetchMINode->InvokeEvent ( vtkMRMLFetchMINode::RemoteIOErrorEvent );
       }
     }
