@@ -1,6 +1,6 @@
 <MRML >
 <EMSTemplate
-  id="vtkMRMLEMSTemplateNode1"  name="out_MRI Human Brain"  hideFromEditors="false"  selectable="true"  selected="false"  TreeNodeID="vtkMRMLEMSTreeNode1"  GlobalParametersNodeID="vtkMRMLEMSGlobalParametersNode1"  SpatialAtlasNodeID="vtkMRMLEMSAtlasNode1"  SubParcellationNodeID="vtkMRMLEMSVolumeCollectionNode2"  EMSWorkingDataNodeID="" ></EMSTemplate>
+  id="vtkMRMLEMSTemplateNode1"  name="MRI Human Brain"  hideFromEditors="false"  selectable="true"  selected="false"  TreeNodeID="vtkMRMLEMSTreeNode1"  GlobalParametersNodeID="vtkMRMLEMSGlobalParametersNode1"  SpatialAtlasNodeID="vtkMRMLEMSAtlasNode1"  SubParcellationNodeID="vtkMRMLEMSVolumeCollectionNode2"  EMSWorkingDataNodeID="" ></EMSTemplate>
  <EMSTree
   id="vtkMRMLEMSTreeNode1"  name="Root"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="NULL"  TreeParametersNodeID="vtkMRMLEMSTreeParametersNode1"  Label="Root"  ChildNodeIDs="vtkMRMLEMSTreeNode2 vtkMRMLEMSTreeNode5"  ></EMSTree>
  <EMSTreeParameters
