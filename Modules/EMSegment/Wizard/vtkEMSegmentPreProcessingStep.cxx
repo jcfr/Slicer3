@@ -105,6 +105,21 @@ vtkEMSegmentPreProcessingStep::Validate()
   // If they are still valid do not repeat preprocessing unless otherwise wanted 
   // Kilian - still to do - save intermediate results 
   // so do special check here 
+
+  if ( mrmlManager->GetRegistrationPackageType() == mrmlManager->GetPackageTypeFromString("CMTK") ) {
+    const char* path = this->Script("::EMSegmenterPreProcessingTcl::Get_CMTK_Installation_Path");
+    if ( *path == '\0' ) {
+      if (!vtkKWMessageDialog::PopupYesNo(this->GetApplication(), NULL, "CMTK is not installed",
+                                          "For optimal results please install the CMTK extension. \n\nDo you want to proceed with BRAINSTools instead?",
+                                          vtkKWMessageDialog::WarningIcon | vtkKWMessageDialog::InvokeAtPointer))
+        {
+          wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+          wizard_workflow->ProcessInputs();
+          return;
+        }
+    }
+  }
+
   if (this->askQuestionsBeforeRunningPreprocessingFlag)
     {
       if (mrmlManager->GetWorkingDataNode()->GetAlignedTargetNodeIsValid() && mrmlManager->GetWorkingDataNode()->GetAlignedAtlasNodeIsValid())

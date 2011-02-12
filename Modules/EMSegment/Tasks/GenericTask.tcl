@@ -384,19 +384,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         set selectedRegistrationPackage ""
         switch -exact "$preferredRegistrationPackage" {
             "CMTK" {
-                # search for directories , sorted with the highest svn first
-                set dirs [lsort -decreasing [glob -directory [$::slicer3::Application GetExtensionsInstallPath] -type d * ] ]
-                foreach dir $dirs {
-                    set filename $dir\/CMTK4Slicer/registration
-                    if { [file exists $filename] } {
-                        set CMTKFOLDER  $dir\/CMTK4Slicer
-                        $LOGIC PrintText "TCL: Found CMTK in $dir\/CMTK4Slicer"
+                set CMTKFOLDER [Get_CMTK_Installation_Path]
+                if { $CMTKFOLDER != "" } {
+                        $LOGIC PrintText "TCL: Found CMTK in $CMTKFOLDER"
                         set selectedRegistrationPackage "CMTK"
-                        break
-                    }
-                }
-                if { $selectedRegistrationPackage != "CMTK" } {
-                    $LOGIC PrintText "TCL: WARNING: Couldn't find CMTK"
+                } else {
+                    $LOGIC PrintText "TCL: WARNING: Couldn't find CMTK, switch back to BRAINSTools"
                     set selectedRegistrationPackage "BRAINS"
                 }
             }
@@ -1226,6 +1219,24 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
+    # This function will be called by the wizard and expects a path or "" in the case CMTK is not installed
+    proc Get_CMTK_Installation_Path { } {
+        variable LOGIC
+        
+        set CMTKFOLDER ""
+        # search for directories , sorted with the highest svn first
+        set dirs [lsort -decreasing [glob -directory [$::slicer3::Application GetExtensionsInstallPath] -type d * ] ]
+        foreach dir $dirs {
+            set filename $dir\/CMTK4Slicer/registration
+            if { [file exists $filename] } {
+                set CMTKFOLDER  $dir\/CMTK4Slicer
+                $LOGIC PrintText "TCL: Found CMTK in $dir\/CMTK4Slicer"
+                break
+            }
+        }
+        
+        return $CMTKFOLDER
+    }
 
     proc WriteDataToTemporaryDir { Node Type } {
         variable SCENE
