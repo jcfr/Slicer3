@@ -49,6 +49,12 @@ class VTK_MRML_EXPORT vtkDataIOManager : public vtkObject
   void AddNewDataTransfer ( vtkDataTransfer *transfer, vtkMRMLNode *node);
   void AllTransfersClearedFromCache();
 
+  ///
+  /// Checks for bad data transfers
+  bool FailedDataTransferCheck();
+  bool CompletedWithErrorsDataTransferCheck();
+
+
   /// 
   /// Adds a new data transfer object to the collection
   void AddDataTransfer ( vtkDataTransfer *transfer );

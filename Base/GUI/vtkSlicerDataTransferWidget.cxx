@@ -586,6 +586,7 @@ void vtkSlicerDataTransferWidget::DeleteTransferFromCache()
       {
       if (( this->DataTransfer->GetTransferStatus() == vtkDataTransfer::Completed ) ||
           ( this->DataTransfer->GetTransferStatus() == vtkDataTransfer::CompletedWithErrors ) ||
+          ( this->DataTransfer->GetTransferStatus() == vtkDataTransfer::Failed ) ||
           ( this->DataTransfer->GetTransferStatus() == vtkDataTransfer::Cancelled ) ||
           ( this->DataTransfer->GetTransferStatus() == vtkDataTransfer::TimedOut ))
         {
@@ -713,6 +714,14 @@ void vtkSlicerDataTransferWidget::UpdateWidget()
         this->EnableDeleteButton();
         this->DisableCancelButton();
         this->UpdateURILabel ( "(error): ");
+        this->DisableURILabel();
+        break;
+      case vtkDataTransfer::Failed:
+        this->TransferStatusLabel->SetImageToIcon(appGUI->GetSlicerFoundationIcons()->GetSlicerErrorIcon());
+        this->TransferStatusLabel->SetBalloonHelpString ("Transfer status: failed!");
+        this->EnableDeleteButton();
+        this->DisableCancelButton();
+        this->UpdateURILabel ( "(failed): ");
         this->DisableURILabel();
         break;
       case vtkDataTransfer::CancelPending:
@@ -998,6 +1007,9 @@ void vtkSlicerDataTransferWidget::CreateWidget( )
         this->TransferStatusLabel->SetImageToIcon ( appGUI->GetSlicerFoundationIcons()->GetSlicerDoneIcon() );
         break;
       case vtkDataTransfer::CompletedWithErrors:
+        this->TransferStatusLabel->SetImageToIcon ( appGUI->GetSlicerFoundationIcons()->GetSlicerErrorIcon() );
+        break;
+      case vtkDataTransfer::Failed:
         this->TransferStatusLabel->SetImageToIcon ( appGUI->GetSlicerFoundationIcons()->GetSlicerErrorIcon() );
         break;
       case vtkDataTransfer::Cancelled:

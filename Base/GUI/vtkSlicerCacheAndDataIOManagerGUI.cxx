@@ -866,6 +866,10 @@ void vtkSlicerCacheAndDataIOManagerGUI::AddNewDataTransfer ( vtkDataTransfer *tr
 {
 
   vtkDebugMacro("vtkSlicerCacheAndDataIOManagerGUI: Adding new data transfer");
+  if ( this->Built == false )
+    {
+    this->BuildGUI();
+    }
   if ( this->TransferWidgetCollection == NULL )
     {
     this->TransferWidgetCollection = vtkCollection::New();

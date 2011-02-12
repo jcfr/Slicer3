@@ -54,6 +54,7 @@ class VTK_MRML_EXPORT vtkDataTransfer : public vtkObject
       case vtkDataTransfer::Completed: return "Completed";
       case vtkDataTransfer::CompletedWithErrors: return "CompletedWithErrors";
       case vtkDataTransfer::TimedOut: return "TimedOut";
+      case vtkDataTransfer::Failed: return "Failed";
       case vtkDataTransfer::Cancelled: return "Cancelled";
       case vtkDataTransfer::Deleted: return "Deleted";
       case vtkDataTransfer::Ready: return "Ready";
@@ -88,7 +89,8 @@ class VTK_MRML_EXPORT vtkDataTransfer : public vtkObject
       Cancelled,
       Ready,
       Deleted,
-      TimedOut
+      TimedOut,
+      Failed
     };
   /// transfer type values
   enum

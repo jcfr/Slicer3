@@ -260,6 +260,58 @@ void vtkDataIOManager::RemoveDataTransfer ( int transferID )
     }
 }
 
+
+//----------------------------------------------------------------------------
+bool vtkDataIOManager::FailedDataTransferCheck()
+{
+  vtkDataTransfer *dt;
+
+  if ( this->DataTransferCollection == NULL )
+    {
+    this->DataTransferCollection = vtkCollection::New();
+    }
+
+  int n = this->DataTransferCollection->GetNumberOfItems();
+  for ( int i=0; i < n; i++ )
+    {
+    dt = vtkDataTransfer::SafeDownCast ( this->DataTransferCollection->GetItemAsObject (i) );
+    if ( dt->GetTransferStatus() == vtkDataTransfer::Failed)
+      {
+      return true;
+      }
+    }
+  return false;
+}
+
+
+
+
+//----------------------------------------------------------------------------
+bool vtkDataIOManager::CompletedWithErrorsDataTransferCheck()
+{
+  vtkDataTransfer *dt;
+
+  if ( this->DataTransferCollection == NULL )
+    {
+    this->DataTransferCollection = vtkCollection::New();
+    }
+
+  int n = this->DataTransferCollection->GetNumberOfItems();
+  for ( int i=0; i < n; i++ )
+    {
+    dt = vtkDataTransfer::SafeDownCast ( this->DataTransferCollection->GetItemAsObject (i) );
+    if ( dt->GetTransferStatus() == vtkDataTransfer::CompletedWithErrors)
+      {
+      return true;
+      }
+    }
+  return false;
+}
+
+
+
+
+
 //----------------------------------------------------------------------------
 vtkDataTransfer * vtkDataIOManager::GetDataTransfer ( int transferID )
 {
