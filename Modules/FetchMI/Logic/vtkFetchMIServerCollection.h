@@ -13,6 +13,10 @@
 
 #include "vtkSlicerFetchMIModuleLogicExport.h"
 
+#include <vector>
+#include <string>
+#include <map>
+
 class VTK_SLICER_FETCHMI_MODULE_LOGIC_EXPORT vtkFetchMIServerCollection : public vtkCollection
 {
 public:
@@ -67,6 +71,18 @@ public:
   vtkFetchMIServer *GetNextServer(vtkCollectionSimpleIterator &cookie) {
     return static_cast<vtkFetchMIServer *>(this->GetNextItemAsObject(cookie));};
 
+  // Description:
+  // Method tells logic whether, based on web services type, the
+  // uri is inferrable or it must be retrieved via posting metadata and parsing response.
+  // Method looks at map set up for all web service Types to pull out that info.
+  int InferrableURI ( const char *webserviceType );
+  
+  // parameter map: webserviceType, inferrableURI, ... (add others as required)
+//BTX
+  std::map <std::string, std::vector<int> > WebServiceTypesAndParameters;
+//ETX
+
+  
  protected:
   vtkFetchMIServerCollection();
   ~vtkFetchMIServerCollection();
