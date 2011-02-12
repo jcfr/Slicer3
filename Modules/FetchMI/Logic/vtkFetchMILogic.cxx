@@ -97,63 +97,36 @@ vtkFetchMILogic::vtkFetchMILogic()
 
   // Temporary vars used for parsing xml.
   this->NumberOfTagsOnServer = 0;
-//  this->DebugOn();
 
-   //--- Initialize the XML writer collection with writers for all known services.
-   //--- Extend here as we support new web services.
-   vtkFetchMIWriterXND *xndw = vtkFetchMIWriterXND::New();
-   vtkFetchMIParserXND *xndp = vtkFetchMIParserXND::New();
-   vtkFetchMIWebServicesClientXND *xndc = vtkFetchMIWebServicesClientXND::New();
 
-   //--- Add all known servers and set their service type.
-   //--- Extend here as we support new web services.
-   const char *IDString = "XND";
-   const char *HandlerString = "XNDHandler";
-   vtkFetchMIServer *s1 = vtkFetchMIServer::New();
-   s1->SetParser ( xndp );
-   s1->SetWriter ( xndw );
-   s1->SetWebServicesClient ( xndc );
-   s1->SetName ( "http://xnd.slicer.org:8000" );
-   s1->SetServiceType ( IDString);
-   s1->SetURIHandlerName ( HandlerString);
-   s1->SetTagTableName ( IDString);
-   this->ServerCollection->AddItem ( s1 );
-   s1->Delete();
-   
-   vtkFetchMIServer *s2 = vtkFetchMIServer::New();
-   s2->SetParser ( xndp);
-   s2->SetWriter ( xndw);
-   s2->SetWebServicesClient (xndc);
-   s2->SetName ( "http://localhost:8081");
-   s2->SetServiceType ( IDString);
-   s2->SetURIHandlerName ( HandlerString);
-   s2->SetTagTableName ( IDString);
-   this->ServerCollection->AddItem ( s2 );
-   s2->Delete();
+  //--- DEVELOPER NOTE:
+  //--- Add all known servers and set their service type.
+  //--- Extend here as we support new web services.
+   this->AddNewServer ( "http://xnd.slicer.org:8000",
+                        "XND",
+                        "XNDHandler",
+                        "XND");
+   this->AddNewServer ( "http://localhost:8081",
+                        "XND",
+                        "XNDHandler",
+                        "XND");
+/*
+   this->AddNewServer ( "central.xnat.org",
+                        "XNE",
+                        "XNEHandler",
+                        "XNE");
+   this->AddNewServer ( "https://loci.ucsd.edu/hid",
+                        "HID",
+                        "HIDHandler",
+                        "HID");                        
+*/   
 
-   /*
-   IDString = "HID";
-   HandlerString = "HIDHandler";
-   vtkFetchMIServer *s3 = vtkFetchMIServer::New();
-   s3->SetName ( "https://loci.ucsd.edu/hid");
-   s3->SetServiceType ( IDString );
-   s3->SetURIHandlerName ( HandlerString);
-   s3->SetTagTableName ( IDString);
-   this->ServerCollection->AddItem ( s3 );
-   s3->Delete();
-   */
-   xndw->Delete();
-   xndp->Delete();
-   xndc->Delete();
-   
    if ( this->FetchMINode != NULL )
      {
      this->FetchMINode->InvokeEvent ( vtkMRMLFetchMINode::KnownServersModifiedEvent );
      }
-
    this->Visited = false;
    this->Raised = false;
-//   this->DebugOn();
 }
 
 
@@ -496,33 +469,79 @@ void vtkFetchMILogic::AddNewServer (const char *name,
     vtkErrorMacro ( "vtkFetchMILogic::AddNewServer: got NULL TagTable name");
     return;
     }
-  // Developers note: extend this check as new service types are added.
+  
+  vtkFetchMIServer *service = this->GetServerCollection()->FindServerByName ( name );
+  if ( service != NULL )
+    {
+    vtkWarningMacro ( "Web Service is already in the collection." );
+    return;
+    }
+
+  //---
+  //--- DEVELOPER NOTE:
+  //--- extend this process or generalize
+  //--- as new service types are added.
+  //---
+  
   if ( !(strcmp(type, "XND")))
     {
-    vtkFetchMIServer *localhost = this->GetServerCollection()->FindServerByName ( "http://localhost:8081");
-    if ( localhost != NULL )
-      {
-      vtkFetchMIServer *s1 = vtkFetchMIServer::New();
-      s1->SetName ( name );
-      s1->SetServiceType ( type );
-      s1->SetParser ( localhost->GetParser() );
-      s1->SetWriter (localhost->GetWriter() );
-      s1->SetWebServicesClient ( localhost->GetWebServicesClient() );
-      s1->SetURIHandlerName ( URIHandlerName );
-      s1->SetTagTableName ( TagTableName );
-      s1->SetTagTable ( this->FetchMINode->GetTagTableCollection()->FindTagTableByName ( "XND" ) );
-      this->ServerCollection->AddItem ( s1 );
-      s1->Delete();
-      }
-    else
-      {
-    vtkErrorMacro ( "Server is of unknown or unsupported type." );
-    return;
-      }
+    //--- Initialize the XML writer collection with writers for all known services.
+    //--- Extend here as we support new web services.
+    vtkFetchMIWriterXND *xndw = vtkFetchMIWriterXND::New();
+    vtkFetchMIParserXND *xndp = vtkFetchMIParserXND::New();
+    vtkFetchMIWebServicesClientXND *xndc = vtkFetchMIWebServicesClientXND::New();
+    vtkFetchMIServer *s = vtkFetchMIServer::New();
+    s->SetName ( name );
+    s->SetServiceType ( type );
+    s->SetParser ( xndp );
+    s->SetWriter ( xndw );
+    s->SetWebServicesClient ( xndc );
+    s->SetURIHandlerName ( URIHandlerName );
+    s->SetTagTableName ( TagTableName );
+    this->ServerCollection->AddItem ( s );
     if ( this->FetchMINode != NULL )
       {
+      if ( this->FetchMINode->GetTagTableCollection() )
+        {
+        s->SetTagTable ( this->FetchMINode->GetTagTableCollection()->FindTagTableByName ( "XND" ) );
+        }
       this->FetchMINode->InvokeEvent ( vtkMRMLFetchMINode::KnownServersModifiedEvent );
       }
+    s->Delete();
+    xndw->Delete();
+    xndp->Delete();
+    xndc->Delete();
+    }
+  else if ( !(strcmp (type, "XNE")))
+    {
+    /*
+    //--- Initialize the XML writer collection with writers for all known services.
+    //--- Extend here as we support new web services.
+    vtkFetchMIWriterXNE *xnew = vtkFetchMIWriterXNE::New();
+    vtkFetchMIParserXNE *xnep = vtkFetchMIParserXNE::New();
+    vtkFetchMIWebServicesClientXNE *xnec = vtkFetchMIWebServicesClientXNE::New();
+    vtkFetchMIServer *s = vtkFetchMIServer::New();
+    s->SetName ( name );
+    s->SetServiceType ( type );
+    s->SetParser ( xnep );
+    s->SetWriter ( xnew );
+    s->SetWebServicesClient ( xnec );
+    s->SetURIHandlerName ( URIHandlerName );
+    s->SetTagTableName ( TagTableName );
+    this->ServerCollection->AddItem ( s );
+    if ( this->FetchMINode != NULL )
+      {
+      if ( this->FetchMINode->GetTagTableCollection() )
+        {
+        s->SetTagTable ( this->FetchMINode->GetTagTableCollection()->FindTagTableByName ( "XNE" ) );
+        }
+      this->FetchMINode->InvokeEvent ( vtkMRMLFetchMINode::KnownServersModifiedEvent );
+      }
+    s->Delete();
+    xnew->Delete();
+    xnep->Delete();
+    xnec->Delete();
+    */
     }
   else
     {
@@ -1135,7 +1154,8 @@ void vtkFetchMILogic::SaveResourceSelectionState ( )
   //--- select everything, so we upload scene + all data.
   //--- then restores GUI selection state reflected by GUI.
   //---
-  //--- Note to Developers: extend this as new storagenode types 
+  //--- DEVELOPER NOTE:
+  //--- extend this as new storagenode types 
   //--- are added to Slicer.
   this->TemporarySelectedStorableNodeIDs.clear();
   this->SetTemporarySceneSelected  (this->GetSceneSelected() );
@@ -1528,7 +1548,8 @@ void vtkFetchMILogic::DeselectScene()
 //----------------------------------------------------------------------------
 void vtkFetchMILogic::ApplySlicerDataTypeTag()
 {
-  //--- Note to developers: expand logic here as new node types are added.
+  //--- DEVELOPER NOTE:
+  //--- expand logic here as new node types are added.
   //--- always make sure the scene as a selected SlicerDataType tag.
   //--- NOTE:
   //--- currently, valid SlicerDataTypes include these:
