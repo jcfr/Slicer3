@@ -41,11 +41,11 @@ public:
 
 
   //BTX
-  std::string GetTclTaskDirectory(vtkSlicerApplication* app);
-  std::string GetTclGeneralDirectory();
-  std::string DefineTclTaskFileFromMRML(vtkSlicerApplication *app);
-  std::string DefineTclTaskFullPathName(vtkSlicerApplication* app, const char* TclFileName);
-  std::string GetTemporaryTaskDirectory(vtkSlicerApplication* app);
+  vtkstd::string GetTclTaskDirectory(vtkSlicerApplication* app);
+  vtkstd::string GetTclGeneralDirectory();
+  vtkstd::string DefineTclTaskFileFromMRML(vtkSlicerApplication *app);
+  vtkstd::string DefineTclTaskFullPathName(vtkSlicerApplication* app, const char* TclFileName);
+  vtkstd::string GetTemporaryTaskDirectory(vtkSlicerApplication* app);
   //ETX
   
   // Used within StartSegmentation to copy data from the MRMLManager

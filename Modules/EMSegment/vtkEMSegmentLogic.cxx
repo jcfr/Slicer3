@@ -169,8 +169,8 @@ int vtkEMSegmentLogic::SourceTclFile(vtkSlicerApplication*app,const char *tclFil
 //----------------------------------------------------------------------------
 
 int vtkEMSegmentLogic::SourceTaskFiles(vtkSlicerApplication* app) { 
-  vtksys_stl::string generalFile = this->DefineTclTaskFullPathName(app, vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
-  vtksys_stl::string specificFile = this->DefineTclTaskFileFromMRML(app);
+  vtkstd::string generalFile = this->DefineTclTaskFullPathName(app, vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
+  vtkstd::string specificFile = this->DefineTclTaskFileFromMRML(app);
   cout << "Sourcing general Task file : " << generalFile.c_str() << endl;
   // Have to first source the default file to set up the basic structure"
   if (this->SourceTclFile(app,generalFile.c_str()))
@@ -194,7 +194,7 @@ int vtkEMSegmentLogic::SourcePreprocessingTclFiles(vtkSlicerApplication* app)
       return 1;
     }
    // Source all files here as we otherwise sometimes do not find the function as Tcl did not finish sourcing but our cxx file is already trying to call the function 
-   vtksys_stl::string tclFile =  this->GetModuleShareDirectory();
+   vtkstd::string tclFile =  this->GetModuleShareDirectory();
 #ifdef _WIN32
    tclFile.append("\\Tcl\\EMSegmentAutoSample.tcl");
 #else
@@ -1570,13 +1570,13 @@ ConvertGUIEnumToAlgorithmEnumInterpolationType(int guiEnumValue)
 }
 
 //----------------------------------------------------------------------------
-std::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication* app)
+vtkstd::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication* app)
 {
   //workaround for the mrml library, we need to have write access to this folder
   const char* tmp_dir = app->GetTemporaryDirectory();
   if (tmp_dir)
     {
-      std::string copied_task_dir(std::string(tmp_dir) + std::string("/EMSegmentTaskCopy"));
+      vtkstd::string copied_task_dir(std::string(tmp_dir) + std::string("/EMSegmentTaskCopy"));
 
       /**
         * Copy content directory to another directory with all files and
@@ -1586,13 +1586,15 @@ std::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication* app)
         */
        // copy not always, only new files
        // Later do automatically
-      vtksys_stl::string orig_task_dir = this->GetModuleShareDirectory() + vtksys_stl::string("/Tasks");
-      if (!vtksys::SystemTools::CopyADirectory(orig_task_dir.c_str(), copied_task_dir.c_str(), false, true) )
+      vtkstd::string orig_task_dir = this->GetModuleShareDirectory() + vtkstd::string("/Tasks");
+      
+      if ( !vtksys::SystemTools::CopyADirectory(orig_task_dir.c_str(), copied_task_dir.c_str(), false, true) )
       {
+          cout << "GetTclTaskDirectory:: Couldn't copy task directory " << orig_task_dir.c_str() << " to " << copied_task_dir.c_str() << endl;
           vtkErrorMacro("GetTclTaskDirectory:: Couldn't copy task directory " << orig_task_dir.c_str() << " to " << copied_task_dir.c_str());
           return vtksys::SystemTools::ConvertToOutputPath("");
       }
-      return copied_task_dir.c_str();
+      return copied_task_dir;
     }
   else
     {
@@ -1606,10 +1608,10 @@ std::string  vtkEMSegmentLogic::GetTclTaskDirectory(vtkSlicerApplication* app)
 }
 
 //----------------------------------------------------------------------------
-vtksys_stl::string  vtkEMSegmentLogic::GetTclGeneralDirectory()
+vtkstd::string  vtkEMSegmentLogic::GetTclGeneralDirectory()
 {
   // Later do automatically
-  vtksys_stl::string file_path = this->GetModuleShareDirectory() +  vtksys_stl::string("/Tcl");
+  vtkstd::string file_path = this->GetModuleShareDirectory() +  vtkstd::string("/Tcl");
   return vtksys::SystemTools::ConvertToOutputPath(file_path.c_str());
 }
 
@@ -1718,7 +1720,7 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkKWApplication* app, v
   
    // Sample
   {
-    vtksys_stl::stringstream CMD ;
+    vtkstd::stringstream CMD ;
     CMD <<  "::EMSegmenterAutoSampleTcl::EMSegmentGaussCurveCalculationFromID " << vtkKWTkUtilities::GetTclNameFromPointer(app->GetMainInterp(), this) << " " << vtkKWTkUtilities::GetTclNameFromPointer(app->GetMainInterp(), this->MRMLManager) << " 0.95 1 { " ;
     for (int i = 0 ; i < numTargetImages; i++) {
       CMD << workingTarget->GetNthVolumeNodeID(i) << " " ;
@@ -1776,7 +1778,7 @@ void  vtkEMSegmentLogic::AutoCorrectSpatialPriorWeight(vtkIdType nodeID)
 //----------------------------------------------------------------------------
 // cannot be moved to vtkEMSEgmentGUI bc of command line interface !
 // This function is used for the UpdateButton in vtkEMSegmentParametersSetStep
-vtksys_stl::string vtkEMSegmentLogic::GetTemporaryTaskDirectory(vtkSlicerApplication* app)
+vtkstd::string vtkEMSegmentLogic::GetTemporaryTaskDirectory(vtkSlicerApplication* app)
 {
   // FIXME, what happens if user has no write permission to this directory
   std::string taskDir("");
@@ -1807,14 +1809,14 @@ std::string vtkEMSegmentLogic::DefineTclTaskFullPathName(vtkSlicerApplication* a
 //  std::string task_dir = this->GetTclTaskDirectory(app);
 //  cout << "TEST 1" << task_dir << " " << vtksys::SystemTools::FileExists(task_dir.c_str()) << endl;
 
-  vtksys_stl::string tmp_full_file_path = this->GetTclTaskDirectory(app) + vtksys_stl::string("/") + vtksys_stl::string(TclFileName);
-//  vtksys_stl::string full_file_path = vtksys::SystemTools::ConvertToOutputPath(tmp_full_file_path.c_str());
+  vtkstd::string tmp_full_file_path = this->GetTclTaskDirectory(app) + vtkstd::string("/") + vtkstd::string(TclFileName);
+//  vtkstd::string full_file_path = vtksys::SystemTools::ConvertToOutputPath(tmp_full_file_path.c_str());
   if (vtksys::SystemTools::FileExists(tmp_full_file_path.c_str()))
     {
       return tmp_full_file_path;
     }
 
-  tmp_full_file_path = this->GetTemporaryTaskDirectory(app) + vtksys_stl::string("/") + vtksys_stl::string(TclFileName);
+  tmp_full_file_path = this->GetTemporaryTaskDirectory(app) + vtkstd::string("/") + vtkstd::string(TclFileName);
 //  full_file_path = vtksys::SystemTools::ConvertToOutputPath(tmp_full_file_path.c_str());
   if (vtksys::SystemTools::FileExists(tmp_full_file_path.c_str()))
     {
@@ -1822,7 +1824,7 @@ std::string vtkEMSegmentLogic::DefineTclTaskFullPathName(vtkSlicerApplication* a
     }
 
   vtkErrorMacro("DefineTclTaskFullPathName : could not find tcl file with name  " << TclFileName ); 
-  tmp_full_file_path = vtksys_stl::string("");
+  tmp_full_file_path = vtkstd::string("");
   return  tmp_full_file_path;
 }
 
@@ -2067,7 +2069,7 @@ CreatePackageFilenames(vtkMRMLScene* scene,
 
    // get the full path to the scene
   std::vector<std::string> scenePathComponents;
-  vtksys_stl::string rootDir = newSceneManager->GetMRMLScene()->GetRootDirectory();
+  vtkstd::string rootDir = newSceneManager->GetMRMLScene()->GetRootDirectory();
   if (rootDir.find_last_of("/") == rootDir.length() - 1)
     {
       vtkDebugMacro("em seg: found trailing slash in : " << rootDir);
