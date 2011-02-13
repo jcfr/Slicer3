@@ -366,7 +366,45 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self.GetUIPanel().AddPage("AtlasCreator","AtlasCreator","")
         self._atlascreatorPage = self.GetUIPanel().GetPageWidget("AtlasCreator")
-        helpText = "**A simple Atlas Creator**"
+        helpText = """**Atlas Creator v0.1**
+        
+More Information available at <a>http://www.slicer.org/slicerWiki/index.php/Modules:AtlasCreator</a>
+
+**Input/Output**
+Specify the I/O here. The original images and the segmentations must have the same filenames (f.e. case01.nrrd, case02.nrrd...) in both directories to get correctly linked together. 
+
+Original Images: Directory to Original Images
+Segmentations: Directory to Segmentations
+Output directory: Directory to save transforms and atlases
+
+If transforms already exist from a former registration, it is possible to skip the registration and use these transforms.
+Optional Input:
+- Skip Registration and Use Existing: True, if registration should be skipped
+- Transforms directory: Path to existing transforms
+- Existing Template: Path to an existing template
+    
+**Registration/Resampling**
+The template can be either a fixed Volume or can be dynamically generated.
+
+Registration Template:
+- Dynamic: For dynamic generation, the number of iterations for calculating the Mean image have to be specified.
+- Fixed: A filename to be selected as the default case. Possible files are present in the original images and segmentations directory.
+    
+Registration Type: Affine or Non-Rigid (BSpline) registration
+    
+Save transforms: Enable the saving of transforms and the default case. Then, the atlases can be generated again later without the Original Images but only with Segmentations.
+    
+**Atlas Generation**
+Labels: The labels to include in the Atlas Generation. They are read automatically of the default case if possible.
+Normalize Atlases to 0..1: Map the Atlas values to 0..1. This includes a cast to Float.
+Output Case for Atlases: Change the Output Cast of the Atlases.
+    
+**Cluster Configuration**
+The time-consuming task of Registration can be run on a cluster. Then, the Atlas Creator waits until all Registrations are complete.
+
+Use Cluster: Activate the usage of the Scheduler Command for registration.
+Scheduler Command: Executable to run before the commands for registering images. Could be qsub-run or similar to stage a cluster job.
+"""
         aboutText = "This module was developed by Daniel Haehn and Kilian Pohl, University of Pennsylvania. The research was funded by an ARRA supplement to NIH NCRR (P41 RR13218)."
         self._helpAboutFrame = self.BuildHelpAndAboutFrame(self._atlascreatorPage,helpText,aboutText)
 
