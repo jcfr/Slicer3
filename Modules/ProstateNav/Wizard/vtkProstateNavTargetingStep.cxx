@@ -84,7 +84,7 @@ enum
   COL_COUNT // all valid columns should be inserted above this line
 };
 static const char* COL_LABELS[COL_COUNT] = { "Name", "R", "A", "S", "Needle", "OrW", "OrX", "OrY", "OrZ" };
-static const int COL_WIDTHS[COL_COUNT] = { 20, 20, 20, 20, 10, 6, 6, 6, 6 };
+static const int COL_WIDTHS[COL_COUNT] = { 8, 6, 6, 6, 10, 6, 6, 6, 6 };
 
 
 //----------------------------------------------------------------------------
@@ -919,12 +919,27 @@ void vtkProstateNavTargetingStep::OnMultiColumnListSelection()
     vtkProstateNavTargetDescriptor* targetDesc=this->GetProstateNavManager()->GetTargetDescriptorAtIndex(targetIndex);    
 
     if (targetDesc==NULL)
-    {
+      {
       vtkErrorMacro("Target descriptor not found");
       return;
-    }
+      }
    
-    this->GetProstateNavManager()->SetCurrentTargetIndex(targetIndex);    
+    this->GetProstateNavManager()->SetCurrentTargetIndex(targetIndex);
+    if (this->NeedlePositionMatrix)
+      {
+      vtkKWMatrixWidget* matrix = this->NeedlePositionMatrix->GetWidget();
+      matrix->SetElementValueAsDouble(0, 0, targetDesc->GetRASLocation()[0]);
+      matrix->SetElementValueAsDouble(0, 1, targetDesc->GetRASLocation()[1]);
+      matrix->SetElementValueAsDouble(0, 2, targetDesc->GetRASLocation()[2]);
+      }
+    if (this->ShowTargetOrientation && this->NeedleOrientationMatrix)
+      {
+      vtkKWMatrixWidget* matrix = this->NeedleOrientationMatrix->GetWidget();
+      matrix->SetElementValueAsDouble(0, 0, targetDesc->GetRASOrientation()[0]);
+      matrix->SetElementValueAsDouble(0, 1, targetDesc->GetRASOrientation()[1]);
+      matrix->SetElementValueAsDouble(0, 2, targetDesc->GetRASOrientation()[2]);
+      matrix->SetElementValueAsDouble(0, 3, targetDesc->GetRASOrientation()[3]);
+      }
 
     /* it would be more rational to set the slice orientation here, but it is too slow
     // Set slice orientation to match the original acquisitions
