@@ -428,6 +428,8 @@ if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
       if {$isWindows} {
          # ignore, already downloaded with tcl
       } else {
+        cd $Slicer3_LIB/tcl
+
         runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/tk tk
          
         cd $Slicer3_LIB/tcl/tk/unix
