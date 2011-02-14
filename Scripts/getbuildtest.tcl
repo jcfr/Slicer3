@@ -78,7 +78,7 @@ set ::GETBUILDTEST(cpack-generator) ""
 set ::GETBUILDTEST(rpm-spec) ""
 set ::GETBUILDTEST(extend) "false"
 set ::GETBUILDTEST(ext-dir) ""
-set ::GETBUILDTEST(compiler) ""
+set ::GETBUILDTEST(compiler) "gcc"
 set ::GETBUILDTEST(bitness) "32"
 switch $::tcl_platform(os) {
     "SunOS" { 

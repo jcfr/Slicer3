@@ -533,13 +533,17 @@ if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
 if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
 
     if {$::GENLIB(buildit)} {
+
         if { $isWindows } { 
             # is present in the windows binary download
-        } elseif { $isDarwin } {
-            cd $Slicer3_LIB/tcl
-            runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/blt blt
-            runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt blt
-      
+        } else {
+          cd $Slicer3_LIB/tcl
+          runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/blt blt
+          runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt blt
+        }
+
+        if { $isDarwin } {
+
             if { ![file exists $Slicer3_LIB/tcl/isPatchedBLT] } { 
               puts "Patching..." 
               runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch 
