@@ -1589,11 +1589,11 @@ namespace eval EMSegmenterPreProcessingTcl {
             if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
                 set CMD "$CMD --delta-f-threshold 1"
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
-                set CMD "$CMD --grid-spacing 40 --refine 1"
+                set CMD "$CMD --fast --grid-spacing 40 --refine 1"
                 set CMD "$CMD --energy-weight 5e-2"
                 set CMD "$CMD --accuracy 1 --coarsest 1.5"
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
-                set CMD "$CMD --delay-refine --grid-spacing 40 --refine 4"
+                set CMD "$CMD --verbose --fast --delay-refine --grid-spacing 40 --refine 4"
                 set CMD "$CMD --exact-spacing --energy-weight 5e-2"
                 set CMD "$CMD --exploration 16 --accuracy 0.1 --coarsest 1.5"
             } else {
