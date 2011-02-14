@@ -718,6 +718,156 @@ if(NOT DISABLE_CXX_TESTING)
 
 #====CMTK============================
 
+if ( FALSE )
+  # Task test - small - float
+  midas_add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_float
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+     MIDAS{MRI-Human-Brain_T1-Atlas-Template-float.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-float.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_float
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+  # Task test - small - short
+  midas_add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_short
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    MIDAS{MRI-Human-Brain_T1-Atlas-Template-short.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-short.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_short
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+  # Task test - small - char
+  midas_add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_char
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    MIDAS{MRI-Human-Brain_T1-Atlas-Template-char.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-char.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_char
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+  # Task test - small - uchar
+  midas_add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_uchar
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    MIDAS{MRI-Human-Brain_T1-Atlas-Template-uchar.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-uchar.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_uchar
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+  # Task test - small - ushort
+  midas_add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_ushort
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    MIDAS{MRI-Human-Brain_T1-Atlas-Template-ushort.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-ushort.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_ushort
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+  # Task test - small - uint
+  midas_add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_uint
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    MIDAS{MRI-Human-Brain_T1-Atlas-Template-uint.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-uint.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_uint
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+  # Task test - small - int
+  midas_add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_int
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    MIDAS{MRI-Human-Brain_T1-Atlas-Template-int.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-int.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_int
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+  # Task test - small - double
+  midas_add_test(
+    EMSegCL_Task_CMTK_MRIHumanBrain_double
+    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
+    --targetVolumeFileNames
+    MIDAS{MRI-Human-Brain_T1-Atlas-Template-double.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-double.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_Task_CMTK_MRIHumanBrain_double
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+#-------------
+endif ( FALSE )
+
+
   # Task test - small
   add_test(
     EMSegCL_Task_CMTK_MRIHumanBrain_small
