@@ -6,7 +6,7 @@
 
 # scm is source code manager (i.e. svn)
 scm       svn
-svnpath  https://www.nitrc.org/svn/vmagnotta/GTRACT
+svnpath  https://www.nitrc.org/svn/vmagnotta/slicer-ext-distribution/GTRACT-slicer3-1.0
 svnusername slicerbot
 svnpassword slicer
 
