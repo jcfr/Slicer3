@@ -438,6 +438,9 @@ switch $::tcl_platform(os) {
         if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
             set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
             set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish85.exe
+            set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl85.lib
+            set ::VTK_TK_LIB $::TCL_LIB_DIR/tk85.lib
+            set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh85.exe
             set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/amd64/python.exe
             set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/amd64/python26.lib
             set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild/amd64
@@ -445,6 +448,9 @@ switch $::tcl_platform(os) {
         } else {
             set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
             set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
+            set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
+            set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
+            set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
             set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/python.exe
             set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/python26.lib
             set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild
@@ -452,18 +458,13 @@ switch $::tcl_platform(os) {
         }
 
         set ::PYTHON_INCLUDE $::PYTHON_BIN_DIR/include
-        
         set ::NUMPY_TAG "http://svn.scipy.org/svn/numpy/branches/1.5.x"
-
         set ::NETLIB_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/numpy/core/numeric.pyc
         set ::NUMPY_TEST_FILE $::PYTHON_BIN_DIR/lib/site-packages/numpy/core/numeric.pyc
         set ::SCIPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/scipy/version.pyc
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::KWWidgets_TEST_FILE $::KWWidgets_BUILD_DIR/bin/$::env(VTK_BUILD_SUBDIR)/KWWidgets.lib
         set ::OpenCV_TEST_FILE $::OpenCV_DIR/lib/$::VTK_BUILD_TYPE/CV.lib
-        set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl85.lib
-        set ::VTK_TK_LIB $::TCL_LIB_DIR/tk85.lib
-        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh85.exe
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$::VTK_BUILD_TYPE/ITKCommon.dll
         set ::OPENIGTLINK_TEST_FILE $::OpenIGTLink_DIR/bin/$::VTK_BUILD_TYPE/OpenIGTLink.lib
         set ::BatchMake_TEST_FILE $::BatchMake_BUILD_DIR/bin/$::VTK_BUILD_TYPE/BatchMake.lib
