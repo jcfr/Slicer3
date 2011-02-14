@@ -532,82 +532,81 @@ if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
 
 if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
 
-    if {$::GENLIB(buildit)} {
+  if {$::GENLIB(buildit)} {
 
-        if { $isWindows } { 
-            # is present in the windows binary download
-        } else {
-          cd $Slicer3_LIB/tcl
-          runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/blt blt
-          runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt blt
+    if { $isWindows } { 
+      # is present in the windows binary download
+    } else {
+      cd $Slicer3_LIB/tcl
+      runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/blt blt
+      runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt blt
+
+      if { $isDarwin } {
+
+        if { ![file exists $Slicer3_LIB/tcl/isPatchedBLT] } { 
+          puts "Patching..." 
+          runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch 
+          cd $Slicer3_LIB/tcl/blt 
+          runcmd patch -p2 < ../bltpatch 
+
+          # create a file to make sure BLT isn't patched twice 
+          runcmd touch $Slicer3_LIB/tcl/isPatchedBLT 
+          file delete $Slicer3_LIB/tcl/bltpatch 
+        } else { 
+          puts "BLT already patched." 
         }
+        cd $Slicer3_LIB/tcl/blt
+        runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build --enable-shared --x-includes=/usr/X11R6/include --x-libraries=/usr/X11R6/lib --with-cflags=-fno-common
+        eval runcmd $::MAKE
+        catch "eval runcmd $::MAKE install" ;# install fails at end, so catch so build doesn't fail
 
-        if { $isDarwin } {
+      } elseif { $isSolaris } {
 
-            if { ![file exists $Slicer3_LIB/tcl/isPatchedBLT] } { 
-              puts "Patching..." 
-              runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch 
-              cd $Slicer3_LIB/tcl/blt 
-              runcmd patch -p2 < ../bltpatch 
+        cd $Slicer3_LIB/tcl/blt
 
-              # create a file to make sure BLT isn't patched twice 
-              runcmd touch $Slicer3_LIB/tcl/isPatchedBLT 
-              file delete $Slicer3_LIB/tcl/bltpatch 
-            } else { 
-              puts "BLT already patched." 
-            }
-            cd $Slicer3_LIB/tcl/blt
-            runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build --enable-shared --x-includes=/usr/X11R6/include --x-libraries=/usr/X11R6/lib --with-cflags=-fno-common
-            eval runcmd $::MAKE
-            catch "eval runcmd $::MAKE install" ;# install fails at end, so catch so build doesn't fail
-
-        } elseif { $isSolaris } {
-
-          cd $Slicer3_LIB/tcl/blt
-
-          # On Solaris 10 - due to bug http://bugs.opensolaris.org/bugdatabase/view_bug.do?bug_id=6223255 - we need to set some -L and -R paths.
-          # I does not affect later Solaris releases.
-          set EXTRAS10LIBS ""
-          set MYSQLDIR ""             
-          if {$::GENLIB(bitness) == "64"} {
-            set ::env(CC) "$::GENLIB(compiler) -m64"
-            set ::env(LDFLAGS) "-m64 -L/usr/sfw/lib/64 -R/usr/sfw/lib/64"
-            puts "genlib blt 64 bit branch: $::env(CC)"
-            if {$tcl_platform(osVersion) == "5.10"} {
-              replaceStringInFile src/Makefile.in "@XFT_LIB_SPEC@" "@EXPAT_LIB_SPEC@ @XFT_LIB_SPEC@"
-              set EXTRAS10LIBS "--with-freetype2libdir=/usr/sfw/lib/64 --with-expatlibdir=/usr/sfw/lib/64"
-              set MYSQLDIR "--without-mysqlincdir --without-mysqllibdir"
-              puts "ExtraS10Libs_64 are: $EXTRAS10LIBS"
-            } else {
-              set MYSQLDIR "--with-mysqlincdir=/usr/mysql/5.1/include --with-mysqllibdir=/usr/mysql/5.1/lib/64/mysql"
-            } 
+        # On Solaris 10 - due to bug http://bugs.opensolaris.org/bugdatabase/view_bug.do?bug_id=6223255 - we need to set some -L and -R paths.
+        # I does not affect later Solaris releases.
+        set EXTRAS10LIBS ""
+        set MYSQLDIR ""             
+        if {$::GENLIB(bitness) == "64"} {
+          set ::env(CC) "$::GENLIB(compiler) -m64"
+          set ::env(LDFLAGS) "-m64 -L/usr/sfw/lib/64 -R/usr/sfw/lib/64"
+          puts "genlib blt 64 bit branch: $::env(CC)"
+          if {$tcl_platform(osVersion) == "5.10"} {
+            replaceStringInFile src/Makefile.in "@XFT_LIB_SPEC@" "@EXPAT_LIB_SPEC@ @XFT_LIB_SPEC@"
+            set EXTRAS10LIBS "--with-freetype2libdir=/usr/sfw/lib/64 --with-expatlibdir=/usr/sfw/lib/64"
+            set MYSQLDIR "--without-mysqlincdir --without-mysqllibdir"
+            puts "ExtraS10Libs_64 are: $EXTRAS10LIBS"
           } else {
-            set ::env(CC) "$::GENLIB(compiler)"
-            puts "genlib blt 32 bit branch: $::env(CC)"
-            if {$tcl_platform(osVersion) == "5.10"} {
-              replaceStringInFile src/Makefile.in "@XFT_LIB_SPEC@" "@EXPAT_LIB_SPEC@ @XFT_LIB_SPEC@"
-              set EXTRAS10LIBS "--with-freetype2libdir=/usr/sfw/lib --with-expatlibdir=/usr/sfw/lib"
-              set MYSQLDIR "--without-mysqlincdir --without-mysqllibdir"
-              puts "ExtraS10Libs_32 are: $EXTRAS10LIBS"
-            } else {
-              set MYSQLDIR "--with-mysqlincdir=/usr/mysql/5.1/include --with-mysqllibdir=/usr/mysql/5.1/lib/mysql"
-              }
-          }
-              
-          eval runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build --enable-shared $EXTRAS10LIBS $MYSQLDIR
-          eval runcmd $::SERIAL_MAKE
-          eval runcmd $::SERIAL_MAKE install
-
+            set MYSQLDIR "--with-mysqlincdir=/usr/mysql/5.1/include --with-mysqllibdir=/usr/mysql/5.1/lib/64/mysql"
+          } 
         } else {
-
-            cd $Slicer3_LIB/tcl/blt
-            runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build
-            eval runcmd $::SERIAL_MAKE
-            eval runcmd $::SERIAL_MAKE install
-
+          set ::env(CC) "$::GENLIB(compiler)"
+          puts "genlib blt 32 bit branch: $::env(CC)"
+          if {$tcl_platform(osVersion) == "5.10"} {
+            replaceStringInFile src/Makefile.in "@XFT_LIB_SPEC@" "@EXPAT_LIB_SPEC@ @XFT_LIB_SPEC@"
+            set EXTRAS10LIBS "--with-freetype2libdir=/usr/sfw/lib --with-expatlibdir=/usr/sfw/lib"
+            set MYSQLDIR "--without-mysqlincdir --without-mysqllibdir"
+            puts "ExtraS10Libs_32 are: $EXTRAS10LIBS"
+          } else {
+            set MYSQLDIR "--with-mysqlincdir=/usr/mysql/5.1/include --with-mysqllibdir=/usr/mysql/5.1/lib/mysql"
+          }
         }
+
+        eval runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build --enable-shared $EXTRAS10LIBS $MYSQLDIR
+        eval runcmd $::SERIAL_MAKE
+        eval runcmd $::SERIAL_MAKE install
+
+      } else {
+        cd $Slicer3_LIB/tcl/blt
+        runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build
+        eval runcmd $::SERIAL_MAKE
+        eval runcmd $::SERIAL_MAKE install
+      }
     }
+  }
 }
+
 ################################################################################
 # Get and build python
 #
