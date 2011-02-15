@@ -599,7 +599,12 @@ if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
 
       } else {
         cd $Slicer3_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build
+
+        if {$::GENLIB(bitness) == "64"} {
+          runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build --enable-64bit --with-cflags=-fPIC
+        } else {
+          runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build
+        }
         eval runcmd $::SERIAL_MAKE
         eval runcmd $::SERIAL_MAKE install
       }
