@@ -1591,11 +1591,11 @@ namespace eval EMSegmenterPreProcessingTcl {
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
                 set CMD "$CMD --fast --grid-spacing 40 --refine 1"
                 set CMD "$CMD --energy-weight 5e-2"
-                set CMD "$CMD --accuracy 1 --coarsest 1.5"
+                set CMD "$CMD --accuracy 1 --coarsest 6"
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
                 set CMD "$CMD --verbose --fast --delay-refine --grid-spacing 40 --refine 4"
                 set CMD "$CMD --exact-spacing --energy-weight 5e-2"
-                set CMD "$CMD --exploration 16 --accuracy 0.1 --coarsest 1.5"
+                set CMD "$CMD --exploration 16 --accuracy 0.1 --coarsest 6"
             } else {
                 PrintError "CMTKRegistration: Unknown deformableType: $deformableType"
                 return ""
