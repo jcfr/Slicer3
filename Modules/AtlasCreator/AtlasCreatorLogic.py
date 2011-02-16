@@ -103,13 +103,6 @@ class AtlasCreatorLogic(object):
         else:
             # do not save the transforms, so use the temporary directory
             transformDirectory = self.Helper().GetSlicerTemporaryDirectory()        
-        
-        # check if the temporary directory is ok
-        # if not, abort immediately because of unsafe conditions
-        # details: we check later if all registrations are completed by checking if an output with the case name
-        #            exists in the temporary directory. Hence, already existing files will cause many problems.
-        if not self.Helper().CheckTemporaryDirectory(configuration.GetOriginalImagesFilePathList()):
-            return False
                      
         # check if we register or if we use existing transforms
         if not skipRegistrationMode:
@@ -124,12 +117,15 @@ class AtlasCreatorLogic(object):
             
             # check if it is cluster mode, if yes change the launcher for the registration
             slicerLaunchPrefixForRegistration = self.Helper().GetSlicerLaunchPrefix()
+            multiThreading = True
             
             if clusterMode:
                 # if this is a cluster mode, add the schedulerCommand
                 self.Helper().info("Found cluster configuration..")
                 self.Helper().debug("Scheduler Command: " + str(configuration.GetSchedulerCommand()))
                 slicerLaunchPrefixForRegistration = configuration.GetSchedulerCommand() + " " + str(slicerLaunchPrefixForRegistration)
+                # deactivate multiThreading in a cluster environment
+                multiThreading = False
                     
             #
             # FIXED REGISTRATION
@@ -145,7 +141,8 @@ class AtlasCreatorLogic(object):
                               configuration.GetOriginalImagesFilePathList(),
                               defaultCase,
                               transformDirectory,
-                              configuration.GetRegistrationType())
+                              configuration.GetRegistrationType(),
+                              multiThreading)
                 
             #
             # DYNAMIC REGISTRATION
@@ -175,23 +172,23 @@ class AtlasCreatorLogic(object):
                                                   configuration.GetOriginalImagesFilePathList(),
                                                   meanImageFilePath,
                                                   transformDirectory,
-                                                  configuration.GetRegistrationType()) 
+                                                  configuration.GetRegistrationType(),
+                                                  multiThreading) 
     
                 # now we point the defaultCase to the meanImageFilePath
                 defaultCase = meanImageFilePath
                 
                 self.Helper().info("End of Dynamic registration..")
                 
-            if configuration.GetSaveTransforms():
-                # we will save the defaultCase, if save transforms is enabled
-                # this will ensure that we can later 
-                # use the transforms and the template to resample
-                # at this point, the defaultCase is either the meanImage or the fixed defaultCase
-                defaultCaseImageData = slicer.vtkImageData()
-                defaultCaseImageData.DeepCopy(self.Helper().LoadImage(defaultCase))
-                pathToTemplate = configuration.GetOutputDirectory() + "template.nrrd"
-                self.Helper().info("Saving template to " + str(pathToTemplate))
-                self.Helper().SaveImage(str(pathToTemplate), defaultCaseImageData)
+            # we will save the template
+            # this will ensure that we can later 
+            # use the transforms (if they exist) and the template to resample
+            # at this point, the defaultCase is either the meanImage or the fixed defaultCase
+            defaultCaseImageData = slicer.vtkImageData()
+            defaultCaseImageData.DeepCopy(self.Helper().LoadImage(defaultCase))
+            pathToTemplate = configuration.GetOutputDirectory() + "template.nrrd"
+            self.Helper().info("Saving template to " + str(pathToTemplate))
+            self.Helper().SaveImage(str(pathToTemplate), defaultCaseImageData)
                     
         else:
             # we are skipping the registration
@@ -277,7 +274,7 @@ class AtlasCreatorLogic(object):
 
     
     '''=========================================================================================='''
-    def Register(self, launchCommandPrefix, filePathsList, templateFilePath, outputDirectory, registrationType):
+    def Register(self, launchCommandPrefix, filePathsList, templateFilePath, outputDirectory, registrationType, multiThreading):
         '''
             Register a set of images, get a transformation and save it
             
@@ -292,6 +289,8 @@ class AtlasCreatorLogic(object):
             registrationType
                 type of registration as String, could be "affine" and "non-rigid"
                 if the value is invalid, affine registration is assumed
+            multiThreading
+                if TRUE, use multiThreading
                 
             Returns
                 A list of filepaths to the aligned Images or None depending on success
@@ -320,6 +319,10 @@ class AtlasCreatorLogic(object):
             
         outputAlignedImages = []
             
+            
+        # create a unique temp directory in Slicer's temp directory
+        uniqueTempDir = mktemp(self.Helper().GetSlicerTemporaryDirectory()) + os.sep
+            
         # loop through filePathsList and start registration command
         for movingImageFilePath in filePathsList:
             
@@ -335,13 +338,14 @@ class AtlasCreatorLogic(object):
             
             # generate file path to save aligned output image
             # by getting the filename of the case and appending it to the outputDirectory
-            outputAlignedImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + str(movingImageName) + ".nrrd"
+            outputAlignedImageFilePath = uniqueTempDir + str(movingImageName) + ".nrrd"
             
             command = str(launchCommandPrefix) + self.Helper().GetRegistrationCommand(templateFilePath,
                                                                                       movingImageFilePath,
                                                                                       outputTransformFilePath,
                                                                                       outputAlignedImageFilePath,
-                                                                                      onlyAffineReg)
+                                                                                      onlyAffineReg,
+                                                                                      multiThreading)
             
             self.Helper().debug("Register command: " + str(command))
             

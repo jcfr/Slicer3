@@ -315,6 +315,9 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         if result:
 
+            # now loading the template
+            templateID = self.GetHelper().DisplayImageInSlicer(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/template.nrrd"),'Template')
+
             for currentLabel in labels: 
                 # loading atlas for label i
                 self.GetHelper().DisplayImageInSlicer(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/atlas"+str(currentLabel)+".nrrd"),'AtlasForLabel'+str(currentLabel))

@@ -24,6 +24,21 @@ class AtlasCreatorHelper(object):
         '''
 
         self.__parentClass = parentClass
+        
+        # deactivated by default
+        self.__debugMode = 0
+
+
+
+    '''=========================================================================================='''
+    def EnableDebugMode(self):
+        '''
+            Enables the debug Mode
+            
+            Returns
+                n/a
+        '''
+        self.__debugMode = 1
 
 
 
@@ -37,12 +52,9 @@ class AtlasCreatorHelper(object):
             
             Returns
                 n/a
-        '''
-                
-        # deactivated by default
-        debugMode = 1
-
-        if debugMode:
+        '''        
+        
+        if self.__debugMode:
 
             print "[AtlasCreator " + strftime("%H:%M:%S") + "] DEBUG: " + str(message)
             import sys
@@ -323,7 +335,7 @@ class AtlasCreatorHelper(object):
     
 
     '''=========================================================================================='''    
-    def GetRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg):
+    def GetRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading):
         '''
             Get the command to Register an image to a template
             
@@ -337,6 +349,8 @@ class AtlasCreatorHelper(object):
                 the file path to the aligned image output
             onlyAffineReg
                 if true, just use affine registration and no BSpline
+            multiThreading
+                if true, use multi threading
                 
             Returns
                 the command to Register an image
@@ -355,6 +369,9 @@ class AtlasCreatorHelper(object):
 
         if not onlyAffineReg:
             registrationCommand += " --useBSpline"
+            
+        if not multiThreading:
+            registrationCommand += " --debugNumberOfThreads 1"
 
         registrationCommand += " --numberOfSamples 100000 --numberOfIterations 1500"
         registrationCommand += " --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --splineGridSize 28,20,24 --fixedVolumeTimeIndex 0"
@@ -480,6 +497,8 @@ class AtlasCreatorHelper(object):
         # create a volumeNode using the imageData
         volumeNode = slicer.MRMLScene.CreateNodeByClass('vtkMRMLScalarVolumeNode')
         
+        slicer.MRMLScene.AddNodeNoNotify(volumeNode)
+        
         # set the imageData which was passed
         volumeNode.SetAndObserveImageData(imageData)
         s = imageData.GetSpacing()
@@ -488,6 +507,8 @@ class AtlasCreatorHelper(object):
         volumeNode.SetOrigin(o[0], o[1], o[2])
         
         success = slicer.VolumesGUI.GetLogic().SaveArchetypeVolume(filePath,volumeNode)
+        
+        slicer.MRMLScene.RemoveNodeNoNotify(volumeNode)
         
         return success
     
