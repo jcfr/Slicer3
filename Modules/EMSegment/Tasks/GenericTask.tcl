@@ -157,14 +157,12 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         if { $NAME != ""} {
             set dirname $basefilename$NAME
-            $LOGIC PrintText "TCL: Create file: $dirname"
+            $LOGIC PrintText "TCL: Create directory: $dirname"
             set CMD "mkdir \"$dirname\""
             eval exec $CMD
         } else {
             PrintError "Could not create file: $basefilename$NAME"
         }
-
-        $LOGIC PrintText "TCL: Create directory: $dirname"
 
         return $dirname
     }
@@ -1593,8 +1591,8 @@ namespace eval EMSegmenterPreProcessingTcl {
                 set CMD "$CMD --energy-weight 5e-2"
                 set CMD "$CMD --accuracy 1 --coarsest 6"
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
-                set CMD "$CMD --verbose --fast --delay-refine --grid-spacing 40 --refine 4"
-                set CMD "$CMD --exact-spacing --energy-weight 5e-2"
+                set CMD "$CMD --verbose --fast --grid-spacing 40 --refine 4"
+                set CMD "$CMD --energy-weight 5e-2"
                 set CMD "$CMD --exploration 16 --accuracy 0.1 --coarsest 6"
             } else {
                 PrintError "CMTKRegistration: Unknown deformableType: $deformableType"
