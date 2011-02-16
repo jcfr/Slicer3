@@ -113,7 +113,7 @@ midas_add_test(NAME ${BRAINSFitTestName} COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRA
             ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
   --compareIntensityTolerance 9
   --compareRadiusTolerance 0
-  --compareNumberOfPixelsTolerance 1000
+  --compareNumberOfPixelsTolerance 1500
   BRAINSFitTest
   --costMetric MMI
   --failureExitCode -1 --writeTransformOnFailure
@@ -332,7 +332,7 @@ midas_add_test(NAME ${BRAINSFitTestName} COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRA
 ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
   --compareIntensityTolerance 7
   --compareRadiusTolerance 0
-  --compareNumberOfPixelsTolerance 777
+  --compareNumberOfPixelsTolerance 1100
   BRAINSFitTest
   --costMetric MMI
   --failureExitCode -1 --writeTransformOnFailure
