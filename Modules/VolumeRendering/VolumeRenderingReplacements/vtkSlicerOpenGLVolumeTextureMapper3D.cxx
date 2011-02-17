@@ -1764,7 +1764,7 @@ int  vtkSlicerOpenGLVolumeTextureMapper3D::IsRenderSupported(
     }
   
   if ( this->GetInput()->GetNumberOfScalarComponents() > 1 &&
-       property->GetIndependentComponents() )
+       (!property ||property->GetIndependentComponents()) )
     {
     return 0;
     }
