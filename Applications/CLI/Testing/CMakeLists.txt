@@ -1180,6 +1180,7 @@ target_link_libraries(${CLP}Test ${CLP}Lib)
 add_test(PolyDataToLabelmapTest ${Launcher_Command} ${TestLocation}PolyDataToLabelmapTest
   --compare ${BASELINE}/OAS10001.mha
             ${TEMP}/PolyDataToLabelmapTestOutput.mha
+  --compareNumberOfPixelsTolerance 18
   ModuleEntryPoint
     ${TEST_DATA}/PolyDataToLabelmap/OAS10001.hdr 
     ${TEST_DATA}/PolyDataToLabelmap/OAS10001.vtp 
