@@ -1,5 +1,5 @@
 scm       svn
-svnpath http://svn.na-mic.org/NAMICSandBox/trunk/leftAtriumWallSegmentation/CLI
+svnpath http://svn.na-mic.org/NAMICSandBox/trunk/leftAtriumWallSegmentation
 name     LeftAtriumWallSegmentationModule
 cmakeproject      LeftAtriumWallSegmentationModule
 svnusername slicerbot
