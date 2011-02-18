@@ -2,6 +2,7 @@ from Slicer import slicer
 import os
 import glob
 import time
+import tempfile
 
 from AtlasCreatorConfiguration import AtlasCreatorConfiguration
 from AtlasCreatorGridConfiguration import AtlasCreatorGridConfiguration
@@ -33,6 +34,18 @@ class AtlasCreatorLogic(object):
         self._parentClass = parentClass
         
         self.__dryRun = 0
+
+
+
+    '''=========================================================================================='''
+    def EnableDryrunMode(self):
+        '''
+            Enables the dryrun Mode
+            
+            Returns
+                n/a
+        '''
+        self.__dryRun = 1
 
 
 
@@ -207,11 +220,14 @@ class AtlasCreatorLogic(object):
         #
         self.Helper().info("Entering Resampling Stage..")
                 
+        # create a unique temp directory in Slicer's temp directory
+        uniqueTempDir = tempfile.mkdtemp("AtlasCreatorResampled",self.Helper().GetSlicerTemporaryDirectory()) + os.sep                
+                
         self.Resample(self.Helper().GetSlicerLaunchPrefix(),
                       configuration.GetSegmentationsFilePathList(),
                       defaultCase,
                       transformDirectory,
-                      self.Helper().GetSlicerTemporaryDirectory())
+                      uniqueTempDir)
             
         #
         #
@@ -219,13 +235,23 @@ class AtlasCreatorLogic(object):
         #
         #
         self.Helper().info("Entering Combine-To-Atlas Stage..")
+        
+        # convert the uniqueTempDir to a FilePathList
+        resampledSegmentationsFilePathList = self.Helper().ConvertDirectoryToList(uniqueTempDir)
                     
-        self.CombineToAtlas(configuration.GetSegmentationsFilePathList(),
+        self.CombineToAtlas(resampledSegmentationsFilePathList,
                             configuration.GetLabelsList(),
                             configuration.GetOutputCast(),
                             configuration.GetNormalizeAtlases(),
                             configuration.GetOutputDirectory())
         
+        # cleanup!!
+        # now delete the resampled segmentations
+        for file in resampledSegmentationsFilePathList:
+            os.remove(file)
+            
+        # now delete the whole temporary directory
+        os.rmdir(uniqueTempDir)        
         
         self.Helper().info("--------------------------------------------------------------------------------")        
         self.Helper().info("                             All Done, folks!                                   ")
@@ -321,7 +347,7 @@ class AtlasCreatorLogic(object):
             
             
         # create a unique temp directory in Slicer's temp directory
-        uniqueTempDir = mktemp(self.Helper().GetSlicerTemporaryDirectory()) + os.sep
+        uniqueTempDir = tempfile.mkdtemp("AtlasCreator",self.Helper().GetSlicerTemporaryDirectory()) + os.sep
             
         # loop through filePathsList and start registration command
         for movingImageFilePath in filePathsList:
@@ -351,12 +377,14 @@ class AtlasCreatorLogic(object):
             
             
             if self.__dryRun:
-                self.Helper().info("DRYRUN - skipping execution..")            
+                self.Helper().info("DRYRUN - skipping execution..")    
             else:
                 os.system(command)
                 
             outputAlignedImages.append(str(outputAlignedImageFilePath))
             
+        if self.__dryRun:
+            return outputAlignedImages
         
         # at this point:
         # either the registration was completed if the os.system call did not send it to the background
@@ -385,8 +413,15 @@ class AtlasCreatorLogic(object):
                     # we know we have to wait longer
                     allOutputsExist = False
                     break
-                
-        self.Helper().debug("All outputs exist!")        
+        
+        self.Helper().debug("All outputs exist!")                
+        
+        # now delete the content in the temporary directory
+        for file in outputAlignedImages:
+            os.remove(file)
+            
+        # now delete the whole temporary directory
+        os.rmdir(uniqueTempDir)
                 
         return outputAlignedImages
 
@@ -553,7 +588,11 @@ class AtlasCreatorLogic(object):
             Returns
                 TRUE or FALSE depending on success
         '''
-
+        
+        if self.__dryRun:
+            self.Helper().info("DRYRUN - skipping execution..")
+            return True
+        
         # sanity checks
         if len(filePathsList) == 0:
             self.Helper().info("Empty filePathsList for CombineToAtlas() command. Aborting..")
