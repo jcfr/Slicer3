@@ -246,7 +246,7 @@ class AtlasCreatorConfiguration(object):
                 n/a
         '''
         if type(value).__name__=='list' and len(value) >= 1:
-            # we have at least one filePath in the list
+            # we have at least one label in the list
             self.__labelsList = value
             
             
