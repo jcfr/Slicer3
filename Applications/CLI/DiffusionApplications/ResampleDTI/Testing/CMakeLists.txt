@@ -74,6 +74,7 @@ add_test(${CLP}BSplineWSInterpolationTest ${Launcher_Command} ${TestLocation}${R
     ${ReferenceImageBSplineWS}
     ${TransformedImage3}
   --compareIntensityTolerance 0
+  --compareNumberOfPixelsTolerance 3
   ModuleEntryPoint
     -f ${BSplineFile}
     --interpolation ws
