@@ -414,39 +414,75 @@ itcl::body SlicePlaneSWidget::getLinkedSliceLogics { } {
     set logic [$sliceGUI GetLogic]
     set sliceNode [$logic GetSliceNode]
     set orientString [$sliceNode GetOrientationString]
+    set ssgui [[$::slicer3::ApplicationGUI GetApplication] GetModuleGUIByName "Slices"]
+#    set layout [$::slicer3::ApplicationGUI GetGUILayoutNode]
+#    set viewArrangement [$layout GetViewArrangement]
+    set numsgui [$ssgui GetNumberOfSliceGUI]
 
     set logics ""
     set link [$_sliceCompositeNode GetLinkedControl]
-    if { $link == 1 && [$this isCompareViewMode] == 1 && ([$sliceNode GetSingletonTag] == "Red" || [$this isCompareViewer] == 1) } {
-        set ssgui [[$::slicer3::ApplicationGUI GetApplication] GetModuleGUIByName "Slices"]
-        set layout [$::slicer3::ApplicationGUI GetGUILayoutNode]
-        set viewArrangement [$layout GetViewArrangement]
-
-        set numsgui [$ssgui GetNumberOfSliceGUI]
-
-        for { set i 0 } { $i < $numsgui } { incr i } {
-            if { $i == 0} {
-                set sgui [$ssgui GetFirstSliceGUI]
-                set lname [$ssgui GetFirstSliceGUILayoutName]
-            } else {
-                set sgui [$ssgui GetNextSliceGUI $lname]
-                set lname [$ssgui GetNextSliceGUILayoutName $lname]
-            }
-
-            if { $lname != "Red" && [string first "Compare" $lname] != 0 } {
-              continue
-            } 
-
-            set currSliceNode [$sgui GetSliceNode]
-            set currOrientString [$currSliceNode GetOrientationString]
-            if { [string compare $orientString $currOrientString] == 0 || ($_actionStartOrientation != "" && [string compare $_actionStartOrientation $currOrientString] == 0) } {
-                lappend logics [$sgui GetLogic]
-            }
-        }
+ 
+    if {[$this isCompareViewMode] == 0} {
+        if {$link == 0} {
+          # just return myself, nothing's linked to me
+          lappend logics [$sliceGUI GetLogic]
+        } else {
+          # get the slice guis that are also linked
+          for { set i 0 } { $i < $numsgui } { incr i } {
+              if { $i == 0} {
+                  set sgui [$ssgui GetFirstSliceGUI]
+                  set lname [$ssgui GetFirstSliceGUILayoutName]
+              } else {
+                  set sgui [$ssgui GetNextSliceGUI $lname]
+                  set lname [$ssgui GetNextSliceGUILayoutName $lname]
+              }
+              # is it linked?
+              if {[[[$sgui GetLogic] GetSliceCompositeNode] GetLinkedControl] == 1} {
+                  lappend logics [$sgui GetLogic]
+              }
+          }
+      }
     } else {
-        lappend logics [$sliceGUI GetLogic]
+        # we're in compare view mode
+        if {$link == 1} {
+            # puts "Linked, compare view, logics = $logics"
+            for { set i 0 } { $i < $numsgui } { incr i } {
+                if { $i == 0} {
+                    set sgui [$ssgui GetFirstSliceGUI]
+                    set lname [$ssgui GetFirstSliceGUILayoutName]
+                } else {
+                    set sgui [$ssgui GetNextSliceGUI $lname]
+                    set lname [$ssgui GetNextSliceGUILayoutName $lname]
+                }
+                # if it's a not compare gui, grab the logic
+                if {[string first "Compare" $lname] != 0} {
+                    # is it linked?
+                    if {[[[$sgui GetLogic] GetSliceCompositeNode] GetLinkedControl] == 1} {
+                        lappend logics [$sgui GetLogic]
+                    }
+                }
+            }
+            
+        } else {
+            # not linked, compare view"
+            if { ([$sliceNode GetSingletonTag] == "Red" || [$this isCompareViewer] == 1) } {
+                for { set i 0 } { $i < $numsgui } { incr i } {
+                    if { $i == 0} {
+                        set sgui [$ssgui GetFirstSliceGUI]
+                        set lname [$ssgui GetFirstSliceGUILayoutName]
+                    } else {
+                        set sgui [$ssgui GetNextSliceGUI $lname]
+                        set lname [$ssgui GetNextSliceGUILayoutName $lname]
+                    }
+                    
+                    if { $lname != "Red" && [string first "Compare" $lname] != 0 } {
+                        continue
+                    } 
+                    lappend logics [$sgui GetLogic]
+                }
+            }
+        } 
     }
-
   return $logics
 }
 
