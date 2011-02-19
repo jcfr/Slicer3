@@ -135,15 +135,25 @@ def usage():
 def examples():
 
     info("Examples:")
+    info("-----------------------------------------------------------------------------------------------")
+    info("1. Run fixed registration with the testdata:")
     info("")
-    info("Run fixed registration on the testdata:")
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --normalize')
     info("")
-    info('python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --normalize')
+    info("-----------------------------------------------------------------------------------------------")
+    info("2. Run dynamic registration with the testdata:")
     info("")
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize')
     info("")
-    info("Run dynamic registration")
+    info("-----------------------------------------------------------------------------------------------")
+    info("3. Run dynamic registration with the testdata on a cluster (scheduler command \"qsub-run\"):")
     info("")
-    info("Use existing registrations and just re-sample")
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize --cluster --schedulerCommand qsub-run')
+    info("")
+    info("-----------------------------------------------------------------------------------------------")
+    info("4. Use existing registrations and just re-sample")
+    info("")
+    info('        python atlascreator.py --skipRegistration --transforms /tmp/acout --existingTemplate TestData/segmentations/case62.nrrd -s TestData/segmentations/ -o /tmp/acout -l "3 4 5 6 7 8 9" --normalize --outputCast 3')
     info("")
 
 
@@ -311,7 +321,7 @@ def main(argv):
         info("Error: Could not find the images!")
         info("Error: Location of --images is invalid: " + str(imagesDir))
         errorOccured = True
-    else:
+    elif imagesDir:
         imagesDir = os.path.abspath(imagesDir) + os.sep
         
     if not (segmentationsDir and os.path.isdir(segmentationsDir)):
@@ -320,7 +330,7 @@ def main(argv):
         info("Error: Could not find the segmentations!")
         info("Error: Location of --segmentations is invalid: " + str(segmentationsDir))
         errorOccured = True
-    else:
+    elif segmentationsDir:
         segmentationsDir = os.path.abspath(segmentationsDir) + os.sep
     
     if not (outputDir and os.path.isdir(outputDir)):
@@ -329,7 +339,7 @@ def main(argv):
         info("Error: Could not find the output directory!")
         info("Error: Location of --output is invalid: " + str(outputDir))
         errorOccured = True
-    else:
+    elif outputDir:
         outputDir = os.path.abspath(outputDir) + os.sep
     
     # check if we have everything if skipRegistration is enabled
@@ -357,7 +367,7 @@ def main(argv):
         errorOccured = True
         
     # check if either dynamic or fixed registration is configured
-    if not dynamic and not fixed:
+    if not dynamic and not fixed and not skipRegistration:
         info("Error: The registration type was not set. Either --fixed or --dynamic are required!")
         errorOccured = True
        
@@ -465,24 +475,7 @@ def main(argv):
         info("")
         sys.exit(2)
         
-    # no error occured, no give some feedback
-    if nonRigid:
-        info("Activating Non-Rigid Registration..")
-        
-    if writeTransforms:
-        info("Transforms will be written to output directory..")
-            
-    info("Labels: " + str(labels))
-    
-    if normalize:
-        info("Atlases will be normalized to 0..1")
-    
-    info("Output Cast: " + str(outputCast))
-    
-    if cluster:
-        info("Cluster Mode is activated!")
-        info("Scheduler Command: "+str(schedulerCommand))
-        
+    #no error occured, so give some feedback        
     if debug:
         info("Debug Mode is enabled!")
         
@@ -520,11 +513,14 @@ def main(argv):
         evalpythonCommand += "configuration = AtlasCreatorConfiguration();"
         
     # now the configuration options which are valid for all
-    evalpythonCommand += "configuration.SetOriginalImagesFilePathList(gui.GetHelper().ConvertDirectoryToList('"+imagesDir+"'));"
+    if imagesDir:
+        evalpythonCommand += "configuration.SetOriginalImagesFilePathList(gui.GetHelper().ConvertDirectoryToList('"+imagesDir+"'));"
     
-    evalpythonCommand += "configuration.SetSegmentationsFilePathList(gui.GetHelper().ConvertDirectoryToList('"+segmentationsDir+"'));"
+    if segmentationsDir:
+        evalpythonCommand += "configuration.SetSegmentationsFilePathList(gui.GetHelper().ConvertDirectoryToList('"+segmentationsDir+"'));"
     
-    evalpythonCommand += "configuration.SetOutputDirectory('"+outputDir+"');"
+    if outputDir:
+        evalpythonCommand += "configuration.SetOutputDirectory('"+outputDir+"');"
     
     if fixed:
         evalpythonCommand += "configuration.SetTemplateType('fixed');"
