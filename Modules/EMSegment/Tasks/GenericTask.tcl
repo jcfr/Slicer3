@@ -1140,17 +1140,34 @@ namespace eval EMSegmenterPreProcessingTcl {
         if { $outVolumeFileName == "" } { return 1 }
         set CMD "$CMD -o \"$outVolumeFileName\""
 
-        set tmpFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
-        set RemoveFiles "$tmpFileName"
-        if { $tmpFileName == "" } {
+        set inputVolumeFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
+        set RemoveFiles "$inputVolumeFileName"
+        if { $inputVolumeFileName == "" } {
             return 1
         }
-        set CMD "$CMD --floating \"$tmpFileName\""
+        set CMD "$CMD --floating \"$inputVolumeFileName\""
 
-        set tmpFileName [WriteDataToTemporaryDir $referenceVolumeNode Volume]
-        set RemoveFiles "$RemoveFiles $tmpFileName"
-        if { $tmpFileName == "" } { return 1 }
-        set CMD "$CMD \"$tmpFileName\""
+        # set the right scalar type
+        set referenceVolume [$referenceVolumeNode GetImageData]
+        set scalarType [$referenceVolume GetScalarTypeAsString]
+        switch -exact "$scalarType" {
+            "char" { set CMD "$CMD --char" }
+            "unsigned char" { set CMD "$CMD --byte" }
+            "short" { set CMD "$CMD --short" }
+            "unsigned short" { set CMD "$CMD --ushort" }
+            "int" { set CMD "$CMD --int" }
+            "float" { set CMD "$CMD --float" }
+            "double" { set CMD "$CMD --double" }
+            default {
+                PrintError "CMTKResampleCLI: cannot resample a volume of type $scalarType"
+                return 1
+            }
+        }
+
+        set referenceVolumeFileName [WriteDataToTemporaryDir $referenceVolumeNode Volume]
+        set RemoveFiles "$RemoveFiles $referenceVolumeFileName"
+        if { $referenceVolumeFileName == "" } { return 1 }
+        set CMD "$CMD \"$referenceVolumeFileName\""
 
         set CMD "$CMD \"$transformDirName\""
 
@@ -1585,7 +1602,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
             if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
-                set CMD "$CMD --delta-f-threshold 1"
+                set CMD "$CMD --fast --delta-f-threshold 1"
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
                 set CMD "$CMD --fast --grid-spacing 40 --refine 1"
                 set CMD "$CMD --energy-weight 5e-2"
