@@ -26,13 +26,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImagePCAFilter_h
 #define __vtkImagePCAFilter_h
 
-#include "vtkKilisSandboxWin32Header.h"
+#include "vtkAtlasCreatorCxxModuleWin32Header.h"
 
 // #include "vtkSlicer.h"
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkFloatArray.h"
 
-class VTK_KilisSandbox_EXPORT vtkImagePCAFilter : public vtkImageMultipleInputFilter
+class VTK_ATLASCREATORCXXMODULE_EXPORT vtkImagePCAFilter : public vtkImageMultipleInputFilter
 {
   public:
   // -----------------------------------------------------
