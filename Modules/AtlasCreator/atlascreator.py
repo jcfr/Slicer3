@@ -81,6 +81,9 @@ def usage():
     info("-w, --writeTransforms")
     info("        Write transforms to output directory.")
     info("")
+    info("--keepAligned")
+    info("        Keep the aligned images and segmentations.")
+    info("")    
     info("-l, --labels STRING")
     info("        List of labels to include for the atlases, f.e. \"3 4 5 6 8 10\".")
     info("")
@@ -188,6 +191,7 @@ def main(argv):
                                                         "template=",                                                        
                                                         "non-rigid",
                                                         "writeTransforms",
+                                                        "keepAligned",
                                                         "labels=",
                                                         "normalize",
                                                         "outputCast=",
@@ -223,6 +227,8 @@ def main(argv):
     nonRigid = False
     
     writeTransforms = False
+    
+    keepAligned = False
     
     labels = None
     
@@ -265,6 +271,8 @@ def main(argv):
             nonRigid = True
         elif opt in ("-w", "--writeTransforms"):
             writeTransforms = True
+        elif opt in ("--keepAligned"):
+            keepAligned = True
         elif opt in ("-l", "--labels"):
             labels = arg.strip().split(" ")
         elif opt in ("--normalize"):
@@ -541,6 +549,13 @@ def main(argv):
     else:
         evalpythonCommand += "configuration.SetSaveTransforms(0);"
 
+    if keepAligned:
+        evalpythonCommand += "configuration.SetDeleteAlignedImages(0);"
+        evalpythonCommand += "configuration.SetDeleteAlignedSegmentations(0);"
+    else:
+        evalpythonCommand += "configuration.SetDeleteAlignedImages(1);"
+        evalpythonCommand += "configuration.SetDeleteAlignedSegmentations(1);"
+        
     if normalize:
         evalpythonCommand += "configuration.SetNormalizeAtlases(1);"
     else:

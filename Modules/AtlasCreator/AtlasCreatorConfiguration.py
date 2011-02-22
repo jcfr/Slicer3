@@ -28,7 +28,9 @@ class AtlasCreatorConfiguration(object):
         self.__registrationType = "Affine"
         
         self.__saveTransforms = 1
-        self.__normalizeAtlases = 0
+        self.__deleteAlignedImages = 1
+        self.__deleteAlignedSegmentations = 1
+        self.__normalizeAtlases = 0        
         
         self.__outputCast = "Short" 
 
@@ -49,6 +51,8 @@ class AtlasCreatorConfiguration(object):
         output += "Labels: " + str(self.__labelsList) + "\n"
         output += "Registration Type: " + str(self.__registrationType) + "\n"
         output += "Save Transforms: " + str(self.__saveTransforms) + "\n"
+        output += "Delete Aligned Images: " + str(self.__deleteAlignedImages) + "\n"
+        output += "Delete Aligned Segmentations: " + str(self.__deleteAlignedSegmentations) + "\n"
         output += "Normalize Atlases: " + str(self.__normalizeAtlases) + "\n"
         output += "Output Cast: " + str(self.__outputCast) + "\n"
         
@@ -336,6 +340,62 @@ class AtlasCreatorConfiguration(object):
         
         
                 
+    '''=========================================================================================='''
+    def GetDeleteAlignedImages(self):
+        '''
+            Returns
+                the flag for deleting the aligned images
+        '''
+        return self.__deleteAlignedImages
+
+
+
+    '''=========================================================================================='''
+    def SetDeleteAlignedImages(self, value):
+        '''
+            Sets the flag for deleting the aligned images
+            
+            value
+                the flag as 0 or 1
+                
+            Returns
+                n/a
+        '''
+        if value != 0 and value != 1:
+            self.__deleteAlignedImages = 1
+        else:
+            self.__deleteAlignedImages = int(value)    
+    
+    
+    
+        '''=========================================================================================='''
+    def GetDeleteAlignedSegmentations(self):
+        '''
+            Returns
+                the flag for deleting the aligned segmentations
+        '''
+        return self.__deleteAlignedSegmentations
+
+
+
+    '''=========================================================================================='''
+    def SetDeleteAlignedSegmentations(self, value):
+        '''
+            Sets the flag for deleting the aligned segmentations
+            
+            value
+                the flag as 0 or 1
+                
+            Returns
+                n/a
+        '''
+        if value != 0 and value != 1:
+            self.__deleteAlignedSegmentations = 1
+        else:
+            self.__deleteAlignedSegmentations = int(value)    
+    
+    
+    
     '''=========================================================================================='''
     def GetOutputCast(self):
         '''

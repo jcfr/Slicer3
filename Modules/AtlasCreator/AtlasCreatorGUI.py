@@ -61,6 +61,10 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._saveTransformsCheckBox = slicer.vtkKWCheckButtonWithLabel()
 
+        self._deleteAlignedImagesCheckBox = slicer.vtkKWCheckButtonWithLabel()
+
+        self._deleteAlignedSegmentationsCheckBox = slicer.vtkKWCheckButtonWithLabel()
+
         self._thirdFrame = slicer.vtkSlicerModuleCollapsibleFrame()
 
         self._labelsEntry = slicer.vtkKWEntryWithLabel()
@@ -304,6 +308,12 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         # set save deformation fields and transforms
         configuration.SetSaveTransforms(self._saveTransformsCheckBox.GetWidget().GetSelectedState())
 
+        # set delete aligned images
+        configuration.SetDeleteAlignedImages(self._deleteAlignedImagesCheckBox.GetWidget().GetSelectedState())
+
+        # set delete aligned segmentations
+        configuration.SetDeleteAlignedSegmentations(self._deleteAlignedSegmentationsCheckBox.GetWidget().GetSelectedState())
+
         # set normalize atlases
         configuration.SetNormalizeAtlases(self._normalizeAtlasCheckBox.GetWidget().GetSelectedState())
         
@@ -535,6 +545,18 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._saveTransformsCheckBox.SetLabelText("Save Transforms:")
         self._saveTransformsCheckBox.GetWidget().SetSelectedState(1)
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._saveTransformsCheckBox.GetWidgetName())
+
+        self._deleteAlignedImagesCheckBox.SetParent(self._secondFrame.GetFrame())
+        self._deleteAlignedImagesCheckBox.Create()
+        self._deleteAlignedImagesCheckBox.SetLabelText("Delete Aligned Images:")
+        self._deleteAlignedImagesCheckBox.GetWidget().SetSelectedState(1)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deleteAlignedImagesCheckBox.GetWidgetName())
+
+        self._deleteAlignedSegmentationsCheckBox.SetParent(self._secondFrame.GetFrame())
+        self._deleteAlignedSegmentationsCheckBox.Create()
+        self._deleteAlignedSegmentationsCheckBox.SetLabelText("Delete Aligned Segmentations:")
+        self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(1)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deleteAlignedSegmentationsCheckBox.GetWidgetName())
 
         self._thirdFrame.SetParent(self._moduleFrame.GetFrame())
         self._thirdFrame.Create()

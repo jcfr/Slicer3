@@ -175,10 +175,11 @@ class AtlasCreatorLogic(object):
                     meanImage = slicer.vtkImageData()
                     if not self.__dryRun:
                         meanImage.DeepCopy(self.GetMeanImage(alignedImages))
-                        if alignedImages != configuration.GetOriginalImagesFilePathList():
-                            # do not delete the original images
-                            self.Helper().DeleteFilesAndDirectory(alignedImages)
-                        
+                        if configuration.GetDeleteAlignedImages():
+                            if alignedImages != configuration.GetOriginalImagesFilePathList():
+                                # do not delete the original images
+                                self.Helper().DeleteFilesAndDirectory(alignedImages)
+                            
                     meanImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + "tmpMeanImage.nrrd"
                     if not self.__dryRun:
                         self.Helper().SaveImage(meanImageFilePath, meanImage)
@@ -196,9 +197,10 @@ class AtlasCreatorLogic(object):
                 defaultCase = meanImageFilePath
                 
                 self.Helper().info("End of Dynamic registration..")
-                
-            # now delete the content in the temporary directory
-            self.Helper().DeleteFilesAndDirectory(alignedImages)
+            
+            # now delete the content in the temporary directory, if selected
+            if configuration.GetDeleteAlignedImages():
+                self.Helper().DeleteFilesAndDirectory(alignedImages)
                 
             # we will save the template
             # this will ensure that we can later 
@@ -254,7 +256,8 @@ class AtlasCreatorLogic(object):
         
         # cleanup!!
         # now delete the resampled segmentations
-        self.Helper().DeleteFilesAndDirectory(resampledSegmentationsFilePathList)
+        if configuration.GetDeleteAlignedSegmentations():
+            self.Helper().DeleteFilesAndDirectory(resampledSegmentationsFilePathList)
         
         self.Helper().info("--------------------------------------------------------------------------------")        
         self.Helper().info("                             All Done, folks!                                   ")
