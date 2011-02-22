@@ -87,34 +87,30 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def CheckTemporaryDirectory(self,filePathList):
+    def DeleteFilesAndDirectory(self,filePathList):
         ''' 
-            Check if the temporary directory contains any filenames which
-            may block the Atlas Creator logic
+            Delete all files of a filePathList and also the directory
             
             filePathList
-                the list of file paths to check
+                the list of file paths to delete
             
             Returns
-                TRUE if the tempDir is ok and FALSE if not
+                TRUE or FALSE depending on success
         '''         
-        # quickly check if the temp directory has old content
-        # if yes, this is dangerous and we will abort
-        # it can be dangerous because we use this to check if the registration is complete
-        for originalImage in filePathList:
-            
-            originalImageFileName = os.path.basename(originalImage)
-            originalImageName = os.path.splitext(originalImageFileName)[0]
-            potentialOutputPath = self.GetSlicerTemporaryDirectory() + originalImageName + ".nrrd" 
-            
-            if os.path.isfile(potentialOutputPath):
-                # there is old content
-                # abort immediately
-                self.info("ERROR: There are already aligned images in the temporary directory: " + str(self.GetSlicerTemporaryDirectory()))
-                self.info("ERROR: This is extremely dangerous. Please move " + str(potentialOutputPath) + "!!!")
-                self.info("ERROR: Aborting now!!!")
+        # now delete the content in the temporary directory
+        for file in filePathList:
+            if os.path.isfile(file):
+                os.remove(file)
+            else:
                 return False
-
+            
+        # now delete the whole temporary directory
+        if os.path.isdir(os.path.dirname(filePathList[0])):
+            os.rmdir(os.path.dirname(filePathList[0]))
+        else:
+            return False     
+        
+        
         return True
     
 
@@ -200,12 +196,12 @@ class AtlasCreatorHelper(object):
             imageData
                 vtkImageData
             dividend
-                the number to divide with, will be casted to float
+                the number to divide with, will be casted to double
             
             Returns
                 vtkImageData after division
         '''            
-        imageData.DeepCopy(self.ReCastImage(imageData, "Float"))
+        imageData.DeepCopy(self.ReCastImage(imageData, "Double"))
         div = slicer.vtkImageMathematics()
         div.SetInput(imageData)
         div.SetOperationToMultiplyByK()

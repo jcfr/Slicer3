@@ -15,6 +15,12 @@ if(NOT Slicer3_SOURCE_DIR)
 endif(NOT Slicer3_SOURCE_DIR)
 
 # --------------------------------------------------------------------------
+# Include the Cxx/ directory
+subDirs(
+  Cxx
+)
+
+# --------------------------------------------------------------------------
 # Copy over the Python files
 
 if(Slicer3_USE_PYTHON)
@@ -34,3 +40,4 @@ if(Slicer3_USE_PYTHON)
     )
 
 endif(Slicer3_USE_PYTHON)
+

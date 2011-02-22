@@ -150,12 +150,12 @@ class AtlasCreatorLogic(object):
                 
                 self.Helper().info("Fixed registration against " + str(defaultCase))
                 
-                self.Register(slicerLaunchPrefixForRegistration,
-                              configuration.GetOriginalImagesFilePathList(),
-                              defaultCase,
-                              transformDirectory,
-                              configuration.GetRegistrationType(),
-                              multiThreading)
+                alignedImages = self.Register(slicerLaunchPrefixForRegistration,
+                                              configuration.GetOriginalImagesFilePathList(),
+                                              defaultCase,
+                                              transformDirectory,
+                                              configuration.GetRegistrationType(),
+                                              multiThreading)
                 
             #
             # DYNAMIC REGISTRATION
@@ -175,6 +175,10 @@ class AtlasCreatorLogic(object):
                     meanImage = slicer.vtkImageData()
                     if not self.__dryRun:
                         meanImage.DeepCopy(self.GetMeanImage(alignedImages))
+                        if alignedImages != configuration.GetOriginalImagesFilePathList():
+                            # do not delete the original images
+                            self.Helper().DeleteFilesAndDirectory(alignedImages)
+                        
                     meanImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + "tmpMeanImage.nrrd"
                     if not self.__dryRun:
                         self.Helper().SaveImage(meanImageFilePath, meanImage)
@@ -192,6 +196,9 @@ class AtlasCreatorLogic(object):
                 defaultCase = meanImageFilePath
                 
                 self.Helper().info("End of Dynamic registration..")
+                
+            # now delete the content in the temporary directory
+            self.Helper().DeleteFilesAndDirectory(alignedImages)
                 
             # we will save the template
             # this will ensure that we can later 
@@ -247,11 +254,7 @@ class AtlasCreatorLogic(object):
         
         # cleanup!!
         # now delete the resampled segmentations
-        for file in resampledSegmentationsFilePathList:
-            os.remove(file)
-            
-        # now delete the whole temporary directory
-        os.rmdir(uniqueTempDir)        
+        self.Helper().DeleteFilesAndDirectory(resampledSegmentationsFilePathList)
         
         self.Helper().info("--------------------------------------------------------------------------------")        
         self.Helper().info("                             All Done, folks!                                   ")
@@ -283,6 +286,11 @@ class AtlasCreatorLogic(object):
             image = slicer.vtkImageData()
             image.DeepCopy(self.Helper().LoadImage(filePath))
             
+            # to prevent overflows,
+            # divide the images individually before adding them up
+            # this automatically casts the image to double
+            image.DeepCopy(self.Helper().DivideImage(image, len(filePathsList)))
+            
             if firstRun:
                 newMeanImage.DeepCopy(image)
                 firstRun = 0
@@ -290,10 +298,6 @@ class AtlasCreatorLogic(object):
                 # now add'em all up
                 newMeanImage.DeepCopy(self.Helper().AddImages(image, newMeanImage))
                 
-        # second, divide by the number of images added
-        # this automatically casts to float
-        newMeanImage.DeepCopy(self.Helper().DivideImage(newMeanImage, len(filePathsList)))
-    
         # now return the mean image
         return newMeanImage
     
@@ -414,14 +418,7 @@ class AtlasCreatorLogic(object):
                     allOutputsExist = False
                     break
         
-        self.Helper().debug("All outputs exist!")                
-        
-        # now delete the content in the temporary directory
-        for file in outputAlignedImages:
-            os.remove(file)
-            
-        # now delete the whole temporary directory
-        os.rmdir(uniqueTempDir)
+        self.Helper().debug("All outputs exist!")
                 
         return outputAlignedImages
 

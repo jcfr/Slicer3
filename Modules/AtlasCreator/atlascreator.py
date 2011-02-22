@@ -86,7 +86,7 @@ def usage():
     info("")
     info("--normalize")
     info("        Normalize Atlases to 0..1.")
-    info("        If activated, the output cast will be set to Float.")
+    info("        If activated, the output cast will be set to Double.")
     info("")
     info("--outputCast INT")
     info("        Output cast for the atlases. Possible values:")

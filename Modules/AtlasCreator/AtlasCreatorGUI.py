@@ -135,7 +135,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         if normalize:
             self._outputCastCombo.SetEnabled(0)
-            self._outputCastCombo.GetWidget().SetValue("Float")
+            self._outputCastCombo.GetWidget().SetValue("Double")
         else:
             self._outputCastCombo.SetEnabled(1)
                 
