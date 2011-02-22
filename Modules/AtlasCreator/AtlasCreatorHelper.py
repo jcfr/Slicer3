@@ -368,11 +368,13 @@ class AtlasCreatorHelper(object):
             
         if not multiThreading:
             registrationCommand += " --debugNumberOfThreads 1"
+        else:
+            registrationCommand += " --debugNumberOfThreads -1"
 
         registrationCommand += " --numberOfSamples 100000 --numberOfIterations 1500"
         registrationCommand += " --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --splineGridSize 28,20,24 --fixedVolumeTimeIndex 0"
         registrationCommand += " --movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON"
-        registrationCommand += " --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --failureExitCode -1 --debugNumberOfThreads -1"
+        registrationCommand += " --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --failureExitCode -1"
         registrationCommand += " --debugLevel 0 --costFunctionConvergenceFactor 1e+9 --projectedGradientTolerance 1e-5"
 
 
