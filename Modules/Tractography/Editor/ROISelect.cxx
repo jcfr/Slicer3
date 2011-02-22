@@ -200,16 +200,20 @@ int main( int argc, const char * argv[] ){
   //vtkIdTypeArray *cellArray=outFibersCellArray->GetData();
   //cellArray->SetNumberOfTuples(numNewPts+numNewCells);
 
+  vtkDataArray *oldTensors = input->GetPointData()->GetTensors();
   vtkFloatArray *newTensors = vtkFloatArray::New();
-  newTensors->SetNumberOfComponents(9);
-  newTensors->Allocate(9*numNewPts);
-  outFibers->GetPointData()->SetTensors(newTensors);
+  // only allocate and change the output polydata if the input had tensors
+  // otherwise this leads to malformed polydata with empty tensors
+  if (oldTensors)
+    {
+      newTensors->SetNumberOfComponents(9);
+      newTensors->Allocate(9*numNewPts);
+      outFibers->GetPointData()->SetTensors(newTensors);
+    }
   newTensors->Delete();
   newTensors = static_cast<vtkFloatArray *> (outFibers->GetPointData()->GetTensors());
 
-
   vtkIdType ptId = 0;
-  vtkDataArray *oldTensors = input->GetPointData()->GetTensors();
   double tensor[9];
 
   for (inCellId=0, inLines->InitTraversal(); 
