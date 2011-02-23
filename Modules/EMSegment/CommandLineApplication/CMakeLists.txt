@@ -66,6 +66,7 @@ target_link_libraries(
   ${CLP_MODULE}
   EMSegment
   vtkCommon
+  AtlasCreatorCxxModule
   )
 
 set(CLP_MODULE EMSegmentTransformToNewFormat)

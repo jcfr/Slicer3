@@ -35,6 +35,7 @@ extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Mrmlcli_Init(Tcl_Interp *interp); 
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
 extern "C" int Kwwidgets_Init(Tcl_Interp *interp);
+extern "C" int Atlascreatorcxxmodule_Init(Tcl_Interp *interp);
 
 #define tgVtkCreateMacro(name,type) \
   name  = type::New(); \
@@ -113,6 +114,7 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv)
      Vtkitk_Init(interp);
      Commandlinemodule_Init(interp);
      Kwwidgets_Init(interp);
+     Atlascreatorcxxmodule_Init(interp);
      return interp;
 }
 
