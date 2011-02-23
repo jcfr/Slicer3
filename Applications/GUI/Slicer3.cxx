@@ -1996,6 +1996,7 @@ int Slicer3_main(int& argc, char *argv[])
         {
         PyErr_Print();
         }
+      slicerApp->PromptBeforeExitOff();
       slicerApp->SetExitStatus(v == NULL ? EXIT_FAILURE : EXIT_SUCCESS);
       slicerApp->Exit();
       slicerApp->Delete();
