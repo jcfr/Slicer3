@@ -1,7 +1,7 @@
 scm       svn
 svnpath http://svn.na-mic.org/NAMICSandBox/trunk/leftAtriumWallSegmentation
-name     LeftAtriumWallSegmentationModule
-cmakeproject      LeftAtriumWallSegmentationModule
+name     leftAtriumWallSegmentation
+cmakeproject      leftAtriumWallSegmentation
 svnusername slicerbot
 svnpassword slicer
 
