@@ -1983,6 +1983,8 @@ int Slicer3_main(int& argc, char *argv[])
 #endif
 #endif
 
+  int displayMainSlicerWindow = 1;
+
   if ( EvalPython != "" )
     {
 #if defined(Slicer3_USE_PYTHON)
@@ -1997,10 +1999,12 @@ int Slicer3_main(int& argc, char *argv[])
         PyErr_Print();
         }
       slicerApp->PromptBeforeExitOff();
-      slicerApp->SetExitStatus(v == NULL ? EXIT_FAILURE : EXIT_SUCCESS);
-      slicerApp->Exit();
-      slicerApp->Delete();
-      exit(v == NULL ? EXIT_FAILURE : EXIT_SUCCESS);
+      displayMainSlicerWindow = 0; // do not display the main Slicer Window
+      Exec = "exit"; // let Slicer exit now properly
+      //slicerApp->SetExitStatus(v == NULL ? EXIT_FAILURE : EXIT_SUCCESS);
+      //slicerApp->Exit();
+      //slicerApp->Delete();
+      //exit(v == NULL ? EXIT_FAILURE : EXIT_SUCCESS);
       }
 #endif
     }
@@ -2023,8 +2027,11 @@ int Slicer3_main(int& argc, char *argv[])
   // ------------------------------
   // DISPLAY WINDOW AND RUN
   slicerApp->SplashMessage("Finalizing Startup...");
-  appGUI->DisplayMainSlicerWindow ( );
 
+  if (displayMainSlicerWindow)
+    {
+    appGUI->DisplayMainSlicerWindow ( );
+    }
 
   //
   //--- set home module based on registry settings
@@ -2200,7 +2207,11 @@ int Slicer3_main(int& argc, char *argv[])
   //
   // Run!  - this will return when the user exits
   //
-  res = slicerApp->StartApplication();
+  
+  if (displayMainSlicerWindow)
+    {  
+    res = slicerApp->StartApplication();
+    }
 
   SlicerQDebug("Shutting down ...");
 
