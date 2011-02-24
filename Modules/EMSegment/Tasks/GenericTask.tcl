@@ -1121,7 +1121,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
 
-    proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformDirName } {
+    proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformDirName backgroundLevel } {
         variable SCENE
         variable LOGIC
         variable CMTKFOLDER
@@ -1132,9 +1132,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set CMD "$CMTKFOLDER/reformatx"
 
-        #set bgValue 0
-        #set CMD "$CMD -v --linear --pad-out $bgValue"
-
+        set CMD "$CMD --pad-out $backgroundLevel"
 
         set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
         if { $outVolumeFileName == "" } { return 1 }
@@ -2244,7 +2242,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         switch $transformType {
             "CMTKTransform" {
                 $LOGIC PrintText "TCL: with CMTKResampleCLI..."
-                if { [CMTKResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName] } {
+                if { [CMTKResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName $backgroundLevel] } {
                     return 1
                 }
             }
