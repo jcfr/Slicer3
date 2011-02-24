@@ -293,10 +293,11 @@ void vtkScriptedModuleGUI::UpdateGUI ()
 //---------------------------------------------------------------------------
 void vtkScriptedModuleGUI::ProcessMRMLEvents(vtkObject *caller,
                                              unsigned long event,
-                                             void *vtkNotUsed(callData)) 
+                                             void *callData) 
 {
   vtkDebugMacro("ProcessMRMLEvents()");
   vtkMRMLNode *mrmlNode = vtkMRMLNode::SafeDownCast(caller);
+  vtkMRMLScene *mrmlScene = vtkMRMLScene::SafeDownCast(caller);
 
   if (this->Language == vtkScriptedModuleGUI::Tcl)
     {
@@ -310,11 +311,33 @@ void vtkScriptedModuleGUI::ProcessMRMLEvents(vtkObject *caller,
   else if (this->Language == vtkScriptedModuleGUI::Python)
     {
 #ifdef Slicer3_USE_PYTHON
-    std::stringstream pythonCommand;
-    pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui'].ProcessMRMLEvents('" << mrmlNode->GetID() << "'," << event << ")\n";
-    if (PyRun_SimpleString( pythonCommand.str().c_str() ) != 0)
+    if (mrmlNode != NULL || mrmlScene != NULL)
       {
-      PyErr_Print();
+      std::stringstream pythonCommand;
+      
+      if (mrmlNode)
+        {
+        // event was fired by a MRML node
+        pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui'].ProcessMRMLEvents('" << mrmlNode->GetID() << "'," << event << ")\n";
+        }
+      else if(mrmlScene)
+        {
+        // event was fired by the MRML scene
+        
+        // let's check if we have valid callData
+        vtkMRMLNode *mrmlNodeFromCallData = vtkMRMLNode::SafeDownCast((vtkMRMLNode*)callData);
+      
+        if (mrmlNodeFromCallData)
+          {
+          // we have valid callData and forward it to the python script
+          pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui'].ProcessMRMLEvents('MRMLScene'," << event << ",'" << mrmlNodeFromCallData->GetID() << "')\n";
+          }
+        }
+      
+      if (PyRun_SimpleString( pythonCommand.str().c_str() ) != 0)
+        {
+        PyErr_Print();
+        }
       }
 #endif
     }
