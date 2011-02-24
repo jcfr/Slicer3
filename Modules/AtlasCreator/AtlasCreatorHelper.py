@@ -196,12 +196,12 @@ class AtlasCreatorHelper(object):
             imageData
                 vtkImageData
             dividend
-                the number to divide with, will be casted to double
+                the number to divide with, will be casted to float
             
             Returns
                 vtkImageData after division
         '''            
-        imageData.DeepCopy(self.ReCastImage(imageData, "Double"))
+        imageData.DeepCopy(self.ReCastImage(imageData, "Float"))
         div = slicer.vtkImageMathematics()
         div.SetInput(imageData)
         div.SetOperationToMultiplyByK()
@@ -585,3 +585,30 @@ class AtlasCreatorHelper(object):
     
     
 
+    '''==========================================================================================''' 
+    def GetCMTKInstallationDirectory(self):
+        '''
+            Return the installation directory of the CMTK extension.
+            
+            Returns
+                The installation directory as String or None if CMTK was not found
+        '''
+        extensionsDirForCurrentRev = os.path.join(str(slicer.Application.GetExtensionsInstallPath()),str(slicer.Application.GetSvnRevision()))
+        self.debug("Looking for CMTK in " + str(extensionsDirForCurrentRev))
+        
+        if not os.path.isdir(extensionsDirForCurrentRev):
+            # extension directory does not exist
+            return None
+        
+        cmtkDir = os.path.join(extensionsDirForCurrentRev,"CMTK4Slicer")
+        if not os.path.isdir(cmtkDir):
+            # CMTK directory does not exist
+            return None
+        
+        if not os.path.isfile(os.path.join(cmtkDir,"registration")):
+            # CMTK registration command not found
+            return None
+
+        # CMTK seems to be available
+        return cmtkDir
+    
