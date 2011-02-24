@@ -583,7 +583,7 @@ int vtkImageLabelPropagation::IterativeRequestData( vtkInformation* vtkNotUsed( 
 
   void *inPtr;
   void *outPtr;
-  vtkDebugMacro(<<"Executing image euclidean distance");
+  vtkDebugMacro(<<"Executing Label Probagation");
   
   int outExt[6];
   outData->GetWholeExtent( outExt );
