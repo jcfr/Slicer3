@@ -43,6 +43,10 @@
 
 #include "vtkImageData.h"
 #include "vtkObjectFactory.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+
 #include <math.h>
 
 vtkCxxRevisionMacro(vtkImageKilianDistanceTransform, "$Revision: 1.1 $");
@@ -72,20 +76,20 @@ void vtkImageKilianDistanceTransform::ExecuteInformation(vtkImageData *vtkNotUse
 //----------------------------------------------------------------------------
 // This method tells the superclass that the whole input array is needed
 // to compute any output region.
-void vtkImageKilianDistanceTransform::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
-{
-  memcpy(inExt, outExt, 6 * sizeof(int));
-
-  // Assumes that the input update extent has been initialized to output ...
-  if (this->GetInput() != NULL)
-    {
-    this->GetInput()->GetWholeExtent(inExt);
-    }
-  else
-    {
-    vtkErrorMacro("Input is NULL");
-    }
-}
+// void vtkImageKilianDistanceTransform::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
+// {
+//   memcpy(inExt, outExt, 6 * sizeof(int));
+// 
+//   // Assumes that the input update extent has been initialized to output ...
+//   if (this->GetInput() != NULL)
+//     {
+//     this->GetInput()->GetWholeExtent(inExt);
+//     }
+//   else
+//     {
+//     vtkErrorMacro("Input is NULL");
+//     }
+// }
 
 //----------------------------------------------------------------------------
 // This templated execute method handles any type input, but the output
@@ -800,8 +804,20 @@ void vtkImageKilianDistanceTransform::AllocateOutputScalars(vtkImageData *outDat
 //----------------------------------------------------------------------------
 // This method is passed input and output Datas, and executes the DistanceTransform
 // algorithm to fill the output from the input.
-void vtkImageKilianDistanceTransform::IterativeExecuteData(vtkImageData *inData, vtkImageData *outData)
+int vtkImageKilianDistanceTransform::IterativeRequestData( vtkInformation* vtkNotUsed( request ),
+  vtkInformationVector** inputVector,
+  vtkInformationVector* outputVector)
 {
+
+  vtkInformation* inInfo = inputVector[0]->GetInformationObject(0);
+  vtkImageData *inData = vtkImageData::SafeDownCast(
+    inInfo->Get(vtkDataObject::DATA_OBJECT()));
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+  vtkImageData *outData = vtkImageData::SafeDownCast(
+    outInfo->Get(vtkDataObject::DATA_OBJECT()));
+
+  this->AllocateOutputScalars(outData);
+
   void *inPtr;
   void *outPtr;
   vtkDebugMacro(<<"Executing image euclidean distance");
@@ -816,14 +832,14 @@ void vtkImageKilianDistanceTransform::IterativeExecuteData(vtkImageData *inData,
   if (outData->GetScalarType() != VTK_FLOAT)
     {
     vtkErrorMacro(<< "Execute: Output must be be type float.");
-    return;
+    return 1;
     }
 
   // this filter expects input to have 1 components
   if (outData->GetNumberOfScalarComponents() != 1)
     {
     vtkErrorMacro(<< "Execute: Cannot handle more than 1 components");
-    return;
+    return 1;
     }
 
   if (this->GetIteration() == 0)
@@ -834,7 +850,7 @@ void vtkImageKilianDistanceTransform::IterativeExecuteData(vtkImageData *inData,
           inData, (VTK_TT *) (inPtr), outData, outExt, (float *) (outPtr));
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
-      return;
+      return 1;
     }
   }
 else
@@ -903,12 +919,13 @@ if (this->GetSignedDistanceMap())
         this, OriginalInData, (VTK_TT *)(OriginalInData->GetScalarPointerForExtent(OriginalInData->GetUpdateExtent())), outData, outExt, (float *)(outPtr));
     default:
     vtkErrorMacro(<< "Execute: Unknown ScalarType");
-    return;
+    return 1;
     }
   }
 }
 
 this->UpdateProgress((this->GetIteration()+1.0)/3.0);
+return 1;
 }
 
 //----------------------------------------------------------------------------
@@ -1007,5 +1024,26 @@ void vtkImageKilianDistanceTransform::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "SignedDistanceMap:" << (this->SignedDistanceMap ? "On\n"
       : "Off\n");
 
+}
+
+//----------------------------------------------------------------------------
+// This extent of the components changes to real and imaginary values.
+int vtkImageKilianDistanceTransform::IterativeRequestInformation(
+  vtkInformation* vtkNotUsed(input), vtkInformation* output)
+{
+  vtkDataObject::SetPointDataActiveScalarInfo(output, VTK_FLOAT, 1);
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+// This method tells the superclass that the whole input array is needed
+// to compute any output region.
+int vtkImageKilianDistanceTransform::IterativeRequestUpdateExtent(
+  vtkInformation* input, vtkInformation* vtkNotUsed(output) )
+{
+  int *wExt = input->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT());
+  input->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(),wExt,6);
+
+  return 1;
 }
 

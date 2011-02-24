@@ -164,8 +164,14 @@ public:
   vtkSetMacro(SignedDistanceMap, int);
   vtkGetMacro(SignedDistanceMap, int);
   vtkBooleanMacro(SignedDistanceMap, int); 
+  
+  // olde style  
+  // void iterativeExecuteData(vtkImageData *in, vtkImageData *out);
 
-  void IterativeExecuteData(vtkImageData *in, vtkImageData *out);
+  // New Style 
+  int IterativeRequestData(vtkInformation*,
+                                   vtkInformationVector**,
+                                   vtkInformationVector*);
   
 protected:
   vtkImageKilianDistanceTransform();
@@ -187,7 +193,13 @@ int DistanceFormat;
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
   // Kilian - vtk old style not needed anymore  
   // void ExecuteInformation() {this->vtkImageIterateFilter::ExecuteInformation();}
-  void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
+  // void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
+
+  virtual int IterativeRequestInformation(vtkInformation* in,
+                                          vtkInformation* out);
+  virtual int IterativeRequestUpdateExtent(vtkInformation* in,
+                                           vtkInformation* out);
+
 private:
   vtkImageKilianDistanceTransform(const vtkImageKilianDistanceTransform&);  // Not implemented.
   void operator=(const vtkImageKilianDistanceTransform&);  // Not implemented.
