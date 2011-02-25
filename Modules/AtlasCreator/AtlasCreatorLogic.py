@@ -105,6 +105,22 @@ class AtlasCreatorLogic(object):
         else:
             self.Helper().info("ERROR! Invalid Configuration.. Aborting..")
             return False
+        
+        
+        # check if we want to use CMTK
+        useCMTK = False
+        if configuration.GetToolkit() == "CMTK":
+            # check if CMTK is installed
+            cmtkDir = self.Helper().GetCMTKInstallationDirectory()
+            if cmtkDir:
+                self.Helper().info("Found CMTK at: " + cmtkDir)
+                useCMTK = True
+            else:
+                self.Helper().info("ERROR! CMTK extensions not found!")
+                self.Helper().info("ERROR! Falling back to BRAINSFit...")
+                self.Helper().info("ERROR! Please install CMTK4Slicer in order to use CMTK!")
+                useCMTK = False
+                
     
         # at this point, we have a valid configuration, let's print it
         self.Helper().info("Configuration for Atlas Creator:\n" + str(configuration.GetConfigurationAsString()))
@@ -115,7 +131,8 @@ class AtlasCreatorLogic(object):
             transformDirectory = configuration.GetOutputDirectory()
         else:
             # do not save the transforms, so use the temporary directory
-            transformDirectory = self.Helper().GetSlicerTemporaryDirectory()        
+            uniqueTempDir = tempfile.mkdtemp("AtlasCreatorTransforms",self.Helper().GetSlicerTemporaryDirectory()) + os.sep
+            transformDirectory = uniqueTempDir      
                      
         # check if we register or if we use existing transforms
         if not skipRegistrationMode:
@@ -129,7 +146,7 @@ class AtlasCreatorLogic(object):
             self.Helper().info("Entering Registration Stage..")
             
             # check if it is cluster mode, if yes change the launcher for the registration
-            slicerLaunchPrefixForRegistration = self.Helper().GetSlicerLaunchPrefix()
+            slicerLaunchPrefixForRegistration = self.Helper().GetSlicerLaunchPrefix(useCMTK)
             multiThreading = True
             
             if clusterMode:
@@ -155,7 +172,8 @@ class AtlasCreatorLogic(object):
                                               defaultCase,
                                               transformDirectory,
                                               configuration.GetRegistrationType(),
-                                              multiThreading)
+                                              multiThreading,
+                                              useCMTK)
                 
             #
             # DYNAMIC REGISTRATION
@@ -191,7 +209,8 @@ class AtlasCreatorLogic(object):
                                                   meanImageFilePath,
                                                   transformDirectory,
                                                   configuration.GetRegistrationType(),
-                                                  multiThreading) 
+                                                  multiThreading,
+                                                  useCMTK) 
     
                 # now we point the defaultCase to the meanImageFilePath
                 defaultCase = meanImageFilePath
@@ -232,11 +251,12 @@ class AtlasCreatorLogic(object):
         # create a unique temp directory in Slicer's temp directory
         uniqueTempDir = tempfile.mkdtemp("AtlasCreatorResampled",self.Helper().GetSlicerTemporaryDirectory()) + os.sep                
                 
-        self.Resample(self.Helper().GetSlicerLaunchPrefix(),
+        self.Resample(self.Helper().GetSlicerLaunchPrefix(useCMTK),
                       configuration.GetSegmentationsFilePathList(),
                       defaultCase,
                       transformDirectory,
-                      uniqueTempDir)
+                      uniqueTempDir,
+                      useCMTK)
             
         #
         #
@@ -258,6 +278,11 @@ class AtlasCreatorLogic(object):
         # now delete the resampled segmentations
         if configuration.GetDeleteAlignedSegmentations():
             self.Helper().DeleteFilesAndDirectory(resampledSegmentationsFilePathList)
+        
+        # delete the transforms, if we did not want to save them
+        if not configuration.GetSaveTransforms():
+            self.Helper().DeleteFilesAndDirectory(transformDirectory,True) # wipe'em!!
+            
         
         self.Helper().info("--------------------------------------------------------------------------------")        
         self.Helper().info("                             All Done, folks!                                   ")
@@ -307,7 +332,7 @@ class AtlasCreatorLogic(object):
 
     
     '''=========================================================================================='''
-    def Register(self, launchCommandPrefix, filePathsList, templateFilePath, outputDirectory, registrationType, multiThreading):
+    def Register(self, launchCommandPrefix, filePathsList, templateFilePath, outputDirectory, registrationType, multiThreading, useCMTK=False):
         '''
             Register a set of images, get a transformation and save it
             
@@ -324,6 +349,8 @@ class AtlasCreatorLogic(object):
                 if the value is invalid, affine registration is assumed
             multiThreading
                 if TRUE, use multiThreading
+            useCMTK
+                if TRUE, use CMTK instead of BRAINSFit
                 
             Returns
                 A list of filepaths to the aligned Images or None depending on success
@@ -373,12 +400,20 @@ class AtlasCreatorLogic(object):
             # by getting the filename of the case and appending it to the outputDirectory
             outputAlignedImageFilePath = uniqueTempDir + str(movingImageName) + ".nrrd"
             
-            command = str(launchCommandPrefix) + self.Helper().GetRegistrationCommand(templateFilePath,
-                                                                                      movingImageFilePath,
-                                                                                      outputTransformFilePath,
-                                                                                      outputAlignedImageFilePath,
-                                                                                      onlyAffineReg,
-                                                                                      multiThreading)
+            if useCMTK:
+                command = str(launchCommandPrefix) + self.Helper().GetCMTKRegistrationCommand(templateFilePath,
+                                                                                              movingImageFilePath,
+                                                                                              outputTransformFilePath,
+                                                                                              outputAlignedImageFilePath,
+                                                                                              onlyAffineReg,
+                                                                                              multiThreading)
+            else:    
+                command = str(launchCommandPrefix) + self.Helper().GetBRAINSFitRegistrationCommand(templateFilePath,
+                                                                                                   movingImageFilePath,
+                                                                                                   outputTransformFilePath,
+                                                                                                   outputAlignedImageFilePath,
+                                                                                                   onlyAffineReg,
+                                                                                                   multiThreading)
             
             self.Helper().debug("Register command: " + str(command))
             
@@ -428,7 +463,7 @@ class AtlasCreatorLogic(object):
 
     
     '''=========================================================================================='''
-    def Resample(self, launchCommandPrefix, filePathsList, templateFilePath, transformDirectory, outputSegmentationDirectory):
+    def Resample(self, launchCommandPrefix, filePathsList, templateFilePath, transformDirectory, outputSegmentationDirectory,useCMTK=False):
         '''
             Resample a set of segmentations using exising transforms
             
@@ -441,8 +476,11 @@ class AtlasCreatorLogic(object):
             transformDirectory
                 directory to existing transformations
                 the transformation has to be named after the basename of the filepaths with a .mat extension      
+                (can be a directory as well)
             outputSegmentationDirectory
                 directory to save the resampled images
+            useCMTK
+                if TRUE, use CMTK instead of BRAINSFit
                 
             Returns
                 TRUE or FALSE depending on success
@@ -480,10 +518,16 @@ class AtlasCreatorLogic(object):
             # by getting the filename of the case and appending it to the outputSegmentationDirectory
             outputSegmentationFilePath = outputSegmentationDirectory + str(segmentationName) + ".nrrd"
 
-            command = str(launchCommandPrefix) + self.Helper().GetResampleCommand(segmentationFilePath,
-                                                                                  templateFilePath,
-                                                                                  transformFilePath,
-                                                                                  outputSegmentationFilePath)
+            if useCMTK:
+                command = str(launchCommandPrefix) + self.Helper().GetCMTKResampleCommand(segmentationFilePath,
+                                                                                          templateFilePath,
+                                                                                          transformFilePath,
+                                                                                          outputSegmentationFilePath)                
+            else:
+                command = str(launchCommandPrefix) + self.Helper().GetBRAINSFitResampleCommand(segmentationFilePath,
+                                                                                               templateFilePath,
+                                                                                               transformFilePath,
+                                                                                               outputSegmentationFilePath)
 
             self.Helper().debug("Resample command: " + str(command))
             

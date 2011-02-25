@@ -20,8 +20,13 @@ Version:   $Revision: 1.2 $
 
 #include "vtkAtlasCreatorCxxModuleLogic.h"
 #include "vtkAtlasCreatorCxxModule.h"
+
+#include "vtkMRMLAtlasCreatorNode.h"
+
+#include "vtkMRMLScene.h"
+
 #include "vtkSlicerApplication.h"
-#include "vtkTcl.h" // Needed for Tcl_Interp
+
 
 
 vtkAtlasCreatorCxxModuleLogic* vtkAtlasCreatorCxxModuleLogic::New()
@@ -44,19 +49,7 @@ vtkAtlasCreatorCxxModuleLogic* vtkAtlasCreatorCxxModuleLogic::New()
 vtkAtlasCreatorCxxModuleLogic::vtkAtlasCreatorCxxModuleLogic()
 {
 
-  Tcl_Interp *interp = NULL;
-  vtkSlicerApplication *slicerApp = vtkSlicerApplication::GetInstance ( );
-  interp = slicerApp->GetMainInterp();
-  if (!interp)
-    {
-      std::cout << "Error: InitializeTcl failed" << std::endl;
-    
-    } else {
 
-      // do something here
-      return;
-
-    }
 
 }
 
@@ -67,11 +60,27 @@ vtkAtlasCreatorCxxModuleLogic::~vtkAtlasCreatorCxxModuleLogic()
 }
 
 //----------------------------------------------------------------------------
+void vtkAtlasCreatorCxxModuleLogic::RegisterNodes()
+{
+
+  vtkMRMLScene* scene = this->GetMRMLScene();
+
+  if (scene)
+    {
+    vtkMRMLAtlasCreatorNode* atlasCreatorNode = vtkMRMLAtlasCreatorNode::New();
+    scene->RegisterNodeClass(atlasCreatorNode);
+    atlasCreatorNode->Delete();
+    }
+
+}
+
+//----------------------------------------------------------------------------
 void vtkAtlasCreatorCxxModuleLogic::PrintSelf(ostream& os, vtkIndent indent)
 {
   
 }
 
+//----------------------------------------------------------------------------
 void vtkAtlasCreatorCxxModuleLogic::Apply()
 {
 

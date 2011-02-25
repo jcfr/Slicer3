@@ -25,12 +25,14 @@ class AtlasCreatorConfiguration(object):
         
         self.__labelsList = []
         
+        self.__toolkit = "BRAINSFit"
+        
         self.__registrationType = "Affine"
         
         self.__saveTransforms = 1
         self.__deleteAlignedImages = 1
         self.__deleteAlignedSegmentations = 1
-        self.__normalizeAtlases = 0        
+        self.__normalizeAtlases = 0
         
         self.__outputCast = "Short" 
 
@@ -49,6 +51,7 @@ class AtlasCreatorConfiguration(object):
         output += "Dynamic Template Iterations: " + str(self.__dynamicTemplateIterations) + "\n"
         output += "Fixed Template Default Case: " + str(self.__fixedTemplateDefaultCaseFilePath) + "\n"
         output += "Labels: " + str(self.__labelsList) + "\n"
+        output += "Toolkit: " + str(self.__toolkit) + "\n"
         output += "Registration Type: " + str(self.__registrationType) + "\n"
         output += "Save Transforms: " + str(self.__saveTransforms) + "\n"
         output += "Delete Aligned Images: " + str(self.__deleteAlignedImages) + "\n"
@@ -252,6 +255,35 @@ class AtlasCreatorConfiguration(object):
         if type(value).__name__=='list' and len(value) >= 1:
             # we have at least one label in the list
             self.__labelsList = value
+            
+            
+            
+    '''=========================================================================================='''
+    def GetToolkit(self):
+        '''
+            Returns
+                the toolkit to perform registration and re-sampling
+        '''
+        return self.__toolkit
+
+
+
+    '''=========================================================================================='''
+    def SetToolkit(self, value):
+        '''
+            Sets the toolkit to perform registration and re-sampling
+            
+            value
+                the toolkit as String. Supported values are
+                "BRAINSFit", "CMTK"
+                
+            Returns
+                n/a
+        '''
+        if value == "BRAINSFit" or value == "CMTK":
+            self.__toolkit = str(value)
+        else:
+            self.__toolkit = "BRAINSFit"            
             
             
                             

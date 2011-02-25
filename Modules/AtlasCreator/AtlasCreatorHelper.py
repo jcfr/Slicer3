@@ -3,6 +3,8 @@ from time import strftime
 from math import floor
 import os
 import glob
+import shutil
+import sys
 
 class AtlasCreatorHelper(object):
     '''
@@ -57,9 +59,12 @@ class AtlasCreatorHelper(object):
         if self.__debugMode:
 
             print "[AtlasCreator " + strftime("%H:%M:%S") + "] DEBUG: " + str(message)
-            import sys
+
             # flush, to always show the output
-            sys.stdout.flush()
+            try:
+                sys.stdout.flush()
+            except:
+                pass
 
 
 
@@ -80,23 +85,35 @@ class AtlasCreatorHelper(object):
         if infoMode:
 
             print "[AtlasCreator " + strftime("%H:%M:%S") + "] " + str(message)
-            import sys
+
             # flush, to always show the output
-            sys.stdout.flush()
+            try:
+                sys.stdout.flush()
+            except:
+                pass
 
 
 
     '''=========================================================================================='''
-    def DeleteFilesAndDirectory(self,filePathList):
+    def DeleteFilesAndDirectory(self,filePathList,wipe=False):
         ''' 
             Delete all files of a filePathList and also the directory
             
             filePathList
                 the list of file paths to delete
+            wipe
+                if TRUE, wipe it without asking questions!
             
             Returns
                 TRUE or FALSE depending on success
         '''         
+        
+        # if we want to wipe something, just do it!
+        if wipe:
+            if os.path.isdir(os.path.dirname(filePathList[0])):
+                shutil.rmtree(os.path.dirname(filePathList[0]), True, None)
+                return True
+            
         # now delete the content in the temporary directory
         for file in filePathList:
             if os.path.isfile(file):
@@ -116,13 +133,18 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def GetSlicerLaunchPrefix(self):
+    def GetSlicerLaunchPrefix(self,useCMTK=False):
         '''
             Get the path to the 3D Slicer launcher ready to start a plugin. (OS independent)
+            
+            useCMTK
+                If TRUE, add the CMTK directory instead of the Plugin Directory
             
             Returns
                 the path to the 3D Slicer launcher configured to start a plugin as a String
                 f.e. /home/user/Slicer3-build/Slicer3 --launch /home/user/Slicer3-build/lib/Slicer3/Plugins/
+                If useCMTK is TRUE:
+                f.e. /home/user/Slicer3-build/Slicer3 --launch /home/user/Slicer3user/@SVNREV@/CMTK4Slicer
                 pay attention to the trailing /
         '''
         # read the Slicer environment
@@ -132,12 +154,20 @@ class AtlasCreatorHelper(object):
         
         if not os.path.isfile(slicerLauncher):
             self.info("ERROR! Could not find Slicer3 launcher.. Aborting..")
+            return None
         
-        slicerPluginsDir = os.path.normpath(slicer.Application.GetPluginsDir())
-        if not os.path.isdir(slicerPluginsDir):
-            self.info("ERROR! Could not find Slicer3 Plugins directory.. Aborting..")
+        if useCMTK:
+            executableDir = os.path.normpath(self.GetCMTKInstallationDirectory())
+        else:
+            executableDir = os.path.normpath(slicer.Application.GetPluginsDir())
+        
+        if not os.path.isdir(executableDir):
+            self.info("ERROR! Could not find Executable directory.. Aborting..")
+            self.info("ERROR! Path not found: " + str(executableDir))
+            return None
             
-        launchCommandPrefix = slicerLauncher + " --launch " + slicerPluginsDir + os.sep
+            
+        launchCommandPrefix = slicerLauncher + " --launch " + executableDir + os.sep
         self.debug("The launchCommandPrefix is " + str(launchCommandPrefix))
         
         return launchCommandPrefix
@@ -331,9 +361,9 @@ class AtlasCreatorHelper(object):
     
 
     '''=========================================================================================='''    
-    def GetRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading):
+    def GetBRAINSFitRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading):
         '''
-            Get the command to Register an image to a template
+            Get the command to Register an image to a template using BRAINSFit
             
             templateFilePath
                 the file path to the template (target) image
@@ -383,9 +413,9 @@ class AtlasCreatorHelper(object):
 
     
     '''=========================================================================================='''    
-    def GetResampleCommand(self,segmentationFilePath,templateFilePath,transformFilePath,outputSegmentationFilePath):
+    def GetBRAINSFitResampleCommand(self,segmentationFilePath,templateFilePath,transformFilePath,outputSegmentationFilePath):
         '''
-            Get the command to Resample a segmentation
+            Get the command to Resample a segmentation using BRAINSFit
             
             segmentationFilePath
                 the file path to the segmentation
@@ -406,6 +436,68 @@ class AtlasCreatorHelper(object):
         resampleCommand += " --outputVolume "+os.path.normpath(outputSegmentationFilePath)
         resampleCommand += " --defaultValue 8.0 --pixelType short --interpolationMode NearestNeighbor"
 
+        return str(resampleCommand)
+
+
+
+    '''=========================================================================================='''    
+    def GetCMTKRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading):
+        '''
+            Get the command to Register an image to a template using CMTK
+            
+            templateFilePath
+                the file path to the template (target) image
+            movingImageFilePath
+                the file path to the moving image
+            outputTransformFilePath
+                the file path to the transformation output
+            outputImageFilePath
+                the file path to the aligned image output
+            onlyAffineReg
+                if true, just use affine registration and no BSpline
+            multiThreading
+                if true, use multi threading
+                
+            Returns
+                the command to Register an image
+        '''        
+    
+        
+        registrationCommand = "registration"
+        registrationCommand += " --initxlate --exploration 8.0 --dofs 6 --dofs 9 --accuracy 0.5"
+        registrationCommand += " -o " + os.path.normpath(outputTransformFilePath)
+        registrationCommand += " --write-reformatted " + os.path.normpath(outputImageFilePath)
+        registrationCommand += " " + os.path.normpath(templateFilePath)
+        registrationCommand += " " + os.path.normpath(movingImageFilePath)
+
+        return str(registrationCommand)
+
+
+    
+    '''=========================================================================================='''    
+    def GetCMTKResampleCommand(self,segmentationFilePath,templateFilePath,transformFilePath,outputSegmentationFilePath):
+        '''
+            Get the command to Resample a segmentation using CMTK
+            
+            segmentationFilePath
+                the file path to the segmentation
+            templateFilePath
+                the file path to the template used to define the output space
+            transformFilePath
+                the file path to the existing transformation          
+            outputSegmentationFilePath
+                the file path to the resampled segmentation output
+                
+            Returns
+                the command to Resample a segmentation
+        '''
+        
+        resampleCommand = "reformatx"
+        resampleCommand += " -o " + os.path.normpath(outputSegmentationFilePath)
+        resampleCommand += " --floating " + os.path.normpath(templateFilePath)
+        resampleCommand += " " + os.path.normpath(segmentationFilePath)
+        resampleCommand += " " + os.path.normpath(transformFilePath)
+        
         return str(resampleCommand)
 
 

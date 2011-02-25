@@ -48,6 +48,10 @@ def usage():
     info("-o, --output DIR")
     info("        Output directory.")
     info("")
+    info("--cmtk")
+    info("        Use the CMTK toolkit for registration and resampling, instead of BRAINSFit.")
+    info("        The CMTK4Slicer extensions have to be installed in order to use CMTK.")
+    info("")
     info("--skipRegistration")
     info("        Skip the registration and use existing transforms.")
     info("")
@@ -144,17 +148,22 @@ def examples():
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --normalize')
     info("")
     info("-----------------------------------------------------------------------------------------------")
-    info("2. Run dynamic registration with the testdata:")
+    info("2. Run fixed registration with the testdata and use CMTK instead of BRAINSFit:")
+    info("")
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --normalize --cmtk')
+    info("")    
+    info("-----------------------------------------------------------------------------------------------")
+    info("3. Run dynamic registration with the testdata:")
     info("")
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize')
     info("")
     info("-----------------------------------------------------------------------------------------------")
-    info("3. Run dynamic registration with the testdata on a cluster (scheduler command \"qsub\"):")
+    info("4. Run dynamic registration with the testdata on a cluster (scheduler command \"qsub\"):")
     info("")
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize --cluster --schedulerCommand \"qsub -b y\"')
     info("")
     info("-----------------------------------------------------------------------------------------------")
-    info("4. Use existing registrations and just re-sample")
+    info("5. Use existing registrations and just re-sample")
     info("")
     info('        python atlascreator.py --skipRegistration --transforms /tmp/acout --existingTemplate TestData/segmentations/case62.nrrd -s TestData/segmentations/ -o /tmp/acout -l "3 4 5 6 7 8 9" --normalize --outputCast 3')
     info("")
@@ -182,6 +191,7 @@ def main(argv):
                                                         "images=",
                                                         "segmentations=",
                                                         "output=",
+                                                        "cmtk",
                                                         "skipRegistration",
                                                         "transforms=",
                                                         "existingTemplate=",
@@ -214,6 +224,8 @@ def main(argv):
     imagesDir = None
     segmentationsDir = None
     outputDir = None
+    
+    useCMTK = False
     
     transformsDir = None
     existingTemplate = None
@@ -253,6 +265,8 @@ def main(argv):
             segmentationsDir = arg
         elif opt in ("-o", "--output"):
             outputDir = arg
+        elif opt in ("--cmtk"):
+            useCMTK = True
         elif opt in ("--skipRegistration"):
             skipRegistration = True
         elif opt in ("--transforms"):
@@ -529,6 +543,9 @@ def main(argv):
     
     if outputDir:
         evalpythonCommand += "configuration.SetOutputDirectory('"+outputDir+"');"
+    
+    if useCMTK:
+        evalpythonCommand += "configuration.SetToolkit('CMTK');"
     
     if fixed:
         evalpythonCommand += "configuration.SetTemplateType('fixed');"

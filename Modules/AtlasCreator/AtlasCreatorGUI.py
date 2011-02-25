@@ -20,7 +20,11 @@ vtkKWCheckButton_SelectedStateChangedEvent = 10000
 
 vtkKWEntry_EntryValueChangedEvent = 10000
 
+vtkMRMLScene_NodeAddedEvent = 66000
+
 vtkMRMLScene_CloseEvent = 66003
+
+vtkMRMLAtlasCreatorNode_LaunchComputationEvent = 31337
 
 vtkSlicerNodeSelectorWidget_NodeSelectedEvent = 11000
 
@@ -84,7 +88,12 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._logic = AtlasCreatorLogic(self)
 
+        self._associatedMRMLNode = None
+
         self._updating = 0
+        
+        
+
 
     def Destructor(self):
 
@@ -108,6 +117,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._normalizeAtlasCheckBoxTag = self.AddObserverByNumber(self._normalizeAtlasCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
         self._defaultCaseEntryTag = self.AddObserverByNumber(self._defaultCaseEntry.GetWidget(),vtkKWEntry_EntryValueChangedEvent)
         self._transformsTemplateButtonTag = self.AddObserverByNumber(self._transformsTemplateButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
+        self._mrmlNodeAddedTag = self.AddMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_NodeAddedEvent)
+
 
     def RemoveGUIObservers(self):
         pass
@@ -132,6 +143,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self.UpdateLabelList()
             elif caller == self._transformsTemplateButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
                 self.UpdateLabelList()
+            
                 
                 
     def ToggleNormalize(self):
@@ -366,13 +378,27 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
             self._updating = 0
 
-    def ProcessMRMLEvents(self,caller,event):
 
-        if caller == self.GetLogic().GetMRMLScene() and event == vtkMRMLScene_CloseEvent:
-            self.OnSceneClose()
 
-        elif caller == self.GetScriptedModuleNode():
-            self.UpdateGUI()
+    def ProcessMRMLEvents(self,callerID,event,callDataID = None):
+        
+        
+        if self._associatedMRMLNode:
+            if callerID == self._associatedMRMLNode.GetID() and event == vtkMRMLAtlasCreatorNode_LaunchComputationEvent:
+                # the observed node was launched!
+                self.GetHelper().info("LAUNCH!")
+                
+
+        # observe MRMLScene events
+        if callerID == "MRMLScene" and event == vtkMRMLScene_NodeAddedEvent and callDataID:
+            
+            callDataAsMRMLNode = slicer.MRMLScene.GetNodeByID(callDataID)
+            
+            if isinstance(callDataAsMRMLNode, slicer.vtkMRMLAtlasCreatorNode):
+                self.GetHelper().info("A new vtkMRMLAtlasCreatorNode was added: " + str(callDataID))
+                self._associatedMRMLNode = callDataAsMRMLNode
+                self.AddMRMLObserverByNumber(self._associatedMRMLNode,vtkMRMLAtlasCreatorNode_LaunchComputationEvent)
+
 
 
     def BuildGUI(self):

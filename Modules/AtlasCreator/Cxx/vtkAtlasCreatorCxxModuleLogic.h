@@ -29,6 +29,7 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkAtlasCreatorCxxModuleLogic : public vt
   virtual void ProcessMrmlEvents ( vtkObject *caller, unsigned long event,
                                    void *callData ){};
 
+  void RegisterNodes();
 
   // The method that creates and runs VTK or ITK pipeline
   void Apply();

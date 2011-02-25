@@ -53,6 +53,7 @@ install(FILES
 
 set(AtlasCreatorCxxModule_SRCS
   vtkAtlasCreatorCxxModuleLogic.cxx
+  vtkMRMLAtlasCreatorNode.cxx
   vtkImageKilianDistanceTransform.cxx
   vtkImagePCAFilter.cxx
   )
