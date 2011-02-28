@@ -4,7 +4,6 @@
 import sys
 import os
 import getopt
-from wx.tools.img2img import outputDir
 
 
 
