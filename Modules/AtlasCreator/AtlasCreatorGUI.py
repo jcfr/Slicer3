@@ -657,9 +657,9 @@ Scheduler Command: Executable to run before the commands for registering images.
 
     def ReadLabelsFromImage(self,path):
         
-        defaultCaseImageData = slicer.vtkImageData()
-        defaultCaseImageData.DeepCopy(self.GetHelper().LoadImage(os.path.normpath(path)))
-        labels = self.GetHelper().GetLabels(defaultCaseImageData)
+        node = self.GetHelper().LoadVolume(os.path.normpath(path))
+        labels = self.GetHelper().GetLabels(node.GetImageData())
+        slicer.MRMLScene.RemoveNode(node)
         
         return labels
     
