@@ -363,7 +363,7 @@ class AtlasCreatorHelper(object):
     
 
     '''=========================================================================================='''    
-    def GetBRAINSFitRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading):
+    def GetBRAINSFitRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading,backgroundValue):
         '''
             Get the command to Register an image to a template using BRAINSFit
             
@@ -379,6 +379,8 @@ class AtlasCreatorHelper(object):
                 if true, just use affine registration and no BSpline
             multiThreading
                 if true, use multi threading
+            backgroundValue
+                the backgroundValue of the moving image                
                 
             Returns
                 the command to Register an image
@@ -403,6 +405,8 @@ class AtlasCreatorHelper(object):
         else:
             registrationCommand += " --debugNumberOfThreads -1"
 
+        registrationCommand += " --backgroundFillValue " + str(backgroundValue)
+        
         registrationCommand += " --numberOfSamples 100000 --numberOfIterations 1500"
         registrationCommand += " --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --splineGridSize 28,20,24 --fixedVolumeTimeIndex 0"
         registrationCommand += " --movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON"
@@ -443,7 +447,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def GetCMTKRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading):
+    def GetCMTKRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading,backgroundValue):
         '''
             Get the command to Register an image to a template using CMTK
             
@@ -459,6 +463,8 @@ class AtlasCreatorHelper(object):
                 if true, just use affine registration and no BSpline
             multiThreading
                 if true, use multi threading
+            backgroundValue
+                the backgroundValue of the moving image
                 
             Returns
                 the command to Register an image
@@ -649,6 +655,33 @@ class AtlasCreatorHelper(object):
             newDisplayNode.AutoWindowLevelOn()
         
         return str(volumeNode.GetID())
+    
+    
+    
+    '''=========================================================================================='''
+    def GuessBackgroundValue(self,filePath):
+        '''
+            Guesses the background value for a given image
+            
+            filePath
+                the filepath to an existing image
+            
+            Returns
+                The guess for a background value
+        '''
+        emlogic = slicer.vtkEMSegmentLogic()
+        
+        # load the image
+        node = self.LoadVolume(filePath)
+        
+        # guess the bg value
+        guess = emlogic.GuessRegistrationBackgroundLevel(node)
+        
+        # remove the node from the scene
+        slicer.MRMLScene.RemoveNode(node)
+        
+        # and return the bg value
+        return guess
     
     
 

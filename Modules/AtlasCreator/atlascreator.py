@@ -4,6 +4,7 @@
 import sys
 import os
 import getopt
+from wx.tools.img2img import outputDir
 
 
 
@@ -355,15 +356,30 @@ def main(argv):
     elif segmentationsDir:
         segmentationsDir = os.path.abspath(segmentationsDir) + os.sep
     
-    if not (outputDir and os.path.isdir(outputDir)):
-        # no valid outputDir
-        # we have to abort
-        info("Error: Could not find the output directory!")
-        info("Error: Location of --output is invalid: " + str(outputDir))
-        errorOccured = True
-    elif outputDir:
+    if outputDir and os.path.isdir(outputDir):
+        # outputDir already exists
+        # we create a new unique one
+        outputDir = os.path.abspath(outputDir)
+        info("Warning: The output directory ("+str(outputDir)+") already exists..")
+        
+        count = 2
+        while (os.path.isdir(outputDir)):
+            ++count
+        
+        outputDir = os.path.abspath(str(outputDir)+str(count)) + os.sep
+        info("Warning: Using new output directory instead: " + str(outputDir))
+        os.path.makedirs(outputDir)
+        
+    elif outputDir and not os.path.isfile(outputDir):
+        # outputDir did not exist and is not a file
+        # create it
         outputDir = os.path.abspath(outputDir) + os.sep
-    
+        os.path.makedirs(outputDir)
+        info("Created output directory: " + str(outputDir))
+    else:
+        info("Error: Location of --output is invalid or not a directory: " + str(outputDir))
+        errorOccured = True   
+        
     # check if we have everything if skipRegistration is enabled
     if skipRegistration and transformsDir and existingTemplate:
         # check if transformDir and existingTemplate are not valid

@@ -403,6 +403,10 @@ class AtlasCreatorLogic(object):
             if movingImageFilePath == templateFilePath:
                 continue
             
+            # guess the background level of the current image
+            backgroundGuess = self.Helper().GuessBackgroundValue(movingImageFilePath)
+            self.Helper().debug("Guessing background value: "+str(backgroundGuess))
+            
             movingImageName = os.path.splitext(os.path.basename(movingImageFilePath))[0]
             
             # generate file path to save output transformation
@@ -419,14 +423,16 @@ class AtlasCreatorLogic(object):
                                                                                               outputTransformFilePath,
                                                                                               outputAlignedImageFilePath,
                                                                                               onlyAffineReg,
-                                                                                              multiThreading)
+                                                                                              multiThreading,
+                                                                                              backgroundGuess)
             else:    
                 command = str(launchCommandPrefix) + self.Helper().GetBRAINSFitRegistrationCommand(templateFilePath,
                                                                                                    movingImageFilePath,
                                                                                                    outputTransformFilePath,
                                                                                                    outputAlignedImageFilePath,
                                                                                                    onlyAffineReg,
-                                                                                                   multiThreading)
+                                                                                                   multiThreading,
+                                                                                                   backgroundGuess)
             
             self.Helper().debug("Register command: " + str(command))
             
