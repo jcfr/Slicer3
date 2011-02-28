@@ -362,18 +362,20 @@ def main(argv):
         info("Warning: The output directory ("+str(outputDir)+") already exists..")
         
         count = 2
+        outputDir = os.path.abspath(str(outputDir)+str(count)) + os.sep
+        
         while (os.path.isdir(outputDir)):
             ++count
+            outputDir = os.path.abspath(str(outputDir)+str(count)) + os.sep
         
-        outputDir = os.path.abspath(str(outputDir)+str(count)) + os.sep
         info("Warning: Using new output directory instead: " + str(outputDir))
-        os.path.makedirs(outputDir)
+        os.makedirs(outputDir)
         
     elif outputDir and not os.path.isfile(outputDir):
         # outputDir did not exist and is not a file
         # create it
         outputDir = os.path.abspath(outputDir) + os.sep
-        os.path.makedirs(outputDir)
+        os.makedirs(outputDir)
         info("Created output directory: " + str(outputDir))
     else:
         info("Error: Location of --output is invalid or not a directory: " + str(outputDir))
