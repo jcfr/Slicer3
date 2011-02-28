@@ -201,8 +201,6 @@ class AtlasCreatorLogic(object):
                     meanImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + "tmpMeanImage.nrrd"
                     if not self.__dryRun:
                         self.Helper().SaveVolume(meanImageFilePath, meanVolumeNode)
-                        # now we delete the meanVolumeNode
-                        slicer.MRMLScene.RemoveNode(meanVolumeNode)
                     
                     # we register the original images against the meanImage
                     # we then set the alignedImages and start over..
@@ -734,9 +732,7 @@ class AtlasCreatorLogic(object):
             # now save the currentLabelAtlasNode with the currentLabelAtlas imageData
             currentLabelAtlasNode.SetAndObserveImageData(currentLabelAtlas)
             self.Helper().SaveVolume(str(outputAtlasDirectory) + "atlas" + str(label) + ".nrrd", currentLabelAtlasNode)
-            
-            # now we can delete the currentLabelAtlasNode
-            slicer.MRMLScene.RemoveNode(currentLabelAtlasNode)
+
             
         # now we attack the combined atlas   
         
@@ -752,9 +748,7 @@ class AtlasCreatorLogic(object):
         # now save the atlas
         atlasNode.SetAndObserveImageData(atlas)
         self.Helper().SaveVolume(str(outputAtlasDirectory) + "atlas.nrrd", atlasNode)
-        
-        # and delete the node
-        slicer.MRMLScene.RemoveNode(atlasNode)
+
             
         return True
 
