@@ -391,7 +391,7 @@ class AtlasCreatorHelper(object):
         registrationCommand += " --movingVolume "+os.path.normpath(movingImageFilePath)
         registrationCommand += " --outputTransform "+os.path.normpath(outputTransformFilePath)
         registrationCommand += " --outputVolume "+os.path.normpath(outputImageFilePath)
-        registrationCommand += " --maxBSplineDisplacement 10.0 --outputVolumePixelType short --backgroundFillValue 0.0 --interpolationMode Linear"
+        registrationCommand += " --maxBSplineDisplacement 10.0 --outputVolumePixelType short --interpolationMode Linear"
         #registrationCommand += " --maskProcessingMode  ROIAUTO --ROIAutoDilateSize 3.0 --maskInferiorCutOffFromCenter 65.0"
         #registrationCommand += " --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
         registrationCommand += " --initializeTransformMode useCenterOfHeadAlign --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
