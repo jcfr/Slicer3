@@ -29,6 +29,8 @@ class AtlasCreatorHelper(object):
         
         # deactivated by default
         self.__debugMode = 0
+        
+        self.__lookupIJKRAS = dict()
 
 
 
@@ -528,15 +530,15 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def LoadImage(self,filePath):
+    def LoadVolume(self,filePath):
         '''
-            Load an image
+            Loads an image as a MRMLScalarVolumeNode and add it to the MRML Scene
             
             filePath
                 the file path to an existing image in any 3D Slicer readable format
             
             Returns
-                vtkImageData containing the loaded image
+                vtkMRMLScalarVolumeNode containing the loaded image and meta information
         '''
         # if we do not have a filePath, exit and return None
         if not filePath:
@@ -547,33 +549,20 @@ class AtlasCreatorHelper(object):
         # load the file using Slicer's mechanism
         volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath,"tmpAtlasCreatorNode")
         
-        image = slicer.vtkImageData()
-        image.DeepCopy(volumeNode.GetImageData())
-        
-        # copy spacing and origin from the volumeNode to the new imageData
-        s = volumeNode.GetSpacing()
-        o = volumeNode.GetOrigin()
-        image.SetSpacing(s[0], s[1], s[2])
-        image.SetOrigin(o[0], o[1], o[2])
-
-        # now we can delete the volumeNode from the scene, since we have all the information we need
-        slicer.MRMLScene.RemoveNode(volumeNode)
-        
-        # return the imageData
-        return image
+        return volumeNode
 
 
 
     '''=========================================================================================='''    
-    def SaveImage(self,filePath,imageData):
+    def SaveVolume(self,filePath,volumeNode):
         '''
-            Save an image
+            Saves a MRMLScalarVolumeNode
             
             filePath
-                the file path to save an image in any 3D Slicer readable format
+                the file path to save a MRMLScalarVolumeNode in any 3D Slicer readable format
             
-            imageData
-                vtkImageData to save
+            volumeNode
+                vtkMRMLScalarVolumeNode to save
             
             Returns
                 TRUE or FALSE depending on success
@@ -583,22 +572,8 @@ class AtlasCreatorHelper(object):
             return False
 
         filePath = os.path.normpath(filePath)
-
-        # create a volumeNode using the imageData
-        volumeNode = slicer.MRMLScene.CreateNodeByClass('vtkMRMLScalarVolumeNode')
-        
-        slicer.MRMLScene.AddNodeNoNotify(volumeNode)
-        
-        # set the imageData which was passed
-        volumeNode.SetAndObserveImageData(imageData)
-        s = imageData.GetSpacing()
-        o = imageData.GetOrigin()
-        volumeNode.SetSpacing(s[0], s[1], s[2])
-        volumeNode.SetOrigin(o[0], o[1], o[2])
         
         success = slicer.VolumesGUI.GetLogic().SaveArchetypeVolume(filePath,volumeNode)
-        
-        slicer.MRMLScene.RemoveNodeNoNotify(volumeNode)
         
         return success
     

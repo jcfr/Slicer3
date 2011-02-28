@@ -190,9 +190,9 @@ class AtlasCreatorLogic(object):
                     self.Helper().info("Starting iteration " + str(i + 1) + "...")
                     
                     # we generate the current meanImage
-                    meanImage = slicer.vtkImageData()
+                    meanVolumeNode = slicer.vtkMRMLScalarVolumeNode()
                     if not self.__dryRun:
-                        meanImage.DeepCopy(self.GetMeanImage(alignedImages))
+                        meanVolumeNode = self.GetMeanImage(alignedImages)
                         if configuration.GetDeleteAlignedImages():
                             if alignedImages != configuration.GetOriginalImagesFilePathList():
                                 # do not delete the original images
@@ -200,7 +200,9 @@ class AtlasCreatorLogic(object):
                             
                     meanImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + "tmpMeanImage.nrrd"
                     if not self.__dryRun:
-                        self.Helper().SaveImage(meanImageFilePath, meanImage)
+                        self.Helper().SaveVolume(meanImageFilePath, meanVolumeNode)
+                        # now we delete the meanVolumeNode
+                        slicer.MRMLScene.RemoveNode(meanVolumeNode)
                     
                     # we register the original images against the meanImage
                     # we then set the alignedImages and start over..
@@ -225,11 +227,12 @@ class AtlasCreatorLogic(object):
             # this will ensure that we can later 
             # use the transforms (if they exist) and the template to resample
             # at this point, the defaultCase is either the meanImage or the fixed defaultCase
-            defaultCaseImageData = slicer.vtkImageData()
-            defaultCaseImageData.DeepCopy(self.Helper().LoadImage(defaultCase))
+            v = self.Helper().LoadVolume(defaultCase)
             pathToTemplate = configuration.GetOutputDirectory() + "template.nrrd"
             self.Helper().info("Saving template to " + str(pathToTemplate))
-            self.Helper().SaveImage(str(pathToTemplate), defaultCaseImageData)
+            self.Helper().SaveVolume(str(pathToTemplate), v)
+            # now remove the node from the mrmlscene
+            slicer.MRMLScene.RemoveNode(v)
                     
         else:
             # we are skipping the registration
@@ -295,29 +298,31 @@ class AtlasCreatorLogic(object):
     '''=========================================================================================='''
     def GetMeanImage(self, filePathsList):
         '''
-            Get the mean image of a set of images
+            Get the mean image of a set of images and create a vtkMRMLScalarVolumeNode
             
             filePathsList
                 list of file paths to the images
                 
             Returns
-                vtkImageData after the mean image was computed
+                vtkMRMLScalarVolumeNode with imageData after the mean image was computed
         '''
         newMeanImage = slicer.vtkImageData()
+        
+        outputV = slicer.vtkMRMLScalarVolumeNode()
         
         firstRun = 1
         
         # first, add up all images
         for filePath in filePathsList:
             
-            # we load the image from filePath
-            image = slicer.vtkImageData()
-            image.DeepCopy(self.Helper().LoadImage(filePath))
+            # we load the image from filePath as a MRML node
+            v = self.Helper().LoadVolume(filePath)
             
+            image = slicer.vtkImageData()
             # to prevent overflows,
             # divide the images individually before adding them up
             # this automatically casts the image to double
-            image.DeepCopy(self.Helper().DivideImage(image, len(filePathsList)))
+            image.DeepCopy(self.Helper().DivideImage(v.GetImageData(), len(filePathsList)))
             
             if firstRun:
                 newMeanImage.DeepCopy(image)
@@ -326,8 +331,18 @@ class AtlasCreatorLogic(object):
                 # now add'em all up
                 newMeanImage.DeepCopy(self.Helper().AddImages(image, newMeanImage))
                 
+            # now copy the orientation of the node to our output node
+            outputV.CopyOrientation(v)    
+            
+            # now we remove the mrml node
+            slicer.MRMLScene.RemoveNode(v)
+            
+        
+        # now save the mean image data to the node
+        outputV.SetAndObserveImageData(newMeanImage)
+                
         # now return the mean image
-        return newMeanImage
+        return outputV
     
 
     
@@ -656,6 +671,7 @@ class AtlasCreatorLogic(object):
             return False
         
         # the combined atlas imageData
+        atlasNode = slicer.vtkMRMLScalarVolumeNode()
         atlas = slicer.vtkImageData()
         
         firstAtlasRun = True
@@ -664,6 +680,7 @@ class AtlasCreatorLogic(object):
         for label in labelsList:
             
             # for each label, we create an atlas using all manual segmentations
+            currentLabelAtlasNode = slicer.vtkMRMLScalarVolumeNode()
             currentLabelAtlas = slicer.vtkImageData()
             firstRun = True        
 
@@ -671,8 +688,13 @@ class AtlasCreatorLogic(object):
             for segmentationFilePath in filePathsList:
                 
                 # read the manual segmentation
+                currentSegmentationNode = self.Helper().LoadVolume(segmentationFilePath)
                 currentSegmentation = slicer.vtkImageData()
-                currentSegmentation.DeepCopy(self.Helper().LoadImage(segmentationFilePath))
+                currentSegmentation.DeepCopy(currentSegmentationNode.GetImageData())
+                # copy the orientation to our label atlas node
+                currentLabelAtlasNode.CopyOrientation(currentSegmentationNode)
+                # .. and to our atlas node
+                atlasNode.CopyOrientation(currentSegmentationNode)            
                 
                 # binarize the current segmentation
                 currentSegmentation.DeepCopy(self.Helper().BinarizeImageByLabel(currentSegmentation, label))
@@ -684,6 +706,9 @@ class AtlasCreatorLogic(object):
                 else:
                     # combine a binarized image by the current label with the existing currentLabelAtlas
                     currentLabelAtlas.DeepCopy(self.Helper().AddImages(currentSegmentation, currentLabelAtlas))
+
+                # now we delete the currentSegmentationNode
+                slicer.MRMLScene.RemoveNode(currentSegmentationNode)
 
             # and combine it with the other label atlases
             if firstAtlasRun:
@@ -706,8 +731,12 @@ class AtlasCreatorLogic(object):
                 self.Helper().info("Re-Casting atlas for label " + str(label) + " to " + str(reCastString))
                 currentLabelAtlas.DeepCopy(self.Helper().ReCastImage(currentLabelAtlas, str(reCastString)))
 
-            # now save the currentLabelAtlas
-            self.Helper().SaveImage(str(outputAtlasDirectory) + "atlas" + str(label) + ".nrrd", currentLabelAtlas)
+            # now save the currentLabelAtlasNode with the currentLabelAtlas imageData
+            currentLabelAtlasNode.SetAndObserveImageData(currentLabelAtlas)
+            self.Helper().SaveVolume(str(outputAtlasDirectory) + "atlas" + str(label) + ".nrrd", currentLabelAtlasNode)
+            
+            # now we can delete the currentLabelAtlasNode
+            slicer.MRMLScene.RemoveNode(currentLabelAtlasNode)
             
         # now we attack the combined atlas   
         
@@ -721,7 +750,11 @@ class AtlasCreatorLogic(object):
             atlas.DeepCopy(self.Helper().ReCastImage(atlas, str(reCastString)))
             
         # now save the atlas
-        self.Helper().SaveImage(str(outputAtlasDirectory) + "atlas.nrrd", atlas)
+        atlasNode.SetAndObserveImageData(atlas)
+        self.Helper().SaveVolume(str(outputAtlasDirectory) + "atlas.nrrd", atlasNode)
+        
+        # and delete the node
+        slicer.MRMLScene.RemoveNode(atlasNode)
             
         return True
 
