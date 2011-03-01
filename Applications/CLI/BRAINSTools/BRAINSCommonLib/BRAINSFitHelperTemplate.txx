@@ -1226,7 +1226,10 @@ BRAINSFitHelperTemplate<FixedImageType, MovingImageType>::StartRegistration(void
           }
         }
       }
-    else if ( currentTransformType == "ROIBSpline" ) //HACK:  What is an ROIBSpline? what is difference form BSpline?
+    // AF: ROIBSpline use the bounding box of the input label to initialize
+    // the BSpline grid, instead of using the whole image volume. This is
+    // particularly useful when the region of interest is small wrt the image
+    else if ( currentTransformType == "ROIBSpline" )
       {
       //
       // Process the bulkAffineTransform for BSpline's BULK

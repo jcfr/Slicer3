@@ -107,6 +107,9 @@ BRAINSFitHelper::BRAINSFitHelper()
     this->m_CurrentGenericTransform = myHelper->GetCurrentGenericTransform();            \
     this->m_ActualNumberOfIterations = myHelper->GetActualNumberOfIterations();          \
     this->m_PermittedNumberOfIterations = myHelper->GetPermittedNumberOfIterations();    \
+    this->m_GenericTransformList.resize(myHelper->GetGenericTransformListPtr()->size());     \
+    std::copy(myHelper->GetGenericTransformListPtr()->begin(), myHelper->GetGenericTransformListPtr()->end(), \
+      this->m_GenericTransformList.begin()); \
 }
 
 
