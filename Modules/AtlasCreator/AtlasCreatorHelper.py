@@ -419,7 +419,7 @@ class AtlasCreatorHelper(object):
 
     
     '''=========================================================================================='''    
-    def GetBRAINSFitResampleCommand(self,segmentationFilePath,templateFilePath,transformFilePath,outputSegmentationFilePath):
+    def GetBRAINSFitResampleCommand(self,segmentationFilePath,templateFilePath,transformFilePath,outputSegmentationFilePath,backgroundValue):
         '''
             Get the command to Resample a segmentation using BRAINSFit
             
@@ -431,6 +431,8 @@ class AtlasCreatorHelper(object):
                 the file path to the existing transformation          
             outputSegmentationFilePath
                 the file path to the resampled segmentation output
+            backgroundValue
+                the backgroundValue of the segmentation                
                 
             Returns
                 the command to Resample a segmentation
@@ -440,6 +442,7 @@ class AtlasCreatorHelper(object):
         resampleCommand += " --referenceVolume "+os.path.normpath(templateFilePath)
         resampleCommand += " --warpTransform "+os.path.normpath(transformFilePath)
         resampleCommand += " --outputVolume "+os.path.normpath(outputSegmentationFilePath)
+        resampleCommand += " --defaultValue " + str(backgroundValue)
         resampleCommand += " --defaultValue 8.0 --pixelType short --interpolationMode NearestNeighbor"
 
         return str(resampleCommand)
@@ -447,7 +450,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def GetCMTKRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading,backgroundValue):
+    def GetCMTKRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformDirectory,outputImageFilePath,onlyAffineReg,multiThreading,backgroundValue,backgroundValueTemplate):
         '''
             Get the command to Register an image to a template using CMTK
             
@@ -455,8 +458,8 @@ class AtlasCreatorHelper(object):
                 the file path to the template (target) image
             movingImageFilePath
                 the file path to the moving image
-            outputTransformFilePath
-                the file path to the transformation output
+            outputTransformDirectory
+                the file path to the directory for transformation output
             outputImageFilePath
                 the file path to the aligned image output
             onlyAffineReg
@@ -465,6 +468,8 @@ class AtlasCreatorHelper(object):
                 if true, use multi threading
             backgroundValue
                 the backgroundValue of the moving image
+            backgroundValueTemplae
+                the backgroundValue of the template                
                 
             Returns
                 the command to Register an image
@@ -473,7 +478,9 @@ class AtlasCreatorHelper(object):
         
         registrationCommand = "registration"
         registrationCommand += " --initxlate --exploration 8.0 --dofs 6 --dofs 9 --accuracy 0.5"
-        registrationCommand += " -o " + os.path.normpath(outputTransformFilePath)
+        registrationCommand += " -o " + os.path.normpath(outputTransformDirectory)
+        registrationCommand += " --pad-ref " + str(backgroundValueTemplate)
+        registrationCommand += " --pad-flt " + str(backgroundValue)
         registrationCommand += " --write-reformatted " + os.path.normpath(outputImageFilePath)
         registrationCommand += " " + os.path.normpath(templateFilePath)
         registrationCommand += " " + os.path.normpath(movingImageFilePath)
@@ -483,7 +490,7 @@ class AtlasCreatorHelper(object):
 
     
     '''=========================================================================================='''    
-    def GetCMTKResampleCommand(self,segmentationFilePath,templateFilePath,transformFilePath,outputSegmentationFilePath):
+    def GetCMTKResampleCommand(self,segmentationFilePath,templateFilePath,transformDirectory,outputSegmentationFilePath,backgroundValue):
         '''
             Get the command to Resample a segmentation using CMTK
             
@@ -491,20 +498,23 @@ class AtlasCreatorHelper(object):
                 the file path to the segmentation
             templateFilePath
                 the file path to the template used to define the output space
-            transformFilePath
-                the file path to the existing transformation          
+            transformDirectory
+                the file path to the existing transformation directory         
             outputSegmentationFilePath
                 the file path to the resampled segmentation output
-                
+            backgroundValue
+                the backgroundValue of the segmentation                
+            
             Returns
                 the command to Resample a segmentation
         '''
         
         resampleCommand = "reformatx"
         resampleCommand += " -o " + os.path.normpath(outputSegmentationFilePath)
+        resampleCommand += " --pad-out " + str(backgroundValue)
         resampleCommand += " --floating " + os.path.normpath(templateFilePath)
         resampleCommand += " " + os.path.normpath(segmentationFilePath)
-        resampleCommand += " " + os.path.normpath(transformFilePath)
+        resampleCommand += " " + os.path.normpath(transformDirectory)
         
         return str(resampleCommand)
 

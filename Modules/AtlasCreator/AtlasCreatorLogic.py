@@ -277,11 +277,11 @@ class AtlasCreatorLogic(object):
         
         # cleanup!!
         # now delete the resampled segmentations
-        if configuration.GetDeleteAlignedSegmentations():
+        if configuration.GetDeleteAlignedSegmentations() and not self.__dryRun:
             self.Helper().DeleteFilesAndDirectory(resampledSegmentationsFilePathList)
         
         # delete the transforms, if we did not want to save them
-        if not configuration.GetSaveTransforms():
+        if not configuration.GetSaveTransforms() and not self.__dryRun:
             self.Helper().DeleteFilesAndDirectory(transformDirectory,True) # wipe'em!!
             
         
@@ -407,6 +407,10 @@ class AtlasCreatorLogic(object):
             backgroundGuess = self.Helper().GuessBackgroundValue(movingImageFilePath)
             self.Helper().debug("Guessing background value: "+str(backgroundGuess))
             
+            # guess the background level of the current image
+            backgroundGuessTemplate = self.Helper().GuessBackgroundValue(templateFilePath)
+            self.Helper().debug("Guessing background value for template: "+str(backgroundGuessTemplate))            
+            
             movingImageName = os.path.splitext(os.path.basename(movingImageFilePath))[0]
             
             # generate file path to save output transformation
@@ -424,7 +428,8 @@ class AtlasCreatorLogic(object):
                                                                                               outputAlignedImageFilePath,
                                                                                               onlyAffineReg,
                                                                                               multiThreading,
-                                                                                              backgroundGuess)
+                                                                                              backgroundGuess,
+                                                                                              backgroundGuessTemplate)
             else:    
                 command = str(launchCommandPrefix) + self.Helper().GetBRAINSFitRegistrationCommand(templateFilePath,
                                                                                                    movingImageFilePath,
@@ -528,6 +533,10 @@ class AtlasCreatorLogic(object):
             # do not resample the same file
             if os.path.basename(segmentationFilePath) == os.path.basename(templateFilePath):
                 continue
+            
+            # guess the background level of the current image
+            backgroundGuess = self.Helper().GuessBackgroundValue(segmentationFilePath)
+            self.Helper().debug("Guessing background value: "+str(backgroundGuess))            
 
             segmentationName = os.path.splitext(os.path.basename(segmentationFilePath))[0]
 
@@ -541,12 +550,14 @@ class AtlasCreatorLogic(object):
                 command = str(launchCommandPrefix) + self.Helper().GetCMTKResampleCommand(segmentationFilePath,
                                                                                           templateFilePath,
                                                                                           transformFilePath,
-                                                                                          outputSegmentationFilePath)                
+                                                                                          outputSegmentationFilePath,
+                                                                                          backgroundGuess)                
             else:
                 command = str(launchCommandPrefix) + self.Helper().GetBRAINSFitResampleCommand(segmentationFilePath,
                                                                                                templateFilePath,
                                                                                                transformFilePath,
-                                                                                               outputSegmentationFilePath)
+                                                                                               outputSegmentationFilePath,
+                                                                                               backgroundGuess)
 
             self.Helper().debug("Resample command: " + str(command))
             

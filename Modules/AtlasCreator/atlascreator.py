@@ -177,7 +177,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.1")
+    info("Version v0.2")
     info("")
     
     if len(argv) == 0:
@@ -361,15 +361,19 @@ def main(argv):
         outputDir = os.path.abspath(outputDir)
         info("Warning: The output directory ("+str(outputDir)+") already exists..")
         
+        # the directory already exists,
+        # we want to add an index to the new one
         count = 2
-        outputDir = os.path.abspath(str(outputDir)+str(count)) + os.sep
+        newOutputDir = os.path.abspath(str(outputDir)+str(count))
         
-        while (os.path.isdir(outputDir)):
-            ++count
-            outputDir = os.path.abspath(str(outputDir)+str(count)) + os.sep
+        while (os.path.isdir(newOutputDir)):
+            count = count + 1
+            newOutputDir = os.path.abspath(str(outputDir)+str(count))
         
-        info("Warning: Using new output directory instead: " + str(outputDir))
-        os.makedirs(outputDir)
+        info("Warning: Using new output directory instead: " + str(newOutputDir))
+        os.makedirs(newOutputDir)
+        
+        outputDir = newOutputDir + os.sep
         
     elif outputDir and not os.path.isfile(outputDir):
         # outputDir did not exist and is not a file
@@ -599,6 +603,9 @@ def main(argv):
     
     # add the start command
     evalpythonCommand += "logic.Start(configuration);"
+    
+    # cleanup
+    evalpythonCommand += "logic = None; gui = None;"
         
     command = slicerLauncherFilePath + ' --no_splash --evalpython "' + evalpythonCommand + '"'
 
