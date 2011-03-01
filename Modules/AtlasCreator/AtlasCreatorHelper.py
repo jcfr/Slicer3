@@ -512,8 +512,8 @@ class AtlasCreatorHelper(object):
         resampleCommand = "reformatx"
         resampleCommand += " -o " + os.path.normpath(outputSegmentationFilePath)
         resampleCommand += " --pad-out " + str(backgroundValue)
-        resampleCommand += " --floating " + os.path.normpath(templateFilePath)
-        resampleCommand += " " + os.path.normpath(segmentationFilePath)
+        resampleCommand += " --floating " + os.path.normpath(segmentationFilePath)
+        resampleCommand += " " + os.path.normpath(templateFilePath)
         resampleCommand += " " + os.path.normpath(transformDirectory)
         
         return str(resampleCommand)
