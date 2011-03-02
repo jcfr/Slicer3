@@ -98,6 +98,19 @@
       </constraints>
     </double>
 
+    <double>
+      <name>levelSetThreshold</name>
+      <longflag>levelSetThreshold</longflag>
+      <description>The threshold for outputing final binary mask from level set function. Larger value will give larger binary object region for the same level set function.</description>
+      <label>Threshold for level set</label>
+      <default>2</default>
+      <constraints>
+        <minimum>-2.9</minimum>
+        <maximum>2.9</maximum>
+        <step>0.1</step>
+      </constraints>
+    </double>
+
 <!--     <integer> -->
 <!--       <name>numOfIteration</name> -->
 <!--       <longflag>numOfIteration</longflag> -->
