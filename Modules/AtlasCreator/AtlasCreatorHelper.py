@@ -443,7 +443,7 @@ class AtlasCreatorHelper(object):
         resampleCommand += " --warpTransform "+os.path.normpath(transformFilePath)
         resampleCommand += " --outputVolume "+os.path.normpath(outputSegmentationFilePath)
         resampleCommand += " --defaultValue " + str(backgroundValue)
-        resampleCommand += " --defaultValue 8.0 --pixelType short --interpolationMode NearestNeighbor"
+        resampleCommand += " --pixelType short --interpolationMode NearestNeighbor"
 
         return str(resampleCommand)
 
