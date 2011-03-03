@@ -679,7 +679,7 @@ if {  [BuildThis $::PYTHON_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [stri
 
       cd $Slicer3_LIB/python
       runcmd $::SVN co $::PYTHON_TAG -r $::PYTHON_REVISION
-      cd $Slicer3_LIB/python/release26-maint
+      cd $Slicer3_LIB/python/Python-2.6.6
       foreach flag {LD_LIBRARY_PATH LDFLAGS CPPFLAGS} {
         if { ![info exists ::env($flag)] } { set ::env($flag) "" }
       }
@@ -896,22 +896,24 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
       set ::env(LIB) $::MSSDK_PATH/Lib\;[file dirname $::COMPILER_PATH]/lib
       set ::env(LIBPATH) $devenvdir
 
-      puts [parray ::env]
+      set ::PYTHON_EXE $::PYTHON_BUILD_DIR/python.exe
+    } else {
+      set ::PYTHON_EXE $::PYTHON_BUILD_DIR/bin/python
     }
 
 
     cd $::Slicer3_LIB/python/numpy
-    runcmd $::PYTHON_BUILD_DIR/python.exe ./setup.py config
+    runcmd $::PYTHON_EXE ./setup.py config
 
     set ::env(VS_UNICODE_OUTPUT) ""
     
-    set buildType ""
     if { $::PYTHON_BUILD_TYPE == "Debug" } {
-      set buildType "--debug"
+      runcmd $::PYTHON_EXE ./setup.py build  --debug
+    } else {
+      runcmd $::PYTHON_EXE ./setup.py build
     }
 
-    runcmd $::PYTHON_BUILD_DIR/python.exe ./setup.py build $buildType
-    runcmd $::PYTHON_BUILD_DIR/python.exe ./setup.py install
+    runcmd $::PYTHON_EXE ./setup.py install
 
     ## in earlier slicer versions we needed to add manifests to the pyd files.
     ## this is now handled by a patch to python's distutils 
