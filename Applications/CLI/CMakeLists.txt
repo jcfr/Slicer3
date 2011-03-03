@@ -854,6 +854,7 @@ if (Slicer3_SOURCE_DIR)
     #ZeroCrossingBasedEdgeDetectionImageFilterLib
     DiffusionTensorMathematics
     DiffusionTensorEstimation
+    BSplineToDeformationField
     )
 
   slicer3_install_plugins(${TARGETS})
