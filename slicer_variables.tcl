@@ -76,25 +76,22 @@ if { $have_compiler == 1} {
   set ::env(COMPILER) $comp
 }
 
-set have_bitness 0
+# we are 32 bit by default, but if we are being
+# called from a 64 bit build config, set all 
+# variables to match
+set bit 32
 if { [info exists ::GETBUILDTEST(bitness)] } {
   set bit $::GETBUILDTEST(bitness)
-  set have_bitness 1
 }
 if { [info exists ::GENLIB(bitness)] } {
   set bit $::GENLIB(bitness)
-  set have_bitness 1
 }
 if { [info exists ::env(BITNESS)] } {
   set bit $::env(BITNESS)
-  set have_bitness 1
 }
-
-if { $have_bitness == 1} {
-  set ::GETBUILDTEST(bitness) $bit
-  set ::GENLIB(bitness) $bit
-  set ::env(BITNESS) $bit
-}
+set ::GETBUILDTEST(bitness) $bit
+set ::GENLIB(bitness) $bit
+set ::env(BITNESS) $bit
 
 #
 # set the default locations for the main components
@@ -171,7 +168,7 @@ switch $::tcl_platform(os) {
         set ::TCL_MINOR_VERSION 5
     }
     "Windows NT" {
-        if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
+        if { $::env(BITNESS) == "64" } {
             set ::TCL_VERSION tcl85
             set ::TCL_MINOR_VERSION 5
         } else {
@@ -452,7 +449,7 @@ switch $::tcl_platform(os) {
         # always build python as release (otherwise numpy fails)
         set ::PYTHON_BUILD_TYPE "Release"
 
-        if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
+        if { $::env(BITNESS) == "64" } {
             set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
             set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish85.exe
             set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl85.lib
@@ -530,13 +527,13 @@ switch $::tcl_platform(os) {
         # If you're not using one of the two, you should check 
         # your compiler's manual for the existence of a similar flag.
 
-        if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
+        if { $::env(BITNESS) == "64" } {
 
           # Due to bug 6223255 on Solaris 10 we need to explicitly set the runtime path
           # for shared objects, because the linker will not find the 64 bit lib automatically.
           # See the bellow link for more details:
           # http://bugs.opensolaris.org/bugdatabase/view_bug.do?bug_id=6223255
-          if {$tcl_platform(osVersion) == "5.10" && ($::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64")} {
+          if { $tcl_platform(osVersion) == "5.10" && $::env(BITNESS) == "64" } {
             set ::env(CFLAGS) -m64
             set ::env(CXXFLAGS) "$::env(CXXFLAGS) -m64"
             set ::env(LDFLAGS) "-m64 -L/usr/sfw/lib/64 -R/usr/sfw/lib/64"
@@ -733,15 +730,13 @@ switch $::tcl_platform(os) {
         }
          
         # Windows 64 is only supported with commercial Visual Studio
-        if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
-
+        if { $::env(BITNESS) == "64" } {
           if { [file exists "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"] } {
             set ::GENERATOR "Visual Studio 9 2008 Win64"
             set ::MAKE "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"
             set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 9.0/VC/bin/x86_amd64"
             set ::MSSDK_PATH "c:/Program Files/Microsoft SDKs/Windows/v6.0A"
           }
-
           if { [file exists "c:/Program Files (x86)/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"] } {
             set ::GENERATOR "Visual Studio 9 2008 Win64"
             set ::MAKE "c:/Program Files (x86)/Microsoft Visual Studio 9.0/Common7/IDE/devenv.exe"
