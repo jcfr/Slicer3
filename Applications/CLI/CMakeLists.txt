@@ -855,6 +855,7 @@ if (Slicer3_SOURCE_DIR)
     DiffusionTensorMathematics
     DiffusionTensorEstimation
     BSplineToDeformationField
+    BSplineToDeformationFieldLib
     )
 
   slicer3_install_plugins(${TARGETS})
