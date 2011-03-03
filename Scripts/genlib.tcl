@@ -814,7 +814,7 @@ if { [BuildThis $::CLAPACK_TEST_FILE "CLAPACK"] == 1 } {
 # Get and build numpy and scipy
 #
 
-if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [string tolower $::USE_PYTHON] == "on" } {
+if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [string tolower $::USE_PYTHON] == "on" && [string tolower $::USE_NUMPY] == "on" } {
 
     set ::env(PYTHONHOME) $::Slicer3_LIB/python-build
     cd $::Slicer3_LIB/python
@@ -854,11 +854,19 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
     set fp [open "numpy/site.cfg" "w"]
     puts $fp ""
     puts $fp "\[blas\]"
-    puts $fp "library_dirs = $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/$PYTHON_BUILD_TYPE/$path_sep$::Slicer3_LIB/CLAPACK-build/F2CLIBS/libf2c/$PYTHON_BUILD_TYPE/"
+    if { $isWindows } {
+      puts $fp "library_dirs = $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/$::PYTHON_BUILD_TYPE/$path_sep$::Slicer3_LIB/CLAPACK-build/F2CLIBS/libf2c/$::PYTHON_BUILD_TYPE/"
+    } else {
+      puts $fp "library_dirs = $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/$path_sep$::Slicer3_LIB/CLAPACK-build/F2CLIBS/libf2c/"
+    }
     puts $fp "libraries = blas,$f2c_libname"
     puts $fp ""
     puts $fp "\[lapack\]"
-    puts $fp "library_dirs = $::Slicer3_LIB/CLAPACK-build/SRC/$PYTHON_BUILD_TYPE/"
+    if { $isWindows } {
+      puts $fp "library_dirs = $::Slicer3_LIB/CLAPACK-build/SRC/$::PYTHON_BUILD_TYPE/"
+    } else {
+      puts $fp "library_dirs = $::Slicer3_LIB/CLAPACK-build/SRC/"
+    }
     puts $fp "lapack_libs = lapack"
     puts $fp ""
     close $fp
