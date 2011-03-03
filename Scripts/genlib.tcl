@@ -215,7 +215,6 @@ proc replaceStringInFile {fileName oldString newString} {
   close $fp
 }
 
-
 ################################################################################
 # First, set up the directory
 # - determine the location
@@ -646,20 +645,29 @@ if {  [BuildThis $::PYTHON_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [stri
       # copy the lib so that numpy and slicer can find it easily
       # copy the socket shared library so python can find it
       # TODO: perhaps we need an installer step here
+
+      set suffix ""
+      if { $::PYTHON_BUILD_TYPE == "Debug" } {
+        # python adds _d to debug versions, but we want to treat them all the same 
+        # for slicer purposes
+        set suffix "_d"
+        file copy -force $::PYTHON_BUILD_DIR/python$suffix.exe $PYTHON_BUILD_DIR/python.exe
+        file copy -force $::PYTHON_BUILD_DIR/python26$suffix.lib $PYTHON_BUILD_DIR/python26.lib
+      }
       
-      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/python26.lib $::Slicer3_LIB/python-build/Lib/python26.lib "]
+      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/python26$suffix.lib $::Slicer3_LIB/python-build/Lib/python26.lib "]
       if {$ret == 1} {
-          puts "ERROR: couldn't copy $::PYTHON_BUILD_DIR/python26.lib to $::Slicer3_LIB/python-build/Lib/"
+          puts "ERROR: couldn't copy $::PYTHON_BUILD_DIR/python26$suffix.lib to $::Slicer3_LIB/python-build/Lib/"
           exit 1
       }
-      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/_socket.pyd $::Slicer3_LIB/python-build/Lib/_socket.pyd"]
+      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/_socket$suffix.pyd $::Slicer3_LIB/python-build/Lib/_socket.pyd"]
       if {$ret == 1} {
-         puts "ERROR: failed to copy $::PYTHON_BUILD_DIR/_socket.pyd to $::Slicer3_LIB/python-build/Lib/_socket.pyd"
+         puts "ERROR: failed to copy $::PYTHON_BUILD_DIR/_socket$suffix.pyd to $::Slicer3_LIB/python-build/Lib/_socket.pyd"
          exit 1
        }
-      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/_ctypes.pyd $::Slicer3_LIB/python-build/Lib/_ctypes.pyd"]
+      set ret [catch "file copy -force $::PYTHON_BUILD_DIR/_ctypes$suffix.pyd $::Slicer3_LIB/python-build/Lib/_ctypes.pyd"]
       if {$ret == 1} {
-        puts "ERROR: failed to copy $::PYTHON_BUILD_DIR/_ctypes.pyd to $::Slicer3_LIB/python-build/Lib/_ctypes.pyd"
+        puts "ERROR: failed to copy $::PYTHON_BUILD_DIR/_ctypes$suffix.pyd to $::Slicer3_LIB/python-build/Lib/_ctypes.pyd"
         exit 1
       }
 
@@ -769,6 +777,40 @@ if { [BuildThis $::NETLIB_TEST_FILE "netlib"] && !$::USE_SYSTEM_PYTHON && [strin
 }
 
 ################################################################################
+# Get and build CLAPACK
+#
+
+if { [BuildThis $::CLAPACK_TEST_FILE "CLAPACK"] == 1 } {
+    cd $Slicer3_LIB
+
+    runcmd $::SVN co $::CLAPACK_TAG CLAPACK
+
+    if {$::GENLIB(buildit)} {
+      file mkdir $Slicer3_LIB/CLAPACK-build
+      cd $Slicer3_LIB/CLAPACK-build
+
+      runcmd $::CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+        -DBUILD_SHARED_LIBS:BOOL=OFF \
+        -DCMAKE_SKIP_RPATH:BOOL=ON \
+        -DCMAKE_BUILD_TYPE:STRING=$::PYTHON_BUILD_TYPE \
+        ../CLAPACK
+
+      if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE CLAPACK.dsw /MAKE "ALL_BUILD - $::PYTHON_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE CLAPACK.SLN /out buildlog.txt /build  $::PYTHON_BUILD_TYPE
+        }
+      } else {
+        eval runcmd $::MAKE 
+      }
+  }
+}
+
+################################################################################
 # Get and build numpy and scipy
 #
 
@@ -781,114 +823,104 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
 
     runcmd $::SVN co $::NUMPY_TAG numpy
 
-    if { $isLinux } {
-        # Add MAIN__ stub symbol to work around link error with gnu fortran
-        # (protect the definition in case the patch is applied more than once)
-        set fp [open numpy/numpy/linalg/python_xerbla.c "a"]
-        puts $fp "#ifndef MAIN__DEFINED"
-        puts $fp "int MAIN__() {return (0);}"
-        puts $fp "#endif"
-        puts $fp "#define MAIN__DEFINED"
-        close $fp
+    #
+    # as of 3.6.4, follow the approach used in slicer4 superbuild
+    #
+
+    if { $isDarwin } {
+        if { ![info exists ::env(DYLD_LIBRARY_PATH)] } { set ::env(DYLD_LIBRARY_PATH) "" }
+        set ::env(DYLD_LIBRARY_PATH) $::Slicer3_LIB/python-build/lib:$::env(DYLD_LIBRARY_PATH)
+    } else {
+        if { !$isWindows } {
+          if { ![info exists ::env(LD_LIBRARY_PATH)] } { set ::env(LD_LIBRARY_PATH) "" }
+          set ::env(LD_LIBRARY_PATH) $::Slicer3_LIB/python-build/lib:$::env(LD_LIBRARY_PATH)
+        }
     }
+
+    set path_sep ":"
+    if { $isWindows } {
+      set path_sep ";"
+    }
+
+    # As explained in site.cfg.example, the library name without the prefix "lib" should be used.
+    # Nevertheless, on windows, only "libf2c" leads to a successful configuration and 
+    # installation of NUMPY
+    set f2c_libname "f2c"
+    if { $isWindows } {
+      set f2c_libname "libf2c"
+    }
+
+    # setup the site.cfg file
+    set fp [open "numpy/site.cfg" "w"]
+    puts $fp ""
+    puts $fp "\[blas\]"
+    puts $fp "library_dirs = $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/$PYTHON_BUILD_TYPE/$path_sep$::Slicer3_LIB/CLAPACK-build/F2CLIBS/libf2c/$PYTHON_BUILD_TYPE/"
+    puts $fp "libraries = blas,$f2c_libname"
+    puts $fp ""
+    puts $fp "\[lapack\]"
+    puts $fp "library_dirs = $::Slicer3_LIB/CLAPACK-build/SRC/$PYTHON_BUILD_TYPE/"
+    puts $fp "lapack_libs = lapack"
+    puts $fp ""
+    close $fp
 
     if { $isWindows } {
+      # store the old path - on some systems (some cyginw installs)
+      # having the vc and devenv paths prefixed to the path
+      # prevents subsequent cmake builds from functioning
+      set ::GENLIB(prePythonPATH) $::env(PATH)
 
-        # store the old path - on some systems (some cyginw installs)
-        # having the vc and devenv paths prefixed to the path
-        # prevents subsequent cmake builds from functioning
-        set ::GENLIB(prePythonPATH) $::env(PATH)
+      # prepare the environment for numpy build script
+      # - the path setup depends on how cygwin was configured (either
+      # with or without the /cygdrive portion of the path)
+      if { [string match *cygdrive* $env(PATH)] } {
+        # Steve's way - cygwin does not mount c:/ as /c
+        regsub -all ":" [file dirname $::MAKE] "" devenvdir
+        regsub -all ":" $::COMPILER_PATH "" vcbindir
+        set devenvdir /cygdrive/$devenvdir
+        set vcbindir /cygdrive/$vcbindir
+        set ::env(PATH) $devenvdir:$vcbindir:$::env(PATH)
+        regsub -all ":" $::PYTHON_BUILD_DIR "" pcbuildpath
+        set ::env(PATH) /cygdrive/$pcbuildpath:$::env(PATH)
+        regsub -all ":" $::MSSDK_PATH/Bin "" sdkpath
+        set ::env(PATH) /cygdrive/$sdkpath:$::env(PATH)
+      } else {
+        # Jim's way - cygwin does mount c:/ as /c and doesn't use cygdrive
+        set devenvdir [file dirname $::MAKE]
+        set vcbindir $::COMPILER_PATH
+        set ::env(PATH) $devenvdir\;$vcbindir\;$::MSSDK_PATH/bin\;$::env(PATH)
+        set ::env(PATH) $::env(PATH)\;$::PYTHON_BUILD_DIR
+      }
+      set ::env(INCLUDE) [file dirname $::COMPILER_PATH]/include
+      set ::env(INCLUDE) $::MSSDK_PATH/Include\;$::env(INCLUDE)
+      set ::env(INCLUDE) [file normalize $::Slicer3_LIB/python-build/Include]\;$::env(INCLUDE)
+      set ::env(LIB) $::MSSDK_PATH/Lib\;[file dirname $::COMPILER_PATH]/lib
+      set ::env(LIBPATH) $devenvdir
 
-        # prepare the environment for numpy build script
-        # - the path setup depends on how cygwin was configured (either
-        # with or without the /cygdrive portion of the path)
-        if { [string match *cygdrive* $env(PATH)] } {
-          # Steve's way - cygwin does not mount c:/ as /c
-          regsub -all ":" [file dirname $::MAKE] "" devenvdir
-          regsub -all ":" $::COMPILER_PATH "" vcbindir
-          set devenvdir /cygdrive/$devenvdir
-          set vcbindir /cygdrive/$vcbindir
-          set ::env(PATH) $devenvdir:$vcbindir:$::env(PATH)
-          regsub -all ":" $::PYTHON_BUILD_DIR "" pcbuildpath
-          set ::env(PATH) /cygdrive/$pcbuildpath:$::env(PATH)
-          regsub -all ":" $::MSSDK_PATH/Bin "" sdkpath
-          set ::env(PATH) /cygdrive/$sdkpath:$::env(PATH)
-        } else {
-          # Jim's way - cygwin does mount c:/ as /c and doesn't use cygdrive
-          set devenvdir [file dirname $::MAKE]
-          set vcbindir $::COMPILER_PATH
-          set ::env(PATH) $devenvdir\;$vcbindir\;$::env(PATH)
-          set ::env(PATH) $::env(PATH)\;$::PYTHON_BUILD_DIR
-        }
-        set ::env(INCLUDE) [file dirname $::COMPILER_PATH]/include
-        set ::env(INCLUDE) $::MSSDK_PATH/Include\;$::env(INCLUDE)
-        set ::env(INCLUDE) [file normalize $::Slicer3_LIB/python-build/Include]\;$::env(INCLUDE)
-        set ::env(LIB) $::MSSDK_PATH/Lib\;[file dirname $::COMPILER_PATH]/lib
-        set ::env(LIBPATH) $devenvdir
-
-        cd $::Slicer3_LIB/python/numpy
-        runcmd $::PYTHON_BUILD_DIR/python.exe ./setup.py --verbose install
-
-        # numpy dlls do not have embeded manifests by default, need to add them here
-        # - only required for newer versions of visual studio.  Assume that
-        #   if the mt command doesn't exists, there are no manifests
-        set mt $::MSSDK_PATH/Bin/mt.exe
-        if { [file exists $mt] } {
-          set libprefix $::Slicer3_LIB/python-build/Lib/site-packages/numpy
-          foreach lib {core fft lib linalg numarray random} {
-            set pyds [glob -nocomplain $libprefix/$lib/*.pyd]
-            foreach pyd $pyds {
-              runcmd $mt -manifest $pyd.manifest -outputresource:$pyd\;2
-            }
-          }
-        }
-
-        # restore the old path 
-        set ::env(PATH) $::GENLIB(prePythonPATH)
-
-    } else {
-
-        if { $isDarwin } {
-            if { ![info exists ::env(DYLD_LIBRARY_PATH)] } { set ::env(DYLD_LIBRARY_PATH) "" }
-            set ::env(DYLD_LIBRARY_PATH) $::Slicer3_LIB/python-build/lib:$::env(DYLD_LIBRARY_PATH)
-        } else {
-            if { ![info exists ::env(LD_LIBRARY_PATH)] } { set ::env(LD_LIBRARY_PATH) "" }
-            set ::env(LD_LIBRARY_PATH) $::Slicer3_LIB/python-build/lib:$::env(LD_LIBRARY_PATH)
-        }
-
-        if { $::USE_SCIPY } {
-          set ::env(ATLAS) None
-          set ::env(BLAS) $::Slicer3_LIB/netlib-build/BLAS-build/libblas.a
-          set ::env(BLAS_SRC) $::Slicer3_LIB/netlib/BLAS
-          set ::env(LAPACK) $::Slicer3_LIB/netlib-build/lapack-build/liblapack.a
-        }
-
-        cd $::Slicer3_LIB/python/numpy
-        if {$::GENLIB(bitness) == "64"} {
-          set ::env(CC) "$::GENLIB(compiler) -m64"
-        } else {
-          set ::env(CC) "$::GENLIB(compiler)"
-        }
-
-
-        # for linux,
-        # explicitly disable the pfortran compiler to avoid issues with g77/gfortran incompatibilities
-        runcmd $::Slicer3_LIB/python-build/bin/python ./setup.py build --fcompiler=xxx
-        runcmd $::Slicer3_LIB/python-build/bin/python ./setup.py install
-
-        # do scipy
-
-        if { $::USE_SCIPY } {
-          # TODO: need to have a way to build the blas library...
-          cd $::Slicer3_LIB/python
-          runcmd $::SVN co $::SCIPY_TAG scipy
-          
-          cd $::Slicer3_LIB/python/scipy
-          
-          # turn off scipy - not clear how to get it to build on all platforms
-          runcmd $::Slicer3_LIB/python-build/bin/python ./setup.py install
-        }
+      puts [parray ::env]
     }
+
+
+    cd $::Slicer3_LIB/python/numpy
+    runcmd $::PYTHON_BUILD_DIR/python.exe ./setup.py config
+
+    set ::env(VS_UNICODE_OUTPUT) ""
+    
+    set buildType ""
+    if { $::PYTHON_BUILD_TYPE == "Debug" } {
+      set buildType "--debug"
+    }
+
+    runcmd $::PYTHON_BUILD_DIR/python.exe ./setup.py build $buildType
+    runcmd $::PYTHON_BUILD_DIR/python.exe ./setup.py install
+
+    ## in earlier slicer versions we needed to add manifests to the pyd files.
+    ## this is now handled by a patch to python's distutils 
+
+    if { $isWindows } {
+      # restore the old path 
+      set ::env(PATH) $::GENLIB(prePythonPATH)
+    }
+
 }
 
 

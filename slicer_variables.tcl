@@ -142,11 +142,14 @@ set ::KWWidgets_TAG "Slicer-3-6"
 #set ::VTK_TAG "http://svn.github.com/pieper/SlicerVTK.git" ;# slicer's patched vtk 5.6
 set ::VTK_TAG "http://svn.slicer.org/Slicer3-lib-mirrors/branches/Slicer-3-6/VTK" ;# slicer's patched vtk 5.6
 set ::ITK_TAG ITK-3-20
-set ::PYTHON_TAG "http://svn.python.org/projects/python/branches/release26-maint"
-set ::PYTHON_REVISION 76651 ;# avoid windows manifest "fix"
+#set ::PYTHON_TAG "http://svn.python.org/projects/python/branches/release26-maint"
+#set ::PYTHON_REVISION 76651 ;# avoid windows manifest "fix"
+set ::PYTHON_TAG http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Python-2.6.6
+set ::PYTHON_REVISION "HEAD"
 set ::BLAS_TAG http://svn.slicer.org/Slicer3-lib-mirrors/trunk/netlib/BLAS
 set ::LAPACK_TAG http://svn.slicer.org/Slicer3-lib-mirrors/trunk/netlib/lapack-3.1.1
-set ::NUMPY_TAG "http://svn.scipy.org/svn/numpy/branches/1.3.x"
+set ::CLAPACK_TAG http://svn.slicer.org/Slicer3-lib-mirrors/trunk/clapack-3.2.1-CMAKE
+set ::NUMPY_TAG http://svn.slicer.org/Slicer3-lib-mirrors/trunk/numpy-1.4.1
 set ::SCIPY_TAG "http://svn.scipy.org/svn/scipy/branches/0.7.x"
 #set ::BatchMake_TAG "BatchMake-1-2"
 set ::BatchMake_TAG "HEAD"
@@ -290,6 +293,7 @@ switch $::tcl_platform(os) {
         set ::PYTHON_LIB $::PYTHON_BIN_DIR/lib/libpython2.6.so
         set ::PYTHON_INCLUDE $::PYTHON_BIN_DIR/include/python2.6
         set ::NETLIB_TEST_FILE $::Slicer3_LIB/netlib-build/BLAS-build/libblas.a
+        set ::CLAPACK_TEST_FILE $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/libblas.a
         set ::NUMPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/numpy/core/numeric.pyc
         set ::SCIPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/scipy/version.pyc
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.5
@@ -331,6 +335,7 @@ switch $::tcl_platform(os) {
         set ::PYTHON_LIB $::PYTHON_BIN_DIR/lib/libpython2.6.dylib
         set ::PYTHON_INCLUDE $::PYTHON_BIN_DIR/include/python2.6
         set ::NETLIB_TEST_FILE $::Slicer3_LIB/netlib-build/BLAS-build/libblas.a
+        set ::CLAPACK_TEST_FILE $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/libblas.a
         set ::NUMPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/numpy/core/numeric.pyc
         set ::SCIPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/scipy/version.pyc
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitcl3.2.dylib
@@ -367,6 +372,7 @@ switch $::tcl_platform(os) {
         set ::PYTHON_LIB $::PYTHON_BIN_DIR/lib/libpython2.6.so
         set ::PYTHON_INCLUDE $::PYTHON_BIN_DIR/include/python2.6
         set ::NETLIB_TEST_FILE $::Slicer3_LIB/netlib-build/BLAS-build/libblas.a
+        set ::CLAPACK_TEST_FILE $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/libblas.a
         set ::NUMPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/numpy/core/numeric.pyc
         set ::SCIPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/scipy/version.pyc
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
@@ -401,6 +407,7 @@ switch $::tcl_platform(os) {
         set ::PYTHON_LIB $::PYTHON_BIN_DIR/lib/libpython2.6.so
         set ::PYTHON_INCLUDE $::PYTHON_BIN_DIR/include/python2.6
         set ::NETLIB_TEST_FILE $::Slicer3_LIB/netlib-build/BLAS-build/libblas.a
+        set ::CLAPACK_TEST_FILE $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/libblas.a
         set ::NUMPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/numpy/core/numeric.pyc
         set ::SCIPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/scipy/version.pyc
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.5
@@ -435,6 +442,9 @@ switch $::tcl_platform(os) {
           error "need to define system python path for $::tcl_platform(os)"
         }
 
+        # always build python as release (otherwise numpy fails)
+        set PYTHON_BUILD_TYPE "Release"
+
         if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
             set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
             set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish85.exe
@@ -444,7 +454,7 @@ switch $::tcl_platform(os) {
             set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/amd64/python.exe
             set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/amd64/python26.lib
             set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild/amd64
-            set ::PYTHON_CONFIG "Release|x64"
+            set ::PYTHON_CONFIG "$::PYTHON_BUILD_TYPE|x64"
         } else {
             set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
             set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
@@ -454,12 +464,13 @@ switch $::tcl_platform(os) {
             set ::PYTHON_TEST_FILE $::PYTHON_BIN_DIR/PCbuild/python.exe
             set ::PYTHON_LIB $::PYTHON_BIN_DIR/PCbuild/python26.lib
             set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild
-            set ::PYTHON_CONFIG "Release|Win32"
+            set ::PYTHON_CONFIG "$::PYTHON_BUILD_TYPE|Win32"
         }
 
         set ::PYTHON_INCLUDE $::PYTHON_BIN_DIR/include
-        set ::NUMPY_TAG "http://svn.scipy.org/svn/numpy/branches/1.5.x"
+        #set ::NUMPY_TAG "http://svn.scipy.org/svn/numpy/branches/1.5.x"
         set ::NETLIB_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/numpy/core/numeric.pyc
+        set ::CLAPACK_TEST_FILE $::Slicer3_LIB/CLAPACK-build/BLAS/SRC/$::PYTHON_BUILD_TYPE/blas.lib
         set ::NUMPY_TEST_FILE $::PYTHON_BIN_DIR/lib/site-packages/numpy/core/numeric.pyc
         set ::SCIPY_TEST_FILE $::PYTHON_BIN_DIR/lib/python2.6/site-packages/scipy/version.pyc
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
