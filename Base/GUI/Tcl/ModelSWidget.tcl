@@ -40,6 +40,7 @@ if { [itcl::find class ModelSWidget] == "" } {
     variable _sliceCompositeNode ""
 
     # methods
+    method updateModelNode {} {}
     method processEvent {{caller ""} {event ""}} {}
     method positionActors {} {}
     method highlight {} {}
@@ -110,6 +111,31 @@ itcl::configbody ModelSWidget::modelID {
   if { $modelID == "" } {
     return
   }
+
+  $this updateModelNode
+}
+
+
+itcl::configbody ModelSWidget::opacity {
+  $this highlight
+  [$sliceGUI GetSliceViewer] RequestRender
+}
+
+itcl::configbody ModelSWidget::visibility {
+  $this highlight
+  [$sliceGUI GetSliceViewer] RequestRender
+}
+
+# ------------------------------------------------------------------
+#                             METHODS
+# ------------------------------------------------------------------
+
+
+# since the model node may be changing, provide this method
+# to update the internal representation when, for example, the 
+# polydata or display node structures update
+itcl::body ModelSWidget::updateModelNode {} {
+
   # find the model node
   set modelNode [$::slicer3::MRMLScene GetNodeByID $modelID]
   if { $modelNode == "" } {
@@ -144,20 +170,6 @@ itcl::configbody ModelSWidget::modelID {
   $this highlight
   [$sliceGUI GetSliceViewer] RequestRender
 }
-
-itcl::configbody ModelSWidget::opacity {
-  $this highlight
-  [$sliceGUI GetSliceViewer] RequestRender
-}
-
-itcl::configbody ModelSWidget::visibility {
-  $this highlight
-  [$sliceGUI GetSliceViewer] RequestRender
-}
-
-# ------------------------------------------------------------------
-#                             METHODS
-# ------------------------------------------------------------------
 
 itcl::body ModelSWidget::positionActors { } {
 
@@ -255,6 +267,8 @@ itcl::body ModelSWidget::processEvent { {caller ""} {event ""} } {
     return
   }
 
+  $this updateModelNode
+
   if { [info command $_modelNode] == "" || [$_modelNode GetPolyData] == "" } {
     # the model was deleted behind our back, 
     # or if there is no poly data, turn off our display and do nothing
@@ -265,6 +279,7 @@ itcl::body ModelSWidget::processEvent { {caller ""} {event ""} } {
   set displayNode [$_modelNode GetDisplayNode]
   if { $displayNode != "" } {
     $this configure -visibility [$displayNode GetSliceIntersectionVisibility]
+    puts "$this configure -visibility [$displayNode GetSliceIntersectionVisibility]"
   }
 
   if { !$visibility } {
