@@ -246,6 +246,9 @@ set ::USE_SYSTEM_PYTHON "false"
 #   (this variable is forced to off later in this file if non-VS 2008 compiler is selected or non-XP version of windows is detected)
 set ::USE_PYTHON "ON"
 
+# always build python as release (otherwise numpy fails due to hard coded naming conventions)
+set ::PYTHON_BUILD_TYPE "Release"
+
 # CMake option for numerical Python, only matters if Python is on
 set ::USE_NUMPY "ON"
 # getbuildtest option for SCIPY - also build support libraries (blas and lapack) needed for scipy
@@ -443,7 +446,7 @@ switch $::tcl_platform(os) {
         }
 
         # always build python as release (otherwise numpy fails)
-        set PYTHON_BUILD_TYPE "Release"
+        set ::PYTHON_BUILD_TYPE "Release"
 
         if {$::GETBUILDTEST(bitness) == "64" || $::GENLIB(bitness) == "64"} {
             set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
