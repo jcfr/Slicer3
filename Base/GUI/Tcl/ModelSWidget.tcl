@@ -279,7 +279,6 @@ itcl::body ModelSWidget::processEvent { {caller ""} {event ""} } {
   set displayNode [$_modelNode GetDisplayNode]
   if { $displayNode != "" } {
     $this configure -visibility [$displayNode GetSliceIntersectionVisibility]
-    puts "$this configure -visibility [$displayNode GetSliceIntersectionVisibility]"
   }
 
   if { !$visibility } {
