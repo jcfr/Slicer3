@@ -92,7 +92,7 @@ else (Slicer_SOURCE_DIR)
                  @ONLY)
 
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/BRAINSCommonLibInstallConfig.cmake
-          DESTINATION lib/BRAINSCommonLib
+          DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/BRAINSCommonLib
           COMPONENT Development
           RENAME BRAINSCommonLibConfig.cmake)
 
