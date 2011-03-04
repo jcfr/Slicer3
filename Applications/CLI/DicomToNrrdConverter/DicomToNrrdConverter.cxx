@@ -1264,14 +1264,17 @@ int main(int argc, char* argv[])
             }
           DiffusionVectors.push_back(vect3d);
           }
-        valueArray.resize(0);
-        ExtractSiemensDiffusionInformation(tag, "B_value", valueArray);
-        bValues.push_back( valueArray[0] );
+        else
+          {
+          valueArray.resize(0);
+          ExtractSiemensDiffusionInformation(tag, "B_value", valueArray);
+          bValues.push_back( valueArray[0] );
+          }
         }
 
-      if (bValues[k] > max_bValue)
+      if (bValues[k/nStride] > max_bValue)
         {
-        max_bValue = bValues[k];
+        max_bValue = bValues[k/nStride];
         }
       }
 
