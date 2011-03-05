@@ -789,10 +789,16 @@ if { [BuildThis $::CLAPACK_TEST_FILE "CLAPACK"] == 1 } {
       file mkdir $Slicer3_LIB/CLAPACK-build
       cd $Slicer3_LIB/CLAPACK-build
 
+      set CMAKE_C_FLAGS_CLAPACK ""
+      if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
+        set CMAKE_C_FLAGS_CLAPACK "-fPIC"
+      }
+
       runcmd $::CMAKE \
         -G$GENERATOR \
         -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
         -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_C_FLAGS:STRING=$CMAKE_C_FLAGS_CLAPACK \
         -DBUILD_SHARED_LIBS:BOOL=OFF \
         -DCMAKE_SKIP_RPATH:BOOL=ON \
         -DCMAKE_BUILD_TYPE:STRING=$::PYTHON_BUILD_TYPE \
