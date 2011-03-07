@@ -33,78 +33,7 @@
 
 #include "vtkSlicerApplication.h"
 #include "vtkKWTkUtilities.h"
-
-extern "C" int Slicerbasegui_Init(Tcl_Interp *interp);
-extern "C" int Emsegment_Init(Tcl_Interp *interp);
-extern "C" int Vtkteem_Init(Tcl_Interp *interp);
-extern "C" int Vtkitk_Init(Tcl_Interp *interp);
-extern "C" int Slicerbaselogic_Init(Tcl_Interp *interp);
-extern "C" int Mrml_Init(Tcl_Interp *interp);
-extern "C" int Mrmlcli_Init(Tcl_Interp *interp); 
-extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
-
-#define tgVtkCreateMacro(name,type) \
-  name  = type::New(); \
-  name##Tcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp, name)); 
-
-#define tgVtkDefineMacro(name,type) \
-  type *name; \
-  std::string name##Tcl;\
-  tgVtkCreateMacro(name,type); 
-
-#define tgSetDataMacro(name,matrix)               \
- virtual int Set##name(const char *fileName) { \
-   if (strcmp(fileName,"None")) { \
-    tgVtkCreateMacro(this->name,vtkImageData); \
-    this->matrix = vtkMatrix4x4::New(); \
-    return tgReadVolume(fileName,this->name,this->matrix);    \
-   } \
-   this->name = NULL; \
-   this->matrix = NULL; \
-   std::cout << "Here" << std::endl; \
-   return 0; \
- }
-
-
-vtksys_stl::string tgGetSLICER_HOME(char** argv)  
-{ 
-  vtksys_stl::string slicerHome = "";
-  if ( !vtksys::SystemTools::GetEnv("Slicer3_HOME", slicerHome) )
-  {
-    std::string programPath;
-    std::string errorMessage;
-    if ( !vtksys::SystemTools::FindProgramPath(argv[0], programPath, errorMessage) ) return slicerHome;
-
-    slicerHome = vtksys::SystemTools::GetFilenamePath(programPath.c_str()) + "/../../../";
-  } 
-  return slicerHome;
-}
-
-int tgSetSLICER_HOME(char** argv)  
-{ 
-  vtksys_stl::string slicerHome = "";
-  if ( !vtksys::SystemTools::GetEnv("Slicer3_HOME", slicerHome) )
-  {
-    std::string programPath;
-    std::string errorMessage;
-
-    if ( !vtksys::SystemTools::FindProgramPath(argv[0], programPath, errorMessage) ) return 1;
-
-    std::string homeEnv = "Slicer3_HOME=";
-    homeEnv += vtksys::SystemTools::GetFilenamePath(programPath.c_str()) + "/../../../";
-   
-    cout << "Set environment: " << homeEnv.c_str() << endl;
-    vtkKWApplication::PutEnv(const_cast <char *> (homeEnv.c_str()));
-  } else {
-    cout << "Slicer3_HOME found: " << slicerHome << endl;
-  }
-  return 0;
-}
-
-
-// -============================
-// END OF TCL Specific Files 
-// -============================
+#include "EMSegmentHelper.h"
 
 
 
@@ -361,6 +290,7 @@ void GenerateEmptyMRMLScene(const char* filename)
   emLogic->Delete();  
 }
 
+/*
 std::string StripBackslashes(const std::string& s)
 {
   std::string outString;
@@ -377,6 +307,7 @@ std::string StripBackslashes(const std::string& s)
     }
   return outString;
 }
+*/
 
 
 class ProgressReporter

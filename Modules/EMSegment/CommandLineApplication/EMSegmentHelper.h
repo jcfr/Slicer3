@@ -35,7 +35,7 @@ extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Mrmlcli_Init(Tcl_Interp *interp); 
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
 extern "C" int Kwwidgets_Init(Tcl_Interp *interp);
-extern "C" int Atlascreatorcxxmodule_Init(Tcl_Interp *interp);
+//extern "C" int Atlascreatorcxxmodule_Init(Tcl_Interp *interp);
 
 #define tgVtkCreateMacro(name,type) \
   name  = type::New(); \
@@ -47,16 +47,16 @@ extern "C" int Atlascreatorcxxmodule_Init(Tcl_Interp *interp);
   tgVtkCreateMacro(name,type); 
 
 #define tgSetDataMacro(name,matrix)               \
- virtual int Set##name(const char *fileName) { \
-   if (strcmp(fileName,"None")) { \
+  virtual int Set##name(const char *fileName) { \
+  if (strcmp(fileName,"None")) { \
     tgVtkCreateMacro(this->name,vtkImageData); \
     this->matrix = vtkMatrix4x4::New(); \
     return tgReadVolume(fileName,this->name,this->matrix);    \
-   } \
-   this->name = NULL; \
-   this->matrix = NULL; \
-   std::cout << "Here" << std::endl; \
-   return 0; \
+  } \
+  this->name = NULL; \
+  this->matrix = NULL; \
+  std::cout << "Here" << std::endl; \
+  return 0; \
  }
 
 
@@ -97,7 +97,7 @@ int tgSetSLICER_HOME(char** argv)
 
 Tcl_Interp* CreateTclInterp(int argc, char** argv) 
 {
-   Tcl_Interp *interp = vtkKWApplication::InitializeTcl(argc, argv, &cout);
+    Tcl_Interp *interp = vtkKWApplication::InitializeTcl(argc, argv, &cout);
     if (!interp)
        {
         cout << "Error: InitializeTcl failed" << endl;
@@ -114,7 +114,7 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv)
      Vtkitk_Init(interp);
      Commandlinemodule_Init(interp);
      Kwwidgets_Init(interp);
-     Atlascreatorcxxmodule_Init(interp);
+     // Atlascreatorcxxmodule_Init(interp);
      return interp;
 }
 
