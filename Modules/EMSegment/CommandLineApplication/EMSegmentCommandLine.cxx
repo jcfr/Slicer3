@@ -14,6 +14,7 @@
 #include <vtksys/SystemTools.hxx>
 #include <stdexcept>
 
+#include "../../../Applications/GUI/Slicer3Helper.cxx"
 #include "vtkImageMathematics.h"
 #include "vtkImageAccumulate.h"
 #include "vtkITKArchetypeImageSeriesReader.h"
@@ -565,7 +566,7 @@ int main(int argc, char** argv)
     emsEvents->Delete();
 
     vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
-    emLogic->AddDataIOToScene(mrmlScene,app,appLogic,dataIOManagerLogic);
+    Slicer3Helper::AddDataIOToScene(mrmlScene,app,appLogic,dataIOManagerLogic);
 
     //
     // For the EMSegment logic, getting and setting of parameters in the
@@ -1193,7 +1194,7 @@ int main(int argc, char** argv)
   app = NULL;
 
   emLogic->SetAndObserveMRMLScene(NULL);
-  emLogic->RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
+  Slicer3Helper::RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
   emLogic->Delete();
  
   dataIOManagerLogic->Delete();

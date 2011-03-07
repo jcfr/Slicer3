@@ -135,8 +135,6 @@ public:
   // and write to file 
   virtual bool PackageAndWriteData(vtkSlicerApplication* app, vtkSlicerApplicationLogic *appLogic, const char* packageDirectoryName);
 
-  void AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplication *app, vtkSlicerApplicationLogic *appLogic,  vtkDataIOManagerLogic *dataIOManagerLogic);
-  void RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOManagerLogic *dataIOManagerLogic);
 
 private:
   vtkEMSegmentLogic();

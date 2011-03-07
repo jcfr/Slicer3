@@ -9,6 +9,7 @@
 #include "vtkSlicerColorLogic.h"
 #include "vtkEMSegmentLogic.h"
 #include "vtkKWTkUtilities.h"
+#include "../../../Applications/GUI/Slicer3Helper.cxx"
 
 extern "C" int Slicerbasegui_Init(Tcl_Interp *interp);
 extern "C" int Slicerbaselogic_Init(Tcl_Interp *interp);
@@ -79,7 +80,7 @@ int main(int argc, char** argv)
      std::string appLogicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp, appLogic));;
      app->Script ("namespace eval slicer3 set ApplicationLogic %s", appLogicTcl.c_str());
  
-  vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New ( );
+    vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New ( );
     colorLogic->SetMRMLScene(mrmlScene);
     colorLogic->AddDefaultColorNodes();
     colorLogic->SetMRMLScene(NULL);
@@ -97,7 +98,7 @@ int main(int argc, char** argv)
     emsEvents->Delete();
 
     vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
-    emLogic->AddDataIOToScene(mrmlScene,app,appLogic,dataIOManagerLogic);
+    Slicer3Helper::AddDataIOToScene(mrmlScene,app,appLogic,dataIOManagerLogic);
     vtkEMSegmentMRMLManager* emMRMLManager = emLogic->GetMRMLManager();
 
     // =======================================================================
@@ -195,7 +196,7 @@ int main(int argc, char** argv)
   app = NULL;
 
   emLogic->SetAndObserveMRMLScene(NULL);
-  emLogic->RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
+  Slicer3Helper::RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
   emLogic->Delete();
 
   dataIOManagerLogic->Delete();

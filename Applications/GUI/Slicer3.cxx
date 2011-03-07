@@ -89,6 +89,9 @@
 #include "vtkSlicerROILogic.h"
 #include "vtkSlicerROIGUI.h"
 
+
+#include "Slicer3Helper.cxx"
+
 //---------------------------------------------------------------------------
 // Slicer3_USE_PYTHON
 //
@@ -1011,74 +1014,9 @@ int Slicer3_main(int& argc, char *argv[])
   slicerApp->Script ("update");
   slicerApp->SaveUserInterfaceGeometryOn();
 
-  // Create Remote I/O and Cache handling mechanisms
-  // and configure them using Application registry values
-  vtkCacheManager *cacheManager = vtkCacheManager::New();
-  cacheManager->SetRemoteCacheLimit ( slicerApp->GetRemoteCacheLimit() );
-  cacheManager->SetRemoteCacheFreeBufferSize ( slicerApp->GetRemoteCacheFreeBufferSize() );
-  cacheManager->SetEnableForceRedownload ( slicerApp->GetEnableForceRedownload() );
-  cacheManager->SetMRMLScene ( scene );
-  //cacheManager->SetEnableRemoteCacheOverwriting ( slicerApp->GetEnableRemoteCacheOverwriting() );
-  //--- MRML collection of data transfers with access to cache manager
-  vtkDataIOManager *dataIOManager = vtkDataIOManager::New();
-  dataIOManager->SetCacheManager ( cacheManager );
-  dataIOManager->SetEnableAsynchronousIO ( slicerApp->GetEnableAsynchronousIO () );
-  //--- Data transfer logic
-  vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
-  dataIOManagerLogic->SetMRMLScene ( scene );
-  dataIOManagerLogic->SetApplicationLogic ( appLogic );
-  dataIOManagerLogic->SetAndObserveDataIOManager ( dataIOManager );
 
-  scene->SetDataIOManager ( dataIOManager );
-  scene->SetCacheManager( cacheManager );
-  vtkCollection *URIHandlerCollection = vtkCollection::New();
-  // add some new handlers
-
-  scene->SetURIHandlerCollection( URIHandlerCollection );
-#if !defined(REMOTEIO_DEBUG)
-  // register all existing uri handlers (add to collection)
-  vtkHTTPHandler *httpHandler = vtkHTTPHandler::New();
-  httpHandler->SetPrefix ( "http://" );
-  httpHandler->SetName ( "HTTPHandler");
-  scene->AddURIHandler(httpHandler);
-  httpHandler->Delete();
-
-  vtkSRBHandler *srbHandler = vtkSRBHandler::New();
-  srbHandler->SetPrefix ( "srb://" );
-  srbHandler->SetName ( "SRBHandler" );
-  scene->AddURIHandler(srbHandler);
-  srbHandler->Delete();
-
-  vtkXNATHandler *xnatHandler = vtkXNATHandler::New();
-  vtkSlicerXNATPermissionPrompterWidget *xnatPermissionPrompter = vtkSlicerXNATPermissionPrompterWidget::New();
-  xnatPermissionPrompter->SetApplication ( slicerApp );
-  xnatPermissionPrompter->SetPromptTitle ("Permission Prompt");
-  xnatHandler->SetPrefix ( "xnat://" );
-  xnatHandler->SetName ( "XNATHandler" );
-  xnatHandler->SetRequiresPermission (1);
-  xnatHandler->SetPermissionPrompter ( xnatPermissionPrompter );
-  scene->AddURIHandler(xnatHandler);
-  xnatPermissionPrompter->Delete();
-  xnatHandler->Delete();
-
-  vtkHIDHandler *hidHandler = vtkHIDHandler::New();
-  hidHandler->SetPrefix ( "hid://" );
-  hidHandler->SetName ( "HIDHandler" );
-  scene->AddURIHandler( hidHandler);
-  hidHandler->Delete();
-
-  vtkXNDHandler *xndHandler = vtkXNDHandler::New();
-  xndHandler->SetPrefix ( "xnd://" );
-  xndHandler->SetName ( "XNDHandler" );
-  scene->AddURIHandler( xndHandler);
-  xndHandler->Delete();
-
-  //add something to hold user tags
-  vtkTagTable *userTagTable = vtkTagTable::New();
-  scene->SetUserTagTable( userTagTable );
-  userTagTable->Delete();
-
-#endif
+  vtkDataIOManagerLogic* dataIOManagerLogic = vtkDataIOManagerLogic::New();
+  Slicer3Helper::AddDataIOToScene(scene,slicerApp,appLogic,dataIOManagerLogic);
 
 #if !defined(SLICESMODULE_DEBUG)
   vtkSlicerSlicesGUI *slicesGUI = vtkSlicerSlicesGUI::New ();
@@ -2336,37 +2274,9 @@ int Slicer3_main(int& argc, char *argv[])
   remoteIOGUI->Delete();
 #endif
 
-  //--- Remote data handling mechanisms
-  if ( dataIOManagerLogic != NULL )
-    {
-    dataIOManagerLogic->SetAndObserveDataIOManager ( NULL );
-    dataIOManagerLogic->SetMRMLScene ( NULL );
-    dataIOManagerLogic->Delete();
-    dataIOManagerLogic = NULL;
-    }
-  if ( dataIOManager != NULL )
-    {
-    scene->SetDataIOManager(NULL);
-    dataIOManager->SetCacheManager(NULL);
-    dataIOManager->Delete();
-    dataIOManager = NULL;
-    }
-  if ( cacheManager != NULL )
-    {
-    scene->SetCacheManager(NULL);
-    cacheManager->SetMRMLScene ( NULL );
-    cacheManager->Delete();
-    cacheManager = NULL;
-    }
-  if (URIHandlerCollection != NULL )
-    {
-    scene->SetURIHandlerCollection(NULL);
-    URIHandlerCollection->Delete();
-    URIHandlerCollection = NULL;
-    }
-  scene->SetUserTagTable( NULL );
-
-
+  Slicer3Helper::RemoveDataIOFromScene(scene,dataIOManagerLogic);
+  dataIOManagerLogic->Delete();
+  dataIOManagerLogic = NULL;
 
   //--- delete gui first, removing Refs to Logic and MRML
 
