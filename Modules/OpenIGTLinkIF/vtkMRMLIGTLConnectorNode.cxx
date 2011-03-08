@@ -785,6 +785,12 @@ void vtkMRMLIGTLConnectorNode::ImportDataFromCircularBuffer()
       {
       continue;
       }
+
+    if (strncmp("OpenIGTLink_MESSAGE_", (*nameIter).c_str(), 20) == 0)
+      {
+      buffer->SetDeviceName("OpenIGTLink");
+      }
+    
     vtkIGTLToMRMLBase* converter = conIter->second;
 
     vtkMRMLScene* scene = this->GetScene();
@@ -860,7 +866,8 @@ void vtkMRMLIGTLConnectorNode::ImportDataFromCircularBuffer()
             converter->IGTLToMRML(buffer, node);
 
             // Save OpenIGTLink time stamp
-            igtl::TimeStamp::Pointer ts;
+            // TODO: avoid calling New() every time.
+            igtl::TimeStamp::Pointer ts = igtl::TimeStamp::New();
             buffer->GetTimeStamp(ts);
             nodeInfo->second = ts->GetSecond();
             nodeInfo->nanosecond = ts->GetNanosecond();
