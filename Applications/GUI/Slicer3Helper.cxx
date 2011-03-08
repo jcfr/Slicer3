@@ -6,55 +6,48 @@ void Slicer3Helper::AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplicati
 {
   if (!app || !appLogic)
     {
-      // todo vtkWarningMacro("Parameter of DataIO are not set according to app or appLogic bc one of them is NULL - this might cause issues when downloading data form the web!");
+      cout << "Parameter of DataIO are not set according to app or appLogic bc one of them is NULL - this might cause issues when downloading data form the web!" << endl;
     }
+
   // Create Remote I/O and Cache handling mechanisms
   // and configure them using Application registry values
-  {
-    vtkCacheManager *cacheManager = vtkCacheManager::New();
-    
-    if (app) 
-      {
-        cacheManager->SetRemoteCacheLimit ( app->GetRemoteCacheLimit() );
-        cacheManager->SetRemoteCacheFreeBufferSize ( app->GetRemoteCacheFreeBufferSize() );
-        cacheManager->SetEnableForceRedownload ( app->GetEnableForceRedownload() );
-        cacheManager->SetRemoteCacheDirectory( app->GetRemoteCacheDirectory() );
-      }
-    cacheManager->SetMRMLScene ( mrmlScene );
-    mrmlScene->SetCacheManager( cacheManager );
-    cacheManager->Delete();
-  }
+  vtkCacheManager *cacheManager = vtkCacheManager::New();
+  if (app)
+    {
+      cacheManager->SetRemoteCacheLimit ( app->GetRemoteCacheLimit() );
+      cacheManager->SetRemoteCacheFreeBufferSize ( app->GetRemoteCacheFreeBufferSize() );
+      cacheManager->SetEnableForceRedownload ( app->GetEnableForceRedownload() );
+      //cacheManager->SetRemoteCacheDirectory( app->GetRemoteCacheDirectory() );
+    }
+  cacheManager->SetMRMLScene ( mrmlScene );
+
 
   //cacheManager->SetEnableRemoteCacheOverwriting ( app->GetEnableRemoteCacheOverwriting() );
   //--- MRML collection of data transfers with access to cache manager
-  {
-    vtkDataIOManager *dataIOManager = vtkDataIOManager::New();
-    dataIOManager->SetCacheManager ( mrmlScene->GetCacheManager() );
-    if (app)
-      {
-        dataIOManager->SetEnableAsynchronousIO ( app->GetEnableAsynchronousIO () );
-      }
-    mrmlScene->SetDataIOManager ( dataIOManager );
-    dataIOManager->Delete();
-  }
+  vtkDataIOManager *dataIOManager = vtkDataIOManager::New();
+  dataIOManager->SetCacheManager ( mrmlScene->GetCacheManager() );
+  if (app)
+    {
+      dataIOManager->SetEnableAsynchronousIO ( app->GetEnableAsynchronousIO () );
+    }
+
 
   //--- Data transfer logic
-  {
-    // vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
-    dataIOManagerLogic->SetMRMLScene ( mrmlScene );
-    if (appLogic)
-      {
-        dataIOManagerLogic->SetApplicationLogic ( appLogic );
-      }
-    dataIOManagerLogic->SetAndObserveDataIOManager ( mrmlScene->GetDataIOManager() );
-  }
+  // vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
+  dataIOManagerLogic->SetMRMLScene ( mrmlScene );
+  if (appLogic)
+    {
+      dataIOManagerLogic->SetApplicationLogic ( appLogic );
+    }
+  dataIOManagerLogic->SetAndObserveDataIOManager ( mrmlScene->GetDataIOManager() );
 
-  {
-    vtkCollection *URIHandlerCollection = vtkCollection::New();
-    // add some new handlers
-    mrmlScene->SetURIHandlerCollection( URIHandlerCollection );
-    URIHandlerCollection->Delete();   
-  }
+  mrmlScene->SetDataIOManager ( dataIOManager );
+  mrmlScene->SetCacheManager ( cacheManager );
+
+
+  vtkCollection *URIHandlerCollection = vtkCollection::New();
+  // add some new handlers
+  mrmlScene->SetURIHandlerCollection( URIHandlerCollection );
 
 #if !defined(REMOTEIO_DEBUG)
   // register all existing uri handlers (add to collection)
@@ -112,19 +105,29 @@ void Slicer3Helper::RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOMana
       dataIOManagerLogic->SetMRMLScene ( NULL );
     }
 
-  if (mrmlScene->GetDataIOManager())
+  vtkDataIOManager* dataIOManager = mrmlScene->GetDataIOManager();
+  if ( dataIOManager != NULL )
     {
-      mrmlScene->GetDataIOManager()->SetCacheManager(NULL);
       mrmlScene->SetDataIOManager(NULL);
+      dataIOManager->SetCacheManager(NULL);
+      dataIOManager->Delete();
     }
 
-  if ( mrmlScene->GetCacheManager())
+  vtkCacheManager* cacheManager = mrmlScene->GetCacheManager();
+  if ( cacheManager != NULL )
     {
-      mrmlScene->GetCacheManager()->SetMRMLScene ( NULL );
       mrmlScene->SetCacheManager(NULL);
+      cacheManager->SetMRMLScene ( NULL );
+      cacheManager->Delete();
     }
 
-  mrmlScene->SetURIHandlerCollection(NULL);
-  mrmlScene->SetUserTagTable( NULL );
-}
+  vtkCollection* URIHandlerCollection = mrmlScene->GetURIHandlerCollection();
+  if (URIHandlerCollection != NULL )
+    {
+      mrmlScene->SetURIHandlerCollection(NULL);
+      URIHandlerCollection->Delete();
+    }
 
+  mrmlScene->SetUserTagTable( NULL );
+
+}
