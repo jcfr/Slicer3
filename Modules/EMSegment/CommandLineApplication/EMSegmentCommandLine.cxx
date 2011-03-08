@@ -290,26 +290,6 @@ void GenerateEmptyMRMLScene(const char* filename)
   emLogic->Delete();  
 }
 
-/*
-std::string StripBackslashes(const std::string& s)
-{
-  std::string outString;
-  for (unsigned int i = 0; i < s.size(); ++i)
-    {
-    if (s[i] != '\\')
-      {
-      outString.push_back(s[i]);
-      }
-    else if (i > 0 && s[i-1] == '\\')
-      {
-      outString.push_back(s[i]);
-      }
-    }
-  return outString;
-}
-*/
-
-
 class ProgressReporter
 {
 public:

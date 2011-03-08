@@ -118,6 +118,25 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv)
      return interp;
 }
 
+#ifdef WIN32
+std::string StripBackslashes(const std::string& s)
+{
+  std::string outString;
+  for (unsigned int i = 0; i < s.size(); ++i)
+    {
+    if (s[i] != '\\')
+      {
+      outString.push_back(s[i]);
+      }
+    else if (i > 0 && s[i-1] == '\\')
+      {
+      outString.push_back(s[i]);
+      }
+    }
+  return outString;
+}
+#endif
+
 vtkSlicerApplicationLogic* InitializeApplication(Tcl_Interp *interp, vtkSlicerApplication *app, int argc, char** argv) 
 {
       // SLICER_HOME
