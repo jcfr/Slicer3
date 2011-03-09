@@ -919,7 +919,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return ""
             }       
 
-            #Threshold --threshold 1 --lower 0 --upper 255 --outsidevalue 1 --thresholdtype Above slicer:0#vtkMRMLScalarVolumeNode8 slicer:0x0#vtkMRMLScalarVolumeNode5 
+            #Threshold --threshold 0 --lower 0 --upper 255 --outsidevalue 1 --thresholdtype Above InputImage OutputImage
             #TODO: get atlas template file for this input
             set non_skull_stripped_atlas  /home/domibel/Desktop/data/spl_50_cases_with_manual_segmentation/ForSBIA/case2/spgr/case2norm.nrrd
             set atlas_mask /home/domibel/Desktop/data/spl_50_cases_with_manual_segmentation/ForSBIA/case2/spgr-strip/case2norm_mask.nrrd
@@ -1598,15 +1598,16 @@ namespace eval EMSegmenterPreProcessingTcl {
             set outNonLinearTransformDirName [CreateDirName "xform"]
             set outTransformDirName $outNonLinearTransformDirName
 
-
+            set CMD "$CMD --verbose"
+            set CMD "$CMD --fast"
             if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
-                set CMD "$CMD --fast --delta-f-threshold 1"
+                set CMD "$CMD --delta-f-threshold 1"
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
-                set CMD "$CMD --fast --grid-spacing 40 --refine 1"
+                set CMD "$CMD --grid-spacing 40 --refine 1"
                 set CMD "$CMD --energy-weight 5e-2"
                 set CMD "$CMD --accuracy 1 --coarsest 6"
             } elseif { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
-                set CMD "$CMD --verbose --fast --grid-spacing 40 --refine 4"
+                set CMD "$CMD --grid-spacing 40 --refine 4"
                 set CMD "$CMD --energy-weight 5e-2"
                 set CMD "$CMD --exploration 16 --accuracy 0.1 --coarsest 6"
             } else {
