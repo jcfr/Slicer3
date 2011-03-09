@@ -25,7 +25,7 @@ void Slicer3Helper::AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplicati
   //cacheManager->SetEnableRemoteCacheOverwriting ( app->GetEnableRemoteCacheOverwriting() );
   //--- MRML collection of data transfers with access to cache manager
   vtkDataIOManager *dataIOManager = vtkDataIOManager::New();
-  dataIOManager->SetCacheManager ( mrmlScene->GetCacheManager() );
+  dataIOManager->SetCacheManager ( cacheManager );
   if (app)
     {
       dataIOManager->SetEnableAsynchronousIO ( app->GetEnableAsynchronousIO () );
@@ -39,7 +39,7 @@ void Slicer3Helper::AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplicati
     {
       dataIOManagerLogic->SetApplicationLogic ( appLogic );
     }
-  dataIOManagerLogic->SetAndObserveDataIOManager ( mrmlScene->GetDataIOManager() );
+  dataIOManagerLogic->SetAndObserveDataIOManager ( dataIOManager );
 
   mrmlScene->SetDataIOManager ( dataIOManager );
   mrmlScene->SetCacheManager ( cacheManager );

@@ -2276,7 +2276,6 @@ int Slicer3_main(int& argc, char *argv[])
 
   Slicer3Helper::RemoveDataIOFromScene(scene,dataIOManagerLogic);
   dataIOManagerLogic->Delete();
-  dataIOManagerLogic = NULL;
 
   //--- delete gui first, removing Refs to Logic and MRML
 
