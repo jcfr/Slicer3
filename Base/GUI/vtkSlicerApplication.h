@@ -57,6 +57,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
     static vtkSlicerApplication* GetInstance(const char* tmp_dir, const char* config_dir);
 
     ///
+    /// This method is used by the constructors
+    void Init();
+
+    ///
     /// Do one tcl event and enter the event loop, allowing the application
     /// interface to actually run.
     /// - override the virtual method from vtkKWApplication to add event broker
