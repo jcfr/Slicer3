@@ -60,7 +60,7 @@ class AtlasCreatorHelper(object):
         
         if self.__debugMode:
 
-            print "[AtlasCreator " + strftime("%H:%M:%S") + "] DEBUG: " + str(message)
+            print "[AtlasCreator " + strftime("%m/%d/%Y %H:%M:%S") + "] DEBUG: " + str(message)
 
             # flush, to always show the output
             try:
@@ -86,7 +86,7 @@ class AtlasCreatorHelper(object):
 
         if infoMode:
 
-            print "[AtlasCreator " + strftime("%H:%M:%S") + "] " + str(message)
+            print "[AtlasCreator " + strftime("%m/%d/%Y %H:%M:%S") + "] " + str(message)
 
             # flush, to always show the output
             try:
@@ -450,7 +450,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def GetCMTKRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformDirectory,outputImageFilePath,onlyAffineReg,multiThreading,backgroundValue,backgroundValueTemplate):
+    def GetCMTKAffineRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformDirectory,outputImageFilePath,backgroundValue,backgroundValueTemplate):
         '''
             Get the command to Register an image to a template using CMTK
             
@@ -462,22 +462,55 @@ class AtlasCreatorHelper(object):
                 the file path to the directory for transformation output
             outputImageFilePath
                 the file path to the aligned image output
-            onlyAffineReg
-                if true, just use affine registration and no BSpline
-            multiThreading
-                if true, use multi threading
             backgroundValue
                 the backgroundValue of the moving image
             backgroundValueTemplae
                 the backgroundValue of the template                
                 
             Returns
-                the command to Register an image
-        '''        
+                the command to Register an image using CMTK in Affine mode
+        '''
     
         
         registrationCommand = "registration"
         registrationCommand += " --initxlate --exploration 8.0 --dofs 6 --dofs 9 --accuracy 0.5"
+        registrationCommand += " -o " + os.path.normpath(outputTransformDirectory)
+        registrationCommand += " --pad-ref " + str(backgroundValueTemplate)
+        registrationCommand += " --pad-flt " + str(backgroundValue)
+        registrationCommand += " --write-reformatted " + os.path.normpath(outputImageFilePath)
+        registrationCommand += " " + os.path.normpath(templateFilePath)
+        registrationCommand += " " + os.path.normpath(movingImageFilePath)
+
+        return str(registrationCommand)
+
+
+
+    '''=========================================================================================='''    
+    def GetCMTKNonRigidRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformDirectory,outputImageFilePath,backgroundValue,backgroundValueTemplate):
+        '''
+            Get the command to Register an image to a template using CMTK
+            
+            templateFilePath
+                the file path to the template (target) image
+            movingImageFilePath
+                the file path to the moving image
+            outputTransformDirectory
+                the file path to the directory for transformation output, here it will be also used as input for the affine transformation
+            outputImageFilePath
+                the file path to the aligned image output
+            backgroundValue
+                the backgroundValue of the moving image
+            backgroundValueTemplae
+                the backgroundValue of the template                
+                
+            Returns
+                the command to Register an image using CMTK in NonRigid mode
+        '''        
+    
+        
+        registrationCommand = "warp"
+        registrationCommand += " --fast --grid-spacing 40 --refine 1 --energy-weight 5e-2 --accuracy 1 --coarsest 6"
+        registrationCommand += " --initial " + os.path.normpath(outputTransformDirectory)
         registrationCommand += " -o " + os.path.normpath(outputTransformDirectory)
         registrationCommand += " --pad-ref " + str(backgroundValueTemplate)
         registrationCommand += " --pad-flt " + str(backgroundValue)
@@ -722,3 +755,21 @@ class AtlasCreatorHelper(object):
         # CMTK seems to be available
         return cmtkDir
     
+    
+    
+    '''=========================================================================================='''
+    def CreateRegistrationScript(self,commands,notify):
+        
+        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
+        
+        with open(os.path.join(pathToAtlasCreator,'template.sh'), 'r') as f:
+            
+            content = f.read()
+            
+        content = content.replace('############{$COMMANDS}############',commands,1)
+        content = content.replace('#############{$NOTIFY}#############',notify,1)
+        
+        return content
+        
+        
+

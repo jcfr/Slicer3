@@ -34,8 +34,14 @@ if(Slicer3_USE_PYTHON)
       COPYONLY)
   endforeach(file)
 
+  # copy template.sh
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/template.sh
+    ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/template.sh
+    COPYONLY)
+
   install(
-    FILES ${PYTHONFILES}
+    FILES ${PYTHONFILES} ${CMAKE_CURRENT_SOURCE_DIR}/template.sh
     DESTINATION ${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}
     )
 

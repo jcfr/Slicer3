@@ -3,11 +3,13 @@ import os
 import glob
 import time
 import tempfile
+import shutil
 
 from AtlasCreatorConfiguration import AtlasCreatorConfiguration
 from AtlasCreatorGridConfiguration import AtlasCreatorGridConfiguration
 from AtlasCreatorSkipRegistrationConfiguration import AtlasCreatorSkipRegistrationConfiguration
 from AtlasCreatorHelper import AtlasCreatorHelper
+from Carbon.Sound import scheduledSoundCmd
 
 class AtlasCreatorLogic(object):
     '''
@@ -125,15 +127,18 @@ class AtlasCreatorLogic(object):
         # at this point, we have a valid configuration, let's print it
         self.Helper().info("Configuration for Atlas Creator:\n" + str(configuration.GetConfigurationAsString()))
         
-        # check if we want to save the transforms in a directory other than the temporary directory
-        if configuration.GetSaveTransforms():
-            # save the transforms, so use the custom transformDirectory
-            transformDirectory = configuration.GetOutputDirectory()
-        else:
-            # do not save the transforms, so use the temporary directory
-            uniqueTempDir = tempfile.mkdtemp("AtlasCreatorTransforms",self.Helper().GetSlicerTemporaryDirectory()) + os.sep
-            transformDirectory = uniqueTempDir      
-                     
+        # create the output directories     
+        transformDirectory = configuration.GetOutputDirectory() + "transforms" + os.sep
+        os.mkdir(transformDirectory)
+        registeredDirectory = configuration.GetOutputDirectory() + "registered" + os.sep
+        os.mkdir(registeredDirectory)
+        resampledDirectory = configuration.GetOutputDirectory() + "resampled" + os.sep
+        os.mkdir(resampledDirectory)
+        scriptsDirectory = configuration.GetOutputDirectory() + "scripts" + os.sep
+        os.mkdir(scriptsDirectory)
+        notifyDirectory =  configuration.GetOutputDirectory() + "notify" + os.sep
+        os.mkdir(notifyDirectory)
+             
         # check if we register or if we use existing transforms
         if not skipRegistrationMode:
             # we register to get fresh transforms!!
@@ -145,17 +150,21 @@ class AtlasCreatorLogic(object):
             #
             self.Helper().info("Entering Registration Stage..")
             
-            # check if it is cluster mode, if yes change the launcher for the registration
-            slicerLaunchPrefixForRegistration = self.Helper().GetSlicerLaunchPrefix(useCMTK)
-            multiThreading = True
+            multiThreading = True # enable multiThreading by default
+            sleepValue = 5 # seconds to wait between each check on completed jobs
+            schedulerCommand = "" # assume no scheduler by default
             
             if clusterMode:
-                # if this is a cluster mode, add the schedulerCommand
+                # if this is a cluster mode, add the schedulerCommand and disable multiThreading
+                # also, raise the seconds to wait between each check on completed jobs to 60
                 self.Helper().info("Found cluster configuration..")
-                self.Helper().debug("Scheduler Command: " + str(configuration.GetSchedulerCommand()))
-                slicerLaunchPrefixForRegistration = configuration.GetSchedulerCommand() + " " + str(slicerLaunchPrefixForRegistration)
-                # deactivate multiThreading in a cluster environment
+                schedulerCommand = configuration.GetSchedulerCommand()
+                self.Helper().debug("Scheduler Command: " + str(schedulerCommand))
                 multiThreading = False
+                sleepValue = 60
+                    
+            # create a temporary meanImage which might get used
+            meanImageFilePath = tempfile.mkstemp(".nrrd", "acTmpMeanImage", configuration.GetOutputDirectory())[1]                   
                     
             #
             # FIXED REGISTRATION
@@ -167,13 +176,17 @@ class AtlasCreatorLogic(object):
                 
                 self.Helper().info("Fixed registration against " + str(defaultCase))
                 
-                alignedImages = self.Register(slicerLaunchPrefixForRegistration,
+                alignedImages = self.Register(schedulerCommand,
                                               configuration.GetOriginalImagesFilePathList(),
                                               defaultCase,
                                               transformDirectory,
+                                              registeredDirectory,
+                                              scriptsDirectory,
+                                              notifyDirectory,
                                               configuration.GetRegistrationType(),
                                               multiThreading,
-                                              useCMTK)
+                                              useCMTK,
+                                              sleepValue)
                 
             #
             # DYNAMIC REGISTRATION
@@ -189,6 +202,15 @@ class AtlasCreatorLogic(object):
                     
                     self.Helper().info("Starting iteration " + str(i + 1) + "...")
                     
+                    # create directories for the current registration iteration
+                    iterationString = "iteration" + str(i + 1)
+                    uniqueRegisteredDirectory = registeredDirectory + iterationString + os.sep
+                    os.mkdir(uniqueRegisteredDirectory)
+                    uniqueScriptsDirectory = scriptsDirectory + iterationString + os.sep
+                    os.mkdir(uniqueScriptsDirectory)
+                    uniqueNotifyDirectory = notifyDirectory + iterationString + os.sep
+                    os.mkdir(uniqueNotifyDirectory)
+                    
                     # we generate the current meanImage
                     meanVolumeNode = slicer.vtkMRMLScalarVolumeNode()
                     if not self.__dryRun:
@@ -198,28 +220,31 @@ class AtlasCreatorLogic(object):
                                 # do not delete the original images
                                 self.Helper().DeleteFilesAndDirectory(alignedImages)
                             
-                    meanImageFilePath = self.Helper().GetSlicerTemporaryDirectory() + "tmpMeanImage.nrrd"
                     if not self.__dryRun:
                         self.Helper().SaveVolume(meanImageFilePath, meanVolumeNode)
                     
                     # we register the original images against the meanImage
                     # we then set the alignedImages and start over..
-                    alignedImages = self.Register(slicerLaunchPrefixForRegistration,
+                    alignedImages = self.Register(schedulerCommand,
                                                   configuration.GetOriginalImagesFilePathList(),
                                                   meanImageFilePath,
                                                   transformDirectory,
+                                                  uniqueRegisteredDirectory,
+                                                  uniqueScriptsDirectory,
+                                                  uniqueNotifyDirectory,                                                  
                                                   configuration.GetRegistrationType(),
                                                   multiThreading,
-                                                  useCMTK) 
+                                                  useCMTK,
+                                                  sleepValue) 
     
                 # now we point the defaultCase to the meanImageFilePath
                 defaultCase = meanImageFilePath
                 
                 self.Helper().info("End of Dynamic registration..")
             
-            # now delete the content in the temporary directory, if selected
+            # now wipe the temporary registered content, if selected
             if configuration.GetDeleteAlignedImages():
-                self.Helper().DeleteFilesAndDirectory(alignedImages)
+                shutil.rmtree(registeredDirectory,True,None)
                 
             # we will save the template
             # this will ensure that we can later 
@@ -231,6 +256,13 @@ class AtlasCreatorLogic(object):
             self.Helper().SaveVolume(str(pathToTemplate), v)
             # now remove the node from the mrmlscene
             slicer.MRMLScene.RemoveNode(v)
+            
+            # update reference to defaultCase to new location, only if templateType is dynamic
+            if configuration.GetTemplateType() == "dynamic":
+                defaultCase = pathToTemplate
+            
+            # now delete the temporary mean template
+            os.remove(meanImageFilePath)
                     
         else:
             # we are skipping the registration
@@ -247,17 +279,16 @@ class AtlasCreatorLogic(object):
         # RESAMPLING STAGE
         #
         #
-        self.Helper().info("Entering Resampling Stage..")
-                
-        # create a unique temp directory in Slicer's temp directory
-        uniqueTempDir = tempfile.mkdtemp("AtlasCreatorResampled",self.Helper().GetSlicerTemporaryDirectory()) + os.sep                
+        self.Helper().info("Entering Resampling Stage..")          
                 
         self.Resample(self.Helper().GetSlicerLaunchPrefix(useCMTK),
                       configuration.GetSegmentationsFilePathList(),
                       defaultCase,
                       transformDirectory,
-                      uniqueTempDir,
+                      resampledDirectory,
                       useCMTK)
+            
+        resampledSegmentationsFilePathList = self.Helper().ConvertDirectoryToList(resampledDirectory)
             
         #
         #
@@ -265,9 +296,6 @@ class AtlasCreatorLogic(object):
         #
         #
         self.Helper().info("Entering Combine-To-Atlas Stage..")
-        
-        # convert the uniqueTempDir to a FilePathList
-        resampledSegmentationsFilePathList = self.Helper().ConvertDirectoryToList(uniqueTempDir)
                     
         self.CombineToAtlas(resampledSegmentationsFilePathList,
                             configuration.GetLabelsList(),
@@ -276,13 +304,18 @@ class AtlasCreatorLogic(object):
                             configuration.GetOutputDirectory())
         
         # cleanup!!
+        # delete the scripts and notify directories
+        if not self.__dryRun:
+            shutil.rmtree(scriptsDirectory, True, None)
+            shutil.rmtree(notifyDirectory, True, None)
+            
         # now delete the resampled segmentations
-        if configuration.GetDeleteAlignedSegmentations() and not self.__dryRun:
-            self.Helper().DeleteFilesAndDirectory(resampledSegmentationsFilePathList)
+        if configuration.GetDeleteAlignedSegmentations():
+            shutil.rmtree(resampledDirectory, True, None)
         
         # delete the transforms, if we did not want to save them
-        if not configuration.GetSaveTransforms() and not self.__dryRun:
-            self.Helper().DeleteFilesAndDirectory(transformDirectory,True) # wipe'em!!
+        if not configuration.GetSaveTransforms() and not skipRegistrationMode:
+            shutil.rmtree(transformDirectory, True, None)
             
         
         self.Helper().info("--------------------------------------------------------------------------------")        
@@ -345,18 +378,24 @@ class AtlasCreatorLogic(object):
 
     
     '''=========================================================================================='''
-    def Register(self, launchCommandPrefix, filePathsList, templateFilePath, outputDirectory, registrationType, multiThreading, useCMTK=False):
+    def Register(self, schedulerCommand, filePathsList, templateFilePath, outputTransformsDirectory, outputAlignedDirectory, outputScriptsDirectory, outputNotifyDirectory, registrationType, multiThreading, useCMTK=False, sleepValue=5):
         '''
             Register a set of images, get a transformation and save it
             
-            launchCommandPrefix
-                prefix for the actual registration command
+            schedulerCommand
+                the schedulerCommand if used else ""
             filePathsList
                 list of existing filepaths to images
             templateFilePath
                 file path to the template
-            outputDirectory
+            outputTransformsDirectory
                 directory to save the generated transformation
+            outputAlignedDirectory
+                directory to save the aligned images
+            outputScriptsDirectory
+                directory to use for generated scripts
+            outputNotifyDirectory
+                directory to use for notification files
             registrationType
                 type of registration as String, could be "affine" and "non-rigid"
                 if the value is invalid, affine registration is assumed
@@ -364,6 +403,8 @@ class AtlasCreatorLogic(object):
                 if TRUE, use multiThreading
             useCMTK
                 if TRUE, use CMTK instead of BRAINSFit
+            sleepValue
+                seconds to wait between each check on completed jobs
                 
             Returns
                 A list of filepaths to the aligned Images or None depending on success
@@ -378,9 +419,21 @@ class AtlasCreatorLogic(object):
             self.Helper().info("Empty templateFilePath for Register() command. Aborting..")
             return None
         
-        if not outputDirectory:
-            self.Helper().info("Empty outputDirectory for Register() command. Aborting..")
+        if not outputTransformsDirectory:
+            self.Helper().info("Empty outputTransformsDirectory for Register() command. Aborting..")
             return None
+        
+        if not outputAlignedDirectory:
+            self.Helper().info("Empty outputAlignedDirectory for Register() command. Aborting..")
+            return None        
+
+        if not outputScriptsDirectory:
+            self.Helper().info("Empty outputScriptsDirectory for Register() command. Aborting..")
+            return None   
+
+        if not outputNotifyDirectory:
+            self.Helper().info("Empty outputNotifyDirectory for Register() command. Aborting..")
+            return None   
         
         if registrationType == "Affine":
             onlyAffineReg = 1
@@ -392,46 +445,69 @@ class AtlasCreatorLogic(object):
             
         outputAlignedImages = []
             
-            
-        # create a unique temp directory in Slicer's temp directory
-        uniqueTempDir = tempfile.mkdtemp("AtlasCreator",self.Helper().GetSlicerTemporaryDirectory()) + os.sep
-            
+        # get the launch command for Slicer3
+        launchCommandPrefix = self.Helper().GetSlicerLaunchPrefix(useCMTK)
+        
+        uniqueID = 0
+        
         # loop through filePathsList and start registration command
         for movingImageFilePath in filePathsList:
-            
+        
             # do not register the same file
             if movingImageFilePath == templateFilePath:
                 continue
+
+            # increase the uniqueID
+            uniqueID = uniqueID + 1
             
             # guess the background level of the current image
             backgroundGuess = self.Helper().GuessBackgroundValue(movingImageFilePath)
             self.Helper().debug("Guessing background value: "+str(backgroundGuess))
             
-            # guess the background level of the current image
-            backgroundGuessTemplate = self.Helper().GuessBackgroundValue(templateFilePath)
-            self.Helper().debug("Guessing background value for template: "+str(backgroundGuessTemplate))            
-            
+            if useCMTK:
+                # guess the background level of the current image, only if CMTK is used
+                backgroundGuessTemplate = self.Helper().GuessBackgroundValue(templateFilePath)
+                self.Helper().debug("Guessing background value for template: "+str(backgroundGuessTemplate))            
+                
             movingImageName = os.path.splitext(os.path.basename(movingImageFilePath))[0]
             
             # generate file path to save output transformation
-            # by getting the filename of the case and appending it to the outputDirectory
-            outputTransformFilePath = outputDirectory + str(movingImageName) + ".mat"
+            # by getting the filename of the case and appending it to the outputTransformsDirectory
+            outputTransformFilePath = outputTransformsDirectory + str(movingImageName) + ".mat"
             
             # generate file path to save aligned output image
-            # by getting the filename of the case and appending it to the outputDirectory
-            outputAlignedImageFilePath = uniqueTempDir + str(movingImageName) + ".nrrd"
+            # by getting the filename of the case and appending it to the outputTransformsDirectory
+            outputAlignedImageFilePath = outputAlignedDirectory + str(movingImageName) + ".nrrd"
+            
+            # we will create a string containing the command(s) which then get written to a script
+            command = ""
             
             if useCMTK:
-                command = str(launchCommandPrefix) + self.Helper().GetCMTKRegistrationCommand(templateFilePath,
-                                                                                              movingImageFilePath,
-                                                                                              outputTransformFilePath,
-                                                                                              outputAlignedImageFilePath,
-                                                                                              onlyAffineReg,
-                                                                                              multiThreading,
-                                                                                              backgroundGuess,
-                                                                                              backgroundGuessTemplate)
+                
+                if not multiThreading:
+                    # for CMTK, we have to set the variable to disable multiThreading
+                    command += "CMTK_NUM_THREADS=1\n"
+                
+                command += str(launchCommandPrefix) + self.Helper().GetCMTKAffineRegistrationCommand(templateFilePath,
+                                                                                                    movingImageFilePath,
+                                                                                                    outputTransformFilePath,
+                                                                                                    outputAlignedImageFilePath,
+                                                                                                    backgroundGuess,
+                                                                                                    backgroundGuessTemplate)
+                
+                if not onlyAffineReg:
+                    # for non-rigid, we include the second CMTK command
+                    command += "\n"
+                    command += str(launchCommandPrefix) + self.Helper().GetCMTKNonRigidRegistrationCommand(templateFilePath,
+                                                                                                           movingImageFilePath,
+                                                                                                           outputTransformFilePath,
+                                                                                                           outputAlignedImageFilePath,
+                                                                                                           backgroundGuess,
+                                                                                                           backgroundGuessTemplate)
+                
+                
             else:    
-                command = str(launchCommandPrefix) + self.Helper().GetBRAINSFitRegistrationCommand(templateFilePath,
+                command += str(launchCommandPrefix) + self.Helper().GetBRAINSFitRegistrationCommand(templateFilePath,
                                                                                                    movingImageFilePath,
                                                                                                    outputTransformFilePath,
                                                                                                    outputAlignedImageFilePath,
@@ -439,13 +515,28 @@ class AtlasCreatorLogic(object):
                                                                                                    multiThreading,
                                                                                                    backgroundGuess)
             
-            self.Helper().debug("Register command: " + str(command))
+            self.Helper().debug("Register command(s): " + str(command))
             
+            # create notification ID
+            notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
+            
+            # now generate a script containing the commands and the notify line
+            script = self.Helper().CreateRegistrationScript(command,notify)
+            
+            scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
+            
+            with open(scriptFilePath, 'w') as f:
+                f.write(script)
+            
+            # set executable permissions
+            os.chmod(scriptFilePath, 0700)    
+            
+            self.Helper().debug("Executing generated Script: "+scriptFilePath)
             
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")    
             else:
-                os.system(command)
+                os.system(schedulerCommand + " " + scriptFilePath)
                 
             outputAlignedImages.append(str(outputAlignedImageFilePath))
             
@@ -464,17 +555,20 @@ class AtlasCreatorLogic(object):
             # not all outputs exist yet
             self.Helper().info("Waiting for Registration to complete..")
             
-            # wait 5 secs and then check again
-            time.sleep(5)
+            # wait some secs and then check again
+            time.sleep(int(sleepValue))
             
             # we assume everything exists
             allOutputsExist = True
 
             # but now we really check if it is so            
-            for file in outputAlignedImages:
+            #for file in outputAlignedImages:
+            for index in range(1,uniqueID+1):
+                
+                file = outputNotifyDirectory + str(index) + ".ac"
                 
                 if not os.path.isfile(file):
-                    self.Helper().debug("Output does not exist: " + str(file))
+                    self.Helper().debug("Job not completed: " + str(index))
                     # if only one file does not exist,
                     # we know we have to wait longer
                     allOutputsExist = False
