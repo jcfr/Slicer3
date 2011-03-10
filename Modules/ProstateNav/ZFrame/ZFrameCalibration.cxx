@@ -163,7 +163,281 @@ void IdentityMatrix(Matrix4x4 &matrix)
 
 
 //----------------------------------------------------------------------------
-ZFrameCalibration::ZFrameCalibration(int xsize, int ysize)
+ZFrameCalibration::ZFrameCalibration()
+{
+}
+
+
+ZFrameCalibration::~ZFrameCalibration()
+{
+}
+
+ 
+int ZFrameCalibration::ZFrameRegistration(zf::Matrix4x4& imageTransform,
+                                          float ZquaternionBase[4], int range[2],
+                                          short* inputImage, int dimensions[3],
+                                          float Zposition[3], float Zorientation[4])
+{
+
+  int xsize = dimensions[0];
+  int ysize = dimensions[1];
+  int zsize = dimensions[2];
+  
+  // Image matrix
+  float tx = imageTransform[0][0];
+  float ty = imageTransform[1][0];
+  float tz = imageTransform[2][0];
+  float sx = imageTransform[0][1];
+  float sy = imageTransform[1][1];
+  float sz = imageTransform[2][1];
+  float nx = imageTransform[0][2];
+  float ny = imageTransform[1][2];
+  float nz = imageTransform[2][2];
+  float px = imageTransform[0][3];
+  float py = imageTransform[1][3];
+  float pz = imageTransform[2][3];
+  
+  // normalize
+  float psi = sqrt(tx*tx + ty*ty + tz*tz);
+  float psj = sqrt(sx*sx + sy*sy + sz*sz);
+  float psk = sqrt(nx*nx + ny*ny + nz*nz);
+  float ntx = tx / psi;
+  float nty = ty / psi;
+  float ntz = tz / psi;
+  float nsx = sx / psj;
+  float nsy = sy / psj;
+  float nsz = sz / psj;
+  float nnx = nx / psk;
+  float nny = ny / psk;
+  float nnz = nz / psk;
+  
+  // Here we calculate 'average' quaternion from registration results from
+  // multiple slices. The average quaternion here is defined as the eigenvector
+  // corresponding to the largest eigenvalue of the sample moment of inertia
+  // matrix given as:
+  //            ____
+  //         1  \   |
+  //    T = ---  |     qi qi'
+  //         n  /___|
+  //              i
+
+  int n = 0;
+  SymmetricMatrix T;
+  T.ReSize(4);
+  float P[3]={0,0,0};
+  for (int i = 0; i < 4; i ++)
+    for (int j = 0; j < 4; j ++)
+      T.element(i, j) = 0.0;
+
+  float position[3];
+  float quaternion[4];
+
+  zf::Matrix4x4 matrix;
+  matrix[0][0] = ntx;
+  matrix[1][0] = nty;
+  matrix[2][0] = ntz;
+  matrix[0][1] = nsx;
+  matrix[1][1] = nsy;
+  matrix[2][1] = nsz;
+  matrix[0][2] = nnx;
+  matrix[1][2] = nny;
+  matrix[2][2] = nnz;
+
+  for (int slindex = range[0]; slindex < range[1]; slindex ++)
+    {
+    // Shift the center
+    // NOTE: The center of the image should be shifted due to different
+    // definitions of image origin between VTK (Slicer) and OpenIGTLink;
+    // OpenIGTLink image has its origin at the center, while VTK image
+    // has one at the corner.
+
+    float hfovi = psi * (dimensions[0]-1) / 2.0;
+    float hfovj = psj * (dimensions[1]-1) / 2.0;
+    //float hfovk = psk * (dimensions[2]-1) / 2.0;
+    
+    // For slice (k) direction, we calculate slice offset based on
+    // the slice index.
+    float offsetk = psk * slindex;
+    
+    float cx = ntx * hfovi + nsx * hfovj + nnx * offsetk;
+    float cy = nty * hfovi + nsy * hfovj + nny * offsetk;
+    float cz = ntz * hfovi + nsz * hfovj + nnz * offsetk;
+
+    // position and quaternion will be overwritten by ZFrameRegistrationQuaternion()
+    zf::MatrixToQuaternion(matrix, quaternion);
+
+    position[0] = px + cx;
+    position[1] = py + cy;
+    position[2] = pz + cz;
+    
+#ifdef DEBUG_ZFRAME_REGISTRATION
+    std::cerr << "=== Image position ===" << std::endl;
+    std::cerr << "x = " << position[0] << std::endl; 
+    std::cerr << "y = " << position[1] << std::endl;
+    std::cerr << "z = " << position[2] << std::endl;
+#endif // DEBUG_ZFRAME_REGISTRATION
+    
+    short * currentSlice;
+    if (slindex >= 0 && slindex < zsize)
+      {
+      currentSlice = &inputImage[xsize*ysize*slindex];
+      }
+    else
+      {
+      return 0;
+      }
+    
+    // Transfer image to a Matrix.
+    SourceImage.ReSize(xsize,ysize);
+
+    for(int i=0; i<xsize; i++)
+      for(int j=0; j<ysize; j++)
+        SourceImage.element(i,j) = currentSlice[j*xsize+i];
+    
+    // if Z-frame position is determined from the slice
+    float spacing[3];
+    spacing[0] = psi;
+    spacing[1] = psj;
+    spacing[2] = psk;
+
+    Init(xsize, ysize);
+
+    if (ZFrameRegistrationQuaternion(position, quaternion,
+                                     ZquaternionBase,
+                                     SourceImage, dimensions, spacing))
+      {
+      P[0] += position[0];
+      P[1] += position[1];
+      P[2] += position[2];
+
+#ifdef DEBUG_ZFRAME_REGISTRATION
+      std::cerr << "position = ("
+                << position[0] << ", "
+                << position[1] << ", "
+                << position[2] << ")" << std::endl;
+#endif // DEBUG_ZFRAME_REGISTRATION
+      
+      // Note that T is defined as SymmetricMatrix class 
+      // and upper triangular part is updated.
+      T.element(0, 0) = T.element(0, 0) + quaternion[0]*quaternion[0];
+      T.element(0, 1) = T.element(0, 1) + quaternion[0]*quaternion[1];
+      T.element(0, 2) = T.element(0, 2) + quaternion[0]*quaternion[2];
+      T.element(0, 3) = T.element(0, 3) + quaternion[0]*quaternion[3];
+      T.element(1, 1) = T.element(1, 1) + quaternion[1]*quaternion[1];
+      T.element(1, 2) = T.element(1, 2) + quaternion[1]*quaternion[2];
+      T.element(1, 3) = T.element(1, 3) + quaternion[1]*quaternion[3];
+      T.element(2, 2) = T.element(2, 2) + quaternion[2]*quaternion[2];
+      T.element(2, 3) = T.element(2, 3) + quaternion[2]*quaternion[3];
+      T.element(3, 3) = T.element(3, 3) + quaternion[3]*quaternion[3];
+      n ++;
+
+#ifdef DEBUG_ZFRAME_REGISTRATION
+      std::cerr << "quaternion = ("
+                << quaternion[0] << ", "
+                << quaternion[1] << ", "
+                << quaternion[2] << ", "
+                << quaternion[3] << ")" << std::endl;
+#endif // DEBUG_ZFRAME_REGISTRATION
+      }
+    }
+
+  if (n <= 0)
+    {
+    return 0;
+    }
+
+  float fn = (float) n;
+  for (int i = 0; i < 3; i ++)
+    {
+    P[i] /= fn;
+    }
+
+  T.element(0, 0) = T.element(0, 0) / fn;
+  T.element(0, 1) = T.element(0, 1) / fn;
+  T.element(0, 2) = T.element(0, 2) / fn;
+  T.element(0, 3) = T.element(0, 3) / fn;
+
+  T.element(1, 1) = T.element(1, 1) / fn;
+  T.element(1, 2) = T.element(1, 2) / fn;
+  T.element(1, 3) = T.element(1, 3) / fn;
+
+  T.element(2, 2) = T.element(2, 2) / fn;
+  T.element(2, 3) = T.element(2, 3) / fn;
+  T.element(3, 3) = T.element(3, 3) / fn;
+
+  
+  // calculate eigenvalues of T matrix
+  DiagonalMatrix D;
+  Matrix V;
+  D.ReSize(4);
+  V.ReSize(4, 4);
+  eigenvalues(T, D, V);
+
+#ifdef DEBUG_ZFRAME_REGISTRATION
+  for (i = 0; i < 4; i ++)
+    {
+    std::cerr << "T[" << i << ", 0] = ("
+              <<  T.element(i, 0) << ", "
+              <<  T.element(i, 1) << ", "
+              <<  T.element(i, 2) << ", "
+              <<  T.element(i, 3) << ")" << std::endl;
+    }
+
+  std::cerr << "D[" << i << ", 0] = ("
+            <<  D.element(0) << ", "
+            <<  D.element(1) << ", "
+            <<  D.element(2) << ", "
+            <<  D.element(3) << ")" << std::endl;
+
+  for (i = 0; i < 4; i ++)
+    {
+    std::cerr << "V[" << i << ", 0] = ("
+              <<  V.element(i, 0) << ", "
+              <<  V.element(i, 1) << ", "
+              <<  V.element(i, 2) << ", "
+              <<  V.element(i, 3) << ")" << std::endl;
+    }
+#endif // DEBUG_ZFRAME_REGISTRATION
+
+  // find the maximum eigen value
+  int maxi = 0;
+  float maxv = D.element(0);
+  for (int i = 1; i < 4; i ++)
+    {
+    if (D.element(i) > maxv)
+      {
+      maxi = i;
+      }
+    }
+
+  // Substitute 'average' position and quaternion.
+  Zposition[0] = P[0];
+  Zposition[1] = P[1];
+  Zposition[2] = P[2];
+  Zorientation[0] = V.element(0, maxi);
+  Zorientation[1] = V.element(1, maxi);
+  Zorientation[2] = V.element(2, maxi);
+  Zorientation[3] = V.element(3, maxi);
+
+#ifdef DEBUG_ZFRAME_REGISTRATION
+  std::cerr << "average position = ("
+            << Zposition[0] << ", "
+            << Zposition[1] << ", "
+            << Zposition[2] << ")" << std::endl;
+
+  std::cerr << "average orientation = ("
+            << Zorientation[0] << ", "
+            << Zorientation[1] << ", "
+            << Zorientation[2] << ", "
+            << Zorientation[3] << ")" << std::endl;
+#endif // DEBUG_ZFRAME_REGISTRATION
+
+  return 1;
+
+}
+
+
+void ZFrameCalibration::Init(int xsize, int ysize)
 {
   int i,j,m,n;
 
@@ -244,11 +518,6 @@ ZFrameCalibration::ZFrameCalibration(int xsize, int ysize)
 }
 
 
-ZFrameCalibration::~ZFrameCalibration()
-{
-}
-
- 
 int ZFrameCalibration::ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
                                                     float ZquaternionBase[4],
                                                     Matrix& SourceImage, int dimension[3], float spacing[3])

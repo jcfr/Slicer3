@@ -35,11 +35,16 @@ class ZFrameCalibration
 public:
 
   // Methods related to finding the fiducial artifacts in the MR images.
-  ZFrameCalibration(int xsize, int ysize);
+  ZFrameCalibration();
   ~ZFrameCalibration();
 
 
 public:
+  int ZFrameRegistration(Matrix4x4& imageTransform,
+                         float ZquaternionBase[4], int range[2],
+                         short* inputImage, int dimensions[3],
+                         float Zposition[3], float Zorientation[4]);
+  void Init(int xsize, int ysize);
   int  ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
                                     float ZquaternionBase[4],
                                     Matrix& srcImage, int dimension[3], float spacing[3]);
