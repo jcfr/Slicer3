@@ -9,7 +9,6 @@ from AtlasCreatorConfiguration import AtlasCreatorConfiguration
 from AtlasCreatorGridConfiguration import AtlasCreatorGridConfiguration
 from AtlasCreatorSkipRegistrationConfiguration import AtlasCreatorSkipRegistrationConfiguration
 from AtlasCreatorHelper import AtlasCreatorHelper
-from Carbon.Sound import scheduledSoundCmd
 
 class AtlasCreatorLogic(object):
     '''
