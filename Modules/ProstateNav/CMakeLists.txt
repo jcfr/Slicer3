@@ -39,6 +39,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/TransRectalProstateRobot
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard
   ${CMAKE_CURRENT_SOURCE_DIR}/newmat
+  ${CMAKE_CURRENT_SOURCE_DIR}/ZFrame
   ${CMAKE_CURRENT_BINARY_DIR}
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
@@ -75,6 +76,7 @@ file(GLOB headers
   "${CMAKE_CURRENT_SOURCE_DIR}/TransRectalProstateRobot/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Wizard/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/newmat/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/ZFrame/*.h"
   )
 
 install(FILES 
@@ -171,6 +173,10 @@ set(ProstateNavNewmat_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/newmat/ZLinAlg.cxx
 )
 
+set(ProstateNavZFrame_SRCS
+  ${CMAKE_CURRENT_SOURCE_DIR}/ZFrame/ZFrameCalibration.cxx
+)
+
 
 # --------------------------------------------------------------------------
 # Wrapping
@@ -194,6 +200,7 @@ add_library(${lib_name}
   ${ProstateNav_SRCS} 
   ${ProstateNavIGTL_SRCS}
   ${ProstateNavNewmat_SRCS} 
+  ${ProstateNavZFrame_SRCS}
   ${ProstateNav_TCL_SRCS}
   )
 slicer3_set_modules_output_path(${lib_name})

@@ -54,67 +54,24 @@ class VTK_PROSTATENAV_EXPORT vtkZFrameRobotToImageRegistration : public vtkRobot
   vtkZFrameRobotToImageRegistration();
   ~vtkZFrameRobotToImageRegistration();
 
-  //BTX
-  typedef float  Matrix4x4[4][4];
-
-
   // Methods related to finding the fiducial artifacts in the MR images.
   void Init(int xsize, int ysize);
 
 
   int  ZFrameRegistration(vtkMRMLScalarVolumeNode* volumeNode,
                           vtkMRMLLinearTransformNode* transformNode, int slindex_s, int slindex_e);
-  int  ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
-                                    float ZquaternionBase[4],
-                                    Matrix& srcImage, int dimension[3], float spacing[3]);
-  bool LocateFiducials(Matrix &image, int xsize, int ysize, 
-                       int Zcoordinates[7][2], float tZcoordinates[7][2]);
-  void FindSubPixelPeak(int Zcoordinate[2], float tZcoordinate[2],
-                        Real Y0, Real Yx1, Real Yx2, Real Yy1, Real Yy2);
-  bool CheckFiducialGeometry(int Zcoordinates[7][2], int xsize, int ysize);
-  void FindFidCentre(float points[7][2], float &rmid, float &cmid);
-  void FindFidCorners(float points[7][2], float *pmid);
-  void OrderFidPoints(float points[7][2], float rmid, float cmid);
-  
-  // Methods related to solving for the frame pose w.r.t. the imaging plane.
-  bool LocalizeFrame(float Zcoordinates[7][2], Column3Vector &Zposition,
-                     Quaternion &Zorientation);
-  void SolveZ(Column3Vector P1, Column3Vector P2, Column3Vector P3,
-              Column3Vector Oz, Column3Vector Vz, Column3Vector &P2f);
-  
-  // Methods for finding matrix maxima.
-  Real ComplexMax(Matrix &realmat, Matrix &imagmat);
-  Real RealMax(Matrix &realmat);
-  Real FindMax(Matrix &inmatrix, int &row, int &col);
-  float CoordDistance(float *p1, float *p2);
-  //ETX
 
-  //BTX
-  void PrintMatrix(Matrix4x4 &matrix);
-  void QuaternionToMatrix(float* q, Matrix4x4& m);
-  void MatrixToQuaternion(Matrix4x4& m, float* q);
-  void Cross(float *a, float *b, float *c);
-  void IdentityMatrix(Matrix4x4 &matrix);
-  //ETX
-  
  protected:
 
   vtkMatrix4x4 * ZFrameBaseOrientation;
 
   short  *InputImage;
-  int    imgxsize;
-  int    imgysize;
-
   //BTX
-  Matrix SourceImage, MaskImage;
-  Matrix IFreal, IFimag, MFreal, MFimag, zeroimag;
-  Matrix PFreal, PFimag;
-  Matrix PIreal, PIimag;
+  Matrix SourceImage;
   //ETX
 
   int SliceRangeLow;
   int SliceRangeHigh;
-
 
 };
 
