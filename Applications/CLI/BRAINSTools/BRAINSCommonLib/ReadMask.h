@@ -8,7 +8,7 @@
 template< class MaskType, unsigned VDimension >
 typename MaskType::Pointer
 ReadImageMask(const std::string & filename,
-              typename itk::ImageBase< VDimension > *referenceImage)
+              typename itk::ImageBase< VDimension > * /*referenceImage*/)
 {
   typedef unsigned char                                    MaskPixelType;
   typedef typename itk::Image< MaskPixelType, VDimension > MaskImageType;
@@ -16,7 +16,7 @@ ReadImageMask(const std::string & filename,
 
   OrientedMaskImage = itkUtil::ReadImage< MaskImageType >(filename);
   // TODO:  May want to check that physical spaces overlap?
-  
+
   // convert mask image to mask
   typedef typename itk::ImageMaskSpatialObject< VDimension >
   ImageMaskSpatialObjectType;

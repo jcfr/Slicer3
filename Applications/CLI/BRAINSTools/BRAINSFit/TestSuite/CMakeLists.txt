@@ -6,27 +6,29 @@ endif (WIN32)
 configure_file(${BRAINSFit_SOURCE_DIR}/CTestCustom.ctest ${BRAINSFit_BINARY_DIR}/CTestCustom.ctest COPYONLY)
 
 add_executable(BRAINSFitTest BRAINSFitTest.cxx ${BRAINSFit_SOURCE_DIR}/BRAINSFitPrimary.cxx)
-target_link_libraries(BRAINSFitTest BRAINSCommonLib ${ITKREVIEWLIB} ITKAlgorithms ITKIO ITKBasicFilters ${OPTIONAL_DEBUG_LINK_LIBRARIES})
+target_link_libraries(BRAINSFitTest BRAINSCommonLib ${ITK_LIBRARIES} ${OPTIONAL_DEBUG_LINK_LIBRARIES})
 set_target_properties(BRAINSFitTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BRAINSFit_BINARY_DIR})
 add_dependencies(BRAINSFitTest BRAINSFit)
 
 if(COMPILE_TEST_GENERATION_PROGRAMS)  ## These were programs needed to create the test suite, but are not needed for actual testing!
-   # The following program was used to generate TestData/test2.nii.gz
+  # The following program was used to generate TestData/test2.nii.gz
   # from test.nii.gz
   if(MakeMakeXfrmImage)
     add_executable(makexfrmedImage makexfrmedImage.cxx)
-    target_link_libraries(makexfrmedImage ${ITKREVIEWLIB} ITKIO)
+    target_link_libraries(makexfrmedImage ${ITK_LIBRARIES})
   endif(MakeMakeXfrmImage)
 
   if(BRAINSFitTestDriver)
     # The test driver is only needed to help generate new testcases
     add_executable(BRAINSFitTestDriver BRAINSFitTestDriver.cxx)
-    target_link_libraries(BRAINSFitTestDriver ${ITKREVIEWLIB} ITKAlgorithms ITKIO ITKBasicFilters ${OPTIONAL_DEBUG_LINK_LIBRARIES} )
+    target_link_libraries(BRAINSFitTestDriver ${ITK_LIBRARIES}
+      ${OPTIONAL_DEBUG_LINK_LIBRARIES} )
     set_target_properties(BRAINSFitTestDriver PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BRAINSFit_BINARY_DIR})
   endif()
 endif(COMPILE_TEST_GENERATION_PROGRAMS)
 
 include(${BRAINS_CMAKE_HELPER_DIR}/MIDAS.cmake)
+set(MIDAS_KEY_DIR "${PROJECT_SOURCE_DIR}/../BRAINSCommonLib/TestData") 
 
 set(BRAINSFitTestName BRAINSFitTest_AffineRotationMasks)
 midas_add_test(NAME ${BRAINSFitTestName} COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRAINSFitTest>
@@ -113,7 +115,7 @@ midas_add_test(NAME ${BRAINSFitTestName} COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRA
             ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
   --compareIntensityTolerance 9
   --compareRadiusTolerance 0
-  --compareNumberOfPixelsTolerance 1500
+  --compareNumberOfPixelsTolerance 1000
   BRAINSFitTest
   --costMetric MMI
   --failureExitCode -1 --writeTransformOnFailure
@@ -332,7 +334,7 @@ midas_add_test(NAME ${BRAINSFitTestName} COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRA
 ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
   --compareIntensityTolerance 7
   --compareRadiusTolerance 0
-  --compareNumberOfPixelsTolerance 1100
+  --compareNumberOfPixelsTolerance 777
   BRAINSFitTest
   --costMetric MMI
   --failureExitCode -1 --writeTransformOnFailure
@@ -824,7 +826,7 @@ midas_add_test(NAME ${BRAINSFitTestName} COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRA
   --compare MIDAS{${BRAINSFitTestName}.result.nii.gz.md5}
             ${BRAINSFit_BINARY_DIR}/Testing/${BRAINSFitTestName}.test.nii.gz
   --compareIntensityTolerance 2505
-  --compareRadiusTolerance 0
+  --compareRadiusTolerance 1
   --compareNumberOfPixelsTolerance 1000
   BRAINSFitTest
   --costMetric MMI
