@@ -565,7 +565,7 @@ class AtlasCreatorLogic(object):
             # not all outputs exist yet
             # get number of existing files
             numberOfExistingFiles = len(glob.glob(outputNotifyDirectory+"*.ac"))
-            self.Helper().info("Waiting for Registration to complete.. ("+numberOfExistingFiles+"/"+uniqueID+" done)")
+            self.Helper().info("Waiting for Registration to complete.. ("+str(numberOfExistingFiles)+"/"+str(uniqueID)+" done)")
             
             # wait some secs and then check again
             time.sleep(int(sleepValue))
@@ -726,7 +726,7 @@ class AtlasCreatorLogic(object):
             # not all outputs exist yet
             # get number of existing files
             numberOfExistingFiles = len(glob.glob(outputNotifyDirectory+"*.ac"))
-            self.Helper().info("Waiting for Resampling to complete.. ("+numberOfExistingFiles+"/"+uniqueID+" done)")
+            self.Helper().info("Waiting for Resampling to complete.. ("+str(numberOfExistingFiles)+"/"+str(uniqueID)+" done)")
             
             # wait some secs and then check again
             time.sleep(int(sleepValue))
