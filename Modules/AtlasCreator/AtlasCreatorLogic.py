@@ -133,10 +133,29 @@ class AtlasCreatorLogic(object):
         os.mkdir(registeredDirectory)
         resampledDirectory = configuration.GetOutputDirectory() + "resampled" + os.sep
         os.mkdir(resampledDirectory)
-        scriptsDirectory = configuration.GetOutputDirectory() + "scripts" + os.sep
-        os.mkdir(scriptsDirectory)
-        notifyDirectory =  configuration.GetOutputDirectory() + "notify" + os.sep
-        os.mkdir(notifyDirectory)
+        scriptsRegistrationDirectory = configuration.GetOutputDirectory() + "scriptsRegistration" + os.sep
+        os.mkdir(scriptsRegistrationDirectory)
+        notifyRegistrationDirectory =  configuration.GetOutputDirectory() + "notifyRegistration" + os.sep
+        os.mkdir(notifyRegistrationDirectory)
+        scriptsResamplingDirectory = configuration.GetOutputDirectory() + "scriptsResampling" + os.sep
+        os.mkdir(scriptsResamplingDirectory)
+        notifyResamplingDirectory =  configuration.GetOutputDirectory() + "notifyResampling" + os.sep
+        os.mkdir(notifyResamplingDirectory)        
+             
+        # executable configuration
+        multiThreading = True # enable multiThreading by default
+        sleepValue = 5 # seconds to wait between each check on completed jobs
+        schedulerCommand = "" # assume no scheduler by default
+        
+        if clusterMode:
+            # if this is a cluster mode, add the schedulerCommand and disable multiThreading
+            # also, raise the seconds to wait between each check on completed jobs to 60
+            self.Helper().info("Found cluster configuration..")
+            schedulerCommand = configuration.GetSchedulerCommand()
+            self.Helper().debug("Scheduler Command: " + str(schedulerCommand))
+            multiThreading = False
+            sleepValue = 60             
+             
              
         # check if we register or if we use existing transforms
         if not skipRegistrationMode:
@@ -148,19 +167,6 @@ class AtlasCreatorLogic(object):
             #
             #
             self.Helper().info("Entering Registration Stage..")
-            
-            multiThreading = True # enable multiThreading by default
-            sleepValue = 5 # seconds to wait between each check on completed jobs
-            schedulerCommand = "" # assume no scheduler by default
-            
-            if clusterMode:
-                # if this is a cluster mode, add the schedulerCommand and disable multiThreading
-                # also, raise the seconds to wait between each check on completed jobs to 60
-                self.Helper().info("Found cluster configuration..")
-                schedulerCommand = configuration.GetSchedulerCommand()
-                self.Helper().debug("Scheduler Command: " + str(schedulerCommand))
-                multiThreading = False
-                sleepValue = 60
                     
             # create a temporary meanImage which might get used
             meanImageFilePath = tempfile.mkstemp(".nrrd", "acTmpMeanImage", configuration.GetOutputDirectory())[1]                   
@@ -180,8 +186,8 @@ class AtlasCreatorLogic(object):
                                               defaultCase,
                                               transformDirectory,
                                               registeredDirectory,
-                                              scriptsDirectory,
-                                              notifyDirectory,
+                                              scriptsRegistrationDirectory,
+                                              notifyRegistrationDirectory,
                                               configuration.GetRegistrationType(),
                                               multiThreading,
                                               useCMTK,
@@ -205,9 +211,9 @@ class AtlasCreatorLogic(object):
                     iterationString = "iteration" + str(i + 1)
                     uniqueRegisteredDirectory = registeredDirectory + iterationString + os.sep
                     os.mkdir(uniqueRegisteredDirectory)
-                    uniqueScriptsDirectory = scriptsDirectory + iterationString + os.sep
+                    uniqueScriptsDirectory = scriptsRegistrationDirectory + iterationString + os.sep
                     os.mkdir(uniqueScriptsDirectory)
-                    uniqueNotifyDirectory = notifyDirectory + iterationString + os.sep
+                    uniqueNotifyDirectory = notifyRegistrationDirectory + iterationString + os.sep
                     os.mkdir(uniqueNotifyDirectory)
                     
                     # we generate the current meanImage
@@ -280,12 +286,15 @@ class AtlasCreatorLogic(object):
         #
         self.Helper().info("Entering Resampling Stage..")          
                 
-        self.Resample(self.Helper().GetSlicerLaunchPrefix(useCMTK),
+        self.Resample(schedulerCommand,
                       configuration.GetSegmentationsFilePathList(),
                       defaultCase,
                       transformDirectory,
                       resampledDirectory,
-                      useCMTK)
+                      scriptsResamplingDirectory,
+                      notifyResamplingDirectory,
+                      useCMTK,
+                      sleepValue)
             
         resampledSegmentationsFilePathList = self.Helper().ConvertDirectoryToList(resampledDirectory)
             
@@ -305,8 +314,10 @@ class AtlasCreatorLogic(object):
         # cleanup!!
         # delete the scripts and notify directories
         if not self.__dryRun:
-            shutil.rmtree(scriptsDirectory, True, None)
-            shutil.rmtree(notifyDirectory, True, None)
+            shutil.rmtree(scriptsRegistrationDirectory, True, None)
+            shutil.rmtree(notifyRegistrationDirectory, True, None)
+            shutil.rmtree(scriptsResamplingDirectory, True, None)
+            shutil.rmtree(notifyResamplingDirectory, True, None)            
             
         # now delete the resampled segmentations
         if configuration.GetDeleteAlignedSegmentations():
@@ -520,7 +531,7 @@ class AtlasCreatorLogic(object):
             notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
             
             # now generate a script containing the commands and the notify line
-            script = self.Helper().CreateRegistrationScript(command,notify)
+            script = self.Helper().CreateScript(command,notify)
             
             scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
             
@@ -530,7 +541,7 @@ class AtlasCreatorLogic(object):
             # set executable permissions
             os.chmod(scriptFilePath, 0700)    
             
-            self.Helper().debug("Executing generated Script: "+scriptFilePath)
+            self.Helper().debug("Executing generated Registration Script: "+scriptFilePath)
             
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")    
@@ -552,7 +563,9 @@ class AtlasCreatorLogic(object):
         
         while not allOutputsExist:
             # not all outputs exist yet
-            self.Helper().info("Waiting for Registration to complete..")
+            # get number of existing files
+            numberOfExistingFiles = len(glob.glob(outputNotifyDirectory+"*.ac"))
+            self.Helper().info("Waiting for Registration to complete.. ("+numberOfExistingFiles+"/"+uniqueID+" done)")
             
             # wait some secs and then check again
             time.sleep(int(sleepValue))
@@ -567,25 +580,25 @@ class AtlasCreatorLogic(object):
                 file = outputNotifyDirectory + str(index) + ".ac"
                 
                 if not os.path.isfile(file):
-                    self.Helper().debug("Job not completed: " + str(index))
+                    self.Helper().debug("Registration Job with id " + str(index) + " not completed!")
                     # if only one file does not exist,
                     # we know we have to wait longer
                     allOutputsExist = False
                     break
         
-        self.Helper().debug("All outputs exist!")
+        self.Helper().debug("All Registration outputs exist!")
                 
         return outputAlignedImages
 
 
     
     '''=========================================================================================='''
-    def Resample(self, launchCommandPrefix, filePathsList, templateFilePath, transformDirectory, outputSegmentationDirectory,useCMTK=False):
+    def Resample(self, schedulerCommand, filePathsList, templateFilePath, transformDirectory, outputSegmentationDirectory, outputScriptsDirectory, outputNotifyDirectory, useCMTK=False, sleepValue=5):
         '''
             Resample a set of segmentations using exising transforms
             
-            launchCommandPrefix
-                prefix for the actual registration command
+            schedulerCommand
+                the schedulerCommand if used else ""
             filePathsList
                 list of existing filepaths to segmentations
             templateFilePath
@@ -596,9 +609,15 @@ class AtlasCreatorLogic(object):
                 (can be a directory as well)
             outputSegmentationDirectory
                 directory to save the resampled images
+            outputScriptsDirectory
+                directory to use for generated scripts
+            outputNotifyDirectory
+                directory to use for notification files                
             useCMTK
                 if TRUE, use CMTK instead of BRAINSFit
-                
+            sleepValue
+                seconds to wait between each check on completed jobs
+                                
             Returns
                 TRUE or FALSE depending on success
         '''
@@ -619,6 +638,19 @@ class AtlasCreatorLogic(object):
         if not outputSegmentationDirectory:
             self.Helper().info("Empty outputSegmentationDirectory for Resample() command. Aborting..")
             return False
+        
+        if not outputScriptsDirectory:
+            self.Helper().info("Empty outputScriptsDirectory for Resample() command. Aborting..")
+            return None   
+
+        if not outputNotifyDirectory:
+            self.Helper().info("Empty outputNotifyDirectory for Resample() command. Aborting..")
+            return None           
+
+        # get the launch command for Slicer3
+        launchCommandPrefix = self.Helper().GetSlicerLaunchPrefix(useCMTK)
+
+        uniqueID = 0
 
         # loop through filePathsList and start resample command
         for segmentationFilePath in filePathsList:
@@ -626,6 +658,9 @@ class AtlasCreatorLogic(object):
             # do not resample the same file
             if os.path.basename(segmentationFilePath) == os.path.basename(templateFilePath):
                 continue
+
+            # increase the uniqueID
+            uniqueID = uniqueID + 1
             
             # guess the background level of the current image
             backgroundGuess = self.Helper().GuessBackgroundValue(segmentationFilePath)
@@ -639,25 +674,80 @@ class AtlasCreatorLogic(object):
             # by getting the filename of the case and appending it to the outputSegmentationDirectory
             outputSegmentationFilePath = outputSegmentationDirectory + str(segmentationName) + ".nrrd"
 
-            if useCMTK:
-                command = str(launchCommandPrefix) + self.Helper().GetCMTKResampleCommand(segmentationFilePath,
-                                                                                          templateFilePath,
-                                                                                          transformFilePath,
-                                                                                          outputSegmentationFilePath,
-                                                                                          backgroundGuess)                
-            else:
-                command = str(launchCommandPrefix) + self.Helper().GetBRAINSFitResampleCommand(segmentationFilePath,
-                                                                                               templateFilePath,
-                                                                                               transformFilePath,
-                                                                                               outputSegmentationFilePath,
-                                                                                               backgroundGuess)
+            # we will create a string containing the command(s) which then get written to a script
+            command = ""
 
-            self.Helper().debug("Resample command: " + str(command))
+            if useCMTK:
+                command += str(launchCommandPrefix) + self.Helper().GetCMTKResampleCommand(segmentationFilePath,
+                                                                                           templateFilePath,
+                                                                                           transformFilePath,
+                                                                                           outputSegmentationFilePath,
+                                                                                           backgroundGuess)                
+            else:
+                command += str(launchCommandPrefix) + self.Helper().GetBRAINSFitResampleCommand(segmentationFilePath,
+                                                                                                templateFilePath,
+                                                                                                transformFilePath,
+                                                                                                outputSegmentationFilePath,
+                                                                                                backgroundGuess)
+
+            self.Helper().debug("Resample command(s): " + str(command))
+            
+            # create notification ID
+            notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
+            
+            # now generate a script containing the commands and the notify line
+            script = self.Helper().CreateScript(command,notify)
+            
+            scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
+            
+            with open(scriptFilePath, 'w') as f:
+                f.write(script)
+            
+            # set executable permissions
+            os.chmod(scriptFilePath, 0700)    
+            
+            self.Helper().debug("Executing generated Resample Script: "+scriptFilePath)
             
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")
+                return False    
             else:
-                os.system(command)
+                os.system(schedulerCommand + " " + scriptFilePath)
+                
+        # at this point:
+        # either the registration was completed if the os.system call did not send it to the background
+        # or the registration still runs in the background
+        # latter is possible, if a cluster scheduler was specified
+        # now, we will wait until all output images exist
+        
+        allOutputsExist = False
+        
+        while not allOutputsExist:
+            # not all outputs exist yet
+            # get number of existing files
+            numberOfExistingFiles = len(glob.glob(outputNotifyDirectory+"*.ac"))
+            self.Helper().info("Waiting for Resampling to complete.. ("+numberOfExistingFiles+"/"+uniqueID+" done)")
+            
+            # wait some secs and then check again
+            time.sleep(int(sleepValue))
+            
+            # we assume everything exists
+            allOutputsExist = True
+
+            # but now we really check if it is so            
+            #for file in outputAlignedImages:
+            for index in range(1,uniqueID+1):
+                
+                file = outputNotifyDirectory + str(index) + ".ac"
+                
+                if not os.path.isfile(file):
+                    self.Helper().debug("Resampling Job with id " + str(index) + " not completed!")
+                    # if only one file does not exist,
+                    # we know we have to wait longer
+                    allOutputsExist = False
+                    break
+        
+        self.Helper().debug("All Resampling outputs exist!")
 
         return True
 

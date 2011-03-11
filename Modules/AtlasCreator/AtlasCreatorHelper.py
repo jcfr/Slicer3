@@ -758,8 +758,18 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''
-    def CreateRegistrationScript(self,commands,notify):
-        
+    def CreateScript(self,commands,notify):
+        '''
+            Return a script based on template.sh where commands and notify were inserted properly.
+            
+            commands
+                A string containing the execution commands.
+            notify
+                A string containing commands to execute before the script exits.
+                
+            Returns
+                The script where the arguments were inserted properly.
+        '''
         pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
         
         with open(os.path.join(pathToAtlasCreator,'template.sh'), 'r') as f:

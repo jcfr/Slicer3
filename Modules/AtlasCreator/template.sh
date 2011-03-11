@@ -1,7 +1,7 @@
 #
 # ATLAS CREATOR for 3D SLICER
 #
-# This file is a template for generated registration scripts.
+# This file is a template for the generation of registration and resampling scripts.
 #
 #
 
