@@ -165,6 +165,12 @@ void IdentityMatrix(Matrix4x4 &matrix)
 //----------------------------------------------------------------------------
 ZFrameCalibration::ZFrameCalibration()
 {
+  this->InputImage = NULL;
+  IdentityMatrix(this->InputImageTrans);
+  for (int i = 0; i < 3; i ++)
+    {
+    this->InputImageDim[i] = 0;
+    }
 }
 
 
@@ -172,30 +178,45 @@ ZFrameCalibration::~ZFrameCalibration()
 {
 }
 
- 
-int ZFrameCalibration::ZFrameRegistration(zf::Matrix4x4& imageTransform,
-                                          float ZquaternionBase[4], int range[2],
-                                          short* inputImage, int dimensions[3],
-                                          float Zposition[3], float Zorientation[4])
+
+int ZFrameCalibration::SetInputImage(short* inputImage, int dimensions[3], Matrix4x4& transform)
 {
 
-  int xsize = dimensions[0];
-  int ysize = dimensions[1];
-  int zsize = dimensions[2];
+  this->InputImage = inputImage;
+  memcpy(this->InputImageDim, dimensions, sizeof(int)*3);
+  memcpy(this->InputImageTrans, transform, sizeof(Matrix4x4));
+
+  return 1;
+}
+
+
+int ZFrameCalibration::SetOrientationBase(float orientation[4])
+{
+  memcpy (this->ZOrientationBase, orientation, sizeof (float) * 4);
+  return 1;
+}
+
+
+int ZFrameCalibration::Register(int range[2], float Zposition[3], float Zorientation[4])
+{
+
+  int xsize = this->InputImageDim[0];
+  int ysize = this->InputImageDim[1];
+  int zsize = this->InputImageDim[2];
   
   // Image matrix
-  float tx = imageTransform[0][0];
-  float ty = imageTransform[1][0];
-  float tz = imageTransform[2][0];
-  float sx = imageTransform[0][1];
-  float sy = imageTransform[1][1];
-  float sz = imageTransform[2][1];
-  float nx = imageTransform[0][2];
-  float ny = imageTransform[1][2];
-  float nz = imageTransform[2][2];
-  float px = imageTransform[0][3];
-  float py = imageTransform[1][3];
-  float pz = imageTransform[2][3];
+  float tx = this->InputImageTrans[0][0];
+  float ty = this->InputImageTrans[1][0];
+  float tz = this->InputImageTrans[2][0];
+  float sx = this->InputImageTrans[0][1];
+  float sy = this->InputImageTrans[1][1];
+  float sz = this->InputImageTrans[2][1];
+  float nx = this->InputImageTrans[0][2];
+  float ny = this->InputImageTrans[1][2];
+  float nz = this->InputImageTrans[2][2];
+  float px = this->InputImageTrans[0][3];
+  float py = this->InputImageTrans[1][3];
+  float pz = this->InputImageTrans[2][3];
   
   // normalize
   float psi = sqrt(tx*tx + ty*ty + tz*tz);
@@ -251,9 +272,9 @@ int ZFrameCalibration::ZFrameRegistration(zf::Matrix4x4& imageTransform,
     // OpenIGTLink image has its origin at the center, while VTK image
     // has one at the corner.
 
-    float hfovi = psi * (dimensions[0]-1) / 2.0;
-    float hfovj = psj * (dimensions[1]-1) / 2.0;
-    //float hfovk = psk * (dimensions[2]-1) / 2.0;
+    float hfovi = psi * (this->InputImageDim[0]-1) / 2.0;
+    float hfovj = psj * (this->InputImageDim[1]-1) / 2.0;
+    //float hfovk = psk * (this->InputIMageDim[2]-1) / 2.0;
     
     // For slice (k) direction, we calculate slice offset based on
     // the slice index.
@@ -280,7 +301,7 @@ int ZFrameCalibration::ZFrameRegistration(zf::Matrix4x4& imageTransform,
     short * currentSlice;
     if (slindex >= 0 && slindex < zsize)
       {
-      currentSlice = &inputImage[xsize*ysize*slindex];
+      currentSlice = &(this->InputImage[xsize*ysize*slindex]);
       }
     else
       {
@@ -302,9 +323,8 @@ int ZFrameCalibration::ZFrameRegistration(zf::Matrix4x4& imageTransform,
 
     Init(xsize, ysize);
 
-    if (ZFrameRegistrationQuaternion(position, quaternion,
-                                     ZquaternionBase,
-                                     SourceImage, dimensions, spacing))
+    if (RegisterQuaternion(position, quaternion, this->ZOrientationBase,
+                           SourceImage, this->InputImageDim, spacing))
       {
       P[0] += position[0];
       P[1] += position[1];
@@ -445,10 +465,8 @@ void ZFrameCalibration::Init(int xsize, int ysize)
   // In the future, this should be flexible.
   // FORCE xsize and ysize for now.
 
-  //this->xsize = xsize;
-  //this->ysize = ysize;
-  this->xsize = 256;
-  this->ysize = 256;
+  xsize = 256;
+  ysize = 256;
 
   // Define an 11x11 correlation kernel for fiducial detection.
   //Real kernel[11][11]={{0,0,0.0,0,0.0,0,0.0,0.0,0.0,0,0},
@@ -479,14 +497,14 @@ void ZFrameCalibration::Init(int xsize, int ysize)
   // Create a mask image and initialize elements to zero.
   // The Matrix class is implemented in the newmat library:
   // see: http://www.robertnz.net/
-  MaskImage.ReSize(this->xsize,this->ysize);
-  for(i=0; i<this->xsize; i++)
-    for(j=0; j<this->ysize; j++)
+  MaskImage.ReSize(xsize,ysize);
+  for(i=0; i<xsize; i++)
+    for(j=0; j<ysize; j++)
         MaskImage.element(i,j) = 0;
 
   // Copy the correlation kernel to the centre of the mask image.
-  for(i=((this->xsize/2)-5),m=0; i<=((this->xsize/2)+5); i++,m++)
-    for(j=((this->ysize/2)-5),n=0; j<=((this->ysize/2)+5); j++,n++)
+  for(i=((xsize/2)-5),m=0; i<=((xsize/2)+5); i++,m++)
+    for(j=((ysize/2)-5),n=0; j<=((ysize/2)+5); j++,n++)
     {
         MaskImage.element(i,j) = kernel[m][n];
     }
@@ -497,9 +515,9 @@ void ZFrameCalibration::Init(int xsize, int ysize)
   // has to be done once.
   // Before transforming the mask to the spatial frequency domain, need to
   // create an empty imaginary component, since the mask is real-valued.
-  zeroimag.ReSize(this->xsize,this->ysize);
-  for(i=0; i<this->xsize; i++)
-    for(j=0; j<this->ysize; j++)
+  zeroimag.ReSize(xsize,ysize);
+  for(i=0; i<xsize; i++)
+    for(j=0; j<ysize; j++)
         zeroimag.element(i,j) = 0;
 
   // The Radix-2 FFT algorithm is implemented in the newmat library:
@@ -518,7 +536,7 @@ void ZFrameCalibration::Init(int xsize, int ysize)
 }
 
 
-int ZFrameCalibration::ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
+int ZFrameCalibration::RegisterQuaternion(float position[3], float quaternion[4],
                                                     float ZquaternionBase[4],
                                                     Matrix& SourceImage, int dimension[3], float spacing[3])
 {

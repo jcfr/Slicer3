@@ -38,16 +38,16 @@ public:
   ZFrameCalibration();
   ~ZFrameCalibration();
 
-
 public:
-  int ZFrameRegistration(Matrix4x4& imageTransform,
-                         float ZquaternionBase[4], int range[2],
-                         short* inputImage, int dimensions[3],
-                         float Zposition[3], float Zorientation[4]);
+  int SetInputImage(short* inputImage, int dimensions[3], Matrix4x4& transform);
+  int SetOrientationBase(float orentation[4]);
+  int Register(int range[2],float Zposition[3], float Zorientation[4]);
+
+protected:
   void Init(int xsize, int ysize);
-  int  ZFrameRegistrationQuaternion(float position[3], float quaternion[4],
-                                    float ZquaternionBase[4],
-                                    Matrix& srcImage, int dimension[3], float spacing[3]);
+  int  RegisterQuaternion(float position[3], float quaternion[4],
+                          float ZquaternionBase[4],
+                          Matrix& srcImage, int dimension[3], float spacing[3]);
   bool LocateFiducials(Matrix &image, int xsize, int ysize, 
                        int Zcoordinates[7][2], float tZcoordinates[7][2]);
   void FindSubPixelPeak(int Zcoordinate[2], float tZcoordinate[2],
@@ -72,8 +72,10 @@ public:
 
 protected:
 
-  int xsize;
-  int ysize;
+  short *   InputImage;
+  int       InputImageDim[3];
+  Matrix4x4 InputImageTrans;
+  float     ZOrientationBase[4];
 
   //BTX
   Matrix SourceImage, MaskImage;

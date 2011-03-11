@@ -142,14 +142,13 @@ int vtkZFrameRobotToImageRegistration::DoRegistration()
     float Zposition[3];
     float Zorientation[4];
 
-    // Call registration
-
+    // Call Z-frame registration
     zf::ZFrameCalibration * calibration;
     calibration = new zf::ZFrameCalibration();
+    calibration->SetInputImage(inputImage, dimensions, imageTransform);
+    calibration->SetOrientationBase(ZquaternionBase);
+    int r = calibration->Register(range, Zposition, Zorientation);
 
-    int r = calibration->ZFrameRegistration(imageTransform, ZquaternionBase,
-                                            range, inputImage, dimensions,
-                                            Zposition, Zorientation);
     delete calibration;
 
     if (r)
