@@ -1957,83 +1957,17 @@ void vtkSlicerSliceControllerWidget::RotateSliceToBackground ( int link )
     return;
     }
 
+  // Note: this action is not affected by the LinkedControl flag on the slice composite node
+  // See: http://www.slicer.org/slicerWiki/index.php/Slicer3:UIDesign:WorkingProblems:LinkedControls#Linked_controls_table
+  // and
+  // http://www.na-mic.org/Bug/view.php?id=1115
   if ( found )
     {
-    if ( link )
+    this->MRMLScene->SaveStateForUndo ( this->SliceNode );
+    vtkMRMLVolumeNode *backgroundNode = mysgui->GetLogic()->GetLayerVolumeNode(0);
+    if ( backgroundNode )
       {
-      // If the controllers are linked, we want to call
-      // RotateToVolumePlane of the current slice node and then copy
-      // its SliceToRAS to the other slice nodes.
-
-      // First save all SliceNodes for undo:
-      vtkCollection *nodes = vtkCollection::New();
-      const char *layoutname = NULL;
-      int nSliceGUI = ssgui->GetNumberOfSliceGUI();
-      vtkSlicerSliceGUI *tsgui;
-      for (int i = 0; i < nSliceGUI; i++)
-        {
-        if (i == 0)
-          {
-          tsgui = ssgui->GetFirstSliceGUI();
-          layoutname = ssgui->GetFirstSliceGUILayoutName();
-          }
-        else
-          {
-          tsgui = ssgui->GetNextSliceGUI(layoutname);
-          layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
-          }
-            
-        if (tsgui)
-          nodes->AddItem ( tsgui->GetSliceNode ( ) );
-        }
-        
-      this->MRMLScene->SaveStateForUndo ( nodes );
-      nodes->Delete ( );
-
-      // RotateToVolumePlane this slice node
-      this->MRMLScene->SaveStateForUndo ( this->SliceNode );
-      vtkMRMLVolumeNode *backgroundNode = mysgui->GetLogic()->GetLayerVolumeNode(0);
-      if ( backgroundNode )
-        {
-        mysgui->GetSliceNode()->RotateToVolumePlane( backgroundNode );
-        }
-        
-      // Now copy the SliceToRAS to all Slices 
-      for (int i = 0; i < nSliceGUI; i++)
-        {
-        if (i == 0)
-          {
-          tsgui = ssgui->GetFirstSliceGUI();
-          layoutname = ssgui->GetFirstSliceGUILayoutName();
-          }
-        else
-          {
-          tsgui = ssgui->GetNextSliceGUI(layoutname);
-          layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
-          }
-            
-        if (tsgui)
-          {
-          vtkMRMLVolumeNode *backgroundNode = tsgui->GetLogic()->GetLayerVolumeNode(0);
-          if ( backgroundNode )
-            {
-            tsgui->GetLogic()->GetSliceCompositeNode()->SetLinkedControl(0);
-            tsgui->GetSliceNode()->SetSliceToRAS( this->SliceNode->GetSliceToRAS() );
-            tsgui->GetSliceNode()->SetOrientationToReformat();
-            tsgui->GetSliceViewer()->RequestRender();
-            tsgui->GetLogic()->GetSliceCompositeNode()->SetLinkedControl(1);
-            }
-          }
-        }
-      }
-    else
-      {
-      this->MRMLScene->SaveStateForUndo ( this->SliceNode );
-      vtkMRMLVolumeNode *backgroundNode = mysgui->GetLogic()->GetLayerVolumeNode(0);
-      if ( backgroundNode )
-        {
-        mysgui->GetSliceNode()->RotateToVolumePlane( backgroundNode );
-        }
+      mysgui->GetSliceNode()->RotateToVolumePlane( backgroundNode );
       }
     }
 }
