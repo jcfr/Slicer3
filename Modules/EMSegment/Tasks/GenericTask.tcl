@@ -1553,24 +1553,6 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "CMTKRegistration: Unknown affineType: $affineType"
             return ""
         }
-        
-
-        #        # Write Parameters
-        #        set fixedVolume [$fixedVolumeNode GetImageData]
-        #        set scalarType [$fixedVolume GetScalarTypeAsString]
-        #        switch -exact "$scalarType" {
-        #            "bit" { set CMD "$CMD --outputVolumePixelType binary" }
-        #            "unsigned char" { set CMD "$CMD --outputVolumePixelType uchar" }
-        #            "unsigned short" { set CMD "$CMD --outputVolumePixelType ushort" }
-        #            "unsigned int" { set CMD "$CMD --outputVolumePixelType uint" }
-        #            "short" -
-        #            "int" -
-        #            "float" { set CMD "$CMD --outputVolumePixelType $scalarType" }
-        #            default {
-        #                PrintError "CMTKRegistration: cannot resample a volume of type $scalarType"
-        #                return ""
-        #            }
-        #        }
 
 
         # affine
@@ -2164,7 +2146,13 @@ namespace eval EMSegmenterPreProcessingTcl {
                     PrintError "RegisterAtlas: Transform node is null"
                     return 1
                 }
-                set transformNodeType "CMTKTransform"  
+                set transformNodeType "CMTKTransform"
+
+                $LOGIC PrintText "TCL: Resampling atlas in CMTKRegistration ..."
+                if { [Resample $movingAtlasVolumeNode $fixedTargetVolumeNode $transformNode $transformDirName $transformNodeType Linear $backgroundLevel $outputAtlasVolumeNode] } {
+                    PrintError "RegisterAtlas: Could not resample(reformatx) atlas volume"
+                    return 1
+                }
             }
             "BRAINS" {
                 set BSplineNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
