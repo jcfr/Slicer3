@@ -536,7 +536,6 @@ proc buildExtension {s3ext} {
     }
     "svn" {
       set svncmd "yes t | $::SVN co"
-      puts "SVN COMMAND $::SVN co"
       if { [info exists ::ext(svnusername)] } {
         set svncmd "$svncmd --username $::ext(svnusername)"
       }
