@@ -779,16 +779,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         set CMDdeform "$CMDdeform --defImage \"$deformationFieldFilename\""
 
         $LOGIC PrintText "TCL: Executing $CMDdeform"
-        catch { eval exec $CMDdeform } errmsg
-        $LOGIC PrintText "TCL: $errmsg"
-
-        # store for later use, TODO: unable to read vector:
-        # ERROR: In /projects/sandbox/Slicer3/trunk/Slicer3/Libs/vtkITK/vtkITKArchetypeImageSeriesScalarReader.cxx, line 169
-        # vtkITKArchetypeImageSeriesScalarReader (0x8dbf5c0): UpdateFromFile: Unsupported number of components (only 1 allowed): 3
-        ###        ReadDataFromDisk $DFNode $deformationFieldFilename Volume
+        if { [catch { exec  $CMDdeform } errmsg] } {
+            $LOGIC PrintText "TCL: ---- $errmsg ----"
+            return ""
+        }
 
         $LOGIC PrintText "TCL: Create deformation field...END"
-        ###        return $DFNode
         return $deformationFieldFilename
     }
 
