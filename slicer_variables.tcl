@@ -436,10 +436,7 @@ switch $::tcl_platform(os) {
         set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE
         set ::Teem_BIN_DIR  $::Teem_BUILD_DIR/bin/$::VTK_BUILD_TYPE
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itclConfig.sh
-        set ::INCR_TCL_LIB $::TCL_LIB_DIR/lib/itcl3.2/itcl32.lib
-        set ::INCR_TK_LIB $::TCL_LIB_DIR/lib/itk3.2/itk32.lib
-        set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
+        
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/BLT24.dll
         set ::Teem_TEST_FILE $::Teem_BIN_DIR/unu.exe
         if { $::USE_SYSTEM_PYTHON } {
@@ -450,6 +447,11 @@ switch $::tcl_platform(os) {
         set ::PYTHON_BUILD_TYPE "Release"
 
         if { $::env(BITNESS) == "64" } {
+            set ::USE_NUMPY "OFF"
+            set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itclstub34.lib
+            set ::INCR_TCL_LIB $::TCL_LIB_DIR/itclstub34.lib
+            set ::INCR_TK_LIB $::TCL_LIB_DIR/itkstub34.lib
+            set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/itkstub34.lib
             set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
             set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish85.exe
             set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl85.lib
@@ -460,6 +462,10 @@ switch $::tcl_platform(os) {
             set ::PYTHON_BUILD_DIR $::Slicer3_LIB/python-build/PCbuild/amd64
             set ::PYTHON_CONFIG "$::PYTHON_BUILD_TYPE|x64"
         } else {
+            set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itclConfig.sh
+            set ::INCR_TCL_LIB $::TCL_LIB_DIR/lib/itcl3.4/itcl32.lib
+            set ::INCR_TK_LIB $::TCL_LIB_DIR/lib/itk3.4/itk32.lib
+            set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
             set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
             set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
             set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
