@@ -350,10 +350,10 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self.GetHelper().DisplayImageInSlicer(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/atlas"+str(currentLabel)+".nrrd"),'AtlasForLabel'+str(currentLabel))
             
             # now loading the atlas for all labels
-            newVolNodeID = self.GetHelper().DisplayImageInSlicer(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/atlas.nrrd"),'AtlasAllLabels')
+            #newVolNodeID = self.GetHelper().DisplayImageInSlicer(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/atlas.nrrd"),'AtlasAllLabels')
 
             selectionNode = slicer.ApplicationLogic.GetSelectionNode()
-            selectionNode.SetReferenceActiveVolumeID(newVolNodeID)
+            selectionNode.SetReferenceActiveVolumeID(templateID)
             slicer.ApplicationLogic.PropagateVolumeSelection()
 
 
@@ -410,7 +410,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self.GetUIPanel().AddPage("AtlasCreator","AtlasCreator","")
         self._atlascreatorPage = self.GetUIPanel().GetPageWidget("AtlasCreator")
-        helpText = """**Atlas Creator v0.24**
+        helpText = """**Atlas Creator v0.25**
         
 More Information available at <a>http://www.slicer.org/slicerWiki/index.php/Modules:AtlasCreator</a>
 

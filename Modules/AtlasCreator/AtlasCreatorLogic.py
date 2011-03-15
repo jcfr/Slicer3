@@ -135,12 +135,16 @@ class AtlasCreatorLogic(object):
         os.mkdir(resampledDirectory)
         scriptsRegistrationDirectory = configuration.GetOutputDirectory() + "scriptsRegistration" + os.sep
         os.mkdir(scriptsRegistrationDirectory)
-        notifyRegistrationDirectory =  configuration.GetOutputDirectory() + "notifyRegistration" + os.sep
+        notifyRegistrationDirectory = configuration.GetOutputDirectory() + "notifyRegistration" + os.sep
         os.mkdir(notifyRegistrationDirectory)
         scriptsResamplingDirectory = configuration.GetOutputDirectory() + "scriptsResampling" + os.sep
         os.mkdir(scriptsResamplingDirectory)
-        notifyResamplingDirectory =  configuration.GetOutputDirectory() + "notifyResampling" + os.sep
+        notifyResamplingDirectory = configuration.GetOutputDirectory() + "notifyResampling" + os.sep
         os.mkdir(notifyResamplingDirectory)        
+        scriptsCombineToAtlasDirectory = configuration.GetOutputDirectory() + "scriptsCombineToAtlas" + os.sep
+        os.mkdir(scriptsCombineToAtlasDirectory)
+        notifyCombineToAtlasDirectory = configuration.GetOutputDirectory() + "notifyCombineToAtlas" + os.sep
+        os.mkdir(notifyCombineToAtlasDirectory) 
              
         # executable configuration
         multiThreading = True # enable multiThreading by default
@@ -236,7 +240,7 @@ class AtlasCreatorLogic(object):
                                                   transformDirectory,
                                                   uniqueRegisteredDirectory,
                                                   uniqueScriptsDirectory,
-                                                  uniqueNotifyDirectory,                                                  
+                                                  uniqueNotifyDirectory,
                                                   configuration.GetRegistrationType(),
                                                   multiThreading,
                                                   useCMTK,
@@ -249,7 +253,7 @@ class AtlasCreatorLogic(object):
             
             # now wipe the temporary registered content, if selected
             if configuration.GetDeleteAlignedImages():
-                shutil.rmtree(registeredDirectory,True,None)
+                shutil.rmtree(registeredDirectory, True, None)
                 
             # we will save the template
             # this will ensure that we can later 
@@ -295,8 +299,11 @@ class AtlasCreatorLogic(object):
                       notifyResamplingDirectory,
                       useCMTK,
                       sleepValue)
-            
-        resampledSegmentationsFilePathList = self.Helper().ConvertDirectoryToList(resampledDirectory)
+        
+        if not self.__dryRun:
+            resampledSegmentationsFilePathList = self.Helper().ConvertDirectoryToList(resampledDirectory)
+        else:
+            resampledSegmentationsFilePathList = configuration.GetSegmentationsFilePathList()
             
         #
         #
@@ -305,11 +312,15 @@ class AtlasCreatorLogic(object):
         #
         self.Helper().info("Entering Combine-To-Atlas Stage..")
                     
-        self.CombineToAtlas(resampledSegmentationsFilePathList,
+        self.CombineToAtlas(schedulerCommand,
+                            resampledSegmentationsFilePathList,
                             configuration.GetLabelsList(),
                             configuration.GetOutputCast(),
                             configuration.GetNormalizeAtlases(),
-                            configuration.GetOutputDirectory())
+                            configuration.GetOutputDirectory(),
+                            scriptsCombineToAtlasDirectory,
+                            notifyCombineToAtlasDirectory,
+                            sleepValue)
         
         # cleanup!!
         # delete the scripts and notify directories
@@ -317,7 +328,9 @@ class AtlasCreatorLogic(object):
             shutil.rmtree(scriptsRegistrationDirectory, True, None)
             shutil.rmtree(notifyRegistrationDirectory, True, None)
             shutil.rmtree(scriptsResamplingDirectory, True, None)
-            shutil.rmtree(notifyResamplingDirectory, True, None)            
+            shutil.rmtree(notifyResamplingDirectory, True, None)    
+            shutil.rmtree(scriptsCombineToAtlasDirectory, True, None)
+            shutil.rmtree(notifyCombineToAtlasDirectory, True, None)        
             
         # now delete the resampled segmentations
         if configuration.GetDeleteAlignedSegmentations():
@@ -472,12 +485,12 @@ class AtlasCreatorLogic(object):
             
             # guess the background level of the current image
             backgroundGuess = self.Helper().GuessBackgroundValue(movingImageFilePath)
-            self.Helper().debug("Guessing background value: "+str(backgroundGuess))
+            self.Helper().debug("Guessing background value: " + str(backgroundGuess))
             
             if useCMTK:
                 # guess the background level of the current image, only if CMTK is used
                 backgroundGuessTemplate = self.Helper().GuessBackgroundValue(templateFilePath)
-                self.Helper().debug("Guessing background value for template: "+str(backgroundGuessTemplate))            
+                self.Helper().debug("Guessing background value for template: " + str(backgroundGuessTemplate))            
                 
             movingImageName = os.path.splitext(os.path.basename(movingImageFilePath))[0]
             
@@ -531,7 +544,7 @@ class AtlasCreatorLogic(object):
             notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
             
             # now generate a script containing the commands and the notify line
-            script = self.Helper().CreateScript(command,notify)
+            script = self.Helper().CreateScript(command, notify)
             
             scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
             
@@ -541,7 +554,7 @@ class AtlasCreatorLogic(object):
             # set executable permissions
             os.chmod(scriptFilePath, 0700)    
             
-            self.Helper().debug("Executing generated Registration Script: "+scriptFilePath)
+            self.Helper().debug("Executing generated Registration Script: " + scriptFilePath)
             
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")    
@@ -564,8 +577,8 @@ class AtlasCreatorLogic(object):
         while not allOutputsExist:
             # not all outputs exist yet
             # get number of existing files
-            numberOfExistingFiles = len(glob.glob(outputNotifyDirectory+"*.ac"))
-            self.Helper().info("Waiting for Registration to complete.. ("+str(numberOfExistingFiles)+"/"+str(uniqueID)+" done)")
+            numberOfExistingFiles = len(glob.glob(outputNotifyDirectory + "*.ac"))
+            self.Helper().info("Waiting for Registration to complete.. (" + str(numberOfExistingFiles) + "/" + str(uniqueID) + " done)")
             
             # wait some secs and then check again
             time.sleep(int(sleepValue))
@@ -575,7 +588,7 @@ class AtlasCreatorLogic(object):
 
             # but now we really check if it is so            
             #for file in outputAlignedImages:
-            for index in range(1,uniqueID+1):
+            for index in range(1, uniqueID + 1):
                 
                 file = outputNotifyDirectory + str(index) + ".ac"
                 
@@ -664,7 +677,7 @@ class AtlasCreatorLogic(object):
             
             # guess the background level of the current image
             backgroundGuess = self.Helper().GuessBackgroundValue(segmentationFilePath)
-            self.Helper().debug("Guessing background value: "+str(backgroundGuess))            
+            self.Helper().debug("Guessing background value: " + str(backgroundGuess))            
 
             segmentationName = os.path.splitext(os.path.basename(segmentationFilePath))[0]
 
@@ -696,7 +709,7 @@ class AtlasCreatorLogic(object):
             notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
             
             # now generate a script containing the commands and the notify line
-            script = self.Helper().CreateScript(command,notify)
+            script = self.Helper().CreateScript(command, notify)
             
             scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
             
@@ -706,7 +719,7 @@ class AtlasCreatorLogic(object):
             # set executable permissions
             os.chmod(scriptFilePath, 0700)    
             
-            self.Helper().debug("Executing generated Resample Script: "+scriptFilePath)
+            self.Helper().debug("Executing generated Resample Script: " + scriptFilePath)
             
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")
@@ -715,7 +728,7 @@ class AtlasCreatorLogic(object):
                 os.system(schedulerCommand + " " + scriptFilePath)
                 
         # at this point:
-        # either the registration was completed if the os.system call did not send it to the background
+        # either the resampling was completed if the os.system call did not send it to the background
         # or the registration still runs in the background
         # latter is possible, if a cluster scheduler was specified
         # now, we will wait until all output images exist
@@ -725,8 +738,8 @@ class AtlasCreatorLogic(object):
         while not allOutputsExist:
             # not all outputs exist yet
             # get number of existing files
-            numberOfExistingFiles = len(glob.glob(outputNotifyDirectory+"*.ac"))
-            self.Helper().info("Waiting for Resampling to complete.. ("+str(numberOfExistingFiles)+"/"+str(uniqueID)+" done)")
+            numberOfExistingFiles = len(glob.glob(outputNotifyDirectory + "*.ac"))
+            self.Helper().info("Waiting for Resampling to complete.. (" + str(numberOfExistingFiles) + "/" + str(uniqueID) + " done)")
             
             # wait some secs and then check again
             time.sleep(int(sleepValue))
@@ -736,7 +749,7 @@ class AtlasCreatorLogic(object):
 
             # but now we really check if it is so            
             #for file in outputAlignedImages:
-            for index in range(1,uniqueID+1):
+            for index in range(1, uniqueID + 1):
                 
                 file = outputNotifyDirectory + str(index) + ".ac"
                 
@@ -813,11 +826,13 @@ class AtlasCreatorLogic(object):
     
     
     '''=========================================================================================='''
-    def CombineToAtlas(self, filePathsList, labelsList, reCastString, useNormalization, outputAtlasDirectory):
+    def CombineToAtlas(self, schedulerCommand, filePathsList, labelsList, reCastString, useNormalization, outputAtlasDirectory, outputScriptsDirectory, outputNotifyDirectory, sleepValue=5):
         '''
             Combine segmentations to an Atlas based on labels. For each label an Atlas gets created. Additionally,
             a combined Atlas is generated. All output is saved.
             
+            schedulerCommand
+                the schedulerCommand if used else ""            
             filePathsList
                 list of existing filepaths to segmentations
             labelsList
@@ -841,14 +856,16 @@ class AtlasCreatorLogic(object):
                 1: enable
             outputAtlasDirectory
                 directory to save the Atlases
-                
+            outputScriptsDirectory
+                directory to use for generated scripts
+            outputNotifyDirectory
+                directory to use for notification files                    
+            sleepValue
+                seconds to wait between each check on completed jobs
+                                
             Returns
                 TRUE or FALSE depending on success
         '''
-        
-        if self.__dryRun:
-            self.Helper().info("DRYRUN - skipping execution..")
-            return True
         
         # sanity checks
         if len(filePathsList) == 0:
@@ -868,89 +885,200 @@ class AtlasCreatorLogic(object):
             self.Helper().info("Empty outputAtlasDirectory for CombineToAtlas() command. Aborting..")
             return False
         
-        # the combined atlas imageData
-        atlasNode = slicer.vtkMRMLScalarVolumeNode()
-        atlas = slicer.vtkImageData()
-        
-        firstAtlasRun = True
+        if not outputScriptsDirectory:
+            self.Helper().info("Empty outputScriptsDirectory for CombineToAtlas() command. Aborting..")
+            return None   
 
+        if not outputNotifyDirectory:
+            self.Helper().info("Empty outputNotifyDirectory for CombineToAtlas() command. Aborting..")
+            return None                
+        
+        # get the launch command for Slicer3
+        launchCommandPrefix = self.Helper().GetSlicerLaunchPrefix(False, True)        
+        
+        uniqueID = 0
+        
         # loop through all labels
         for label in labelsList:
             
-            # for each label, we create an atlas using all manual segmentations
-            currentLabelAtlasNode = slicer.vtkMRMLScalarVolumeNode()
-            currentLabelAtlas = slicer.vtkImageData()
-            firstRun = True        
-
-            # loop through all segmentations
-            for segmentationFilePath in filePathsList:
-                
-                # read the manual segmentation
-                currentSegmentationNode = self.Helper().LoadVolume(segmentationFilePath)
-                currentSegmentation = slicer.vtkImageData()
-                currentSegmentation.DeepCopy(currentSegmentationNode.GetImageData())
-                # copy the orientation to our label atlas node
-                currentLabelAtlasNode.CopyOrientation(currentSegmentationNode)
-                # .. and to our atlas node
-                atlasNode.CopyOrientation(currentSegmentationNode)            
-                
-                # binarize the current segmentation
-                currentSegmentation.DeepCopy(self.Helper().BinarizeImageByLabel(currentSegmentation, label))
-
-                if firstRun:
-                    # binarize an image by a label to the currentLabelAtlas
-                    currentLabelAtlas.DeepCopy(currentSegmentation)
-                    firstRun = False
-                else:
-                    # combine a binarized image by the current label with the existing currentLabelAtlas
-                    currentLabelAtlas.DeepCopy(self.Helper().AddImages(currentSegmentation, currentLabelAtlas))
-
-                # now we delete the currentSegmentationNode
-                slicer.MRMLScene.RemoveNode(currentSegmentationNode)
-
-            # and combine it with the other label atlases
-            if firstAtlasRun:
-                # the first atlas iteration, just copy the currentLabelAtlas
-                atlas.DeepCopy(currentLabelAtlas)
-                firstAtlasRun = False
-            else:
-                # all other runs, add the currentLabelAtlas to the existing atlas
-                atlas.DeepCopy(self.Helper().AddImages(currentLabelAtlas, atlas))
-                
-            # now we copied the currentLabelAtlas to the atlas
-            # so we can modify currentLabelAtlas before saving..
+            # increase the uniqueID
+            uniqueID = uniqueID + 1            
+            command = ""
             
-            # normalize the currentLabelAtlas, if requested
-            if normalize:
-                self.Helper().info("Normalizing atlas for label " + str(label) + " to 0..1")
-                currentLabelAtlas.DeepCopy(self.Helper().DivideImage(currentLabelAtlas, len(filePathsList)))
-            else:
-                # re-Cast, only if not normalized
-                self.Helper().info("Re-Casting atlas for label " + str(label) + " to " + str(reCastString))
-                currentLabelAtlas.DeepCopy(self.Helper().ReCastImage(currentLabelAtlas, str(reCastString)))
-
-            # now save the currentLabelAtlasNode with the currentLabelAtlas imageData
-            currentLabelAtlasNode.SetAndObserveImageData(currentLabelAtlas)
-            self.Helper().SaveVolume(str(outputAtlasDirectory) + "atlas" + str(label) + ".nrrd", currentLabelAtlasNode)
-
+            # add some args to the Slicer launcher call
+            command += str(launchCommandPrefix) + " --no_splash --tmp_dir $ACTEMP --config_dir $ACTEMP --evalpython "
+                
+            evalpythonCommand = "from Slicer import slicer;import sys;import os;"
+            evalpythonCommand += "pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'"
+            evalpythonCommand += "/../Modules/AtlasCreator');"
+            evalpythonCommand += "sys.path.append(pathToAtlasCreator);"
+            evalpythonCommand += "from AtlasCreatorGUI import *;"
+            evalpythonCommand += "gui = AtlasCreatorGUI();"
+            evalpythonCommand += "gui.GetHelper().EnableDebugMode();"    
+            evalpythonCommand += "logic = gui.GetMyLogic();"
             
-        # now we attack the combined atlas   
+            evalpythonCommand += "logic.CombineToAtlasByLabel("
+            evalpythonCommand += str(label) + ","
+            evalpythonCommand += str(filePathsList) + ","
+            evalpythonCommand += "'" + str(outputAtlasDirectory) + "',"
+            evalpythonCommand += "'" + str(reCastString) + "',"
+            evalpythonCommand += str(normalize) + ","
+            evalpythonCommand += "1" # TODO change later
+            evalpythonCommand += ");logic = None;gui = None;"
+            
+            command += "\"" + evalpythonCommand + "\""  
+    
+            self.Helper().debug("CombineToAtlas Command(s): " + str(command))
+    
+            # create notification ID
+            notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
+            
+            # now generate a script containing the commands and the notify line
+            script = self.Helper().CreateScript(command, notify)
+            
+            scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
+            
+            with open(scriptFilePath, 'w') as f:
+                f.write(script)
+            
+            # set executable permissions
+            os.chmod(scriptFilePath, 0700)    
+            
+            self.Helper().debug("Executing generated CombineToAtlas Script: " + scriptFilePath)
+            
+            if self.__dryRun:
+                self.Helper().info("DRYRUN - skipping execution..")
+                return False    
+            else:
+                os.system(schedulerCommand + " " + scriptFilePath)
+                
+        # at this point:
+        # either the combination was completed if the os.system call did not send it to the background
+        # or the registration still runs in the background
+        # latter is possible, if a cluster scheduler was specified
+        # now, we will wait until all output images exist
         
-        # normalize the combined Atlas, if requested 
-        if normalize:
-            self.Helper().info("Normalizing combined atlas to 0..1")
-            atlas.DeepCopy(self.Helper().DivideImage(atlas, len(filePathsList)))
-        else:
-            # re-Cast, only if not normalized
-            self.Helper().info("Re-Casting atlas to " + str(reCastString))
-            atlas.DeepCopy(self.Helper().ReCastImage(atlas, str(reCastString)))
+        allOutputsExist = False
+        
+        while not allOutputsExist:
+            # not all outputs exist yet
+            # get number of existing files
+            numberOfExistingFiles = len(glob.glob(outputNotifyDirectory + "*.ac"))
+            self.Helper().info("Waiting for CombineToAtlas to complete.. (" + str(numberOfExistingFiles) + "/" + str(uniqueID) + " done)")
             
-        # now save the atlas
-        atlasNode.SetAndObserveImageData(atlas)
-        self.Helper().SaveVolume(str(outputAtlasDirectory) + "atlas.nrrd", atlasNode)
+            # wait some secs and then check again
+            time.sleep(int(sleepValue))
+            
+            # we assume everything exists
+            allOutputsExist = True
 
-            
+            # but now we really check if it is so            
+            #for file in outputAlignedImages:
+            for index in range(1, uniqueID + 1):
+                
+                file = outputNotifyDirectory + str(index) + ".ac"
+                
+                if not os.path.isfile(file):
+                    self.Helper().debug("CombineToAtlas Job with id " + str(index) + " not completed!")
+                    # if only one file does not exist,
+                    # we know we have to wait longer
+                    allOutputsExist = False
+                    break
+        
+        self.Helper().debug("All CombineToAtlas outputs exist!")
+
         return True
 
 
 
+    def CombineToAtlasByLabel(self, label, filePathsList, outputAtlasDirectory, reCastString, normalize, normalizeTo=1):
+        '''
+            Combine segmentations to an Atlas based on a given label.
+            
+            label
+                The current label Value
+            filePathsList
+                list of existing filepaths to segmentations
+            outputAtlasDirectory
+                directory to save the Atlas                
+            reCastString
+                re-Cast the Atlases to a certain type defined as a String
+                "Char"
+                "Unsigned Char"
+                "Double"
+                "Float"
+                "Int"
+                "Unsigned Int"
+                "Long"
+                "Unsigned Long"
+                "Short"
+                "Unsigned Short"
+                other values will result in "Short"
+            normalize
+                flag to enable the normalization of Atlas values between 0 and the normalizeTo value
+                False: disable
+                True: enable
+            normalizeTo
+                The value for the upper boundary of the normalization function. Default is 1
+                
+            Returns
+                TRUE or FALSE depending on success
+        '''
+        # sanity checks
+        if len(filePathsList) == 0:
+            return False
+
+        if not outputAtlasDirectory:
+            return False
+        
+        self.Helper().debug("Combining segmentations to Atlas for label " + str(label))        
+                        
+        # for each label, we create an atlas using all manual segmentations
+        currentLabelAtlasNode = slicer.vtkMRMLScalarVolumeNode()
+        currentLabelAtlas = slicer.vtkImageData()
+        firstRun = True        
+
+        # loop through all segmentations
+        for segmentationFilePath in filePathsList:
+            
+            # read the manual segmentation
+            currentSegmentationNode = self.Helper().LoadVolume(segmentationFilePath)
+            currentSegmentation = slicer.vtkImageData()
+            currentSegmentation.DeepCopy(currentSegmentationNode.GetImageData())
+            # copy the orientation to our label atlas node
+            currentLabelAtlasNode.CopyOrientation(currentSegmentationNode) 
+            # now we delete the currentSegmentationNode
+            slicer.MRMLScene.RemoveNode(currentSegmentationNode)
+
+            # binarize the current segmentation
+            currentSegmentation.DeepCopy(self.Helper().BinarizeImageByLabel(currentSegmentation, label))
+
+            if firstRun:
+                # start the atlas with the first binarized segmentation
+                currentLabelAtlas.DeepCopy(currentSegmentation)
+                firstRun = False
+            else:
+                # combine a binarized image by the current label with the existing currentLabelAtlas
+                currentLabelAtlas.DeepCopy(self.Helper().AddImages(currentSegmentation, currentLabelAtlas))
+            
+        # at this point we have an atlas
+        # cleanup
+        currentSegmentation = None
+        currentSegmentationNode = None
+        
+        # normalize the currentLabelAtlas, if requested
+        if normalize:
+            currentLabelAtlas.DeepCopy(self.Helper().DivideImage(currentLabelAtlas, len(filePathsList)))
+        else:
+            currentLabelAtlas.DeepCopy(self.Helper().ReCastImage(currentLabelAtlas, str(reCastString)))
+
+        # now save the currentLabelAtlasNode with the currentLabelAtlas imageData
+        currentLabelAtlasNode.SetAndObserveImageData(currentLabelAtlas)
+        self.Helper().SaveVolume(str(outputAtlasDirectory) + "atlas" + str(label) + ".nrrd", currentLabelAtlasNode)
+
+        self.Helper().debug("Atlas for label " + str(label) + " created..")
+
+        currentLabelAtlas = None
+        currentLabelAtlasNode = None
+
+        return True

@@ -135,12 +135,14 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def GetSlicerLaunchPrefix(self,useCMTK=False):
+    def GetSlicerLaunchPrefix(self,useCMTK=False,justLauncher=False):
         '''
             Get the path to the 3D Slicer launcher ready to start a plugin. (OS independent)
             
             useCMTK
                 If TRUE, add the CMTK directory instead of the Plugin Directory
+            justLauncher
+                If TRUE, just return the path to the Slicer launcher
             
             Returns
                 the path to the 3D Slicer launcher configured to start a plugin as a String
@@ -152,11 +154,15 @@ class AtlasCreatorHelper(object):
         # read the Slicer environment
         slicerDir = str(slicer.Application.GetBinDir())+os.sep+".."+os.sep
         slicerLauncher = os.path.normpath(slicerDir+"Slicer3")
-        self.info("Found 3D Slicer launcher at " + str(slicerLauncher))
         
         if not os.path.isfile(slicerLauncher):
             self.info("ERROR! Could not find Slicer3 launcher.. Aborting..")
             return None
+        
+        if justLauncher:
+            return slicerLauncher
+        
+        self.info("Found 3D Slicer launcher at " + str(slicerLauncher))        
         
         if useCMTK:
             executableDir = os.path.normpath(self.GetCMTKInstallationDirectory())
@@ -296,34 +302,56 @@ class AtlasCreatorHelper(object):
                 
             Returns
                 vtkImageData after Re-Cast
-        '''        
+        '''
+        
+        # get the current type
+        currentType = imageData.GetScalarType()
+        
         cast = slicer.vtkImageCast()
         cast.SetInput(imageData)
         cast.ClampOverflowOn()
         
-        if (castString == "Char"):
+        needToCast = False
+        
+        if (castString == "Char" and (currentType != 2 or currentType != 15)):
             cast.SetOutputScalarTypeToChar()
-        elif (castString == "Unsigned Char"):
+            needToCast = True
+        elif (castString == "Unsigned Char" and currentType != 3):
             cast.SetOutputScalarTypeToUnsignedChar()
-        elif (castString == "Double"):
+            needToCast = True
+        elif (castString == "Double" and currentType != 11):
             cast.SetOutputScalarTypeToUnsignedChar()
-        elif (castString == "Float"):
+            needToCast = True
+        elif (castString == "Float" and currentType != 10):
             cast.SetOutputScalarTypeToFloat()
-        elif (castString == "Int"):
+            needToCast = True
+        elif (castString == "Int" and currentType != 6):
             cast.SetOutputScalarTypeToInt()
-        elif (castString == "Unsigned Int"):
+            needToCast = True
+        elif (castString == "Unsigned Int" and currentType != 7):
             cast.SetOutputScalarTypeToUnsignedInt()
-        elif (castString == "Long"):
+            needToCast = True
+        elif (castString == "Long" and currentType != 8):
             cast.SetOutputScalarTypeToLong()
-        elif (castString == "Unsigned Long"):
+            needToCast = True
+        elif (castString == "Unsigned Long" and currentType != 9):
             cast.SetOutputScalarTypeToUnsignedLong()
-        elif (castString == "Short"):
+            needToCast = True
+        elif (castString == "Short" and currentType != 4):
             cast.SetOutputScalarTypeToShort()
-        elif (castString == "Unsigned Short"):
+            needToCast = True
+        elif (castString == "Unsigned Short" and currentType != 5):
             cast.SetOutputScalarTypeToUnsignedShort()
+            needToCast = True
         else:
             cast.SetOutputScalarTypeToShort()
+            needToCast = True
             
+        # check if we really need to cast,
+        # else exit here and return the input imageData
+        if not needToCast:
+            return imageData    
+        
         cast.Update()
         
         output = slicer.vtkImageData()
