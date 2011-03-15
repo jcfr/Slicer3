@@ -734,6 +734,9 @@ class AtlasCreatorLogic(object):
             else:
                 os.system(schedulerCommand + " " + scriptFilePath)
                 
+        if self.__dryRun:
+            return True                
+                
         # at this point:
         # either the resampling was completed if the os.system call did not send it to the background
         # or the registration still runs in the background
