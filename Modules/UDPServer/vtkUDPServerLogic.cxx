@@ -165,7 +165,6 @@ int vtkUDPServerLogic::Start(int p)
     }
   //Start Thread
   this->ThreadID = this->Thread->SpawnThread((vtkThreadFunctionType) &vtkUDPServerLogic::ThreadFunction, this);
-  std::cerr << "Thread ID: " << this->ThreadID << std::endl;
   return 1;
 }
 
@@ -198,7 +197,6 @@ void* vtkUDPServerLogic::ThreadFunction(void* ptr)
 int vtkUDPServerLogic::Stop()
 {
   // Check if thread exists
-  std::cerr << "Thread ID: " << this->ThreadID << std::endl;
   if (this->ThreadID >= 0)
     {
     this->ServerStopFlag = true;
