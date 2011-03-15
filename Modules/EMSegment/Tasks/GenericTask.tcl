@@ -384,8 +384,8 @@ namespace eval EMSegmenterPreProcessingTcl {
             "CMTK" {
                 set CMTKFOLDER [Get_CMTK_Installation_Path]
                 if { $CMTKFOLDER != "" } {
-                        $LOGIC PrintText "TCL: Found CMTK in $CMTKFOLDER"
-                        set selectedRegistrationPackage "CMTK"
+                    $LOGIC PrintText "TCL: Found CMTK in $CMTKFOLDER"
+                    set selectedRegistrationPackage "CMTK"
                 } else {
                     $LOGIC PrintText "TCL: WARNING: Couldn't find CMTK, switch back to BRAINSTools"
                     set selectedRegistrationPackage "BRAINS"
@@ -543,26 +543,26 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
-     # Create Voronoi diagram with correct scalar type from aligned subparcellation 
-     proc GeneratedVoronoi { input } {
- 
-            set output [vtkImageData New]
-            $output DeepCopy $input 
+    # Create Voronoi diagram with correct scalar type from aligned subparcellation 
+    proc GeneratedVoronoi { input } {
+        
+        set output [vtkImageData New]
+        $output DeepCopy $input 
 
-            set voronoi [vtkImageLabelPropagation New]
-            $voronoi SetInput $output 
-            $voronoi Update 
+        set voronoi [vtkImageLabelPropagation New]
+        $voronoi SetInput $output 
+        $voronoi Update 
 
-            set voronoiCast [vtkImageCast New]
-            $voronoiCast SetInput [$voronoi GetPropagatedMap] 
-            $voronoiCast SetOutputScalarType  [$output GetScalarType]
-            $voronoiCast Update
+        set voronoiCast [vtkImageCast New]
+        $voronoiCast SetInput [$voronoi GetPropagatedMap] 
+        $voronoiCast SetOutputScalarType  [$output GetScalarType]
+        $voronoiCast Update
 
-            $input DeepCopy [$voronoiCast GetOutput]
-            $voronoiCast Delete
-            $voronoi Delete
-            $output Delete
-     }
+        $input DeepCopy [$voronoiCast GetOutput]
+        $voronoiCast Delete
+        $voronoi Delete
+        $output Delete
+    }
 
     #------------------------------------------------------
     # from StartPreprocessingTargetToTargetRegistration
@@ -880,13 +880,14 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
-
+    # Precondition: All the inputchannels are already aligned
+    #
     # This function registers the atlas to the input (both are non-skull stripped)
     # The transformation will then be applied to the known atlas ICC mask
     # The transformed mask will then be applied to the input 
     #
     # The function returns a node with stripped input volumes
-    proc BRAINSSkullStripper { inputNode atlasNode } {
+    proc BRAINSSkullStripper { alignedInputNode atlasNode atlasMaskNode } {
         variable SCENE
         variable LOGIC
         $LOGIC PrintText "TCL: =========================================="
@@ -895,135 +896,207 @@ namespace eval EMSegmenterPreProcessingTcl {
         set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
         
         # initialize
-        set inputNode_SkullStripped ""
-        set atlasNode_SkullStripped ""
+        set alignedInputNode_SkullStripped ""
 
-        # Run the algorithm on each volume
-        for { set i 0 } {$i < [$inputNode GetNumberOfVolumes] } { incr i } {
+        # run the algorithm only on the first volume (index = 0)
 
-            set inputVolumeNode [$inputNode GetNthVolumeNode $i]
+        # This is the non-skull stripped input
+        set inputVolumeNode [$alignedInputNode GetNthVolumeNode 0]
+        set inputVolumeData [$inputVolumeNode GetImageData]
+        if { $inputVolumeData == "" } {
+            # todo: check error handling
+            PrintError "BRAINSSkullStripper: the ${i}th volume node has no input data defined!"
+            foreach VolumeNode $alignedInputNode_SkullStripped {
+                DeleteNode $VolumeNode
+            }
+            return ""
+        }
+        set tmpInputFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
+        set RemoveFiles "\"$tmpInputFileName\""
+        if { $tmpInputFileName == "" } {
+            return ""
+        }
+
+        #$LOGIC PrintText "TCL: ==========================================XX"
+        #$LOGIC PrintText "TCL: =======[$atlasNode Print ]===================================XX"
+
+        #Threshold --threshold 0 --lower 0 --upper 255 --outsidevalue 1 --thresholdtype Above InputImage OutputImage
+
+        # This is the non-skull-stripped atlas volume node
+        #        PrintError "[$atlasNode GetName]"
+        #       set nonStrippedAtlasVolumeNode [$atlasNode GetNthVolumeNode 0]
+        #       set nonStrippedAtlasVolumeData [$nonStrippedAtlasVolumeNode GetImageData]
+        #       if { $nonStrippedAtlasVolumeData == "" } {
+        #           PrintError "BRAINSSkullStripper: the ${atlasIndex}th volume node has no atlas data defined!"
+        #           return ""
+        #       }
+        #       set tmpNonStrippedAtlasFileName [WriteDataToTemporaryDir $nonStrippedAtlasVolumeNode Volume]
+        #       set RemoveFiles "\"$tmpNonStrippedAtlasFileName\""
+        #       if { $tmpNonStrippedAtlasFileName == "" } {
+        #           PrintError "BRAINSSkullStripper: error!"
+        #           return ""
+        #       }
+
+        # TODO, temporary workaround
+        set tmpNonStrippedAtlasFileName $PLUGINS_DIR/../../../../Slicer3/Modules/EMSegment/Tasks/MRI-Human-Brain/atlas_t1.nrrd
+
+        # $LOGIC PrintText "TCL: =========================================="
+
+        set linearTransformFileName [CreateFileName "LinearTransform"]
+        if { $linearTransformFileName == "" } {
+            PrintError "it is empty"
+        }
+
+        set oArgument [CreateFileName "Volume"]
+        if { $oArgument == "" } {
+            PrintError "it is empty"
+        }
+
+        set deformationfield [CreateFileName "Volume"]
+        if { $deformationfield == "" } {
+            PrintError "it is empty"
+        }
+
+        set fixedVolumeFileName \"$tmpInputFileName\"
+        set movingVolumeFileName \"$tmpNonStrippedAtlasFileName\"
+
+        set linearOutputVolumeFileName [CreateFileName "Volume"]
+        if { $linearOutputVolumeFileName == "" } {
+            PrintError "it is empty"
+        }
+
+        # LINEAR REGISTRATION
+        set CMD "${PLUGINS_DIR}/BRAINSFit"
+        set CMD "$CMD --fixedVolume $fixedVolumeFileName"
+        set CMD "$CMD --movingVolume $movingVolumeFileName"
+        set CMD "$CMD --outputVolume $linearOutputVolumeFileName"
+        set CMD "$CMD --outputTransform $linearTransformFileName"
+        set CMD "$CMD --initializeTransformMode useMomentsAlign --transformType Rigid,Affine"
+
+        $LOGIC PrintText "TCL: Executing $CMD"
+        catch { eval exec $CMD } errmsg
+        $LOGIC PrintText "TCL: $errmsg"
+
+
+
+        set nonlinearOutputVolumeFileName [CreateFileName "Volume"]
+        if { $nonlinearOutputVolumeFileName == "" } {
+            PrintError "it is empty"
+        }
+
+        # NON-LINEAR REGISTRATION
+        set CMD "${PLUGINS_DIR}/BRAINSDemonWarp"
+        set CMD "$CMD -f $fixedVolumeFileName"
+        set CMD "$CMD -m $movingVolumeFileName"
+        set CMD "$CMD --initializeWithTransform $linearTransformFileName"
+        set CMD "$CMD --outputVolume $nonlinearOutputVolumeFileName"
+        set CMD "$CMD --outputDeformationFieldVolume $deformationfield"
+
+        #set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16 --numberOfHistogramBins 1024"
+        # fast - for debugging
+        set CMD "$CMD -i 40,20,10,5,2 -n 5 -e --numberOfMatchPoints 16"
+
+        $LOGIC PrintText "TCL: Executing $CMD"
+        catch { eval exec $CMD } errmsg
+        $LOGIC PrintText "TCL: $errmsg"
+
+
+
+        ##########
+        # now we have to apply the transformation on our mask file
+
+        # This is the non-skull stripped input
+        #       set atlasMaskVolumeNode [$atlasMaskNode GetNthVolumeNode 0]
+        #       set atlasMaskVolumeData [$atlasMaskVolumeNode GetImageData]
+        #       if { $atlasMaskVolumeData == "" } {
+        #           PrintError "BRAINSSkullStripper: the ${i}th volume node has no input data defined!"
+        #           foreach VolumeNode $atlasMaskNode_SkullStripped {
+        #               DeleteNode $VolumeNode
+        #           }
+        #           return ""
+        #       }
+        #       set atlas_mask_FileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
+        #       set RemoveFiles "\"$atlas_mask_FileName\""
+        #       if { $atlas_mask_FileName == "" } {
+        #           return ""
+        #       }
+
+        # TODO, temporary workaround
+        set atlas_mask_FileName $PLUGINS_DIR/../../../../Slicer3/Modules/EMSegment/Tasks/MRI-Human-Brain/atlas_t1_stripped_mask.nrrd
+
+        set deformed_atlas_mask_FileName [CreateFileName "Volume"]
+        if { $deformed_atlas_mask_FileName == "" } {
+            PrintError "it is empty"
+        }
+
+        # todo
+        set backgroundLevel 0
+        # WARP(=Resample) mask
+        set CMD "${PLUGINS_DIR}/BRAINSResample"
+        set CMD "$CMD --inputVolume $atlas_mask_FileName"
+        set CMD "$CMD --referenceVolume $fixedVolumeFileName"
+        set CMD "$CMD --deformationVolume $deformationfield"
+        set CMD "$CMD --outputVolume $deformed_atlas_mask_FileName"
+        set CMD "$CMD --defaultValue $backgroundLevel"
+        set CMD "$CMD --pixelType"
+
+
+        set referenceVolume [$inputVolumeNode GetImageData]
+        set scalarType [$referenceVolume GetScalarTypeAsString]
+        switch -exact "$scalarType" {
+            "bit" { set CMD "$CMD binary" }
+            "unsigned char" { set CMD "$CMD uchar" }
+            "unsigned short" { set CMD "$CMD ushort" }
+            "unsigned int" { set CMD "$CMD uint" }
+            "short" -
+            "int" -
+            "float" { set CMD "$CMD $scalarType" }
+            default {
+                PrintError "BRAINSSkullStripper: cannot resample a volume of type $scalarType"
+                return 1
+            }
+        }
+        # Linear
+        #        set CMD "$CMD --interpolationMode $interpolationType"
+
+        $LOGIC PrintText "TCL: Executing $CMD"
+        catch { eval exec $CMD } errmsg
+        $LOGIC PrintText "TCL: $errmsg"
+
+        ##########
+
+        # The input mask is now transformed, apply this transformed mask to the input.
+
+        # Run the algorithm on each input volume
+        for { set i 0 } { $i < [$alignedInputNode GetNumberOfVolumes] } { incr i } {
+
+
+            # This is the non-skull stripped input
+            set inputVolumeNode [$alignedInputNode GetNthVolumeNode $i]
             set inputVolumeData [$inputVolumeNode GetImageData]
             if { $inputVolumeData == "" } {
-                PrintError "BRAINSSkullStripper: the ${i}th volume node has no input data defined!"
-                foreach VolumeNode $inputNode_SkullStripped {
-                    DeleteNode $VolumeNode
-                }
+                PrintError "BRAINSSkullStripper: Cannot mask: the ${i}th volume node has no input data defined!"
                 return ""
             }
-
             set tmpInputFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
             set RemoveFiles "\"$tmpInputFileName\""
             if { $tmpInputFileName == "" } {
                 return ""
-            }       
-
-            #Threshold --threshold 0 --lower 0 --upper 255 --outsidevalue 1 --thresholdtype Above InputImage OutputImage
-            #TODO: get atlas template file for this input
-            set non_skull_stripped_atlas  /home/domibel/Desktop/data/spl_50_cases_with_manual_segmentation/ForSBIA/case2/spgr/case2norm.nrrd
-            set atlas_mask /home/domibel/Desktop/data/spl_50_cases_with_manual_segmentation/ForSBIA/case2/spgr-strip/case2norm_mask.nrrd
-
-
-            set atlas_mask_deformed [CreateFileName "Volume"]
-            if { $atlas_mask_deformed == "" } {
-                PrintError "it is empty"
             }
-
-
-            set linearTransformFileName [CreateFileName "LinearTransform"]
-            if { \"$linearTransformFileName\" == "" } {
-                PrintError "it is empty"
-            }
-
-            set oArgument [CreateFileName "Volume"]
-            if { \"$oArgument\" == "" } {
-                PrintError "it is empty"
-            }
-
-            set deformationfield [CreateFileName "Volume"]
-            if { \"$deformationfield\" == "" } {
-                PrintError "it is empty"
-            }
-
-
-            set fixedVolumeFileName \"$tmpInputFileName\"
-            set movingVolumeFileName \"$non_skull_stripped_atlas\"
 
             set outputVolumeFileName [CreateFileName "Volume"]
             if { $outputVolumeFileName == "" } {
                 PrintError "it is empty"
+                return ""
             }
-
-            # LINEAR REGISTRATION
-            set CMD "${PLUGINS_DIR}/BRAINSFit"
-            set CMD "$CMD --fixedVolume \"$fixedVolumeFileName\""
-            set CMD "$CMD --movingVolume \"$movingVolumeFileName\""
-            set CMD "$CMD --outputVolume \"$outputVolumeFileName\""
-            set CMD "$CMD --outputTransform \"$linearTransformFileName\""
-            set CMD "$CMD --initializeTransformMode useMomentsAlign --transformType Rigid,Affine"
-
-            $LOGIC PrintText "TCL: Executing $CMD"
-            catch { eval exec $CMD } errmsg
-            $LOGIC PrintText "TCL: $errmsg"
-
-
-            # NON-LINEAR REGISTRATION
-            set CMD "${PLUGINS_DIR}/BRAINSDemonWarp"
-            set CMD "$CMD -m \"$movingVolumeFileName\""
-            set CMD "$CMD -f \"$fixedVolumeFileName\""
-            set CMD "$CMD --initializeWithTransform \"$linearTransformFileName\""
-            set CMD "$CMD -o $oArgument -O \"$deformationfield\""
-            #set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
-            # fast - for debugging
-            set CMD "$CMD -i 1,5,2,1,1 -n 5 -e --numberOfMatchPoints 16"
-
-            $LOGIC PrintText "TCL: Executing $CMD"
-            catch { eval exec $CMD } errmsg
-            $LOGIC PrintText "TCL: $errmsg"
-
-
-            # WARP(=Resample) mask
-            set CMD "${PLUGINS_DIR}/BRAINSResample"
-            set CMD "$CMD --inputVolume \"$atlas_mask\""
-            set CMD "$CMD --referenceVolume \"$fixedVolumeFileName\""
-            set CMD "$CMD --deformationVolume \"$deformationfield\""
-            set CMD "$CMD --outputVolume \"$atlas_mask_deformed\""
-            #        set CMD "$CMD --defaultValue $backgroundLevel"
-            set CMD "$CMD --pixelType"
-
-
-            set referenceVolume [$inputVolumeNode GetImageData]
-            set scalarType [$referenceVolume GetScalarTypeAsString]
-            switch -exact "$scalarType" {
-                "bit" { set CMD "$CMD binary" }
-                "unsigned char" { set CMD "$CMD uchar" }
-                "unsigned short" { set CMD "$CMD ushort" }
-                "unsigned int" { set CMD "$CMD uint" }
-                "short" -
-                "int" -
-                "float" { set CMD "$CMD $scalarType" }
-                default {
-                    PrintError "BRAINSSkullStripper: cannot resample a volume of type $scalarType"
-                    return 1
-                }
-            }
-            # Linear
-            #        set CMD "$CMD --interpolationMode $interpolationType"
-
-            $LOGIC PrintText "TCL: Executing $CMD"
-            catch { eval exec $CMD } errmsg
-            $LOGIC PrintText "TCL: $errmsg"
-
-
 
 
             # MASK input volume
             set CMD "${PLUGINS_DIR}/Mask"
-            set CMD "$CMD --label 1 --replace 0 \"$tmpInputFileName\" \"$atlas_mask_deformed\" \"$outputVolumeFileName\""
-
+            set CMD "$CMD --label 1 --replace 0 $tmpInputFileName $deformed_atlas_mask_FileName $outputVolumeFileName"
             $LOGIC PrintText "TCL: Executing $CMD"
             catch { eval exec $CMD } errmsg
             $LOGIC PrintText "TCL: $errmsg"
-
 
             # create a new node for our output-list
             set outputVolumeNode [CreateVolumeNode $inputVolumeNode "[$inputVolumeNode GetName]_stripped"]
@@ -1036,86 +1109,12 @@ namespace eval EMSegmenterPreProcessingTcl {
             file delete -force $outputVolumeFileName
 
             # still in for loop, create a list of Volumes
-            set inputNode_SkullStripped "${inputNode_SkullStripped} $outputVolumeNode "
+            set inputNode_SkullStripped "$alignedInputNode_SkullStripped $outputVolumeNode "
             $LOGIC PrintText "TCL: List of volume nodes: $inputNode_SkullStripped"
-
-
-            ###
-            set atlasVolumeNode [$atlasNode GetNthVolumeNode $i]
-            set atlasVolumeData [$atlasVolumeNode GetImageData]
-            if { $atlasVolumeData == "" } {
-                #PrintError "BRAINSSkullStripper: the ${i}th volume node has no input data defined!"
-                foreach VolumeNode $atlasNode_SkullStripped {
-                    DeleteNode $VolumeNode
-                }
-                return ""
-            }
-            set tmpAtlasFileName [WriteDataToTemporaryDir $atlasVolumeNode Volume]
-            set RemoveFiles "\"$tmpAtlasFileName\""
-            if { $tmpAtlasFileName == "" } {
-                return ""
-            }       
-
-            set outputAtlasVolumeFileName [CreateFileName "Volume"]
-            if { $outputAtlasVolumeFileName == "" } {
-                PrintError "it is empty"
-            }
-            #
-
-            # WARP(=Resample) mask
-            set CMD "${PLUGINS_DIR}/BRAINSResample"
-            set CMD "$CMD --inputVolume \"$tmpAtlasFileName\""
-            set CMD "$CMD --referenceVolume \"$fixedVolumeFileName\""
-            set CMD "$CMD --deformationVolume \"$deformationfield\""
-            set CMD "$CMD --outputVolume \"$outputAtlasVolumeFileName\""
-            #        set CMD "$CMD --defaultValue \"$backgroundLevel\""
-            set CMD "$CMD --pixelType"
-
-
-            set referenceVolume [$inputVolumeNode GetImageData]
-            set scalarType [$referenceVolume GetScalarTypeAsString]
-            switch -exact "$scalarType" {
-                "bit" { set CMD "$CMD binary" }
-                "unsigned char" { set CMD "$CMD uchar" }
-                "unsigned short" { set CMD "$CMD ushort" }
-                "unsigned int" { set CMD "$CMD uint" }
-                "short" -
-                "int" -
-                "float" { set CMD "$CMD $scalarType" }
-                default {
-                    PrintError "BRAINSSkullStripper: cannot resample a volume of type $scalarType"
-                    return 1
-                }
-            }
-            # Linear
-            #        set CMD "$CMD --interpolationMode $interpolationType"
-
-            $LOGIC PrintText "TCL: Executing $CMD"
-            catch { eval exec $CMD } errmsg
-            $LOGIC PrintText "TCL: $errmsg"
-
-
-
-            #
-
-
-            # create a new node for our output-list
-            set atlasoutputVolumeNode [CreateVolumeNode $atlasVolumeNode "[$atlasVolumeNode GetName]_stripped"]
-            set atlasoutputVolumeData [vtkImageData New]
-            $atlasoutputVolumeNode SetAndObserveImageData $atlasoutputVolumeData
-            $atlasoutputVolumeData Delete
-
-            # Read results back
-            ReadDataFromDisk $atlasoutputVolumeNode $outputAtlasVolumeFileName Volume
-            file delete -force $outputAtlasVolumeFileName
-
-            set atlasNode_SkullStripped "${atlasNode_SkullStripped} $atlasoutputVolumeNode "
-            
-
-
         }
         return "$inputNode_SkullStripped"
     }
+
 
 
 
@@ -2006,6 +2005,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
         return 0
     }
+
+
 
     # -------------------------------------
     # Register Atlas to Subject
