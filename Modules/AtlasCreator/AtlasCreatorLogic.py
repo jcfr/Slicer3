@@ -121,8 +121,16 @@ class AtlasCreatorLogic(object):
                 self.Helper().info("ERROR! Falling back to BRAINSFit...")
                 self.Helper().info("ERROR! Please install CMTK4Slicer in order to use CMTK!")
                 useCMTK = False
-                
     
+        # if we need to register, check if all files in the configuration.GetOriginalImagesFilePathList() are
+        # also present in  configuration.GetSegmentationsFilePathList() and vice-versa
+        if not skipRegistrationMode:
+            configuration.SetOriginalImagesFilePathList(self.Helper().GetValidFilePaths(configuration.GetOriginalImagesFilePathList(),
+                                                                                        configuration.GetSegmentationsFilePathList()))
+            configuration.SetSegmentationsFilePathList(self.Helper().GetValidFilePaths(configuration.GetSegmentationsFilePathList(),
+                                                                                       configuration.GetOriginalImagesFilePathList()))
+            
+            
         # at this point, we have a valid configuration, let's print it
         self.Helper().info("Configuration for Atlas Creator:\n" + str(configuration.GetConfigurationAsString()))
         
@@ -723,7 +731,6 @@ class AtlasCreatorLogic(object):
             
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")
-                return False    
             else:
                 os.system(schedulerCommand + " " + scriptFilePath)
                 
@@ -947,8 +954,7 @@ class AtlasCreatorLogic(object):
             self.Helper().debug("Executing generated CombineToAtlas Script: " + scriptFilePath)
             
             if self.__dryRun:
-                self.Helper().info("DRYRUN - skipping execution..")
-                return False    
+                self.Helper().info("DRYRUN - skipping execution..") 
             else:
                 os.system(schedulerCommand + " " + scriptFilePath)
                 

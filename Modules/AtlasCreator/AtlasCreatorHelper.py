@@ -687,10 +687,42 @@ class AtlasCreatorHelper(object):
                 
         return listOfFilePaths
     
+    
+    
+    '''=========================================================================================='''
+    def GetValidFilePaths(self,list1,list2):
+        '''
+            Returns list1 without any files which baseNames are not in list2.
+            
+            list1, list2
+                list of filePaths
+                
+            Returns
+                list1 without invalid entries
+        '''
+        for i in list1:
+            caseNameInList1 = os.path.basename(i)
+            
+            isInBothLists = False
+            
+            for j in list2:
+                
+                caseNameInList2 = os.path.basename(j)
+                
+                if caseNameInList1 == caseNameInList2:
+                    isInBothLists = True
+                    break
+                
+            # remove the item if it is not in both lists
+            if not isInBothLists:
+                list1.remove(i) 
+                
+        return list1
+        
                 
         
     '''=========================================================================================='''    
-    def DisplayImageInSlicer(self,filePath,nodeName,):
+    def DisplayImageInSlicer(self,filePath,nodeName):
         '''
             Displays an image in 3D Slicer and re-calculates Window/Level on the displayNode
             
