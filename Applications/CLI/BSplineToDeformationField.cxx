@@ -85,7 +85,7 @@ int main( int argc , char * argv[] )
   typedef itk::ImageRegionIterator< DeformationFieldType > DeformationFieldIteratorType;
   DeformationFieldIteratorType fieldit( deformationField, deformationField->GetRequestedRegion() );
 
-  std::cerr << "Converting BSpline transform to dense field ... " << std::endl;
+  std::cout << "Converting BSpline transform to dense field ... " << std::endl;
   for (fieldit.GoToBegin(); !fieldit.IsAtEnd(); ++ fieldit)
   {
       DeformationFieldType::IndexType currentPix = fieldit.GetIndex();
@@ -97,7 +97,7 @@ int main( int argc , char * argv[] )
       displacement = movingPoint - fixedPoint;
       fieldit.Set(displacement);
   }
-  std::cerr << "Converting BSpline transform to dense field successful. " << std::endl;
+  std::cout << "Converting BSpline transform to dense field successful. " << std::endl;
 
   typedef itk::ImageFileWriter< DeformationFieldType > DFWriterType;
   DFWriterType::Pointer  deformationFieldWriter =  DFWriterType::New();

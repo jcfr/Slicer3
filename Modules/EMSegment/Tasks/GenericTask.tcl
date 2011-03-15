@@ -747,22 +747,24 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc calcDFVolumeNode { inputVolumeNode referenceVolumeNode transformationNode }   {
         variable LOGIC
 
-        $LOGIC PrintText "TCL: Create deformation field"
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == Create deformation field"
+        $LOGIC PrintText "TCL: =========================================="
 
         # create a deformation field
 
         if { $transformationNode == "" } {
             PrintError "calcDFVolumeNode: transformation node not correctly defined"
-            return 1
+            return ""
         }
         set tmpTransformFileName [WriteDataToTemporaryDir $transformationNode Transform]
-        if { $tmpTransformFileName == "" } { return 1 }
+        if { $tmpTransformFileName == "" } { return "" }
 
         set tmpInputVolumeFileName [WriteImageDataToTemporaryDir $inputVolumeNode ]
-        if { $tmpInputVolumeFileName == "" } { return 1 }
+        if { $tmpInputVolumeFileName == "" } { return "" }
 
         set tmpReferenceVolumeFileName [WriteImageDataToTemporaryDir  $referenceVolumeNode ]
-        if { $tmpReferenceVolumeFileName == "" } { return 1 }
+        if { $tmpReferenceVolumeFileName == "" } { return "" }
 
         set DFNode [CreateVolumeNode $referenceVolumeNode "deformVolume"]
         set outputVolume [vtkImageData New]
@@ -779,12 +781,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         set CMDdeform "$CMDdeform --defImage \"$deformationFieldFilename\""
 
         $LOGIC PrintText "TCL: Executing $CMDdeform"
-        if { [catch { exec  $CMDdeform } errmsg] } {
+        if { [catch { eval exec $CMDdeform } errmsg] } {
             $LOGIC PrintText "TCL: ---- $errmsg ----"
+            $LOGIC PrintText "Information about it: $::errorInfo"
             return ""
         }
 
-        $LOGIC PrintText "TCL: Create deformation field...END"
         return $deformationFieldFilename
     }
 
@@ -2158,7 +2160,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 }
                 $LOGIC PrintText "TCL: RegisterAtlas: calcDFVolumeNode START"
                 set transformNode [calcDFVolumeNode $movingAtlasVolumeNode $fixedTargetVolumeNode $BSplineNode]
-                $LOGIC PrintText "TCL: RegisterAtlas: calcDFVolumeNode DONE, succesfull? FIXME, TODO"
+                $LOGIC PrintText "TCL: RegisterAtlas: calcDFVolumeNode DONE"
                 if { $transformNode == "" } {
                     PrintError "RegisterAtlas: Deformation Field Transform node is null"
                     return 1
