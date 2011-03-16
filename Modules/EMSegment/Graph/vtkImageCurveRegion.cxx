@@ -342,7 +342,28 @@ void vtkImageCurveRegion::SetDimension (int value){
 }
 
 void vtkImageCurveRegion::ExecuteDataGauss(vtkDataObject *output) {
+
   vtkImageData *data = this->AllocateOutputData(output);
+  if (data->GetScalarType() != VTK_FLOAT) {
+    vtkErrorMacro("Execute: This source only outputs floats");
+    return;
+  }
+
+  float **InvCov = new float*[this->Dimension];
+  // This is copied from vtkImageEMLocalSegment.cxx EMClass::CalcInvCovParamters()
+  if (InvertMatrix(this->Covariance,InvCov,this->Dimension) == 0) {
+    vtkErrorMacro(<< "Could not caluclate the Inverse of the Covariance of tissue class. Covariance Matrix is probably almost singular!");
+    delete [] *InvCov;
+    return;
+  }
+
+  float DetCov;
+  DetCov = determinant(this->Covariance,this->Dimension);
+  if (DetCov <= 0.0) {
+    vtkErrorMacro(<< "Coveriance Matrix (Det= " << DetCov <<") for tissue class is probably almost singular or not positiv! Could not calculate the inverse determinant of it ");
+    return;
+  }
+
   float *outPtr;
   int idxR, idxY, idxZ;
   int maxY, maxZ;
@@ -350,31 +371,14 @@ void vtkImageCurveRegion::ExecuteDataGauss(vtkDataObject *output) {
   int rowLength;
   int *outExt;
   float *value   = new float[this->Dimension];
-  float **InvCov = new float*[this->Dimension];
   for (idxR = 0 ; idxR < this->Dimension; idxR++) InvCov[idxR] = new float[this->Dimension];
-  float DetCov;
   float InvSqrtDetCov;
   bool FlagInit = false;
-  // This is copied from vtkImageEMLocalSegment.cxx EMClass::CalcInvCovParamters()  
-  if (InvertMatrix(this->Covariance,InvCov,this->Dimension) == 0) {
-    vtkErrorMacro(<< "Could not caluclate the Inverse of the Covariance of tissue class. Covariance Matrix is probably almost signular!");
-    return;
-  } 
 
-  DetCov = determinant(this->Covariance,this->Dimension);
-  if  (DetCov <= 0.0) {
-    vtkErrorMacro(<< "Coveriance Matrix (Det= " << DetCov <<") for tissue class is probably almost signular or not positiv! Could not calculate the inverse determinant of it ");
-    return;
-  }
   InvSqrtDetCov = sqrt(1/DetCov);
 
   float *LogValue = new float[this->Dimension];
 
-  if (data->GetScalarType() != VTK_FLOAT) {
-    vtkErrorMacro("Execute: This source only outputs floats");
-    return;
-  }
-  
   outExt = data->GetExtent();
   
   // find the region to loop over
