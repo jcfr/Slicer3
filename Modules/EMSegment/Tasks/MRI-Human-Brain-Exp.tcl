@@ -60,11 +60,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
         $LOGIC PrintText  "TCLMRI: Preprocessing MRI Human Brain - ShowUserInterface"
 
-        $preGUI DefineTextLabel "IMPORTANT: This task only applies to skull stripped scans!\n\nShould the EMSegmenter " 0
+        $preGUI DefineTextLabel "This task only applies to skull stripped scans!\n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton " - register the atlas to the input scan ?" 0 $atlasAlignedFlagID
         # $preGUI DefineVolumeMenuButton "Define ICC mask of the atlas ?" 0 $iccMaskSelectID
         $preGUI DefineCheckButton " - perform image inhomogeneity correction on input scan ?" 0 $inhomogeneityCorrectionFlagID
-        $preGUI DefineCheckButton "EXPERIMENTAL:\n - perform skull stripping on input scan ?\n" 0 $performSkullStrippingFlagID
+        $preGUI DefineCheckButton " - perform skull stripping on input scan ?" 0 $performSkullStrippingFlagID
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $preGUI SetButtonsFromMRML
@@ -245,9 +245,9 @@ namespace eval EMSegmenterSimpleTcl {
             return 1
         }
 
-        $inputChannelGUI DefineTextLabel "IMPORTANT: Please insure that input scans are skull stripped!\n\nShould the EMSegmenter " 0
+        $inputChannelGUI DefineTextLabel "Please insure that input scans are skull stripped!\n\nShould the EMSegmenter " 0
         $inputChannelGUI DefineCheckButton " - perform image inhomogeneity correction on input scans ?" 0 $EMSegmenterPreProcessingTcl::inhomogeneityCorrectionFlagID
-        $inputChannelGUI DefineCheckButton "EXPERIMENTAL:\n- perform skull stripping on input scan ?\n" 0 $EMSegmenterPreProcessingTcl::performSkullStrippingFlagID
+        $inputChannelGUI DefineCheckButton " - perform skull stripping on input scan ?" 0 $EMSegmenterPreProcessingTcl::performSkullStrippingFlagID
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $inputChannelGUI SetButtonsFromMRML
