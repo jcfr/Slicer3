@@ -18,6 +18,7 @@
 #include "vtkImageClip.h"
 
 #include <stdio.h>
+#include <sstream>
 // #include <stdlib.h>
 // #include <unistd.h>
 
@@ -542,7 +543,7 @@ void vtkImageEMGeneral::CalculateLogMeanandLogCovariance(double *mu, double *Sig
   // -> I get the Variance - what I need for the one dimesional case is the standard deviation or sigma value for the gauss curve
   for (int k=0; k< NumberOfClasses;k++) logSigma[k] = sqrt(logSigma[k]); 
 
-  delete[] LogTestSequence;
+  delete [] LogTestSequence;
 }
 
 // Specifically defined function for opening files within EM iterations to keep the naming convention  
@@ -550,11 +551,14 @@ FILE* vtkImageEMGeneral::OpenTextFile(const char* FileDir, const char FileName[]
                       const char *LevelName, int LevelNameFlag, int iter, int IterFlag, 
                       const char FileSucessMessage[], char OpenFileName[]) {
   FILE* OpenFile;
-  sprintf(OpenFileName,"%s/%s",FileDir,FileName);
-  if (LabelFlag)     sprintf(OpenFileName,"%s_C%02d",OpenFileName,Label);
-  if (LevelNameFlag) sprintf(OpenFileName,"%s_L%s",OpenFileName,LevelName);
-  if (IterFlag)      sprintf(OpenFileName,"%s_I%02d",OpenFileName,iter);
-  sprintf(OpenFileName,"%s.txt",OpenFileName);
+
+  std::stringstream ss;
+  ss << FileDir << "/" << FileName;
+  if (LabelFlag)     ss << "_C" << setw(2) << Label;
+  if (LevelNameFlag) ss << "_L" << LevelName;
+  if (IterFlag)      ss << "_I" << setw(2) << iter;
+  ss << ".txt";
+  strcpy (OpenFileName,ss.str().c_str());
 
   if (vtkFileOps::makeDirectoryIfNeeded(OpenFileName) == -1) return NULL;
   
