@@ -695,6 +695,7 @@ void vtkSlicerCacheAndDataIOManagerGUI::UpdateOverviewPanel()
   if ( app == NULL || appGUI == NULL )
     {
     vtkErrorMacro ( "Got NULL application or applicationGUI." );
+    delete [] txt;
     return;
     }
 
