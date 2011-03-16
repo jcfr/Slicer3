@@ -475,6 +475,7 @@ int vtkImageEMLocalSegmenter::HierarchicalSegmentation(vtkImageEMLocalSuperClass
   case EMSEGMENT_REGISTRATION_SEQUENTIAL   : std::cerr << "Sequential " << endl; break;
   default : 
     vtkEMAddErrorMessage("Unknown Registration Type " << RegistrationType) ;
+    delete [] NewLevelName;
     return 0;
   } 
   std::cerr << "GenerateBackgroundProbability: " << (head->GetGenerateBackgroundProbability() ? "On" : "Off" ) << endl;
