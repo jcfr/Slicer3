@@ -74,19 +74,23 @@ CONFIGUREBRAINSORSLICERLIBRARY(${CLP} BRAINSDemonWarpPrimary.xml "${${CLP}_SOURC
 ## NOTE:  The BRAINSDemonWarpCommonLib includes VBRAINSDemonWarpPrimary.cxx and must be configured against VBRAINSDemonWarpPrimary.xml
 
 set(CLP BRAINSDemonWarp)
-set(${CLP}_SOURCE BRAINSDemonWarp.cxx BRAINSDemonWarpPrimary.cxx)
-CONFIGUREBRAINSORSLICERPROPERTIES(${CLP} BRAINSDemonWarpPrimary.xml "${${CLP}_SOURCE}" "BRAINSDemonWarpCommonLib")
+set(${CLP}_SOURCE BRAINSDemonWarp.cxx )
+set(${CLP}_PRIMARY_SOURCE BRAINSDemonWarpPrimary.cxx)
+CONFIGUREBRAINSORSLICERPROPERTIES(${CLP} BRAINSDemonWarpPrimary.xml "${${CLP}_SOURCE}" "${${CLP}_PRIMARY_SOURCE}" "BRAINSDemonWarpPrimary" "BRAINSDemonWarpCommonLib")
 
 if(BRAINS_BUILD) ## ONLY BUILD FOR BACKWARDS COMPATIBILITY IN BRAINS ENVIRONMENT
   set(CLP BRAINSDemonWarpCLP) ## NOTE: This is completely redundant, but is needed to support all the old scripts that use the original name
-  set( ${CLP}_SOURCE BRAINSDemonWarpCLP.cxx BRAINSDemonWarpPrimary.cxx)
-  CONFIGUREBRAINSORSLICERPROPERTIES(${CLP} BRAINSDemonWarpPrimary.xml "${${CLP}_SOURCE}" "BRAINSDemonWarpCommonLib")
+  set(${CLP}_SOURCE BRAINSDemonWarp.cxx )
+  set(${CLP}_PRIMARY_SOURCE BRAINSDemonWarpPrimary.cxx)
+  CONFIGUREBRAINSORSLICERPROPERTIES(${CLP} BRAINSDemonWarpPrimary.xml "${${CLP}_SOURCE}" "${${CLP}_PRIMARY_SOURCE}" "BRAINSDemonWarpPrimary" "BRAINSDemonWarpCommonLib")
 ## HACK -- Need to write other backwards compatibility wrappers for the old names of BRAINSDemonWarpCLP
 endif(BRAINS_BUILD) ## ONLY BUILD FOR BACKWARDS COMPATIBILITY IN BRAINS ENVIRONMENT
 
 set(CLP VBRAINSDemonWarp)
-set(${CLP}_SOURCE VBRAINSDemonWarp.cxx VBRAINSDemonWarpPrimary.cxx)
-CONFIGUREBRAINSORSLICERPROPERTIES(${CLP} VBRAINSDemonWarpPrimary.xml "${${CLP}_SOURCE}" "BRAINSDemonWarpCommonLib")
+set(${CLP}_SOURCE VBRAINSDemonWarp.cxx )
+set(${CLP}_PRIMARY_SOURCE VBRAINSDemonWarpPrimary.cxx)
+#CONFIGUREBRAINSORSLICERPROPERTIES(${CLP} VBRAINSDemonWarpPrimary.xml "${${CLP}_SOURCE}" "BRAINSDemonWarpCommonLib")
+CONFIGUREBRAINSORSLICERPROPERTIES(${CLP} VBRAINSDemonWarpPrimary.xml "${${CLP}_SOURCE}" "${${CLP}_PRIMARY_SOURCE}" "VBRAINSDemonWarpPrimary" "BRAINSDemonWarpCommonLib")
 
 ### Add the Testing Subdirectory.
 if(BUILD_TESTING)

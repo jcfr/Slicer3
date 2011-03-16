@@ -66,6 +66,12 @@ PURPOSE.  See the above copyright notices for more information.
 #  endif
 #endif
 
+#ifdef WIN32
+#define MODULE_EXPORT __declspec(dllexport)
+#else
+#define MODULE_EXPORT
+#endif
+
 #include "itkMedianImageFilter.h"
 
 typedef float PixelType;
@@ -190,6 +196,7 @@ typename ImageType::Pointer DoMedian(typename ImageType::Pointer & input,
 DebugImageViewerClient DebugImageDisplaySender;
 #endif
 
+extern "C" MODULE_EXPORT int BRAINSFitPrimary (int argc, char *argv[]);
 int BRAINSFitPrimary(int argc, char *argv[])
 {
   PARSE_ARGS;

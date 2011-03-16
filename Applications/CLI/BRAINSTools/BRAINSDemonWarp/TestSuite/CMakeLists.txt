@@ -8,6 +8,7 @@
 
 if(WIN32)
   set(BRAINSWARP_ITK_LIBS "")
+  set(BUILD_SUBDIR ${CMAKE_BUILD_TYPE}/)
 else(WIN32)
   set(BRAINSWARP_ITK_LIBS ITKAlgorithms ITKIO)
 endif(WIN32)
