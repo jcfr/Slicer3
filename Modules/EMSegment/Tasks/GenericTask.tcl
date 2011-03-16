@@ -1116,6 +1116,35 @@ namespace eval EMSegmenterPreProcessingTcl {
     }
 
 
+    # Description: TODO
+    # Input:  TODO
+    # Output: TODO
+    proc AtlasCreator { } {
+
+        #variable SCENE
+        set SCENE [$::slicer3::Application GetMRMLScene]
+
+        set node [vtkMRMLAtlasCreatorNode New]
+        $node SetToolkit CMTK
+        $node SetTemplateType fixed
+        $node SetRegistrationType Affine
+        $node SetOutputCast short
+        #for more options look into Modules/AtlasCreator/Cxx/vtkMRMLAtlasCreatorNode.h
+
+        $SCENE AddNode $node
+        $node Print
+        $node Launch
+        #the terminal will contain stdout output
+
+        #python test
+        if {0} {
+from Slicer import slicer
+a = slicer.vtkMRMLAtlasCreatorNode()
+help(a)
+slicer.MRMLScene.AddNode(a)
+a.Launch()
+        }
+    }
 
 
     proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformDirName backgroundLevel } {
