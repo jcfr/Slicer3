@@ -161,6 +161,7 @@ double CompareTwoVolumes ( vtkImageData* Volume1, vtkImageData* Volume2 , int Fl
   }
   histo->Delete();
   MathImg->Delete();
+  delete [] Extrema;
 
   return error_rate;
 }
