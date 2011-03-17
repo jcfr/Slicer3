@@ -158,7 +158,7 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
     "pack %s -side top -anchor nw -padx 2 -pady 2",
     this->SpatialPriorsVolumeMenuButton->GetWidgetName());
 
- // Create the spatial prior volume selector
+ // Create the parcellation volume selector
 
   if (!this->ParcellationVolumeMenuButton)
     {
@@ -299,7 +299,7 @@ void vtkEMSegmentSpatialPriorsStep::SpatialPriorsVolumeCallback(
 void vtkEMSegmentSpatialPriorsStep::ParcellationVolumeCallback(
   vtkIdType sel_vol_id, vtkIdType vol_id)
 {
-  // The spatial prior volume has changed because of user interaction
+  // The parcellation volume has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
   if (!mrmlManager)
