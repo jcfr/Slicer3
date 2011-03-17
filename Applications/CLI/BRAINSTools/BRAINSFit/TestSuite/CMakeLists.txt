@@ -28,7 +28,9 @@ if(COMPILE_TEST_GENERATION_PROGRAMS)  ## These were programs needed to create th
 endif(COMPILE_TEST_GENERATION_PROGRAMS)
 
 include(${BRAINS_CMAKE_HELPER_DIR}/MIDAS.cmake)
-set(MIDAS_KEY_DIR "${PROJECT_SOURCE_DIR}/../BRAINSCommonLib/TestData") 
+## Needed to set this for Slicer3 to find the test data directory
+set(BRAINSCommonLib_DATA_DIRS "${PROJECT_SOURCE_DIR}/../BRAINSCommonLib/TestData")
+set(MIDAS_KEY_DIR "${BRAINSCommonLib_DATA_DIRS}")
 
 set(BRAINSFitTestName BRAINSFitTest_AffineRotationMasks)
 midas_add_test(NAME ${BRAINSFitTestName} COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRAINSFitTest>

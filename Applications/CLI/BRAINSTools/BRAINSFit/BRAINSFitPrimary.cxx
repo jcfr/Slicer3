@@ -27,14 +27,6 @@ PURPOSE.  See the above copyright notices for more information.
 //  MattesMutualInformationImageToImageMetric is the logical
 //  thing to insist on (with ITK) when seeking rigid 3D registrations.
 
-#include "BRAINSFitPrimary.h"
-
-#ifdef USE_DEBUG_IMAGE_VIEWER
-#  include "DebugImageViewerClient.h"
-#endif
-
-#include "BRAINSFitHelper.h"
-#include "BRAINSFitPrimaryCLP.h"
 
 #if ( ITK_VERSION_MAJOR < 4  ) //These are all defaults in ITKv4
 #include "itkBrains2MaskImageIOFactory.h"
@@ -72,7 +64,16 @@ PURPOSE.  See the above copyright notices for more information.
 #define MODULE_EXPORT
 #endif
 
+#include "itkExtractImageFilter.h"
 #include "itkMedianImageFilter.h"
+
+#include "BRAINSFitPrimary.h"
+#include "BRAINSFitHelper.h"
+#include "BRAINSFitPrimaryCLP.h"
+
+#ifdef USE_DEBUG_IMAGE_VIEWER
+#  include "DebugImageViewerClient.h"
+#endif
 
 typedef float PixelType;
 // Dimension and MaxInputDimension comes from an enum at the start of
@@ -136,10 +137,11 @@ typename ImageType::Pointer ExtractImage(
   typename InputImageType::Pointer & inputImage,
   unsigned int InputImageTimeIndex)
 {
-  typedef typename itk::ExtractImageFilter< InputImageType,
-                                            ImageType > ExtractImageFilterType;
-  typename ExtractImageFilterType::Pointer extractImageFilter =
-    ExtractImageFilterType::New();
+  typedef typename itk::ExtractImageFilter< InputImageType, ImageType > ExtractImageFilterType;
+  typename ExtractImageFilterType::Pointer extractImageFilter = ExtractImageFilterType::New();
+#if  ITK_VERSION_MAJOR >=4
+  extractImageFilter->SetDirectionCollapseToSubmatrix();
+#endif
 
   // fixedVolumeReader->GetOutput();
   InputImageType::RegionType inputRegion = inputImage->GetLargestPossibleRegion();
@@ -166,6 +168,7 @@ typename ImageType::Pointer ExtractImage(
               << std::endl;
     throw;
     }
+
   typename ImageType::Pointer extractImage = extractImageFilter->GetOutput();
   //  std::cerr << "Extract fixed image origin" << extractImage->GetOrigin() <<
   // std::endl;
