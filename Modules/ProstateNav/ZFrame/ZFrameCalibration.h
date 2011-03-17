@@ -58,8 +58,11 @@ protected:
   void OrderFidPoints(float points[7][2], float rmid, float cmid);
   
   // Methods related to solving for the frame pose w.r.t. the imaging plane.
+ public:
   bool LocalizeFrame(float Zcoordinates[7][2], Column3Vector &Zposition,
                      Quaternion &Zorientation);
+ protected:
+
   void SolveZ(Column3Vector P1, Column3Vector P2, Column3Vector P3,
               Column3Vector Oz, Column3Vector Vz, Column3Vector &P2f);
   
