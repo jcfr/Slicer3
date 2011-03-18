@@ -47,21 +47,18 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc ShowUserInterface { } {
         variable preGUI
         variable atlasAlignedFlagID
-        variable iccMaskSelectID
         variable inhomogeneityCorrectionFlagID
         variable LOGIC
 
         # Always has to be done initially so that variables are correctly defined
         if { [InitVariables] } {
-            puts stderr "ERROR: MRI-HumanBrain: ShowUserInterface: Not all variables are correctly defined!"
+            puts stderr "ERROR: MRI Human Brain: ShowUserInterface: Not all variables are correctly defined!"
             return 1
         }
         $LOGIC PrintText  "TCLMRI: Preprocessing MRI Human Brain - ShowUserInterface"
 
         $preGUI DefineTextLabel "This task only applies to non-skull stripped scans! \n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton "- register the atlas to the input scan ?" 0 $atlasAlignedFlagID
-        # $preGUI DefineCheckButton "Are the input scans skull stripped ?" 0 $skullStrippedFlagID
-        # $preGUI DefineVolumeMenuButton "Define ICC mask of the atlas ?" 0 $iccMaskSelectID
         $preGUI DefineCheckButton "- perform image inhomogeneity correction on input scan ?" 0 $inhomogeneityCorrectionFlagID
 
         # Define this at the end of the function so that values are set by corresponding MRML node
@@ -81,78 +78,33 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable LOGIC
 
         variable atlasAlignedFlagID
-        variable iccMaskSelectID
         variable inhomogeneityCorrectionFlagID
 
         $LOGIC PrintText "TCLMRI: =========================================="
         $LOGIC PrintText "TCLMRI: == Preprocress Data"
         $LOGIC PrintText "TCLMRI: =========================================="
+
+        set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
+        set inhomogeneityCorrectionFlag [ GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID ]
+
         # ---------------------------------------
         # Step 1 : Initialize/Check Input
-        if {[InitPreProcessing]} { 
+        if {[InitPreProcessing]} {
             return 1
         }
-
-        # TODO: TEST: inputAtlasNode might be the wrong version
-#        set skullstrippedNodeNodeList [BRAINSSkullStripper $alignedTargetNode $inputAtlasNode]
-#
-#        if { $skullstrippedNodeNodeList == "" } {
-#            PrintError "Run: BRAINSSkullStripper failed !"
-#            return 1
-#        }
-#        if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$skullstrippedNodeNodeList"] } {
-#            return 1
-#        }
-
 
 
         # ----------------------------------------------------------------------------
         # We have to create this function so that we can run it in command line mode
         #
-        set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
-        set skullStrippedFlag 0
-        set iccMaskVTKID 0
-        # [GetVolumeMenuButtonValueFromMRML $iccMaskSelectID]
-        set inhomogeneityCorrectionFlag [GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID]
 
         $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
 
-        if { !$atlasAlignedFlag && $skullStrippedFlag } {
-            PrintError "Run: We currently cannot align the atlas to skull stripped image"
-            return 1
-        }
-
-        if { $iccMaskVTKID } {
-            set inputAtlasICCMaskNode [$mrmlManager GetVolumeNode $iccMaskVTKID]
-            if { $inputAtlasICCMaskNode == "" } {
-                PrintError "Run: inputAtlasICCMaskNode is not defined"
-                return 1
-            }
-        } else {
-            set inputAtlasICCMaskNode ""
-        }
-
-        # -------------------------------------
-        # Step 2: Generate ICC Mask Of input images
-        if { $inputAtlasICCMaskNode != "" && 0} {
-            set inputAtlasVolumeNode [$inputAtlas GetNthVolumeNode 0]
-            set subjectVolumeNode [$alignedTargetNode GetNthVolumeNode 0]
-
-            set subjectICCMaskNode [GenerateICCMask $inputAtlasVolumeNode $inputAtlasICCMaskNode $subjectVolumeNode]
-
-            if { $subjectICCMaskNode == "" } {
-                PrintError "Run: Generating ICC mask for Input failed!"
-                return 1
-            }
-        } else {
-            #  $LOGIC PrintText "TCLMRI: Skipping ICC Mask generation! - Not yet implemented"
-            set subjectICCMaskNode ""
-        }
 
         # -------------------------------------
         # Step 4: Perform Intensity Correction
         if { $inhomogeneityCorrectionFlag == 1 } {
-
+            set subjectICCMaskNode -1
             set subjectIntensityCorrectedNodeList [PerformIntensityCorrection $subjectICCMaskNode]
             if { $subjectIntensityCorrectedNodeList == "" } {
                 PrintError "Run: Intensity Correction failed !"
@@ -162,7 +114,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
         } else {
-             $LOGIC PrintText "TCLMRI: Skipping intensity correction"
+            $LOGIC PrintText "TCLMRI: Skipping intensity correction"
         }
 
         # write results over to alignedTargetNode
@@ -184,10 +136,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # -------------------------------------
-        # Step 7: Check validity of Distributions 
+        # Step 7: Check validity of Distributions
         set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
         if { $failedIDList != "" } {
-            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n "
+            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n"
             foreach ID $failedIDList {
                 set MSG "${MSG}[$mrmlManager GetTreeNodeName $ID]\n"
             }
@@ -243,7 +195,6 @@ namespace eval EMSegmenterSimpleTcl {
     }
 
     proc PrintError { TEXT } {
-         puts stderr "TCLMRI: ERROR:EMSegmenterSimpleTcl::${TEXT}"
+        puts stderr "TCLMRI: ERROR:EMSegmenterSimpleTcl::${TEXT}"
     }
 }
-
