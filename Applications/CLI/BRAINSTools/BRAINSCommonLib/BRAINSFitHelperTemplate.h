@@ -60,7 +60,7 @@ namespace itk
 {
 
 template <class FixedImageType, class MovingImageType>
-class BRAINSCommonLib_EXPORT BRAINSFitHelperTemplate:public Object
+class BRAINSFitHelperTemplate: public Object
 {
 public:
   /** Standard class typedefs. */
@@ -206,7 +206,7 @@ protected:
   /** instantiate and call the Registration Helper */
   template <class TransformType,
             class OptimizerType,
-            class MetricType> 
+            class MetricType>
     void FitCommonCode(int numberOfIterations,
                        double minimumStepLength,
                        typename TransformType::Pointer &initialITKTransform);
