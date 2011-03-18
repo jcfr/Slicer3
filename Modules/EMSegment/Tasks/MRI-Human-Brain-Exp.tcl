@@ -62,9 +62,9 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         $preGUI DefineTextLabel "This task only applies to skull stripped scans!\n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton " - register the atlas to the input scan ?" 0 $atlasAlignedFlagID
-        # $preGUI DefineVolumeMenuButton "Define ICC mask of the atlas ?" 0 $iccMaskSelectID
         $preGUI DefineCheckButton " - perform image inhomogeneity correction on input scan ?" 0 $inhomogeneityCorrectionFlagID
         $preGUI DefineCheckButton " - perform skull stripping on input scan ?" 0 $performSkullStrippingFlagID
+        # $preGUI DefineVolumeMenuButton "Define ICC mask of the atlas ?" 0 $iccMaskSelectID
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $preGUI SetButtonsFromMRML
@@ -98,7 +98,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # ---------------------------------------
         # Step 1 : Initialize/Check Input
         if {[InitPreProcessing]} {
-             $LOGIC PrintText "TCLMRI: == Problem with init"
+            $LOGIC PrintText "TCLMRI: == Problem with init"
             return 1
         }
         # at this point the input volumes are aligned to the first volume
@@ -113,18 +113,62 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCLMRI: == Skull Stripping"
             $LOGIC PrintText "TCLMRI: =========================================="
             #TODO
-            set maskNode -1
-            set nonSkullStrippedAtlasVolumeNode -1
-#            set tmpSCENE [$mrmlManager GetMRMLScene]
-#            set nonSkullStrippedAtlasVolumeNode [$tmpSCENE GetNodesByName atlas_t1]
-            set skullstrippedNodeList [BRAINSSkullStripper $alignedTargetNode $nonSkullStrippedAtlasVolumeNode $maskNode]
+
+            set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+            #$LOGIC PrintText "TCL: ==========================================XX"
+            #$LOGIC PrintText "TCL: =======[$atlasNode Print ]===================================XX"
+
+            #Threshold --threshold 0 --lower 0 --upper 255 --outsidevalue 1 --thresholdtype Above InputImage OutputImage
+
+            # This is the non-skull-stripped atlas volume node
+            #        PrintError "[$atlasNode GetName]"
+            #       set nonStrippedAtlasVolumeNode [$atlasNode GetNthVolumeNode 0]
+            #       set nonStrippedAtlasVolumeData [$nonStrippedAtlasVolumeNode GetImageData]
+            #       if { $nonStrippedAtlasVolumeData == "" } {
+            #           PrintError "SkullStripper: the ${atlasIndex}th volume node has no atlas data defined!"
+            #           return ""
+            #       }
+            #       set tmpNonStrippedAtlasFileName [WriteDataToTemporaryDir $nonStrippedAtlasVolumeNode Volume]
+            #       set RemoveFiles "\"$tmpNonStrippedAtlasFileName\""
+            #       if { $tmpNonStrippedAtlasFileName == "" } {
+            #           PrintError "SkullStripper: error!"
+            #           return ""
+            #       }
+
+            # TODO, temporary workaround
+            set nonSkullStrippedAtlasFileName $PLUGINS_DIR/../../../../Slicer3/Modules/EMSegment/Tasks/MRI-Human-Brain/atlas_t1.nrrd
+            # $LOGIC PrintText "TCL: =========================================="
+
+            ##########
+            # now we have to apply the transformation on our mask file
+
+            # This is the non-skull stripped input
+            #       set atlasMaskVolumeNode [$atlasMaskNode GetNthVolumeNode 0]
+            #       set atlasMaskVolumeData [$atlasMaskVolumeNode GetImageData]
+            #       if { $atlasMaskVolumeData == "" } {
+            #           PrintError "SkullStripper: the ${i}th volume node has no input data defined!"
+            #           foreach VolumeNode $atlasMaskNode_SkullStripped {
+            #               DeleteNode $VolumeNode
+            #           }
+            #           return ""
+            #       }
+            #       set atlas_mask_FileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
+            #       set RemoveFiles "\"$atlas_mask_FileName\""
+            #       if { $atlas_mask_FileName == "" } {
+            #           return ""
+            #       }
+
+            # TODO, temporary workaround
+            set AtlasMaskFileName $PLUGINS_DIR/../../../../Slicer3/Modules/EMSegment/Tasks/MRI-Human-Brain/atlas_t1_stripped_mask.nrrd
+
+            set skullstrippedNodeList [SkullStripper $alignedTargetNode $nonSkullStrippedAtlasFileName $AtlasMaskFileName]
 
             if { $skullstrippedNodeList == "" } {
-                PrintError "Run: BRAINSSkullStripper failed !"
+                PrintError "Run: SkullStripper failed !"
                 return 1
             }
             if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$skullstrippedNodeList"] } {
-                PrintError "Run: Update of BRAINSSkullStripper failed !"
+                PrintError "Run: Update results of SkullStripper failed !"
                 return 1
             }
         }
@@ -168,7 +212,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # -------------------------------------
         # Step 4: Perform Intensity Correction
         if { $inhomogeneityCorrectionFlag == 1 } {
-
+            set subjectICCMaskNode -1
             set subjectIntensityCorrectedNodeList [PerformIntensityCorrection $subjectICCMaskNode]
             if { $subjectIntensityCorrectedNodeList == "" } {
                 PrintError "Run: Intensity Correction failed !"
@@ -178,7 +222,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
         } else {
-             $LOGIC PrintText "TCLMRI: Skipping intensity correction"
+            $LOGIC PrintText "TCLMRI: Skipping intensity correction"
         }
 
         # write results over to alignedTargetNode
@@ -200,10 +244,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # -------------------------------------
-        # Step 7: Check validity of Distributions 
+        # Step 7: Check validity of Distributions
         set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
         if { $failedIDList != "" } {
-            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n "
+            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n"
             foreach ID $failedIDList {
                 set MSG "${MSG}[$mrmlManager GetTreeNodeName $ID]\n"
             }
@@ -260,7 +304,6 @@ namespace eval EMSegmenterSimpleTcl {
     }
 
     proc PrintError { TEXT } {
-         puts stderr "TCLMRI: ERROR:EMSegmenterSimpleTcl::${TEXT}"
+        puts stderr "TCLMRI: ERROR:EMSegmenterSimpleTcl::${TEXT}"
     }
 }
-
