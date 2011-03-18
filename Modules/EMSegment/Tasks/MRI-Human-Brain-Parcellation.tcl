@@ -47,13 +47,12 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc ShowUserInterface { } {
         variable preGUI
         variable atlasAlignedFlagID
-        variable iccMaskSelectID
         variable inhomogeneityCorrectionFlagID
         variable LOGIC
 
         # Always has to be done initially so that variables are correctly defined
         if { [InitVariables] } {
-            puts stderr "ERROR: MRI-Human Brain Parcellation: ShowUserInterface: Not all variables are correctly defined!"
+            puts stderr "ERROR: MRI Human Brain Parcellation: ShowUserInterface: Not all variables are correctly defined!"
             return 1
         }
         $LOGIC PrintText  "TCLMRI: Preprocessing MRI Human Brain Parcellation - ShowUserInterface"
@@ -79,60 +78,33 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable LOGIC
 
         variable atlasAlignedFlagID
-        variable iccMaskSelectID
         variable inhomogeneityCorrectionFlagID
 
         $LOGIC PrintText "TCLMRI: =========================================="
         $LOGIC PrintText "TCLMRI: == Preprocress Data"
         $LOGIC PrintText "TCLMRI: =========================================="
+
+        set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
+        set inhomogeneityCorrectionFlag [ GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID ]
+
         # ---------------------------------------
         # Step 1 : Initialize/Check Input
-        if {[InitPreProcessing]} { 
+        if {[InitPreProcessing]} {
             return 1
         }
+
 
         # ----------------------------------------------------------------------------
         # We have to create this function so that we can run it in command line mode
         #
-        set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
-        set iccMaskVTKID 0
-        # [GetVolumeMenuButtonValueFromMRML $iccMaskSelectID]
-        set inhomogeneityCorrectionFlag [GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID]
 
         $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
 
 
-        if { $iccMaskVTKID } {
-            set inputAtlasICCMaskNode [$mrmlManager GetVolumeNode $iccMaskVTKID]
-            if { $inputAtlasICCMaskNode == "" } {
-                PrintError "Run: inputAtlasICCMaskNode is not defined"
-                return 1
-            }
-        } else {
-            set inputAtlasICCMaskNode ""
-        }
-
-        # -------------------------------------
-        # Step 2: Generate ICC Mask Of input images
-        if { $inputAtlasICCMaskNode != "" && 0} {
-            set inputAtlasVolumeNode [$inputAtlas GetNthVolumeNode 0]
-            set subjectVolumeNode [$alignedTargetNode GetNthVolumeNode 0]
-
-            set subjectICCMaskNode [GenerateICCMask $inputAtlasVolumeNode $inputAtlasICCMaskNode $subjectVolumeNode]
-
-            if { $subjectICCMaskNode == "" } {
-                PrintError "Run: Generating ICC mask for Input failed!"
-                return 1
-            }
-        } else {
-            #  $LOGIC PrintText "TCLMRI: Skipping ICC Mask generation! - Not yet implemented"
-            set subjectICCMaskNode ""
-        }
-
         # -------------------------------------
         # Step 4: Perform Intensity Correction
         if { $inhomogeneityCorrectionFlag == 1 } {
-
+            set subjectICCMaskNode -1
             set subjectIntensityCorrectedNodeList [PerformIntensityCorrection $subjectICCMaskNode]
             if { $subjectIntensityCorrectedNodeList == "" } {
                 PrintError "Run: Intensity Correction failed !"
@@ -167,11 +139,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         # Step 7: Check validity of Distributions 
         set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
         if { $failedIDList != "" } {
-            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n "
+            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n"
             foreach ID $failedIDList {
                 set MSG "${MSG}[$mrmlManager GetTreeNodeName $ID]\n"
             }
             set MSG "${MSG}This can cause failure of the automatic segmentation. To address the issue, please visit the web site listed under Help"
+
             if { 0 } {
                 # TODO
                 $preGUI PopUpWarningWindow "$MSG"
@@ -186,6 +159,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     #
     # TASK SPECIFIC FUNCTIONS
     #
+
 }
 
 
