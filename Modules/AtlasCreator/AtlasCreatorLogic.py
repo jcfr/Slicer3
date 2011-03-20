@@ -324,7 +324,7 @@ class AtlasCreatorLogic(object):
                             resampledSegmentationsFilePathList,
                             configuration.GetLabelsList(),
                             configuration.GetOutputCast(),
-                            configuration.GetNormalizeAtlases(),
+                            configuration.GetNormalizeTo(),
                             configuration.GetOutputDirectory(),
                             scriptsCombineToAtlasDirectory,
                             notifyCombineToAtlasDirectory,
@@ -403,7 +403,7 @@ class AtlasCreatorLogic(object):
         # now save the mean image data to the node
         outputV.SetAndObserveImageData(newMeanImage)
                 
-        # now return the mean image
+        # now return the mean image volume node
         return outputV
     
 
@@ -836,7 +836,7 @@ class AtlasCreatorLogic(object):
     
     
     '''=========================================================================================='''
-    def CombineToAtlas(self, schedulerCommand, filePathsList, labelsList, reCastString, useNormalization, outputAtlasDirectory, outputScriptsDirectory, outputNotifyDirectory, sleepValue=5):
+    def CombineToAtlas(self, schedulerCommand, filePathsList, labelsList, reCastString, normalizeTo, outputAtlasDirectory, outputScriptsDirectory, outputNotifyDirectory, sleepValue=5):
         '''
             Combine segmentations to an Atlas based on labels. For each label an Atlas gets created. Additionally,
             a combined Atlas is generated. All output is saved.
@@ -860,10 +860,10 @@ class AtlasCreatorLogic(object):
                 "Short"
                 "Unsigned Short"
                 other values will result in "Short"
-            useNormalization
-                flag to enable the normalization of Atlas values between 0 and 1
-                0: disable
-                1: enable
+            normalizeTo
+                flag to enable the normalization of Atlas values
+                -1: disable
+                any other: upper value for normalization
             outputAtlasDirectory
                 directory to save the Atlases
             outputScriptsDirectory
@@ -885,11 +885,6 @@ class AtlasCreatorLogic(object):
         if len(labelsList) == 0:
             self.Helper().info("Empty labelsList for CombineToAtlas() command. Aborting..")
             return False
-
-        if useNormalization == 1:
-            normalize = True
-        else:
-            normalize = False
             
         if not outputAtlasDirectory:
             self.Helper().info("Empty outputAtlasDirectory for CombineToAtlas() command. Aborting..")
@@ -916,27 +911,20 @@ class AtlasCreatorLogic(object):
             command = ""
             
             # add some args to the Slicer launcher call
-            command += str(launchCommandPrefix) + " --no_splash --tmp_dir $ACTEMP --config_dir $ACTEMP --evalpython "
-                
-            evalpythonCommand = "from Slicer import slicer;import sys;import os;"
-            evalpythonCommand += "pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'"
-            evalpythonCommand += "/../Modules/AtlasCreator');"
-            evalpythonCommand += "sys.path.append(pathToAtlasCreator);"
-            evalpythonCommand += "from AtlasCreatorGUI import *;"
-            evalpythonCommand += "gui = AtlasCreatorGUI();"
-            evalpythonCommand += "gui.GetHelper().EnableDebugMode();"    
-            evalpythonCommand += "logic = gui.GetMyLogic();"
+            command += str(launchCommandPrefix) + " --launch " + str(slicer.Application.GetBinDir()) +os.sep+ "ACCombiner";
             
-            evalpythonCommand += "logic.CombineToAtlasByLabel("
-            evalpythonCommand += str(label) + ","
-            evalpythonCommand += str(filePathsList) + ","
-            evalpythonCommand += "'" + str(outputAtlasDirectory) + "',"
-            evalpythonCommand += "'" + str(reCastString) + "',"
-            evalpythonCommand += str(normalize) + ","
-            evalpythonCommand += "1" # TODO change later
-            evalpythonCommand += ");logic = None;gui = None;"
+            # now the args
+            command += " " + str(label)
             
-            command += "\"" + evalpythonCommand + "\""  
+            command += " \""
+            
+            for file in filePathsList:
+                command += str(file) + " "
+            
+            command += "\""
+            command += " " + str(outputAtlasDirectory)
+            command += " \"" + str(reCastString) + "\""
+            command += " " + str(normalizeTo)
     
             self.Helper().debug("CombineToAtlas Command(s): " + str(command))
     
@@ -960,6 +948,9 @@ class AtlasCreatorLogic(object):
                 self.Helper().info("DRYRUN - skipping execution..") 
             else:
                 os.system(schedulerCommand + " " + scriptFilePath)
+
+        if self.__dryRun:
+            return True     
                 
         # at this point:
         # either the combination was completed if the os.system call did not send it to the background
@@ -1078,6 +1069,10 @@ class AtlasCreatorLogic(object):
         # normalize the currentLabelAtlas, if requested
         if normalize:
             currentLabelAtlas.DeepCopy(self.Helper().DivideImage(currentLabelAtlas, len(filePathsList)))
+            
+            if normalizeTo != 1:
+                currentLabelAtlas.DeepCopy(self.Helper().MultiplyImage(currentLabelAtlas, normalizeTo))
+            
         else:
             currentLabelAtlas.DeepCopy(self.Helper().ReCastImage(currentLabelAtlas, str(reCastString)))
 

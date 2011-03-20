@@ -95,6 +95,10 @@ def usage():
     info("        Normalize Atlases to 0..1.")
     info("        If activated, the output cast will be set to Double.")
     info("")
+    info("        --normalizeTo INT")
+    info("                The upper value to normalize the atlases to.")
+    info("                DEFAULT: 1")
+    info("")
     info("--outputCast INT")
     info("        Output cast for the atlases. Possible values:")
     info("        0: Char")
@@ -143,19 +147,19 @@ def examples():
 
     info("Examples:")
     info("-----------------------------------------------------------------------------------------------")
-    info("1. Run fixed registration with the testdata:")
+    info("1. Run fixed registration with the testdata and normalize the atlases to 1:")
     info("")
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --normalize')
     info("")
     info("-----------------------------------------------------------------------------------------------")
     info("2. Run fixed registration with the testdata and use CMTK instead of BRAINSFit:")
     info("")
-    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --normalize --cmtk')
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --cmtk')
     info("")    
     info("-----------------------------------------------------------------------------------------------")
-    info("3. Run dynamic registration with the testdata:")
+    info("3. Run dynamic registration with the testdata and normalize the atlases to 0..100:")
     info("")
-    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize')
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize --normalizeTo 100')
     info("")
     info("-----------------------------------------------------------------------------------------------")
     info("4. Run dynamic registration with the testdata on a cluster (scheduler command \"qsub\"):")
@@ -177,7 +181,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.26")
+    info("Version v0.27")
     info("")
     
     if len(argv) == 0:
@@ -204,6 +208,7 @@ def main(argv):
                                                         "keepAligned",
                                                         "labels=",
                                                         "normalize",
+                                                        "normalizeTo=",
                                                         "outputCast=",
                                                         "cluster",
                                                         "schedulerCommand=",
@@ -245,6 +250,8 @@ def main(argv):
     labels = None
     
     normalize = False
+    
+    normalizeTo = 1
     
     outputCast = 8
     
@@ -291,6 +298,9 @@ def main(argv):
             labels = arg.strip().split(" ")
         elif opt in ("--normalize"):
             normalize = True
+        elif opt in ("--normalizeTo"):
+            normalize = True
+            normalizeTo = arg
         elif opt in ("--outputCast"):
             outputCast = arg
         elif opt in ("-c", "--cluster"):
@@ -472,6 +482,12 @@ def main(argv):
         info("Error: Value of --labels: " + str(labels))
         errorOccured = True
         
+    # if normalizeTo was set, check if it is an integer
+    if normalizeTo != 1 and not is_int(normalizeTo):
+        info("Error: The normalizeTo value must be an integer.")
+        info("Error: Value of --normalizeTo: " + str(normalizeTo))
+        errorOccured = True
+        
     # check if we have a valid outputCast
     if outputCast and is_int(outputCast):
         
@@ -596,8 +612,10 @@ def main(argv):
         
     if normalize:
         evalpythonCommand += "configuration.SetNormalizeAtlases(1);"
+        evalpythonCommand += "configuration.SetNormalizeTo("+str(normalizeTo)+");";
     else:
         evalpythonCommand += "configuration.SetNormalizeAtlases(0);"
+        evalpythonCommand += "configuration.SetNormalizeTo(-1);"
 
     evalpythonCommand += "configuration.SetOutputCast('"+outputCast+"');"
     

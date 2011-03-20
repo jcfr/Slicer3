@@ -333,6 +333,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         # set normalize atlases
         configuration.SetNormalizeAtlases(self._normalizeAtlasCheckBox.GetWidget().GetSelectedState())
+        configuration.SetNormalizeTo(self._normalizeValueEntry.GetWidget().GetValue())
         
         # set output cast
         configuration.SetOutputCast(self._outputCastCombo.GetWidget().GetValue())
@@ -410,7 +411,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self.GetUIPanel().AddPage("AtlasCreator","AtlasCreator","")
         self._atlascreatorPage = self.GetUIPanel().GetPageWidget("AtlasCreator")
-        helpText = """**Atlas Creator v0.26**
+        helpText = """**Atlas Creator v0.27**
         
 More Information available at <a>http://www.slicer.org/slicerWiki/index.php/Modules:AtlasCreator</a>
 
@@ -653,6 +654,12 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._fifthFrame.SetLabelText("Advanced")
         self._fifthFrame.CollapseFrame()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._fifthFrame.GetWidgetName())        
+
+        self._normalizeValueEntry.SetParent(self._fifthFrame.GetFrame())
+        self._normalizeValueEntry.Create()
+        self._normalizeValueEntry.SetLabelText("Normalize to:")
+        self._normalizeValueEntry.GetWidget().SetValue("1")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._normalizeValueEntry.GetWidgetName())
         
         self._generateButton.SetParent(self._moduleFrame.GetFrame())
         self._generateButton.Create()

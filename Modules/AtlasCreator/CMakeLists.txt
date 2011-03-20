@@ -21,6 +21,12 @@ subDirs(
 )
 
 # --------------------------------------------------------------------------
+# Include the Combiner/ directory
+subDirs(
+  ACCombiner
+)
+
+# --------------------------------------------------------------------------
 # Copy over the Python files
 
 if(Slicer3_USE_PYTHON)

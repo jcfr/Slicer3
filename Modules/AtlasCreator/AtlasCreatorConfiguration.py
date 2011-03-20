@@ -33,6 +33,8 @@ class AtlasCreatorConfiguration(object):
         self.__deleteAlignedImages = 1
         self.__deleteAlignedSegmentations = 1
         self.__normalizeAtlases = 0
+
+        self.__normalizeTo = 1
         
         self.__outputCast = "Short" 
 
@@ -57,6 +59,7 @@ class AtlasCreatorConfiguration(object):
         output += "Delete Aligned Images: " + str(self.__deleteAlignedImages) + "\n"
         output += "Delete Aligned Segmentations: " + str(self.__deleteAlignedSegmentations) + "\n"
         output += "Normalize Atlases: " + str(self.__normalizeAtlases) + "\n"
+        output += "Normalize To: " + str(self.__normalizeTo) + "\n"
         output += "Output Cast: " + str(self.__outputCast) + "\n"
         
         return output
@@ -369,6 +372,31 @@ class AtlasCreatorConfiguration(object):
             self.__normalizeAtlases = 0
         else:
             self.__normalizeAtlases = int(value)
+
+
+
+    '''=========================================================================================='''
+    def GetNormalizeTo(self):
+        '''
+            Returns
+                the flag for normalizing atlases
+        '''
+        return self.__normalizeTo
+
+
+
+    '''=========================================================================================='''
+    def SetNormalizeTo(self, value):
+        '''
+            Sets normalizeTo value
+            
+            value
+                the new value as an integer
+                
+            Returns
+                n/a
+        '''
+        self.__normalizeTo = int(value)
         
         
                 

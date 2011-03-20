@@ -239,19 +239,38 @@ class AtlasCreatorHelper(object):
             Returns
                 vtkImageData after division
         '''            
+
+        return self.MultiplyImage(imageData, 1.0/float(dividend))
+    
+    
+    
+    '''=========================================================================================='''
+    def MultiplyImage(self,imageData,factor):
+        ''' 
+            Multiply an image
+            This includes automatic Re-Cast to Float
+            
+            imageData
+                vtkImageData
+            dividend
+                the number to divide with, will be casted to float
+            
+            Returns
+                vtkImageData after multiplication
+        '''            
         imageData.DeepCopy(self.ReCastImage(imageData, "Float"))
-        div = slicer.vtkImageMathematics()
-        div.SetInput(imageData)
-        div.SetOperationToMultiplyByK()
-        div.SetConstantK(1.0/float(dividend))
-        div.Update()
+        mul = slicer.vtkImageMathematics()
+        mul.SetInput(imageData)
+        mul.SetOperationToMultiplyByK()
+        mul.SetConstantK(factor)
+        mul.Update()
         
         output = slicer.vtkImageData()
-        output.DeepCopy(div.GetOutput())
+        output.DeepCopy(mul.GetOutput())
         
-        return output        
-    
+        return output
          
+
 
     '''=========================================================================================='''
     def AddImages(self,imageData1,imageData2):
@@ -572,7 +591,7 @@ class AtlasCreatorHelper(object):
         
         resampleCommand = "reformatx"
         resampleCommand += " -o " + os.path.normpath(outputSegmentationFilePath)
-        resampleCommand += " --nn --pad-out " + str(backgroundValue)
+        resampleCommand += " --nn --short --pad-out " + str(backgroundValue)
         resampleCommand += " --floating " + os.path.normpath(segmentationFilePath)
         resampleCommand += " " + os.path.normpath(templateFilePath)
         resampleCommand += " " + os.path.normpath(transformDirectory)
