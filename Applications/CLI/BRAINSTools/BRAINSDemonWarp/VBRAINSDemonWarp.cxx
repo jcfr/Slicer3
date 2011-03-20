@@ -1,4 +1,3 @@
-//#include "VBRAINSDemonWarpPrimary.h"
 #include "BRAINSDemonWarpTemplates.h"
 
 #ifdef WIN32

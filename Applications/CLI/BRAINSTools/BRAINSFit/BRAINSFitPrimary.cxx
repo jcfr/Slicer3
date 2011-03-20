@@ -18,6 +18,13 @@ PURPOSE.  See the above copyright notices for more information.
 #  pragma warning ( disable : 4786 )
 #endif
 
+#include "itkMedianImageFilter.h"
+#include "itkExtractImageFilter.h"
+
+#include "BRAINSFitPrimary.h"
+#include "BRAINSFitHelper.h"
+#include "BRAINSFitPrimaryCLP.h"
+
 //  This program was modified from
 // Insight/Examples/Registration/ImageRegistration8.cxx
 //  and is an improved replacement for the old (and defective)
@@ -26,7 +33,6 @@ PURPOSE.  See the above copyright notices for more information.
 //  Image registration using the VersorRigid3DTransform and the
 //  MattesMutualInformationImageToImageMetric is the logical
 //  thing to insist on (with ITK) when seeking rigid 3D registrations.
-
 
 #if ( ITK_VERSION_MAJOR < 4  ) //These are all defaults in ITKv4
 #include "itkBrains2MaskImageIOFactory.h"
@@ -63,13 +69,6 @@ PURPOSE.  See the above copyright notices for more information.
 #else
 #define MODULE_EXPORT
 #endif
-
-#include "itkExtractImageFilter.h"
-#include "itkMedianImageFilter.h"
-
-#include "BRAINSFitPrimary.h"
-#include "BRAINSFitHelper.h"
-#include "BRAINSFitPrimaryCLP.h"
 
 #ifdef USE_DEBUG_IMAGE_VIEWER
 #  include "DebugImageViewerClient.h"

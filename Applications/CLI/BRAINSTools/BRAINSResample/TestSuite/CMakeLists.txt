@@ -10,12 +10,13 @@ endif (WIN32)
 ### All test have been pushed to this sub-directory to keep the primary build clean.
 
 add_executable( BRAINSResampleTest  ${BRAINSResample_SOURCE_DIR}/BRAINSResamplePrimary.cxx BRAINSResampleTest.cxx  )
-target_link_libraries(BRAINSResampleTest BRAINSCommonLib ITKAlgorithms ITKIO)
+target_link_libraries(BRAINSResampleTest BRAINSCommonLib ${ITK_LIBRARIES})
 set_target_properties(BRAINSResampleTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 add_dependencies(BRAINSResampleTest BRAINSResample)
 
 set(BRAINSResample_TESTS ${LAUNCH_EXE} $<TARGET_FILE:BRAINSResampleTest>)
 
+SETIFEMPTY(MIDAS_REST_URL "http://midas.kitware.com/api/rest" CACHE STRING "The MIDAS server where testing data resides")
 include(${BRAINS_CMAKE_HELPER_DIR}/MIDAS.cmake)
 set(MIDAS_KEY_DIR "${PROJECT_SOURCE_DIR}/../BRAINSCommonLib/TestData")
 

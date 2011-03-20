@@ -20,15 +20,15 @@ macro(PACKAGE_NEEDS_ITK LOCAL_CMAKE_BUILD_OPTIONS gen)
   OPTION(OPT_USE_SYSTEM_${packageToCheck} "Use the system's ${packageToCheck} library." OFF)
   #  MARK_AS_ADVANCED(OPT_USE_SYSTEM_${packageToCheck})
   if(OPT_USE_SYSTEM_ITK)
-    find_package(ITK 3.20 REQUIRED)
+    find_package(ITK REQUIRED)
     include(${ITK_USE_FILE})
     set(ITK_DEPEND "") ## Set the external depandancy for ITK
   else()
     set(proj Insight)
     ExternalProject_Add(${proj}
-      CVS_REPOSITORY ":pserver:anonymous:insight@public.kitware.com:/cvsroot/Insight"
-      CVS_MODULE "Insight"
-      CVS_TAG -r ITK-3-20
+    GIT_REPOSITORY "http://itk.org/ITK.git"
+    # This tag fixes two items:  #1) ImageDuplicator for vector images, #2) respect metric->NumberOfThreads
+    GIT_TAG "0219c81682779b7cc51166578b5e3af5a1b887d1"
       UPDATE_COMMAND ""
       SOURCE_DIR ${proj}
       BINARY_DIR ${proj}-build
@@ -102,9 +102,11 @@ macro(PACKAGE_NEEDS_VTKWITHQT LOCAL_CMAKE_BUILD_OPTIONS gen)
     endif(APPLE)
 
     ExternalProject_Add(${proj}
-      CVS_REPOSITORY ":pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK"
-      CVS_MODULE "${vtk_module}"
-      CVS_TAG ${vtk_tag}
+      GIT_REPOSITORY "git://vtk.org/VTK.git"
+      GIT_TAG "v5.6.1"
+      # CVS_REPOSITORY ":pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK"
+      # CVS_MODULE "${vtk_module}"
+      # CVS_TAG ${vtk_tag}
       UPDATE_COMMAND ""
       SOURCE_DIR ${proj}
       BINARY_DIR ${proj}-build

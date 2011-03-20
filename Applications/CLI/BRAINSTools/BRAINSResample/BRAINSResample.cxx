@@ -1,6 +1,3 @@
-
-//#include "BRAINSResamplePrimary.h"
-
 #ifdef WIN32
 #define MODULE_IMPORT __declspec(dllimport)
 #else
