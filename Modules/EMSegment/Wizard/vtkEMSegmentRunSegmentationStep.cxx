@@ -46,6 +46,16 @@
 vtkStandardNewMacro(vtkEMSegmentRunSegmentationStep);
 vtkCxxRevisionMacro(vtkEMSegmentRunSegmentationStep, "$Revision: 1.2 $");
 
+
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
+
 //----------------------------------------------------------------------------
 vtkEMSegmentRunSegmentationStep::vtkEMSegmentRunSegmentationStep()
 {
@@ -829,15 +839,6 @@ void vtkEMSegmentRunSegmentationStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
-// #define SHOWROIIJK 1
-
-#ifndef max
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
 
 //----------------------------------------------------------------------------
 void vtkEMSegmentRunSegmentationStep::InitialROIWidget() 
