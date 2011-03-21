@@ -92,6 +92,13 @@
       <label>Verbose Output</label>
       <default>false</default>
     </boolean>
+    
+    <string>
+      <name>taskPreProcessingSetting</name>
+      <longflag>taskPreProcessingSetting</longflag>
+      <description>Specifies the different task parameter. Leave blank for default.</description>
+      <label>Task Pre Processing Setting</label>
+    </string>    
 
   </parameters>
 
