@@ -4,7 +4,7 @@
 
 #include <vtkEMSegmentConfigure.h>
 
-#if defined(WIN32) && !defined(VTKSLICER_STATIC)
+#if defined(_WIN32) && !defined(VTKSLICER_STATIC)
 #if defined(EMSegment_EXPORTS)
 #define VTK_EMSEGMENT_EXPORT __declspec( dllexport ) 
 #else

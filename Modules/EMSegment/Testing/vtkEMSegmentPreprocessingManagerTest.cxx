@@ -17,7 +17,7 @@ int main(int vtkNotUsed(argc), char** argv)
   std::string mrmlSceneFilename           = argv[1];
   std::string parametersNodeName          = argv[2];
 
-#ifdef WIN32
+#ifdef _WIN32
   //
   // strip backslashes from parameter node name (present if spaces were used)
   std::string tmpNodeName = parametersNodeName;

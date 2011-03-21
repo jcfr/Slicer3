@@ -118,7 +118,7 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv)
      return interp;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 std::string StripBackslashes(const std::string& s)
 {
   std::string outString;

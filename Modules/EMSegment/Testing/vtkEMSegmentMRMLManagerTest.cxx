@@ -102,7 +102,7 @@ int main(int vtkNotUsed(argc), char** argv)
   const double MAGIC_DOUBLE5 = 3.14159 * rand();
   const std::string MAGIC_STRING("OU812,10SNE1");
 
-#ifdef WIN32
+#ifdef _WIN32
   //
   // strip backslashes from parameter node name (present if spaces were used)
   std::string tmpNodeName = parametersNodeName;
