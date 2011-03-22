@@ -330,6 +330,12 @@ class AtlasCreatorLogic(object):
                             notifyCombineToAtlasDirectory,
                             sleepValue)
         
+        if configuration.GetPCAAnalysis():
+            self.Helper().info("Performing PCA Analysis..")
+            self.PerformPCAAnalysis(configuration.GetLabelsList(),
+                                    configuration.GetOutputDirectory(),
+                                    configuration.GetOutputDirectory())
+        
         # cleanup!!
         # delete the scripts and notify directories
         if not self.__dryRun:
@@ -560,14 +566,14 @@ class AtlasCreatorLogic(object):
                 f.write(script)
             
             # set executable permissions
-            os.chmod(scriptFilePath, 0700)    
+            os.chmod(scriptFilePath, 0700)
             
             self.Helper().debug("Executing generated Registration Script: " + scriptFilePath)
             
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")    
             else:
-                os.system(schedulerCommand + " " + scriptFilePath)
+                self.Helper().Execute(schedulerCommand + " " + scriptFilePath)
                 
             outputAlignedImages.append(str(outputAlignedImageFilePath))
             
@@ -662,11 +668,11 @@ class AtlasCreatorLogic(object):
         
         if not outputScriptsDirectory:
             self.Helper().info("Empty outputScriptsDirectory for Resample() command. Aborting..")
-            return None   
+            return False   
 
         if not outputNotifyDirectory:
             self.Helper().info("Empty outputNotifyDirectory for Resample() command. Aborting..")
-            return None           
+            return False           
 
         # get the launch command for Slicer3
         launchCommandPrefix = self.Helper().GetSlicerLaunchPrefix(useCMTK)
@@ -732,7 +738,7 @@ class AtlasCreatorLogic(object):
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")
             else:
-                os.system(schedulerCommand + " " + scriptFilePath)
+                self.Helper().Execute(schedulerCommand + " " + scriptFilePath)
                 
         if self.__dryRun:
             return True                
@@ -829,7 +835,7 @@ class AtlasCreatorLogic(object):
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..")
             else:
-                os.system(command)
+                self.Helper().Execute(command)
 
         return True
     
@@ -892,11 +898,11 @@ class AtlasCreatorLogic(object):
         
         if not outputScriptsDirectory:
             self.Helper().info("Empty outputScriptsDirectory for CombineToAtlas() command. Aborting..")
-            return None   
+            return False   
 
         if not outputNotifyDirectory:
             self.Helper().info("Empty outputNotifyDirectory for CombineToAtlas() command. Aborting..")
-            return None                
+            return False                
         
         # get the launch command for Slicer3
         launchCommandPrefix = self.Helper().GetSlicerLaunchPrefix(False, True)        
@@ -947,7 +953,7 @@ class AtlasCreatorLogic(object):
             if self.__dryRun:
                 self.Helper().info("DRYRUN - skipping execution..") 
             else:
-                os.system(schedulerCommand + " " + scriptFilePath)
+                self.Helper().Execute(schedulerCommand + " " + scriptFilePath)
 
         if self.__dryRun:
             return True     
@@ -991,98 +997,42 @@ class AtlasCreatorLogic(object):
 
 
 
-    def CombineToAtlasByLabel(self, label, filePathsList, outputAtlasDirectory, reCastString, normalize, normalizeTo=1):
+    def PerformPCAAnalysis(self,labelsList,atlasDirectory,outputDirectory):
         '''
-            Combine segmentations to an Atlas based on a given label.
+            Performs PCA Analysis on top of the Atlas Generation.
             
-            label
-                The current label Value
-            filePathsList
-                list of existing filepaths to segmentations
-            outputAtlasDirectory
-                directory to save the Atlas                
-            reCastString
-                re-Cast the Atlases to a certain type defined as a String
-                "Char"
-                "Unsigned Char"
-                "Double"
-                "Float"
-                "Int"
-                "Unsigned Int"
-                "Long"
-                "Unsigned Long"
-                "Short"
-                "Unsigned Short"
-                other values will result in "Short"
-            normalize
-                flag to enable the normalization of Atlas values between 0 and the normalizeTo value
-                False: disable
-                True: enable
-            normalizeTo
-                The value for the upper boundary of the normalization function. Default is 1
+            labelsList
+                list of labels to perform PCA analysis for
+            atlasDirectory
+                directory in which existing atlases are located, trailing slash is required
+            outputDirectory
+                directory to write the PCA analysis, trailing slash is required
                 
             Returns
                 TRUE or FALSE depending on success
         '''
-        # sanity checks
-        if len(filePathsList) == 0:
+        if len(labelsList) == 0:
+            self.Helper().info("Empty labelsList for PerformPCAAnalysis() command. Aborting..")
             return False
-
-        if not outputAtlasDirectory:
+            
+        if not atlasDirectory:
+            self.Helper().info("Empty atlasDirectory for PerformPCAAnalysis() command. Aborting..")
             return False
         
-        self.Helper().debug("Combining segmentations to Atlas for label " + str(label))        
-                        
-        # for each label, we create an atlas using all manual segmentations
-        currentLabelAtlasNode = slicer.vtkMRMLScalarVolumeNode()
-        currentLabelAtlas = slicer.vtkImageData()
-        firstRun = True        
-
-        # loop through all segmentations
-        for segmentationFilePath in filePathsList:
-            
-            # read the manual segmentation
-            currentSegmentationNode = self.Helper().LoadVolume(segmentationFilePath)
-            currentSegmentation = slicer.vtkImageData()
-            currentSegmentation.DeepCopy(currentSegmentationNode.GetImageData())
-            # copy the orientation to our label atlas node
-            currentLabelAtlasNode.CopyOrientation(currentSegmentationNode) 
-            # now we delete the currentSegmentationNode
-            slicer.MRMLScene.RemoveNode(currentSegmentationNode)
-
-            # binarize the current segmentation
-            currentSegmentation.DeepCopy(self.Helper().BinarizeImageByLabel(currentSegmentation, label))
-
-            if firstRun:
-                # start the atlas with the first binarized segmentation
-                currentLabelAtlas.DeepCopy(currentSegmentation)
-                firstRun = False
-            else:
-                # combine a binarized image by the current label with the existing currentLabelAtlas
-                currentLabelAtlas.DeepCopy(self.Helper().AddImages(currentSegmentation, currentLabelAtlas))
-            
-        # at this point we have an atlas
-        # cleanup
-        currentSegmentation = None
-        currentSegmentationNode = None
+        if not outputDirectory:
+            self.Helper().info("Empty outputDirectory for PerformPCAAnalysis() command. Aborting..")
+            return False
         
-        # normalize the currentLabelAtlas, if requested
-        if normalize:
-            currentLabelAtlas.DeepCopy(self.Helper().DivideImage(currentLabelAtlas, len(filePathsList)))
+        for label in labelsList:
             
-            if normalizeTo != 1:
-                currentLabelAtlas.DeepCopy(self.Helper().MultiplyImage(currentLabelAtlas, normalizeTo))
+            # create input path
+            inputAtlasFilePath = os.path.join(atlasDirectory,"atlas"+str(label)+".nrrd")
             
-        else:
-            currentLabelAtlas.DeepCopy(self.Helper().ReCastImage(currentLabelAtlas, str(reCastString)))
-
-        # now save the currentLabelAtlasNode with the currentLabelAtlas imageData
-        currentLabelAtlasNode.SetAndObserveImageData(currentLabelAtlas)
-        self.Helper().SaveVolume(str(outputAtlasDirectory) + "atlas" + str(label) + ".nrrd", currentLabelAtlasNode)
-
-        self.Helper().debug("Atlas for label " + str(label) + " created..")
-
-        currentLabelAtlas = None
-        currentLabelAtlasNode = None
-
+            # create output path
+            outputDistanceMapFilePath = os.path.join(outputDirectory,"atlas"+str(label)+"_distanceMap.nrrd")
+            
+            # generate distance maps
+            slicer.TkCall(self.Helper().GetPCADistanceCommand(inputAtlasFilePath,label,outputDistanceMapFilePath))
+            
         return True
+            

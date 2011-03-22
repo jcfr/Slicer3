@@ -32,6 +32,7 @@ subDirs(
 if(Slicer3_USE_PYTHON)
 
   file(GLOB PYTHONFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.py")
+  file(GLOB TCLFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.tcl")
 
   foreach(file ${PYTHONFILES})
     configure_file(
@@ -39,6 +40,13 @@ if(Slicer3_USE_PYTHON)
       ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/${file}
       COPYONLY)
   endforeach(file)
+  
+  foreach(file ${TCLFILES})
+    configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/${file}
+      ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/${file}
+      COPYONLY)
+  endforeach(file)  
 
   # copy template.sh
   configure_file(
@@ -47,7 +55,7 @@ if(Slicer3_USE_PYTHON)
     COPYONLY)
 
   install(
-    FILES ${PYTHONFILES} ${CMAKE_CURRENT_SOURCE_DIR}/template.sh
+    FILES ${PYTHONFILES} ${TCLFILES} ${CMAKE_CURRENT_SOURCE_DIR}/template.sh
     DESTINATION ${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}
     )
 

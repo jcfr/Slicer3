@@ -1,8 +1,9 @@
 from Slicer import slicer
-from time import strftime
 from math import floor
-import os
+from subprocess import call
+from time import strftime
 import glob
+import os
 import shutil
 import sys
 
@@ -31,7 +32,12 @@ class AtlasCreatorHelper(object):
         self.__debugMode = 0
         
         self.__lookupIJKRAS = dict()
+        
+        # create one instance of the EMSegment logic
+        self.__emlogic = slicer.vtkEMSegmentLogic()
 
+        self.__pcaDistanceSourced = 0
+        
 
 
     '''=========================================================================================='''
@@ -791,19 +797,61 @@ class AtlasCreatorHelper(object):
             Returns
                 The guess for a background value
         '''
-        emlogic = slicer.vtkEMSegmentLogic()
+        
         
         # load the image
         node = self.LoadVolume(filePath)
         
         # guess the bg value
-        guess = emlogic.GuessRegistrationBackgroundLevel(node)
+        guess = self.__emlogic.GuessRegistrationBackgroundLevel(node)
         
         # remove the node from the scene
         slicer.MRMLScene.RemoveNode(node)
         
         # and return the bg value
         return guess
+    
+    
+    
+    '''=========================================================================================='''
+    def SourceTclFile(self,filePath):
+        '''
+            Sources a TclFile
+            
+            filePath
+                the filepath to an existing tcl file
+            
+            Returns
+                n/a
+        '''
+        slicer.Application.LoadScript(filePath)
+
+
+
+    '''=========================================================================================='''
+    def GetPCADistanceCommand(self,imageFilePath,label,outputFilePath,maxDist=100,distBound=10):
+        '''
+           Returns a call to the PCADistance function
+           
+           Returns
+               the PCA Distance TCL command as String
+        '''
+        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
+        
+        if not self.__pcaDistanceSourced:
+            # only source the tcl files once
+            self.SourceTclFile(pathToAtlasCreator + os.sep + "HelperFct.tcl")
+            self.SourceTclFile(pathToAtlasCreator + os.sep + "PCA_ModellingFct.tcl")
+            self.__pcaDistanceSourced = 1
+            
+        output = "GenerateDistanceMapWrapper"
+        output += " " + str(imageFilePath) 
+        output += " " + str(label)
+        output += " " + str(maxDist)
+        output += " " + str(distBound)
+        output += " " + str(outputFilePath)
+        
+        return output
     
     
 
@@ -861,4 +909,27 @@ class AtlasCreatorHelper(object):
         return content
         
         
+
+    '''=========================================================================================='''
+    def Execute(self,command):
+        '''
+            Execute a given command and print runtime information.
+            
+            command
+                A string containing the command to be executed
+                
+            Returns
+                n/a
+        '''
+        try:
+            r = call(command,shell=True)
+            if r < 0:
+                self.debug("Command terminated by signal "+str(r))
+            else:
+                self.debug("Command returned "+str(r))
+        except OSError, e:
+            self.debug("Execution failed "+str(e))
+            
+        
+
 

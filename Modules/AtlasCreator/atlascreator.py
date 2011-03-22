@@ -121,6 +121,9 @@ def usage():
     info("        --schedulerCommand EXECUTABLE")
     info("                The executable to use as a scheduler in cluster mode, f.e. \"qsub\".")
     info("")
+    info("--pca")
+    info("        Perform PCA Analysis on top of Atlas Generation.")
+    info("")
     info("--slicer FILEPATH")
     info("        Filepath to the 3D Slicer launcher including arguments, f.e. \"/usr/bin/Slicer3 --tmp_dir /var/tmp\".")
     info("        DEFAULT: Find the 3D Slicer launcher automatically.")
@@ -181,7 +184,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.27")
+    info("Version v0.28")
     info("")
     
     if len(argv) == 0:
@@ -212,6 +215,7 @@ def main(argv):
                                                         "outputCast=",
                                                         "cluster",
                                                         "schedulerCommand=",
+                                                        "pca",
                                                         "slicer=",
                                                         "debug",
                                                         "dryrun",
@@ -257,6 +261,8 @@ def main(argv):
     
     cluster = False
     schedulerCommand = None
+    
+    pca = False
     
     debug = False
     
@@ -307,6 +313,8 @@ def main(argv):
             cluster = True
         elif opt in ("--schedulerCommand"):
             schedulerCommand = arg
+        elif opt in ("--pca"):
+            pca = True
         elif opt in ("--slicer"):
             slicerLauncherFilePath = arg
         elif opt in ("-d", "--debug"):
@@ -616,6 +624,11 @@ def main(argv):
     else:
         evalpythonCommand += "configuration.SetNormalizeAtlases(0);"
         evalpythonCommand += "configuration.SetNormalizeTo(-1);"
+
+    if pca:
+        evalpythonCommand += "configuration.SetPCAAnalysis(1);"
+    else:
+        evalpythonCommand += "configuration.SetPCAAnalysis(0);"
 
     evalpythonCommand += "configuration.SetOutputCast('"+outputCast+"');"
     

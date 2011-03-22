@@ -37,6 +37,8 @@ class AtlasCreatorConfiguration(object):
         self.__normalizeTo = 1
         
         self.__outputCast = "Short" 
+        
+        self.__pcaAnalysis = 0
 
 
 
@@ -503,4 +505,32 @@ class AtlasCreatorConfiguration(object):
         else:
             # use Short as default if argument is illegal
             self.__outputCast = "Short"
+
+
+                
+    '''=========================================================================================='''
+    def GetPCAAnalysis(self):
+        '''
+            Returns
+                the flag for computing PCA analysis
+        '''
+        return self.__pcaAnalysis
+
+
+
+    '''=========================================================================================='''
+    def SetPCAAnalysis(self, value):
+        '''
+            Sets the flag for computing PCA analysis
+            
+            value
+                the flag as 0 or 1
+                
+            Returns
+                n/a
+        '''
+        if value != 0 and value != 1:
+            self.__pcaAnalysis = 0
+        else:
+            self.__pcaAnalysis = int(value)
 
