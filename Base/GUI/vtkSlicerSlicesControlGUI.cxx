@@ -1446,7 +1446,6 @@ void vtkSlicerSlicesControlGUI::FitSlicesToBackground ( )
       nodes->Delete ( );
 
       // Now fit all Slices to background
-      int w, h;
       for (int i = 0; i < nSliceGUI; i++)
         {
         if (i == 0)
@@ -1459,53 +1458,11 @@ void vtkSlicerSlicesControlGUI::FitSlicesToBackground ( )
           sgui = ssgui->GetNextSliceGUI(layoutname);
           layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
           }
-        //w = sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidth();
-        //h = sgui->GetSliceViewer()->GetRenderWidget ( )->GetHeight();
-        sscanf(
-          this->Script("winfo width %s", 
-                       sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
-          "%d", &w);
-        sscanf(
-          this->Script("winfo height %s", 
-                       sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
-          "%d", &h);
-        sgui->GetLogic()->FitSliceToAll ( w, h );
+        int *rSize = sgui->GetSliceViewer()->GetRenderWidget()->GetRenderer()->GetSize();
+        sgui->GetLogic()->FitSliceToAll ( rSize[0], rSize[1] );
         sgui->GetSliceNode()->UpdateMatrices( );
         this->RequestFOVEntriesUpdate();
         }
-
-      //ssgui->GetSliceGUICollection()->InitTraversal();
-      //sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-      //vtkCollection *nodes = vtkCollection::New();
-      //while ( sgui != NULL )
-      //  {
-      //  nodes->AddItem ( sgui->GetSliceNode ( ) );
-      //  sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-      //  }
-      //this->MRMLScene->SaveStateForUndo ( nodes );
-      //nodes->Delete ( );
-
-      //// Now fit all Slices to background
-      //ssgui->GetSliceGUICollection()->InitTraversal();
-      //sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-      //int w, h;
-      //while ( sgui != NULL )
-      //  {
-      //  //w = sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidth();
-      //  //h = sgui->GetSliceViewer()->GetRenderWidget ( )->GetHeight();
-      //  sscanf(
-      //    this->Script("winfo width %s", 
-      //        sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
-      //    "%d", &w);
-      //  sscanf(
-      //    this->Script("winfo height %s", 
-      //        sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
-      //    "%d", &h);
-      //  sgui->GetLogic()->FitSliceToAll ( w, h );
-      //  sgui->GetSliceNode()->UpdateMatrices( );
-      //  this->RequestFOVEntriesUpdate();
-      //  sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-      //  }
       }
     }
 }
