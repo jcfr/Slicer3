@@ -4,7 +4,7 @@ package require Itcl
 #
 if {0} { ;# comment
 
-    This is function is executed by EMSegmenter
+    This function is executed by EMSegmenter
 
     # TODO :
 
@@ -1166,6 +1166,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         #variable SCENE
         set SCENE [$::slicer3::Application GetMRMLScene]
 
+        # we create a new vtkMRMLAtlasCreatorNode and configure it..
         set node [vtkMRMLAtlasCreatorNode New]
         $node SetToolkit CMTK
         $node SetTemplateType fixed
@@ -1174,10 +1175,107 @@ namespace eval EMSegmenterPreProcessingTcl {
         #        $node SetDirectory
         #for more options look into Modules/AtlasCreator/Cxx/vtkMRMLAtlasCreatorNode.h
 
+        set outputDir        "/projects/sandbox/Slicer3/trunk/Slicer3/Modules/AtlasCreator/TestData/originals/"
+        set template         "/projects/sandbox/Slicer3/trunk/Slicer3/Modules/AtlasCreator/TestData/originals/case62.nrrd"
+        set segmentationsDir "/projects/sandbox/Slicer3/trunk/Slicer3/Modules/AtlasCreator/TestData/segmentations/"
+
+        if { $debug || $dryrun } {
+            $node SetDebugMode 1
+        }
+
+        if { $dryrun } {
+            $node SetDryrunMode 1
+        }
+
+        # set special settings if clusterMode or skipRegistrationMode is requested
+        if { $cluster } {
+            # cluster Mode
+            $node SetUseCluster 1
+            $node SetSchedulerCommand $schedulerCommand
+        }
+        elif { $skipRegistration } {
+            # skipRegistration Mode
+            $node SetSkipRegistration 1
+            $node SetTransformsDirectory  $transformsDir
+            $node SetExistingTemplate $existingTemplate
+        }
+
+        # now the configuration options which are valid for all
+        if { $imagesDir } {
+            $node SetOriginalImagesFilePathList $imagesDir
+        }
+
+        if { $segmentationsDir } {
+            $node SetSegmentationsFilePathList $segmentationsDir
+        }
+
+        if { $outputDir } {
+            $node SetOutputDirectory $outputDir
+        }
+
+        if { $useCMTK } {
+            $node SetToolkit "CMTK"
+        }
+        else {
+            $node SetToolkit "BRAINSFit"
+        }
+
+        if { $fixed } {
+            $node SetTemplateType "fixed"
+            $node SetFixedTemplateDefaultCaseFilePath $template
+        }
+        else {
+            $node SetTemplateType "dynamic"
+            $node SetDynamicTemplateIterations $meanIterations
+        }
+
+        $node SetLabelsList $labels
+
+        if { $nonRigid } {
+            $node SetRegistrationType "Non-Rigid"
+        } else {
+            $node SetRegistrationType "Affine"
+        }
+
+        if { $writeTransforms } {
+            $node SetSaveTransforms 1
+        }
+        else {
+            $node SetSaveTransforms 0
+        }
+
+        if { $keepAligned } {
+            $node SetDeleteAlignedImages 0
+            $node SetDeleteAlignedSegmentations 0
+        }
+        else {
+            $node SetDeleteAlignedImages 1
+            $node SetDeleteAlignedSegmentations 1
+        }
+
+        if { $normalize } {
+            $node SetNormalizeAtlases 1
+            $node SetNormalizeTo $normalizeTo
+        } else {
+            $node SetNormalizeAtlases 0
+            $node SetNormalizeTo -1
+        }
+
+        if { $pca } {
+            $node SetPCAAnalysis 1
+        }
+        else {
+            $node SetPCAAnalysis 0
+        }
+
+        $node SetOutputCast $outputCast
+
+        # add the new node to the MRML scene
         $SCENE AddNode $node
         $node Print
         $node Launch
         #the terminal will contain stdout output
+
 
         #python test
         if {0} {
@@ -1187,8 +1285,6 @@ namespace eval EMSegmenterPreProcessingTcl {
             slicer.MRMLScene.AddNode(a)
             a.Launch()
         }
-
-
     }
 
 
