@@ -165,24 +165,27 @@ class AtlasCreatorLogic(object):
         self.Helper().info("Configuration for Atlas Creator:\n" + str(node))
         
         # create the output directories     
+        if not os.path.isdir(node.GetOutputDirectory()):
+            os.makedirs(node.GetOutputDirectory())
+        
         transformDirectory = node.GetOutputDirectory() + "transforms" + os.sep
-        os.mkdir(transformDirectory)
+        os.makedirs(transformDirectory)
         registeredDirectory = node.GetOutputDirectory() + "registered" + os.sep
-        os.mkdir(registeredDirectory)
+        os.makedirs(registeredDirectory)
         resampledDirectory = node.GetOutputDirectory() + "resampled" + os.sep
-        os.mkdir(resampledDirectory)
+        os.makedirs(resampledDirectory)
         scriptsRegistrationDirectory = node.GetOutputDirectory() + "scriptsRegistration" + os.sep
-        os.mkdir(scriptsRegistrationDirectory)
+        os.makedirs(scriptsRegistrationDirectory)
         notifyRegistrationDirectory = node.GetOutputDirectory() + "notifyRegistration" + os.sep
-        os.mkdir(notifyRegistrationDirectory)
+        os.makedirs(notifyRegistrationDirectory)
         scriptsResamplingDirectory = node.GetOutputDirectory() + "scriptsResampling" + os.sep
-        os.mkdir(scriptsResamplingDirectory)
+        os.makedirs(scriptsResamplingDirectory)
         notifyResamplingDirectory = node.GetOutputDirectory() + "notifyResampling" + os.sep
-        os.mkdir(notifyResamplingDirectory)        
+        os.makedirs(notifyResamplingDirectory)        
         scriptsCombineToAtlasDirectory = node.GetOutputDirectory() + "scriptsCombineToAtlas" + os.sep
-        os.mkdir(scriptsCombineToAtlasDirectory)
+        os.makedirs(scriptsCombineToAtlasDirectory)
         notifyCombineToAtlasDirectory = node.GetOutputDirectory() + "notifyCombineToAtlas" + os.sep
-        os.mkdir(notifyCombineToAtlasDirectory) 
+        os.makedirs(notifyCombineToAtlasDirectory) 
              
         # executable configuration
         multiThreading = True # enable multiThreading by default
