@@ -739,8 +739,8 @@ int main(int argc, char** argv)
       if (int(atlasNode->GetNumberOfVolumes()) != int(atlasVolumeFileNames.size()))
     {
           std::stringstream ss;
-          ss << "ERROR: number of volumes defined by  atlasVolumeFileNames ("<< int(atlasVolumeFileNames.size())
-             << ") does not match number of atlas volumes originally defined by template " << atlasNode->GetNumberOfVolumes() ;
+          ss << "ERROR: number of volumes defined by atlasVolumeFileNames ("<< int(atlasVolumeFileNames.size())
+             << ") does not match number of atlas volumes originally defined by template (" << atlasNode->GetNumberOfVolumes() << ")";
           throw std::runtime_error(ss.str());
     }
 
@@ -773,19 +773,19 @@ int main(int argc, char** argv)
         for (unsigned int imageIndex = 0; imageIndex < atlasVolumeFileNames.size(); ++imageIndex)
         {
           // This assumes that the keys are defined by the EMSTree node ids - which they were so far !
-      // if needed can be made more fancy
-      const char* treeNodeID =  atlasNode->GetNthKey(imageIndex);
+          // if needed can be made more fancy
+          const char* treeNodeID =  atlasNode->GetNthKey(imageIndex);
           vtkMRMLNode* tNode = mrmlScene->GetNodeByID(treeNodeID);
           if (tNode)
-        {
-              cout << "Class: " << tNode->GetName()  << " File name :" << atlasVolumeFileNames[imageIndex].c_str() << endl;
-        }
+          {
+              cout << "Class: " << setw(30) << std::left << tNode->GetName() << "File name: " << atlasVolumeFileNames[imageIndex].c_str() << endl;
+          }
           else
-        {
+          {
               // then just make the method more fancy so that you first go through all the nodes in the tree - and then look where the index of the corresponding key defined by the spatialnode ID
-              cout << "Could not retrieve class name for "<< atlasVolumeFileNames[imageIndex].c_str() << endl;
-            }
-    }
+              cout << "Could not retrieve class name for: " << atlasVolumeFileNames[imageIndex].c_str() << endl;
+          }
+        }
       }
     }
 
