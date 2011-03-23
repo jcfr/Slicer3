@@ -315,7 +315,7 @@ inline void EMLocalShapeCostFunction_CalculateCostFunction(EMLocalShapeCostFunct
       }
     for (int i = 0; i < NumberOfTotalTypeCLASS; i++) weights[i] ++;
 
-    assert(z <= ROI_MaxZ);
+    //assert(z <= ROI_MaxZ);
     if (x >  ROI_MaxX)
       {
       // Go to next y row
