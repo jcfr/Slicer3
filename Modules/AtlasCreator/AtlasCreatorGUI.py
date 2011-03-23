@@ -391,7 +391,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         if self._associatedMRMLNode:
             if callerID == self._associatedMRMLNode.GetID() and event == vtkMRMLAtlasCreatorNode_LaunchComputationEvent:
                 # the observed node was launched!
-                self.GetHelper().info("LAUNCH!")
+                self.GetMyLogic().Start(self._associatedMRMLNode)
                 
 
         # observe MRMLScene events
@@ -410,7 +410,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self.GetUIPanel().AddPage("AtlasCreator","AtlasCreator","")
         self._atlascreatorPage = self.GetUIPanel().GetPageWidget("AtlasCreator")
-        helpText = """**Atlas Creator v0.28**
+        helpText = """**Atlas Creator v0.29**
         
 More Information available at <a>http://www.slicer.org/slicerWiki/index.php/Modules:AtlasCreator</a>
 

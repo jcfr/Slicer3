@@ -854,6 +854,41 @@ class AtlasCreatorHelper(object):
         return output
     
     
+    
+    '''=========================================================================================='''
+    def GetPCAGenerateCommand(self,pcaDirectory,labelList,maxNumberOfEigenVectors=10,saveFileFormat="nrrd",combineStructures=0):
+        '''
+           Returns a call to the PCAGenerate function
+           
+           Returns
+               the PCA Distance TCL command as String
+        '''
+        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
+        
+        if not self.__pcaDistanceSourced:
+            # only source the tcl files once
+            self.SourceTclFile(pathToAtlasCreator + os.sep + "HelperFct.tcl")
+            self.SourceTclFile(pathToAtlasCreator + os.sep + "PCA_ModellingFct.tcl")
+            self.__pcaDistanceSourced = 1
+            
+        # convert labelList to a huge string with space as delimiter
+        labelListAsString = "("
+        for label in labelList:
+            labelListAsString += str(label)
+            labelListAsString += " "
+            
+        labelListAsString = labelListAsString.rstrip() + ")" 
+            
+        output = "GeneratePCAModel"
+        output += " " + str(pcaDirectory)
+        output += " " + str(maxNumberOfEigenVectors)
+        output += " \"" + str(labelListAsString) + "\""
+        output += " " + str(saveFileFormat)
+        output += " " + str(combineStructures)
+
+        return output
+
+
 
     '''==========================================================================================''' 
     def GetCMTKInstallationDirectory(self):

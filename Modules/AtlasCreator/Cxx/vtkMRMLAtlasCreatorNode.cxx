@@ -71,8 +71,11 @@ vtkMRMLAtlasCreatorNode::vtkMRMLAtlasCreatorNode()
   this->DeleteAlignedImages = 0;
   this->DeleteAlignedSegmentations = 0;
   this->NormalizeAtlases = 0;
+  this->NormalizeTo = 0;
 
   this->OutputCast = 0;
+
+  this->PCAAnalysis = 0;
 
   this->UseCluster = 0;
   this->SchedulerCommand = 0;
@@ -80,6 +83,9 @@ vtkMRMLAtlasCreatorNode::vtkMRMLAtlasCreatorNode()
   this->SkipRegistration = 0;
   this->ExistingTemplate = 0;
   this->TransformsDirectory = 0;
+
+  this->DebugMode = 0;
+  this->DryrunMode = 0;
 
 }
 
@@ -222,12 +228,15 @@ void vtkMRMLAtlasCreatorNode::WriteXML(ostream& of, int nIndent)
   of << " DeleteAlignedImages =\"" << this->DeleteAlignedImages << "\"";
   of << " DeleteAlignedSegmentations =\"" << this->DeleteAlignedSegmentations << "\"";
   of << " NormalizeAtlases =\"" << this->NormalizeAtlases << "\"";
+  of << " NormalizeTo =\"" << this->NormalizeTo << "\"";
 
 
   if (this->OutputCast != 0)
     {
     of << " OutputCast =\"" << this->OutputCast << "\"";
     }
+
+  of << " PCAAnalysis =\"" << this->PCAAnalysis << "\"";
 
 
   of << " SchedulerCommand =\"" << this->SchedulerCommand << "\"";
@@ -249,6 +258,11 @@ void vtkMRMLAtlasCreatorNode::WriteXML(ostream& of, int nIndent)
     {
     of << " TransformsDirectory =\"" << this->TransformsDirectory << "\"";
     }
+
+
+  of << " DebugMode =\"" << this->DebugMode << "\"";
+  of << " DryrunMode =\"" << this->DryrunMode << "\"";
+
 }
 
 //----------------------------------------------------------------------------
@@ -363,10 +377,33 @@ void vtkMRMLAtlasCreatorNode::ReadXMLAttributes(const char** atts)
       this->SetNormalizeAtlases(val);
       }
 
+    if ( !strcmp(attName, "NormalizeTo") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetNormalizeTo(val);
+      }
+
 
     if ( !strcmp(attName, "OutputCast") )
       {
       this->SetOutputCast( attValue );
+      }
+
+
+    if ( !strcmp(attName, "PCAAnalysis") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetPCAAnalysis(val);
       }
 
 
@@ -408,6 +445,29 @@ void vtkMRMLAtlasCreatorNode::ReadXMLAttributes(const char** atts)
       this->SetTransformsDirectory( attValue );
       }
 
+
+    if ( !strcmp(attName, "DebugMode") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetDebugMode(val);
+      }
+
+    if ( !strcmp(attName, "DryrunMode") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetDryrunMode(val);
+      }
+
     }
 }
 
@@ -437,8 +497,11 @@ void vtkMRMLAtlasCreatorNode::Copy(vtkMRMLNode *anode)
   this->SetDeleteAlignedImages( node->GetDeleteAlignedImages());
   this->SetDeleteAlignedSegmentations( node->GetDeleteAlignedSegmentations());
   this->SetNormalizeAtlases( node->GetNormalizeAtlases());
+  this->SetNormalizeTo( node->GetNormalizeTo());
 
   this->SetOutputCast( node->GetOutputCast());
+
+  this->SetPCAAnalysis( node->GetPCAAnalysis());
 
   this->SetUseCluster( node->GetUseCluster());
   this->SetSchedulerCommand( node->GetSchedulerCommand());
@@ -446,6 +509,9 @@ void vtkMRMLAtlasCreatorNode::Copy(vtkMRMLNode *anode)
   this->SetSkipRegistration( node->GetSkipRegistration());
   this->SetExistingTemplate( node->GetExistingTemplate());
   this->SetTransformsDirectory( node->GetTransformsDirectory());
+
+  this->SetDebugMode( node->GetDebugMode());
+  this->SetDryrunMode( node->GetDryrunMode());
 
 }
 
@@ -472,8 +538,11 @@ void vtkMRMLAtlasCreatorNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "DeleteAlignedImages: " << this->GetDeleteAlignedImages() << "\n";
   os << indent << "DeleteAlignedSegmentations: " << this->GetDeleteAlignedSegmentations() << "\n";
   os << indent << "NormalizeAtlases: " << this->GetNormalizeAtlases() << "\n";
+  os << indent << "NormalizeTo: " << this->GetNormalizeTo() << "\n";
 
   os << indent << "OutputCast: " << (this->GetOutputCast() ? this->GetOutputCast() : "(none)") << "\n";
+
+  os << indent << "PCAAnalysis: " << this->GetPCAAnalysis() << "\n";
 
   os << indent << "UseCluster: " << this->GetUseCluster() << "\n";
   os << indent << "SchedulerCommand: " << (this->GetSchedulerCommand() ? this->GetSchedulerCommand() : "(none)") << "\n";
@@ -481,6 +550,9 @@ void vtkMRMLAtlasCreatorNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "SkipRegistration: " << this->GetSkipRegistration() << "\n";
   os << indent << "ExistingTemplate: " << (this->GetExistingTemplate() ? this->GetExistingTemplate() : "(none)") << "\n";
   os << indent << "TransformsDirectory: " << (this->GetTransformsDirectory() ? this->GetTransformsDirectory() : "(none)") << "\n";
+
+  os << indent << "DebugMode: " << this->GetDebugMode() << "\n";
+  os << indent << "DryrunMode: " << this->GetDryrunMode() << "\n";
 
 }
 

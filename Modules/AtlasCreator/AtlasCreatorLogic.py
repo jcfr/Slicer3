@@ -5,9 +5,6 @@ import time
 import tempfile
 import shutil
 
-from AtlasCreatorConfiguration import AtlasCreatorConfiguration
-from AtlasCreatorGridConfiguration import AtlasCreatorGridConfiguration
-from AtlasCreatorSkipRegistrationConfiguration import AtlasCreatorSkipRegistrationConfiguration
 from AtlasCreatorHelper import AtlasCreatorHelper
 
 class AtlasCreatorLogic(object):
@@ -69,48 +66,60 @@ class AtlasCreatorLogic(object):
 
 
     '''=========================================================================================='''
-    def Start(self, configuration):
+    def Start(self, node):
         '''
             Entry point for the Atlas Creation
             
-            configuration
-                the configuration for the Atlas Creator task
+            node
+                an AtlasCreator MRML Node (vtkMRMLAtlasCreatorNode) transporting a configuration
                 
             Returns
                 TRUE or FALSE
         '''
-                
+        
+        # check if we have a valid vtkMRMLAtlasCreatorNode
+        if not isinstance(node, slicer.vtkMRMLAtlasCreatorNode):
+            self.Helper().info("ERROR: No valid vtkMRMLAtlasCreatorNode!")
+            self.Helper().info("Aborting now!")
+            return False
+        
+        if node.GetDebugMode():
+            # activate debug mode
+            self.Helper().EnableDebugMode()
+            self.Helper().info("Debug Mode is enabled!")
+            
+        if node.GetDryrunMode():
+            # activate dryrun mode
+            self.EnableDryrunMode()
+            self.Helper().info("Dry-Run is activated: Output executable commands instead of running the registration or resampling.")
+        
         clusterMode = 0
         skipRegistrationMode = 0
 
-        if (isinstance(configuration, AtlasCreatorGridConfiguration)):
+        if (node.GetUseCluster()):
             
             # Cluster Mode
             self.Helper().info("--------------------------------------------------------------------------------")
             self.Helper().info("                   Starting Atlas Creator Cluster Mode                          ")
             clusterMode = 1
             
-        elif (isinstance(configuration, AtlasCreatorSkipRegistrationConfiguration)):
+        elif (node.GetSkipRegistration()):
             
             # Skip Registration mode
             self.Helper().info("--------------------------------------------------------------------------------")
             self.Helper().info("               Starting Atlas Creator Skip Registration Mode                    ")
             skipRegistrationMode = 1
             
-        elif (isinstance(configuration, AtlasCreatorConfiguration)):
+        else:
             
             # Standard Mode
             self.Helper().info("--------------------------------------------------------------------------------")
             self.Helper().info("                      Starting Atlas Creator Normal Mode                        ")
-            
-        else:
-            self.Helper().info("ERROR! Invalid Configuration.. Aborting..")
-            return False
         
         
         # check if we want to use CMTK
         useCMTK = False
-        if configuration.GetToolkit() == "CMTK":
+        if node.GetToolkit() == "CMTK":
             # check if CMTK is installed
             cmtkDir = self.Helper().GetCMTKInstallationDirectory()
             if cmtkDir:
@@ -122,36 +131,57 @@ class AtlasCreatorLogic(object):
                 self.Helper().info("ERROR! Please install CMTK4Slicer in order to use CMTK!")
                 useCMTK = False
     
+        #
+        # convert the string based filePath lists to real lists
+        #
+        originalImagesFilePathList = str(node.GetOriginalImagesFilePathList())
+        if originalImagesFilePathList!="":
+            originalImagesFilePathList = originalImagesFilePathList.split()
+        else:
+            originalImagesFilePathList = []
+            
+        segmentationsFilePathList = str(node.GetSegmentationsFilePathList())
+        if segmentationsFilePathList!="":
+            segmentationsFilePathList = segmentationsFilePathList.split()
+        else:
+            segmentationsFilePathList = []   
+            
         # if we need to register, check if all files in the configuration.GetOriginalImagesFilePathList() are
         # also present in  configuration.GetSegmentationsFilePathList() and vice-versa
-        if not skipRegistrationMode:
-            configuration.SetOriginalImagesFilePathList(self.Helper().GetValidFilePaths(configuration.GetOriginalImagesFilePathList(),
-                                                                                        configuration.GetSegmentationsFilePathList()))
-            configuration.SetSegmentationsFilePathList(self.Helper().GetValidFilePaths(configuration.GetSegmentationsFilePathList(),
-                                                                                       configuration.GetOriginalImagesFilePathList()))
+        #
+        if not skipRegistrationMode:         
             
+            originalImagesFilePathList = self.Helper().GetValidFilePaths(originalImagesFilePathList,
+                                                                         segmentationsFilePathList)
+            segmentationsFilePathList = self.Helper().GetValidFilePaths(segmentationsFilePathList,
+                                                                        originalImagesFilePathList)
+            
+            
+        # convert the string based labels list to a real list is not necessary because python does it
+        # automatically
+        labelsList = node.GetLabelsList()
             
         # at this point, we have a valid configuration, let's print it
-        self.Helper().info("Configuration for Atlas Creator:\n" + str(configuration.GetConfigurationAsString()))
+        self.Helper().info("Configuration for Atlas Creator:\n" + str(node))
         
         # create the output directories     
-        transformDirectory = configuration.GetOutputDirectory() + "transforms" + os.sep
+        transformDirectory = node.GetOutputDirectory() + "transforms" + os.sep
         os.mkdir(transformDirectory)
-        registeredDirectory = configuration.GetOutputDirectory() + "registered" + os.sep
+        registeredDirectory = node.GetOutputDirectory() + "registered" + os.sep
         os.mkdir(registeredDirectory)
-        resampledDirectory = configuration.GetOutputDirectory() + "resampled" + os.sep
+        resampledDirectory = node.GetOutputDirectory() + "resampled" + os.sep
         os.mkdir(resampledDirectory)
-        scriptsRegistrationDirectory = configuration.GetOutputDirectory() + "scriptsRegistration" + os.sep
+        scriptsRegistrationDirectory = node.GetOutputDirectory() + "scriptsRegistration" + os.sep
         os.mkdir(scriptsRegistrationDirectory)
-        notifyRegistrationDirectory = configuration.GetOutputDirectory() + "notifyRegistration" + os.sep
+        notifyRegistrationDirectory = node.GetOutputDirectory() + "notifyRegistration" + os.sep
         os.mkdir(notifyRegistrationDirectory)
-        scriptsResamplingDirectory = configuration.GetOutputDirectory() + "scriptsResampling" + os.sep
+        scriptsResamplingDirectory = node.GetOutputDirectory() + "scriptsResampling" + os.sep
         os.mkdir(scriptsResamplingDirectory)
-        notifyResamplingDirectory = configuration.GetOutputDirectory() + "notifyResampling" + os.sep
+        notifyResamplingDirectory = node.GetOutputDirectory() + "notifyResampling" + os.sep
         os.mkdir(notifyResamplingDirectory)        
-        scriptsCombineToAtlasDirectory = configuration.GetOutputDirectory() + "scriptsCombineToAtlas" + os.sep
+        scriptsCombineToAtlasDirectory = node.GetOutputDirectory() + "scriptsCombineToAtlas" + os.sep
         os.mkdir(scriptsCombineToAtlasDirectory)
-        notifyCombineToAtlasDirectory = configuration.GetOutputDirectory() + "notifyCombineToAtlas" + os.sep
+        notifyCombineToAtlasDirectory = node.GetOutputDirectory() + "notifyCombineToAtlas" + os.sep
         os.mkdir(notifyCombineToAtlasDirectory) 
              
         # executable configuration
@@ -163,7 +193,7 @@ class AtlasCreatorLogic(object):
             # if this is a cluster mode, add the schedulerCommand and disable multiThreading
             # also, raise the seconds to wait between each check on completed jobs to 60
             self.Helper().info("Found cluster configuration..")
-            schedulerCommand = configuration.GetSchedulerCommand()
+            schedulerCommand = node.GetSchedulerCommand()
             self.Helper().debug("Scheduler Command: " + str(schedulerCommand))
             multiThreading = False
             sleepValue = 60             
@@ -181,26 +211,26 @@ class AtlasCreatorLogic(object):
             self.Helper().info("Entering Registration Stage..")
                     
             # create a temporary meanImage which might get used
-            meanImageFilePath = tempfile.mkstemp(".nrrd", "acTmpMeanImage", configuration.GetOutputDirectory())[1]                   
+            meanImageFilePath = tempfile.mkstemp(".nrrd", "acTmpMeanImage", node.GetOutputDirectory())[1]                   
                     
             #
             # FIXED REGISTRATION
             #
-            if configuration.GetTemplateType() == "fixed":
+            if node.GetTemplateType() == "fixed":
                 # fixed registration.. only register once against the defaultCase
                 
-                defaultCase = configuration.GetFixedTemplateDefaultCaseFilePath()
+                defaultCase = node.GetFixedTemplateDefaultCaseFilePath()
                 
                 self.Helper().info("Fixed registration against " + str(defaultCase))
                 
                 alignedImages = self.Register(schedulerCommand,
-                                              configuration.GetOriginalImagesFilePathList(),
+                                              originalImagesFilePathList,
                                               defaultCase,
                                               transformDirectory,
                                               registeredDirectory,
                                               scriptsRegistrationDirectory,
                                               notifyRegistrationDirectory,
-                                              configuration.GetRegistrationType(),
+                                              node.GetRegistrationType(),
                                               multiThreading,
                                               useCMTK,
                                               sleepValue)
@@ -208,14 +238,14 @@ class AtlasCreatorLogic(object):
             #
             # DYNAMIC REGISTRATION
             #
-            elif configuration.GetTemplateType() == "dynamic":
+            elif node.GetTemplateType() == "dynamic":
                 # dynamic registration.. register against mean until number of iterations reached
                 
-                alignedImages = configuration.GetOriginalImagesFilePathList()
+                alignedImages = originalImagesFilePathList
                 
-                self.Helper().info("Dynamic registration with " + str(configuration.GetDynamicTemplateIterations()) + " iterations")
+                self.Helper().info("Dynamic registration with " + str(node.GetDynamicTemplateIterations()) + " iterations")
                     
-                for i in range(0, configuration.GetDynamicTemplateIterations()):
+                for i in range(0, node.GetDynamicTemplateIterations()):
                     
                     self.Helper().info("Starting iteration " + str(i + 1) + "...")
                     
@@ -232,8 +262,8 @@ class AtlasCreatorLogic(object):
                     meanVolumeNode = slicer.vtkMRMLScalarVolumeNode()
                     if not self.__dryRun:
                         meanVolumeNode = self.GetMeanImage(alignedImages)
-                        if configuration.GetDeleteAlignedImages():
-                            if alignedImages != configuration.GetOriginalImagesFilePathList():
+                        if node.GetDeleteAlignedImages():
+                            if alignedImages != originalImagesFilePathList():
                                 # do not delete the original images
                                 self.Helper().DeleteFilesAndDirectory(alignedImages)
                             
@@ -243,13 +273,13 @@ class AtlasCreatorLogic(object):
                     # we register the original images against the meanImage
                     # we then set the alignedImages and start over..
                     alignedImages = self.Register(schedulerCommand,
-                                                  configuration.GetOriginalImagesFilePathList(),
+                                                  originalImagesFilePathList(),
                                                   meanImageFilePath,
                                                   transformDirectory,
                                                   uniqueRegisteredDirectory,
                                                   uniqueScriptsDirectory,
                                                   uniqueNotifyDirectory,
-                                                  configuration.GetRegistrationType(),
+                                                  node.GetRegistrationType(),
                                                   multiThreading,
                                                   useCMTK,
                                                   sleepValue) 
@@ -260,7 +290,7 @@ class AtlasCreatorLogic(object):
                 self.Helper().info("End of Dynamic registration..")
             
             # now wipe the temporary registered content, if selected
-            if configuration.GetDeleteAlignedImages():
+            if node.GetDeleteAlignedImages():
                 shutil.rmtree(registeredDirectory, True, None)
                 
             # we will save the template
@@ -268,14 +298,14 @@ class AtlasCreatorLogic(object):
             # use the transforms (if they exist) and the template to resample
             # at this point, the defaultCase is either the meanImage or the fixed defaultCase
             v = self.Helper().LoadVolume(defaultCase)
-            pathToTemplate = configuration.GetOutputDirectory() + "template.nrrd"
+            pathToTemplate = node.GetOutputDirectory() + "template.nrrd"
             self.Helper().info("Saving template to " + str(pathToTemplate))
             self.Helper().SaveVolume(str(pathToTemplate), v)
             # now remove the node from the mrmlscene
             slicer.MRMLScene.RemoveNode(v)
             
             # update reference to defaultCase to new location, only if templateType is dynamic
-            if configuration.GetTemplateType() == "dynamic":
+            if node.GetTemplateType() == "dynamic":
                 defaultCase = pathToTemplate
             
             # now delete the temporary mean template
@@ -285,9 +315,9 @@ class AtlasCreatorLogic(object):
             # we are skipping the registration
             self.Helper().info("Skipping the registration and using the existing transforms..")
             
-            transformDirectory = configuration.GetTransformDirectory()
+            transformDirectory = node.GetTransformDirectory()
             # we set the defaultCase to an existing one
-            defaultCase = configuration.GetExistingTemplate()
+            defaultCase = node.GetExistingTemplate()
             
             
 
@@ -299,7 +329,7 @@ class AtlasCreatorLogic(object):
         self.Helper().info("Entering Resampling Stage..")          
                 
         self.Resample(schedulerCommand,
-                      configuration.GetSegmentationsFilePathList(),
+                      segmentationsFilePathList,
                       defaultCase,
                       transformDirectory,
                       resampledDirectory,
@@ -311,30 +341,39 @@ class AtlasCreatorLogic(object):
         if not self.__dryRun:
             resampledSegmentationsFilePathList = self.Helper().ConvertDirectoryToList(resampledDirectory)
         else:
-            resampledSegmentationsFilePathList = configuration.GetSegmentationsFilePathList()
-            
-        #
-        #
-        # COMBINE TO ATLAS STAGE
-        #
-        #
-        self.Helper().info("Entering Combine-To-Atlas Stage..")
-                    
-        self.CombineToAtlas(schedulerCommand,
-                            resampledSegmentationsFilePathList,
-                            configuration.GetLabelsList(),
-                            configuration.GetOutputCast(),
-                            configuration.GetNormalizeTo(),
-                            configuration.GetOutputDirectory(),
-                            scriptsCombineToAtlasDirectory,
-                            notifyCombineToAtlasDirectory,
-                            sleepValue)
+            resampledSegmentationsFilePathList = segmentationsFilePathList
         
-        if configuration.GetPCAAnalysis():
+
+        if node.GetPCAAnalysis():
+            #
+            #
+            # PCA ANALYSIS STAGE
+            #
+            #
             self.Helper().info("Performing PCA Analysis..")
-            self.PerformPCAAnalysis(configuration.GetLabelsList(),
-                                    configuration.GetOutputDirectory(),
-                                    configuration.GetOutputDirectory())
+            
+            self.PerformPCAAnalysis(labelsList,
+                                    resampledSegmentationsFilePathList,
+                                    node.GetOutputDirectory())
+            
+        else:
+            #
+            #
+            # COMBINE TO ATLAS STAGE
+            #
+            #
+            self.Helper().info("Entering Combine-To-Atlas Stage..")
+                        
+            self.CombineToAtlas(schedulerCommand,
+                                resampledSegmentationsFilePathList,
+                                labelsList,
+                                node.GetOutputCast(),
+                                node.GetNormalizeTo(),
+                                node.GetOutputDirectory(),
+                                scriptsCombineToAtlasDirectory,
+                                notifyCombineToAtlasDirectory,
+                                sleepValue)
+            
         
         # cleanup!!
         # delete the scripts and notify directories
@@ -347,11 +386,11 @@ class AtlasCreatorLogic(object):
             shutil.rmtree(notifyCombineToAtlasDirectory, True, None)        
             
         # now delete the resampled segmentations
-        if configuration.GetDeleteAlignedSegmentations():
+        if node.GetDeleteAlignedSegmentations():
             shutil.rmtree(resampledDirectory, True, None)
         
         # delete the transforms, if we did not want to save them
-        if not configuration.GetSaveTransforms() and not skipRegistrationMode:
+        if not node.GetSaveTransforms() and not skipRegistrationMode:
             shutil.rmtree(transformDirectory, True, None)
             
         
@@ -997,14 +1036,14 @@ class AtlasCreatorLogic(object):
 
 
 
-    def PerformPCAAnalysis(self,labelsList,atlasDirectory,outputDirectory):
+    def PerformPCAAnalysis(self,labelsList,filePathsList,outputDirectory):
         '''
             Performs PCA Analysis on top of the Atlas Generation.
             
             labelsList
                 list of labels to perform PCA analysis for
-            atlasDirectory
-                directory in which existing atlases are located, trailing slash is required
+            filePathsList
+                list of existing filepaths to segmentations
             outputDirectory
                 directory to write the PCA analysis, trailing slash is required
                 
@@ -1015,24 +1054,52 @@ class AtlasCreatorLogic(object):
             self.Helper().info("Empty labelsList for PerformPCAAnalysis() command. Aborting..")
             return False
             
-        if not atlasDirectory:
-            self.Helper().info("Empty atlasDirectory for PerformPCAAnalysis() command. Aborting..")
+        if len(filePathsList) == 0:
+            self.Helper().info("Empty filePathsList for PerformPCAAnalysis() command. Aborting..")
             return False
         
         if not outputDirectory:
             self.Helper().info("Empty outputDirectory for PerformPCAAnalysis() command. Aborting..")
             return False
         
-        for label in labelsList:
-            
-            # create input path
-            inputAtlasFilePath = os.path.join(atlasDirectory,"atlas"+str(label)+".nrrd")
-            
-            # create output path
-            outputDistanceMapFilePath = os.path.join(outputDirectory,"atlas"+str(label)+"_distanceMap.nrrd")
-            
-            # generate distance maps
-            slicer.TkCall(self.Helper().GetPCADistanceCommand(inputAtlasFilePath,label,outputDistanceMapFilePath))
+        # create output dir for PCA distance maps
+        # f.e. /tmp/acout/pcaDistanceMaps/
+        pcaOutputDirectory = outputDirectory + "PCA" + os.sep
+        os.mkdir(pcaOutputDirectory)
+        
+        count = 0
+        
+        for filePath in filePathsList:
+        
+            count = count+1
+        
+            # generate the caseName (without extension)
+            # f.e. case1, case2...
+            caseName = "case"+str(count)
+        
+            # create directory structure for this case
+            # f.e. /tmp/acout/pcaDistanceMaps/case01/
+            casePcaDistanceMapDirectory = os.path.join(pcaOutputDirectory,caseName) + os.sep
+            os.mkdir(casePcaDistanceMapDirectory)
+        
+            for label in labelsList:
+                
+                # create input path, which is just the current aligned segmentation
+                inputAtlasFilePath = filePath
+                
+                # create output path
+                # f.e. /tmp/acout/pcaDistanceMaps/case01/X.nrrd, where X is the current label
+                outputDistanceMapFilePath = os.path.join(casePcaDistanceMapDirectory,str(label)+".nrrd")
+                
+                # generate distance maps
+                slicer.TkCall(self.Helper().GetPCADistanceCommand(inputAtlasFilePath,label,outputDistanceMapFilePath))
+                
+        # now after creating all the distance maps,
+        # we can generate the PCA shape representations
+        gcmd = self.Helper().GetPCAGenerateCommand(pcaOutputDirectory,labelsList)
+        self.Helper().info(gcmd)
+        slicer.TkCall(gcmd)
             
         return True
             
+

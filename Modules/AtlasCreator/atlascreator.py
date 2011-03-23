@@ -1,10 +1,11 @@
 '''
     Launcher for the Atlas Creator
 '''
-import sys
-import os
+import glob
+from subprocess import call
 import getopt
-
+import os
+import sys
 
 
 '''=========================================================================================='''
@@ -26,8 +27,64 @@ def is_int(s):
         return True
     except ValueError:
         return False
+
+
+
+'''=========================================================================================='''    
+def ConvertDirectoryToString(directory):
+    '''
+        Convert a directory to a string of filePaths with space as delimiter. While reading the directory,
+        only real files are added to the list, sub-directories as well as links are ignored.
+        
+        directory
+            a String containing the path to the directory
+            
+        Returns
+            string of filePaths with space as delimiter
+    '''
+    output = ""
     
+    if not directory:
+        return listOfFilePaths
     
+    if not os.path.isdir(directory):
+        return listOfFilePaths
+    
+    # loop through the directory
+    for entry in glob.glob(os.path.join(directory, '*.*')):
+        
+        if os.path.isfile(entry) and not os.path.islink(entry):
+            
+            # this is a real file and not a link or subdir
+            # add it to the string
+            output += str(os.path.normpath(entry))
+            # add the delimiter
+            output += " "
+            
+    return output.rstrip()
+
+    
+
+'''=========================================================================================='''    
+def ConvertListToString(list):
+    '''
+        Convert a list to a string of items with space as delimiter.
+        
+        list
+            a list object
+            
+        Returns
+            string of list items with space as delimiter
+    '''
+    output = ""
+    
+    for i in list:
+        output += str(i)
+        output += " "
+
+    return output.rstrip()
+
+
     
 '''=========================================================================================='''
 def usage():
@@ -184,7 +241,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.28")
+    info("Version v0.29")
     info("")
     
     if len(argv) == 0:
@@ -205,7 +262,7 @@ def main(argv):
                                                         "dynamic",
                                                         "meanIterations=",
                                                         "fixed",
-                                                        "template=",                                                        
+                                                        "template=",
                                                         "non-rigid",
                                                         "writeTransforms",
                                                         "keepAligned",
@@ -377,16 +434,16 @@ def main(argv):
         # outputDir already exists
         # we create a new unique one
         outputDir = os.path.abspath(outputDir)
-        info("Warning: The output directory ("+str(outputDir)+") already exists..")
+        info("Warning: The output directory (" + str(outputDir) + ") already exists..")
         
         # the directory already exists,
         # we want to add an index to the new one
         count = 2
-        newOutputDir = os.path.abspath(str(outputDir)+str(count))
+        newOutputDir = os.path.abspath(str(outputDir) + str(count))
         
         while (os.path.isdir(newOutputDir)):
             count = count + 1
-            newOutputDir = os.path.abspath(str(outputDir)+str(count))
+            newOutputDir = os.path.abspath(str(outputDir) + str(count))
         
         info("Warning: Using new output directory instead: " + str(newOutputDir))
         os.makedirs(newOutputDir)
@@ -409,22 +466,22 @@ def main(argv):
         if not os.path.isdir(transformsDir):
             # transformDir invalid
             info("Error: Could not find the directory of existing transforms!")
-            info("Error: Location of --transforms is invalid: "+str(transformsDir))
+            info("Error: Location of --transforms is invalid: " + str(transformsDir))
             errorOccured = True
         else:
             transformsDir = os.path.abspath(transformsDir) + os.sep
         if not os.path.isfile(existingTemplate):
             # existingTemplate invalid 
             info("Error: Could not find the existing template!")
-            info("Error: Location of --existingTemplate is invalid: "+str(existingTemplate))
+            info("Error: Location of --existingTemplate is invalid: " + str(existingTemplate))
             errorOccured = True
         else:
             existingTemplate = os.path.abspath(existingTemplate)
     elif skipRegistration:
         # we don't have everything, abort!
         info("Error: To skip the registration, --transforms and --existingTemplate are required!")
-        info("Error: Location of --transforms is invalid: "+str(transformsDir))
-        info("Error: Location of --existingTemplate is invalid: "+str(existingTemplate))
+        info("Error: Location of --transforms is invalid: " + str(transformsDir))
+        info("Error: Location of --existingTemplate is invalid: " + str(existingTemplate))
         errorOccured = True
         
     # check if either dynamic or fixed registration is configured
@@ -459,7 +516,7 @@ def main(argv):
         if not os.path.isfile(template):
             # existingTemplate invalid 
             info("Error: Could not find the template!")
-            info("Error: Location of --template is invalid: "+str(template))
+            info("Error: Location of --template is invalid: " + str(template))
             errorOccured = True       
         else:
             template = os.path.abspath(template)
@@ -470,7 +527,7 @@ def main(argv):
         errorOccured = True
         
     # check if at least one label was specified
-    if labels and type(labels).__name__=='list' and len(labels) >= 1:
+    if labels and type(labels).__name__ == 'list' and len(labels) >= 1:
         # convert to integer list
         realLabels = []
         
@@ -534,7 +591,7 @@ def main(argv):
     # check if we have everything if cluster mode is activated
     if cluster and not schedulerCommand:
         info("Error: In cluster mode, a schedulerCommand is required.")
-        info("Error: Value of --schedulerCommand: "+str(schedulerCommand))
+        info("Error: Value of --schedulerCommand: " + str(schedulerCommand))
             
     if errorOccured:
         info("")
@@ -542,106 +599,99 @@ def main(argv):
         info("")
         sys.exit(2)
         
-    #no error occured, so give some feedback        
-    if debug:
-        info("Debug Mode is enabled!")
-        
-    if dryrun:
-        info("Dry-Run is activated: Output executable commands instead of running the registration or resampling.")
 
     # lets create the --evalpython command!!
-    evalpythonCommand = "from Slicer import slicer;import sys;import os;"
-    evalpythonCommand += "pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'"
-    evalpythonCommand += "/../Modules/AtlasCreator');"
-    evalpythonCommand += "sys.path.append(pathToAtlasCreator);"
-    evalpythonCommand += "from AtlasCreatorGUI import *;"
-    evalpythonCommand += "gui = AtlasCreatorGUI();"
+    evalpythonCommand = "from Slicer import slicer;"
+
+    # we create a new vtkMRMLAtlasCreatorNode and configure it..
+    evalpythonCommand += "n=slicer.vtkMRMLAtlasCreatorNode();"
 
     if debug or dryrun:
-        evalpythonCommand += "gui.GetHelper().EnableDebugMode();"
+        evalpythonCommand += "n.SetDebugMode(1);"
 
-    evalpythonCommand += "logic = gui.GetMyLogic();"
-    
     if dryrun:
-        evalpythonCommand += "logic.EnableDryrunMode();"
+        evalpythonCommand += "n.SetDryrunMode(1);"
 
+    # set special settings if clusterMode or skipRegistrationMode is requested
     if cluster:
         # cluster Mode
-        evalpythonCommand += "configuration = AtlasCreatorGridConfiguration();"
-        evalpythonCommand += "configuration.SetSchedulerCommand('"+schedulerCommand+"');"
+        evalpythonCommand += "n.SetUseCluster(1);"
+        evalpythonCommand += "n.SetSchedulerCommand('" + schedulerCommand + "');"
     elif skipRegistration:
         # skipRegistration Mode
-        evalpythonCommand += "configuration = AtlasCreatorSkipRegistrationConfiguration();"
-        evalpythonCommand += "configuration.SetTransformDirectory('"+transformsDir+"');"
-        evalpythonCommand += "configuration.SetExistingTemplate('"+existingTemplate+"');"
-
-    else:
-        # normal Mode
-        evalpythonCommand += "configuration = AtlasCreatorConfiguration();"
+        evalpythonCommand += "n.SetSkipRegistration(1);"
+        evalpythonCommand += "n.SetTransformsDirectory('" + transformsDir + "');"
+        evalpythonCommand += "n.SetExistingTemplate('" + existingTemplate + "');"
         
     # now the configuration options which are valid for all
     if imagesDir:
-        evalpythonCommand += "configuration.SetOriginalImagesFilePathList(gui.GetHelper().ConvertDirectoryToList('"+imagesDir+"'));"
+        evalpythonCommand += "n.SetOriginalImagesFilePathList('" + ConvertDirectoryToString(imagesDir) + "');"
     
     if segmentationsDir:
-        evalpythonCommand += "configuration.SetSegmentationsFilePathList(gui.GetHelper().ConvertDirectoryToList('"+segmentationsDir+"'));"
+        evalpythonCommand += "n.SetSegmentationsFilePathList('" + ConvertDirectoryToString(segmentationsDir) + "');"
     
     if outputDir:
-        evalpythonCommand += "configuration.SetOutputDirectory('"+outputDir+"');"
+        evalpythonCommand += "n.SetOutputDirectory('" + outputDir + "');"
     
     if useCMTK:
-        evalpythonCommand += "configuration.SetToolkit('CMTK');"
+        evalpythonCommand += "n.SetToolkit('CMTK');"
+    else:
+        evalpythonCommand += "n.SetToolkit('BRAINSFit');"
     
     if fixed:
-        evalpythonCommand += "configuration.SetTemplateType('fixed');"
-        evalpythonCommand += "configuration.SetFixedTemplateDefaultCaseFilePath('"+template+"');"
+        evalpythonCommand += "n.SetTemplateType('fixed');"
+        evalpythonCommand += "n.SetFixedTemplateDefaultCaseFilePath('" + template + "');"
     else:
-        evalpythonCommand += "configuration.SetTemplateType('dynamic');"
-        evalpythonCommand += "configuration.SetDynamicTemplateIterations("+str(meanIterations)+");"
+        evalpythonCommand += "n.SetTemplateType('dynamic');"
+        evalpythonCommand += "n.SetDynamicTemplateIterations(" + str(meanIterations) + ");"
     
-    evalpythonCommand += "configuration.SetLabelsList("+str(labels)+");"
+    evalpythonCommand += "n.SetLabelsList('" + ConvertListToString(labels) + "');"
             
     if nonRigid:
-        evalpythonCommand += "configuration.SetRegistrationType('Non-Rigid');"
+        evalpythonCommand += "n.SetRegistrationType('Non-Rigid');"
     else:
-        evalpythonCommand += "configuration.SetRegistrationType('Affine');"
+        evalpythonCommand += "n.SetRegistrationType('Affine');"
             
     if writeTransforms:
-        evalpythonCommand += "configuration.SetSaveTransforms(1);"
+        evalpythonCommand += "n.SetSaveTransforms(1);"
     else:
-        evalpythonCommand += "configuration.SetSaveTransforms(0);"
+        evalpythonCommand += "n.SetSaveTransforms(0);"
 
     if keepAligned:
-        evalpythonCommand += "configuration.SetDeleteAlignedImages(0);"
-        evalpythonCommand += "configuration.SetDeleteAlignedSegmentations(0);"
+        evalpythonCommand += "n.SetDeleteAlignedImages(0);"
+        evalpythonCommand += "n.SetDeleteAlignedSegmentations(0);"
     else:
-        evalpythonCommand += "configuration.SetDeleteAlignedImages(1);"
-        evalpythonCommand += "configuration.SetDeleteAlignedSegmentations(1);"
+        evalpythonCommand += "n.SetDeleteAlignedImages(1);"
+        evalpythonCommand += "n.SetDeleteAlignedSegmentations(1);"
         
     if normalize:
-        evalpythonCommand += "configuration.SetNormalizeAtlases(1);"
-        evalpythonCommand += "configuration.SetNormalizeTo("+str(normalizeTo)+");";
+        evalpythonCommand += "n.SetNormalizeAtlases(1);"
+        evalpythonCommand += "n.SetNormalizeTo(" + str(normalizeTo) + ");";
     else:
-        evalpythonCommand += "configuration.SetNormalizeAtlases(0);"
-        evalpythonCommand += "configuration.SetNormalizeTo(-1);"
+        evalpythonCommand += "n.SetNormalizeAtlases(0);"
+        evalpythonCommand += "n.SetNormalizeTo(-1);"
 
     if pca:
-        evalpythonCommand += "configuration.SetPCAAnalysis(1);"
+        evalpythonCommand += "n.SetPCAAnalysis(1);"
     else:
-        evalpythonCommand += "configuration.SetPCAAnalysis(0);"
+        evalpythonCommand += "n.SetPCAAnalysis(0);"
 
-    evalpythonCommand += "configuration.SetOutputCast('"+outputCast+"');"
+    evalpythonCommand += "n.SetOutputCast('" + outputCast + "');"
     
-    # add the start command
-    evalpythonCommand += "logic.Start(configuration);"
+    # add the new node to the MRML scene
+    evalpythonCommand += "slicer.MRMLScene.AddNode(n);"
+    evalpythonCommand += "n.Launch();"
     
-    # cleanup
-    evalpythonCommand += "logic = None; gui = None;"
         
     command = slicerLauncherFilePath + ' --no_splash --evalpython "' + evalpythonCommand + '"'
 
-    os.system(command)
+    # now run the command
+    try:
+        r = call(command,shell=True)
+    except OSError, e:
+        self.info("Execution failed "+str(e))
 
+    
     
 '''=========================================================================================='''
 if __name__ == "__main__":

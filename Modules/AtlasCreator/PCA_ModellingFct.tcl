@@ -171,7 +171,7 @@ proc SeperateAndSaveCombinedPCAVolumes {vtkImage Extent BoundingBox FileDir File
 
 # -----------------------------------------
 # Generate PCA model from shape data
-proc GeneratePCAModel { PCAPath  MaxNumberOfEigenVectors StructureList  FileExtension PCACombineStructures } {
+proc GeneratePCAModel { PCAPath MaxNumberOfEigenVectors StructureList FileExtension PCACombineStructures } {
   global tcl_platform  tcl_precision fid
   if {[catch {set CaseList [exec ls -1 $MathImage(PCAPath) | grep case]}]  } {
     PrintError "Error: No cases as input for GeneratePCAModel in directory $MathImage(PCAPath)"

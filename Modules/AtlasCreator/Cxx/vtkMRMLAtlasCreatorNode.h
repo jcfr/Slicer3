@@ -116,6 +116,10 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkGetMacro(NormalizeAtlases,int);
   vtkSetMacro(NormalizeAtlases,int);
 
+  // Description: Set NormalizeTo Value
+  vtkGetMacro(NormalizeTo,int);
+  vtkSetMacro(NormalizeTo,int);
+
 
   // Description: The Output Cast
   //   "Char"
@@ -130,6 +134,11 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   //   "Unsigned Short"
   vtkGetStringMacro (OutputCast);
   vtkSetStringMacro (OutputCast);
+
+
+  // Description: 1: Use PCA Analysis 0: Don't use PCA Analysis
+  vtkGetMacro(PCAAnalysis,int);
+  vtkSetMacro(PCAAnalysis,int);
 
 
   // Description: 1: Use Cluster 0: Don't use cluster
@@ -153,6 +162,16 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkGetStringMacro (TransformsDirectory);
   vtkSetStringMacro (TransformsDirectory);
 
+
+  // Description: 1: Use Debug Mode 0: Don't use Debug Mode
+  vtkGetMacro(DebugMode,int);
+  vtkSetMacro(DebugMode,int);
+
+  // Description: 1: Use Dryrun Mode 0: Don't use Dryrun Mode
+  vtkGetMacro(DryrunMode,int);
+  vtkSetMacro(DryrunMode,int);
+
+
 protected:
 
   char *OriginalImagesFilePathList;
@@ -173,8 +192,11 @@ protected:
   int DeleteAlignedImages;
   int DeleteAlignedSegmentations;
   int NormalizeAtlases;
+  int NormalizeTo;
 
   char *OutputCast;
+
+  int PCAAnalysis;
 
   int UseCluster;
   char *SchedulerCommand;
@@ -182,6 +204,9 @@ protected:
   int SkipRegistration;
   char *ExistingTemplate;
   char *TransformsDirectory;
+
+  int DebugMode;
+  int DryrunMode;
 
 
 private:
