@@ -1158,26 +1158,48 @@ namespace eval EMSegmenterPreProcessingTcl {
     }
 
 
-    # Description: TODO
     # Input:  target, directories(manual segmentation + original volumes)
-    # Output: new atlas(template + probability atlas for each label)
-    proc AtlasCreator { directories target } {
+    # Output: new atlas(template + probability atlas for each label) in outputDir
+    proc AtlasCreator { _template _segmentationsDir _imagesDir _outputDir target } {
+
+        set debug 0
+        set dryrun 0
+        set cluster 0
+        set schedulerCommand ""
+        set skipRegistration 0
+        set transformsDir ""
+        set existingTemplate ""
+        set useCMTK 0
+        set fixed 1
+        set nonRigid 0
+        set labels "3 4 5"
+
+        set writeTransforms 0
+        set keepAligned 0
+        set normalize 0
+        set normalizeTo 0
+        set pca 0
+        set outputCast short
+
 
         #variable SCENE
         set SCENE [$::slicer3::Application GetMRMLScene]
 
+
         # we create a new vtkMRMLAtlasCreatorNode and configure it..
         set node [vtkMRMLAtlasCreatorNode New]
-        $node SetToolkit CMTK
+
+
+        set outputDir        $_outputDir
+        set template         $_template
+        set segmentationsDir $_segmentationsDir
+        set imagesDir        $_imagesDir
+
+
+        #for more options look into Modules/AtlasCreator/Cxx/vtkMRMLAtlasCreatorNode.h
         $node SetTemplateType fixed
         $node SetRegistrationType Affine
         $node SetOutputCast short
-        #        $node SetDirectory
-        #for more options look into Modules/AtlasCreator/Cxx/vtkMRMLAtlasCreatorNode.h
-
-        set outputDir        "/projects/sandbox/Slicer3/trunk/Slicer3/Modules/AtlasCreator/TestData/originals/"
-        set template         "/projects/sandbox/Slicer3/trunk/Slicer3/Modules/AtlasCreator/TestData/originals/case62.nrrd"
-        set segmentationsDir "/projects/sandbox/Slicer3/trunk/Slicer3/Modules/AtlasCreator/TestData/segmentations/"
 
         if { $debug || $dryrun } {
             $node SetDebugMode 1
@@ -1192,8 +1214,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # cluster Mode
             $node SetUseCluster 1
             $node SetSchedulerCommand $schedulerCommand
-        }
-        elif { $skipRegistration } {
+        } elseif { $skipRegistration } {
             # skipRegistration Mode
             $node SetSkipRegistration 1
             $node SetTransformsDirectory  $transformsDir
@@ -1201,30 +1222,28 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # now the configuration options which are valid for all
-        if { $imagesDir } {
-            $node SetOriginalImagesFilePathList $imagesDir
+        if { $imagesDir != "" } {
+            $node SetOriginalImagesFilePathList [glob -directory $imagesDir *]
         }
 
-        if { $segmentationsDir } {
-            $node SetSegmentationsFilePathList $segmentationsDir
+        if { $segmentationsDir != "" } {
+            $node SetSegmentationsFilePathList [glob -directory $segmentationsDir *]
         }
 
-        if { $outputDir } {
+        if { $outputDir != "" } {
             $node SetOutputDirectory $outputDir
         }
 
         if { $useCMTK } {
             $node SetToolkit "CMTK"
-        }
-        else {
+        } else {
             $node SetToolkit "BRAINSFit"
         }
 
         if { $fixed } {
             $node SetTemplateType "fixed"
             $node SetFixedTemplateDefaultCaseFilePath $template
-        }
-        else {
+        } else {
             $node SetTemplateType "dynamic"
             $node SetDynamicTemplateIterations $meanIterations
         }
@@ -1239,16 +1258,14 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         if { $writeTransforms } {
             $node SetSaveTransforms 1
-        }
-        else {
+        } else {
             $node SetSaveTransforms 0
         }
 
         if { $keepAligned } {
             $node SetDeleteAlignedImages 0
             $node SetDeleteAlignedSegmentations 0
-        }
-        else {
+        } else {
             $node SetDeleteAlignedImages 1
             $node SetDeleteAlignedSegmentations 1
         }
@@ -1263,8 +1280,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         if { $pca } {
             $node SetPCAAnalysis 1
-        }
-        else {
+        } else {
             $node SetPCAAnalysis 0
         }
 
@@ -1272,19 +1288,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # add the new node to the MRML scene
         $SCENE AddNode $node
-        $node Print
         $node Launch
         #the terminal will contain stdout output
-
-
-        #python test
-        if {0} {
-            from Slicer import slicer
-            a = slicer.vtkMRMLAtlasCreatorNode()
-            help(a)
-            slicer.MRMLScene.AddNode(a)
-            a.Launch()
-        }
+        $node Print
+        $node Delete
     }
 
 
