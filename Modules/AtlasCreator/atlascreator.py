@@ -430,33 +430,7 @@ def main(argv):
     elif segmentationsDir:
         segmentationsDir = os.path.abspath(segmentationsDir) + os.sep
     
-    if outputDir and os.path.isdir(outputDir):
-        # outputDir already exists
-        # we create a new unique one
-        outputDir = os.path.abspath(outputDir)
-        info("Warning: The output directory (" + str(outputDir) + ") already exists..")
-        
-        # the directory already exists,
-        # we want to add an index to the new one
-        count = 2
-        newOutputDir = os.path.abspath(str(outputDir) + str(count))
-        
-        while (os.path.isdir(newOutputDir)):
-            count = count + 1
-            newOutputDir = os.path.abspath(str(outputDir) + str(count))
-        
-        info("Warning: Using new output directory instead: " + str(newOutputDir))
-        os.makedirs(newOutputDir)
-        
-        outputDir = newOutputDir + os.sep
-        
-    elif outputDir and not os.path.isfile(outputDir):
-        # outputDir did not exist and is not a file
-        # create it
-        outputDir = os.path.abspath(outputDir) + os.sep
-        os.makedirs(outputDir)
-        info("Created output directory: " + str(outputDir))
-    else:
+    if not outputDir:
         info("Error: Location of --output is invalid or not a directory: " + str(outputDir))
         errorOccured = True   
         

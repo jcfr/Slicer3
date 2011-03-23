@@ -165,26 +165,58 @@ class AtlasCreatorLogic(object):
         self.Helper().info("Configuration for Atlas Creator:\n" + str(node))
         
         # create the output directories     
-        if not os.path.isdir(node.GetOutputDirectory()):
-            os.makedirs(node.GetOutputDirectory())
+        outputDir = node.GetOutputDirectory()
+            
+        if outputDir and os.path.isdir(outputDir):
+            # outputDir already exists
+            # we create a new unique one
+            outputDir = os.path.abspath(outputDir)
+            self.Helper().info("Warning: The output directory (" + str(outputDir) + ") already exists..")
+            
+            # the directory already exists,
+            # we want to add an index to the new one
+            count = 2
+            newOutputDir = os.path.abspath(str(outputDir) + str(count))
+            
+            while (os.path.isdir(newOutputDir)):
+                count = count + 1
+                newOutputDir = os.path.abspath(str(outputDir) + str(count))
+            
+            self.Helper().info("Warning: Using new output directory instead: " + str(newOutputDir))
+            os.makedirs(newOutputDir)
+            
+            outputDir = newOutputDir + os.sep
+            
+        elif outputDir and not os.path.isfile(outputDir):
+            # outputDir did not exist and is not a file
+            # create it
+            outputDir = os.path.abspath(outputDir) + os.sep
+            os.makedirs(outputDir)
+            self.Helper().info("Created output directory: " + str(outputDir))
+            
+        else:
+            self.Helper().info("ERROR: No valid output directory configured!")
+            self.Helper().info("Aborting now!")
+            return False
+
         
-        transformDirectory = node.GetOutputDirectory() + "transforms" + os.sep
+        transformDirectory = outputDir + "transforms" + os.sep
         os.makedirs(transformDirectory)
-        registeredDirectory = node.GetOutputDirectory() + "registered" + os.sep
+        registeredDirectory = outputDir + "registered" + os.sep
         os.makedirs(registeredDirectory)
-        resampledDirectory = node.GetOutputDirectory() + "resampled" + os.sep
+        resampledDirectory = outputDir + "resampled" + os.sep
         os.makedirs(resampledDirectory)
-        scriptsRegistrationDirectory = node.GetOutputDirectory() + "scriptsRegistration" + os.sep
+        scriptsRegistrationDirectory = outputDir + "scriptsRegistration" + os.sep
         os.makedirs(scriptsRegistrationDirectory)
-        notifyRegistrationDirectory = node.GetOutputDirectory() + "notifyRegistration" + os.sep
+        notifyRegistrationDirectory = outputDir + "notifyRegistration" + os.sep
         os.makedirs(notifyRegistrationDirectory)
-        scriptsResamplingDirectory = node.GetOutputDirectory() + "scriptsResampling" + os.sep
+        scriptsResamplingDirectory = outputDir + "scriptsResampling" + os.sep
         os.makedirs(scriptsResamplingDirectory)
-        notifyResamplingDirectory = node.GetOutputDirectory() + "notifyResampling" + os.sep
+        notifyResamplingDirectory = outputDir + "notifyResampling" + os.sep
         os.makedirs(notifyResamplingDirectory)        
-        scriptsCombineToAtlasDirectory = node.GetOutputDirectory() + "scriptsCombineToAtlas" + os.sep
+        scriptsCombineToAtlasDirectory = outputDir + "scriptsCombineToAtlas" + os.sep
         os.makedirs(scriptsCombineToAtlasDirectory)
-        notifyCombineToAtlasDirectory = node.GetOutputDirectory() + "notifyCombineToAtlas" + os.sep
+        notifyCombineToAtlasDirectory = outputDir + "notifyCombineToAtlas" + os.sep
         os.makedirs(notifyCombineToAtlasDirectory) 
              
         # executable configuration
@@ -214,7 +246,7 @@ class AtlasCreatorLogic(object):
             self.Helper().info("Entering Registration Stage..")
                     
             # create a temporary meanImage which might get used
-            meanImageFilePath = tempfile.mkstemp(".nrrd", "acTmpMeanImage", node.GetOutputDirectory())[1]                   
+            meanImageFilePath = tempfile.mkstemp(".nrrd", "acTmpMeanImage", outputDir)[1]                   
                     
             #
             # FIXED REGISTRATION
@@ -301,7 +333,7 @@ class AtlasCreatorLogic(object):
             # use the transforms (if they exist) and the template to resample
             # at this point, the defaultCase is either the meanImage or the fixed defaultCase
             v = self.Helper().LoadVolume(defaultCase)
-            pathToTemplate = node.GetOutputDirectory() + "template.nrrd"
+            pathToTemplate = outputDir + "template.nrrd"
             self.Helper().info("Saving template to " + str(pathToTemplate))
             self.Helper().SaveVolume(str(pathToTemplate), v)
             # now remove the node from the mrmlscene
@@ -357,7 +389,7 @@ class AtlasCreatorLogic(object):
             
             self.PerformPCAAnalysis(labelsList,
                                     resampledSegmentationsFilePathList,
-                                    node.GetOutputDirectory())
+                                    outputDir)
             
         else:
             #
@@ -372,7 +404,7 @@ class AtlasCreatorLogic(object):
                                 labelsList,
                                 node.GetOutputCast(),
                                 node.GetNormalizeTo(),
-                                node.GetOutputDirectory(),
+                                outputDir,
                                 scriptsCombineToAtlasDirectory,
                                 notifyCombineToAtlasDirectory,
                                 sleepValue)
