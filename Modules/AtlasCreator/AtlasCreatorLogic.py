@@ -286,31 +286,39 @@ class AtlasCreatorLogic(object):
                     
                     self.Helper().info("Starting iteration " + str(i + 1) + "...")
                     
-                    # create directories for the current registration iteration
+                    # create directories for the current registration iteration as subdirs of the registrationDir
                     iterationString = "iteration" + str(i + 1)
                     uniqueRegisteredDirectory = registeredDirectory + iterationString + os.sep
-                    os.mkdir(uniqueRegisteredDirectory)
+                    os.makedirs(uniqueRegisteredDirectory)
                     uniqueScriptsDirectory = scriptsRegistrationDirectory + iterationString + os.sep
-                    os.mkdir(uniqueScriptsDirectory)
+                    os.makedirs(uniqueScriptsDirectory)
                     uniqueNotifyDirectory = notifyRegistrationDirectory + iterationString + os.sep
-                    os.mkdir(uniqueNotifyDirectory)
+                    os.makedirs(uniqueNotifyDirectory)
+                    
+                    # create directories for meanImageComputation as subdirs of the registrationDir
+                    meanScriptsDirectory = uniqueScriptsDirectory + "meanTemplate" + os.sep
+                    os.makedirs(meanScriptsDirectory)
+                    meanNotifyDirectory = uniqueNotifyDirectory + "meanTemplate" + os.sep
+                    os.makedirs(meanNotifyDirectory)
                     
                     # we generate the current meanImage
-                    meanVolumeNode = slicer.vtkMRMLScalarVolumeNode()
                     if not self.__dryRun:
-                        meanVolumeNode = self.GetMeanImage(alignedImages)
+                        self.ComputeMeanImage(schedulerCommand,
+                                              alignedImages, 
+                                              meanImageFilePath,
+                                              meanScriptsDirectory,
+                                              meanNotifyDirectory,
+                                              sleepValue)
+                        
                         if node.GetDeleteAlignedImages():
-                            if alignedImages != originalImagesFilePathList():
+                            if alignedImages != originalImagesFilePathList:
                                 # do not delete the original images
                                 self.Helper().DeleteFilesAndDirectory(alignedImages)
-                            
-                    if not self.__dryRun:
-                        self.Helper().SaveVolume(meanImageFilePath, meanVolumeNode)
                     
                     # we register the original images against the meanImage
                     # we then set the alignedImages and start over..
                     alignedImages = self.Register(schedulerCommand,
-                                                  originalImagesFilePathList(),
+                                                  originalImagesFilePathList,
                                                   meanImageFilePath,
                                                   transformDirectory,
                                                   uniqueRegisteredDirectory,
@@ -325,6 +333,23 @@ class AtlasCreatorLogic(object):
                 defaultCase = meanImageFilePath
                 
                 self.Helper().info("End of Dynamic registration..")
+            
+            # for both registration modes:
+            
+            # now use the alignedImages to return as output as well the normalized intensity maps of aligned cases
+            meanScriptsDirectory = registeredDirectory + "meanTemplateScripts" + os.sep
+            os.makedirs(meanScriptsDirectory)
+            meanNotifyDirectory = registeredDirectory + "meanTemplateNotify" + os.sep                
+            os.makedirs(meanNotifyDirectory)
+            
+            normalizedIntensityMapFilePath = outputDir + "normalizedIntensityMapOfAligned.nrrd"
+            
+            self.ComputeMeanImage(schedulerCommand,
+                                  alignedImages, 
+                                  normalizedIntensityMapFilePath,
+                                  meanScriptsDirectory,
+                                  meanNotifyDirectory,
+                                  sleepValue)
             
             # now wipe the temporary registered content, if selected
             if node.GetDeleteAlignedImages():
@@ -437,54 +462,122 @@ class AtlasCreatorLogic(object):
 
 
     '''=========================================================================================='''
-    def GetMeanImage(self, filePathsList):
+    def ComputeMeanImage(self, schedulerCommand, filePathsList, outputFilePath, outputScriptsDirectory, outputNotifyDirectory, sleepValue=5):
         '''
-            Get the mean image of a set of images and create a vtkMRMLScalarVolumeNode
-            
+            Get the mean image of a set of images and save it
+
+            schedulerCommand
+                the schedulerCommand if used else ""            
             filePathsList
                 list of file paths to the images
+            outputFilePath
+                the filePath where the meanImage gets stored
+            outputScriptsDirectory
+                directory to use for generated scripts
+            outputNotifyDirectory
+                directory to use for notification files
+            sleepValue
+                seconds to wait between each check on completed jobs                           
                 
             Returns
-                vtkMRMLScalarVolumeNode with imageData after the mean image was computed
+                TRUE or FALSE depending on Success
         '''
-        newMeanImage = slicer.vtkImageData()
-        
-        outputV = slicer.vtkMRMLScalarVolumeNode()
-        
-        firstRun = 1
-        
-        # first, add up all images
-        for filePath in filePathsList:
-            
-            # we load the image from filePath as a MRML node
-            v = self.Helper().LoadVolume(filePath)
-            
-            image = slicer.vtkImageData()
-            # to prevent overflows,
-            # divide the images individually before adding them up
-            # this automatically casts the image to double
-            image.DeepCopy(self.Helper().DivideImage(v.GetImageData(), len(filePathsList)))
-            
-            if firstRun:
-                newMeanImage.DeepCopy(image)
-                firstRun = 0
-            else:
-                # now add'em all up
-                newMeanImage.DeepCopy(self.Helper().AddImages(image, newMeanImage))
-                
-            # now copy the orientation of the node to our output node
-            outputV.CopyOrientation(v)    
-            
-            # now we remove the mrml node
-            slicer.MRMLScene.RemoveNode(v)
-            
-        
-        # now save the mean image data to the node
-        outputV.SetAndObserveImageData(newMeanImage)
-                
-        # now return the mean image volume node
-        return outputV
+        # sanity checks
+        if len(filePathsList) == 0:
+            self.Helper().info("Empty filePathsList for ComputeMeanImage() command. Aborting..")
+            return False
     
+        if not outputFilePath:
+            self.Helper().info("Empty outputFilePath for ComputeMeanImage() command. Aborting..")
+            return False
+    
+        if not outputScriptsDirectory:
+            self.Helper().info("Empty outputScriptsDirectory for ComputeMeanImage() command. Aborting..")
+            return None   
+
+        if not outputNotifyDirectory:
+            self.Helper().info("Empty outputNotifyDirectory for ComputeMeanImage() command. Aborting..")
+            return None   
+        
+        
+        # get the launch command for Slicer3
+        launchCommandPrefix = self.Helper().GetSlicerLaunchPrefix(False, True)        
+        
+        uniqueID = 1
+    
+        command = ""
+        
+        # add some args to the Slicer launcher call
+        command += str(launchCommandPrefix) + " --launch " + str(slicer.Application.GetBinDir()) +os.sep+ "ACMeanImage";
+        
+        # now the args
+        command += " \""
+        
+        for file in filePathsList:
+            command += str(file) + " "
+        
+        command += "\""
+        command += " " + str(outputFilePath)
+
+        self.Helper().debug("ComputeMeanImage Command: " + str(command))
+
+        # create notification ID
+        notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
+        
+        # now generate a script containing the commands and the notify line
+        script = self.Helper().CreateScript(command, notify)
+        
+        scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
+        
+        with open(scriptFilePath, 'w') as f:
+            f.write(script)
+        
+        # set executable permissions
+        os.chmod(scriptFilePath, 0700)
+        
+        self.Helper().debug("Executing generated ComputeMeanImage Script: " + scriptFilePath)
+        
+        if self.__dryRun:
+            self.Helper().info("DRYRUN - skipping execution..") 
+        else:
+            self.Helper().Execute(schedulerCommand + " " + scriptFilePath)
+
+        if self.__dryRun:
+            return True     
+                
+        # at this point:
+        # either the computation was completed if the os.system call did not send it to the background
+        # or it still runs in the background
+        # latter is possible, if a cluster scheduler was specified
+        # now, we will wait until all output exists
+        
+        allOutputsExist = False
+        
+        while not allOutputsExist:
+            # not all outputs exist yet
+            # get number of existing files
+            self.Helper().info("Waiting for ComputeMeanImage to complete..")
+            
+            # wait some secs and then check again
+            time.sleep(int(sleepValue))
+            
+            # we assume everything exists
+            allOutputsExist = True
+
+            # but now we really check if it is so            
+                
+            file = outputNotifyDirectory + str(uniqueID) + ".ac"
+            
+            if not os.path.isfile(file):
+                self.Helper().debug("ComputeMeanImage Job not completed!")
+                # if only one file does not exist,
+                # we know we have to wait longer
+                allOutputsExist = False
+        
+        self.Helper().debug("All ComputeMeanImage output exists!")
+
+        return True
+        
 
     
     '''=========================================================================================='''
@@ -818,9 +911,9 @@ class AtlasCreatorLogic(object):
                 
         # at this point:
         # either the resampling was completed if the os.system call did not send it to the background
-        # or the registration still runs in the background
+        # or it still runs in the background
         # latter is possible, if a cluster scheduler was specified
-        # now, we will wait until all output images exist
+        # now, we will wait until all output exists
         
         allOutputsExist = False
         
@@ -850,65 +943,6 @@ class AtlasCreatorLogic(object):
                     break
         
         self.Helper().debug("All Resampling outputs exist!")
-
-        return True
-
-
-    
-    '''=========================================================================================='''
-    def SaveDeformationFields(self, launchCommandPrefix, filePathsList, transformDirectory, outputDeformationFieldsDirectory):
-        '''
-            Save Deformation Fields for a list of files using existing transforms
-            This only works if the transforms are BSpline based
-            
-            launchCommandPrefix
-                prefix for the actual registration command
-            filePathsList
-                list of existing filepaths to segmentations
-            transformDirectory
-                directory to existing transformations
-                the transformation has to be named after the basename of the filepaths with a .mat extension 
-            outputDeformationFieldsDirectory
-                directory to save the Deformation Fields
-                
-            Returns
-                TRUE or FALSE depending on success
-        '''
-        
-        # sanity checks
-        if len(filePathsList) == 0:
-            self.Helper().info("Empty filePathsList for SaveDeformationFields() command. Aborting..")
-            return False
-
-        if not transformDirectory:
-            self.Helper().info("Empty transformDirectory for SaveDeformationFields() command. Aborting..")
-            return False
-        
-        if not outputDeformationFieldsDirectory:
-            self.Helper().info("Empty outputDeformationFieldsDirectory for SaveDeformationFields() command. Aborting..")
-            return False
-
-        # loop through filePathsList, get deformation fields and save it
-        for movingImageFilePath in filePathsList:
-
-            # generate file path to existing transformation
-            # by getting the filename of the case and appending it to the transformDirectory
-            transformFilePath = transformDirectory + str(os.path.basename(movingImageFilePath)) + ".mat"
-            
-            # generate file path to output deformation field
-            # by getting the filename of the case and appending it to the outputDeformationFieldsDirectory
-            outputDeformationFieldFilePath = outputDeformationFieldsDirectory + str(os.path.basename(movingImageFilePath)) + ".nrrd"
-
-            command = str(launchCommandPrefix) + self.Helper().GetSaveDeformationFieldCommand(movingImageFilePath,
-                                                                                              transformFilePath,
-                                                                                              outputDeformationFieldFilePath)
-
-            self.Helper().debug("SaveDeformationFields command: " + str(command))
-            
-            if self.__dryRun:
-                self.Helper().info("DRYRUN - skipping execution..")
-            else:
-                self.Helper().Execute(command)
 
         return True
     
@@ -1033,9 +1067,9 @@ class AtlasCreatorLogic(object):
                 
         # at this point:
         # either the combination was completed if the os.system call did not send it to the background
-        # or the registration still runs in the background
+        # or it still runs in the background
         # latter is possible, if a cluster scheduler was specified
-        # now, we will wait until all output images exist
+        # now, we will wait until all output exists
         
         allOutputsExist = False
         
@@ -1099,7 +1133,7 @@ class AtlasCreatorLogic(object):
         # create output dir for PCA distance maps
         # f.e. /tmp/acout/pcaDistanceMaps/
         pcaOutputDirectory = outputDirectory + "PCA" + os.sep
-        os.mkdir(pcaOutputDirectory)
+        os.makedirs(pcaOutputDirectory)
         
         count = 0
         
@@ -1114,7 +1148,7 @@ class AtlasCreatorLogic(object):
             # create directory structure for this case
             # f.e. /tmp/acout/pcaDistanceMaps/case01/
             casePcaDistanceMapDirectory = os.path.join(pcaOutputDirectory,caseName) + os.sep
-            os.mkdir(casePcaDistanceMapDirectory)
+            os.makedirs(casePcaDistanceMapDirectory)
         
             for label in labelsList:
                 
