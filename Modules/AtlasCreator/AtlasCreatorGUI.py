@@ -389,10 +389,14 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         
         if self._associatedMRMLNode:
-            if callerID == self._associatedMRMLNode.GetID() and event == vtkMRMLAtlasCreatorNode_LaunchComputationEvent:
-                # the observed node was launched!
-                self.GetMyLogic().Start(self._associatedMRMLNode)
-                
+            # check if the callerID is still a valid Node in the scene
+            if slicer.MRMLScene.GetNodeByID(callerID):
+                # check if the callerID equals the associated MRML Node but only if the event is the launch event
+                # we do not want to react to Modify events etc.
+                if event == vtkMRMLAtlasCreatorNode_LaunchComputationEvent and callerID == self._associatedMRMLNode.GetID():
+                    # the observed node was launched!
+                    self.GetMyLogic().Start(self._associatedMRMLNode)
+                    
 
         # observe MRMLScene events
         if callerID == "MRMLScene" and event == vtkMRMLScene_NodeAddedEvent and callDataID:
