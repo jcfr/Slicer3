@@ -171,6 +171,11 @@ public:
   /// modify all slice logic to synch all Compare Slice viewers
   virtual int UpdateCompareView(double value);
 
+  /// 
+  /// if viewers are linked but not in CompareView layout mode,
+  /// modify RGY slice logics to synch
+  virtual int UpdateLinkedView(double value);
+
   //BTX
   enum 
   {

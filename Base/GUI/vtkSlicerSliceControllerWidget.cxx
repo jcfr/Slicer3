@@ -3010,12 +3010,18 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller,
     // modify all slice logic to synch all Compare Slice viewers
     // (don't sync on ScaleValueChangingEvent for performance reasons,
     // wait until the ScaleValueChangedEvent to propagate to the other viewers)
-    if ( link && sgui0 && (event != vtkKWScale::ScaleValueChangingEvent) &&
-         ((layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareView) ||
-          (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareWidescreenView) || 
-          (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView)) )
+    if ( link && sgui0 && event != vtkKWScale::ScaleValueChangingEvent) 
       {
-      modified |= this->UpdateCompareView( offset );
+      if (((layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareView) ||
+           (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareWidescreenView) || 
+           (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView)) )
+        {
+        modified |= this->UpdateCompareView( offset );
+        }
+      else
+        {
+        modified |= this->UpdateLinkedView( offset );
+        }
       }
     else
       {
@@ -3052,12 +3058,18 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller,
       {
       // if slice viewers are linked in CompareView layout mode,
       // modify all slice logic to synch all Compare Slice viewers
-      if ( link && sgui0 &&
-         ((layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareView) ||
-          (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareWidescreenView) || 
-          (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView)) )
+      if ( link && sgui0 )
         {
-        modified |= this->UpdateCompareView( newValue );
+        if (((layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareView) ||
+             (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareWidescreenView) || 
+             (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutSideBySideLightboxView)) )
+          {
+          modified |= this->UpdateCompareView( newValue );
+          }
+        else
+          {
+          modified |= this->UpdateLinkedView( newValue );
+          }
         }
       else
         {
@@ -3127,6 +3139,56 @@ int vtkSlicerSliceControllerWidget::UpdateCompareView ( double newValue )
       
       if ( strncmp(layoutname, "Compare", 7) != 0
            && strcmp(layoutname, "Red") != 0 )
+        continue;
+      
+      if ( sgui->GetLogic() &&  sgui->GetSliceNode() &&
+           !strcmp(this->SliceNode->GetOrientationString(), sgui->GetSliceNode()->GetOrientationString()))
+        {
+        double oldValue = sgui->GetLogic()->GetSliceOffset();
+        if (fabs(oldValue - newValue) > 1.0e-6)
+          {
+          // turn off linking while modifying the node
+          int link 
+            = sgui->GetLogic()->GetSliceCompositeNode()->GetLinkedControl();
+          sgui->GetLogic()->GetSliceCompositeNode()->SetLinkedControl(0);
+          sgui->GetLogic()->SetSliceOffset( newValue );
+          sgui->GetLogic()->SnapSliceOffsetToIJK();
+          sgui->GetLogic()->GetSliceCompositeNode()->SetLinkedControl(link);
+          modified = 1;
+          }
+        }
+      }
+    }
+  return (modified);
+}
+
+//---------------------------------------------------------------------------
+int vtkSlicerSliceControllerWidget::UpdateLinkedView ( double newValue )
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication());
+  vtkSlicerSlicesGUI *ssgui = vtkSlicerSlicesGUI::SafeDownCast ( app->GetModuleGUIByName ("Slices") );
+  vtkSlicerSliceGUI *sgui;
+  int modified = 0;
+
+  if (ssgui)
+    {
+    const char *layoutname = NULL;
+    int nSliceGUI = ssgui->GetNumberOfSliceGUI();
+    int i;
+    for (i = 0; i < nSliceGUI; i++)
+      {
+      if (i == 0)
+        {
+        sgui = ssgui->GetFirstSliceGUI();
+        layoutname = ssgui->GetFirstSliceGUILayoutName();
+        }
+      else
+        {
+        sgui = ssgui->GetNextSliceGUI(layoutname);
+        layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
+        }
+      
+      if ( strncmp(layoutname, "Compare", 7) == 0 )
         continue;
       
       if ( sgui->GetLogic() &&  sgui->GetSliceNode() &&
