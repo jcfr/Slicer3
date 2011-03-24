@@ -167,6 +167,8 @@ class AtlasCreatorLogic(object):
         # create the output directories     
         outputDir = node.GetOutputDirectory()
             
+        # the following code checks if the outputDir already exists
+        # if yes, it creates a new one with a number appended
         if outputDir and os.path.isdir(outputDir):
             # outputDir already exists
             # we create a new unique one
@@ -332,12 +334,9 @@ class AtlasCreatorLogic(object):
             # this will ensure that we can later 
             # use the transforms (if they exist) and the template to resample
             # at this point, the defaultCase is either the meanImage or the fixed defaultCase
-            v = self.Helper().LoadVolume(defaultCase)
             pathToTemplate = outputDir + "template.nrrd"
             self.Helper().info("Saving template to " + str(pathToTemplate))
-            self.Helper().SaveVolume(str(pathToTemplate), v)
-            # now remove the node from the mrmlscene
-            slicer.MRMLScene.RemoveNode(v)
+            shutil.copyfile(defaultCase, pathToTemplate)
             
             # update reference to defaultCase to new location, only if templateType is dynamic
             if node.GetTemplateType() == "dynamic":
@@ -350,7 +349,7 @@ class AtlasCreatorLogic(object):
             # we are skipping the registration
             self.Helper().info("Skipping the registration and using the existing transforms..")
             
-            transformDirectory = node.GetTransformDirectory()
+            transformDirectory = node.GetTransformsDirectory()
             # we set the defaultCase to an existing one
             defaultCase = node.GetExistingTemplate()
             
