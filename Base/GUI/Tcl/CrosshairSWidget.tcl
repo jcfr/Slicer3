@@ -181,6 +181,7 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
       return
   }
 
+
   if { $caller == $_sliceNode } {
       # Slice node changed. How we respond depends who initiated the change.  
       #
@@ -299,7 +300,7 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
               return
           }
       }
-      
+
       # handle events that do depend on the pickstate
       switch $_pickState {
           "" {
@@ -321,14 +322,12 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
           "outside" {
               set _actionState ""
               set state $_actionState
-              $sliceGUI SetGrabID ""
               $this unhighlight
               return
           }
           "near" {
               set _actionState ""
               set state $_actionState
-              $sliceGUI SetGrabID ""
               $this highlight
               return
           }
@@ -337,7 +336,6 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
               # event and tell others not to look at it
               $sliceGUI SetGUICommandAbortFlag 1
               $this highlight
-              $sliceGUI SetGrabID $this
 
               switch $event {
 
@@ -345,12 +343,14 @@ itcl::body CrosshairSWidget::processEvent { {caller ""} {event ""} } {
                       $this requestDelayedAnnotation 
                       set _actionState "dragging"
                       set state $_actionState
+                      $sliceGUI SetGrabID $this
                       return
                   }
 
                   "LeftButtonReleaseEvent" {
                       set _actionState ""
                       set state $_actionState
+                      $sliceGUI SetGrabID ""
                       return
                   }
 
