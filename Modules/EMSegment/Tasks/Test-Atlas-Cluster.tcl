@@ -96,11 +96,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCLMRI: == Preprocress Data"
         $LOGIC PrintText "TCLMRI: =========================================="
 
-        set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
-        set inhomogeneityCorrectionFlag [ GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID ]
-        set inputDir [GetTextEntryValueFromMRML $ac_imagesDirTextID]
-        set inputDir [GetTextEntryValueFromMRML $ac_segmentationsDirTextID]
-        set inputDir [GetTextEntryValueFromMRML $ac_outputDirTextID]
+        set atlasAlignedFlag             [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
+        set inhomogeneityCorrectionFlag  [ GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID ]
+        set imagesDir                    [ GetTextEntryValueFromMRML   $ac_imagesDirTextID ]
+        set segmentationsDir             [ GetTextEntryValueFromMRML   $ac_segmentationsDirTextID ]
+        set outputDir                    [ GetTextEntryValueFromMRML   $ac_outputDirTextID ]
 
         # ---------------------------------------
         # Step 1 : Initialize/Check Input
@@ -108,18 +108,24 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
+        set Slicer3_HOME $::env(Slicer3_HOME)
+        set template     "$Slicer3_HOME/../Slicer3/Modules/AtlasCreator/TestData/originals/case62.nrrd"
+
+        set list [AtlasCreator $template $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir "-1"]
+        puts $list
+
 
         #  virtual void      SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID, vtkIdType volumeID);
         #  virtual vtkIdType GetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID);
-        set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
-        set mrmlManager [$MOD GetMRMLManager]
-        set node_id 1004
-        set vol_id [$mrmlManager GetTreeNodeSpatialPriorVolumeID $node_id]
-        puts "$node_id $vol_id"
-        set vol_id 1010
-        $mrmlManager SetTreeNodeSpatialPriorVolumeID $node_id $vol_id
-        set vol_id [$mrmlManager GetTreeNodeSpatialPriorVolumeID $node_id]
-        puts "$node_id $vol_id"
+#        set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
+#        set mrmlManager [$MOD GetMRMLManager]
+#        set node_id 1004
+#        set vol_id [$mrmlManager GetTreeNodeSpatialPriorVolumeID $node_id]
+#        puts "$node_id $vol_id"
+#        set vol_id 1010
+#        $mrmlManager SetTreeNodeSpatialPriorVolumeID $node_id $vol_id
+#        set vol_id [$mrmlManager GetTreeNodeSpatialPriorVolumeID $node_id]
+#        puts "$node_id $vol_id"
 
         # Atlas creator returns a directory with priors
         # loop through this directory and add volume nodes to the scene
@@ -137,11 +143,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         #Key vtkMRMLEMSTreeNode8 NodeID vtkMRMLScalarVolumeNode6
         #Key atlas_registration_image0 NodeID vtkMRMLScalarVolumeNode7"   NumberOfTrainingSamples="82"  ></EMSAtlas>
         #
-        $inputAtlasNode GetIndexByKey vtkMRMLEMSTreeNode3
-        4
-        $inputAtlasNode GetNodeIDByKey  vtkMRMLEMSTreeNode4
-        vtkMRMLScalarVolumeNode2
-        $mrmlManager MRMLNodeIDToVTKNodeIDMap vtkMRMLScalarVolumeNode2  ???
+#        $inputAtlasNode GetIndexByKey vtkMRMLEMSTreeNode3
+
+#        $inputAtlasNode GetNodeIDByKey  vtkMRMLEMSTreeNode4
+#        vtkMRMLScalarVolumeNode2
+#        $mrmlManager MRMLNodeIDToVTKNodeIDMap vtkMRMLScalarVolumeNode2  ???
 
         #        set atlasRegistrationVolumeIndex -1;
         #         $LOGIC PrintText [[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey]
