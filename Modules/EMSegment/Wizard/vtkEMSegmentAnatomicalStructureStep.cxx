@@ -1287,7 +1287,10 @@ void vtkEMSegmentAnatomicalStructureStep::NodeParentChangedCallback(
     }
 }
 
-
+// not easy to fix - during editing the node attribute 'name' this
+// function gets called each time the user presses a key
+// if a user wants to create a new name, he would probably erase the current name(pressing backspace...)
+// at one point he will reach "", so it must be possible to set a name like ""
 //----------------------------------------------------------------------------
 void vtkEMSegmentAnatomicalStructureStep::SelectedNodeNameChangedCallback(
   vtkIdType sel_vol_id, const char *value)
