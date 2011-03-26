@@ -1160,13 +1160,11 @@ class AtlasCreatorLogic(object):
                 outputDistanceMapFilePath = os.path.join(casePcaDistanceMapDirectory,str(label)+".nrrd")
                 
                 # generate distance maps
-                slicer.TkCall(self.Helper().GetPCADistanceCommand(inputAtlasFilePath,label,outputDistanceMapFilePath))
+                self.Helper().PCAGenerateDistanceMaps(inputAtlasFilePath,label,outputDistanceMapFilePath)
                 
         # now after creating all the distance maps,
         # we can generate the PCA shape representations
-        gcmd = self.Helper().GetPCAGenerateCommand(pcaOutputDirectory,labelsList)
-        self.Helper().info(gcmd)
-        slicer.TkCall(gcmd)
+        self.Helper().PCAGenerateModel(pcaOutputDirectory,labelsList)
             
         return True
             

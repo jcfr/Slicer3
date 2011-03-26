@@ -829,12 +829,20 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def GetPCADistanceCommand(self,imageFilePath,label,outputFilePath,maxDist=100,distBound=10):
+    def PCAGenerateDistanceMaps(self,imageFilePath,label,outputFilePath,dryRun=0,maxDist=100,distBound=10):
         '''
-           Returns a call to the PCADistance function
+            Calls the PCADistance function
            
-           Returns
-               the PCA Distance TCL command as String
+            imageFilePath
+                filePath to an existing image
+            label
+                Label to use for PCA
+            outputFilePath
+                output filePath to the generated distance map
+            
+           
+            Returns
+                n/a
         '''
         pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
         
@@ -851,17 +859,25 @@ class AtlasCreatorHelper(object):
         output += " " + str(distBound)
         output += " " + str(outputFilePath)
         
-        return output
+        self.debug("Invoking TCL code: " + output)
+        
+        if not dryRun:
+            slicer.TkCall(output)
     
     
     
     '''=========================================================================================='''
-    def GetPCAGenerateCommand(self,pcaDirectory,labelList,maxNumberOfEigenVectors=10,saveFileFormat="nrrd",combineStructures=0):
+    def PCAGenerateModel(self,pcaDirectory,labelList,dryRun=0,maxNumberOfEigenVectors=10,saveFileFormat="nrrd",combineStructures=0):
         '''
-           Returns a call to the PCAGenerate function
+            Calls the PCAGenerate function
            
-           Returns
-               the PCA Distance TCL command as String
+            pcaDirectory
+                filePath to a directory containing appropriate distanceMaps
+            labelList
+                list of labels to use for PCA
+           
+            Returns
+               n/a
         '''
         pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
         
@@ -872,21 +888,40 @@ class AtlasCreatorHelper(object):
             self.__pcaDistanceSourced = 1
             
         # convert labelList to a huge string with space as delimiter
-        labelListAsString = "("
+        labelListAsString = ""
+    
         for label in labelList:
             labelListAsString += str(label)
-            labelListAsString += " "
+            labelListAsString += ","
             
-        labelListAsString = labelListAsString.rstrip() + ")" 
+        labelListAsString = labelListAsString.rstrip(",")
+        
+        output1 = "set ::acLabelListAsString " + labelListAsString
             
-        output = "GeneratePCAModel"
-        output += " " + str(pcaDirectory)
-        output += " " + str(maxNumberOfEigenVectors)
-        output += " \"" + str(labelListAsString) + "\""
-        output += " " + str(saveFileFormat)
-        output += " " + str(combineStructures)
+        # set the variable for the labelList
+        if not dryRun:
+            slicer.TkCall(output1)
+        
+        output1b = "splitList $::acLabelListAsString"
+        
+        # now convert the list to a real list
+        if not dryRun:
+            slicer.TkCall(output1b)
+            
+        output2 = "GeneratePCAModel"
+        output2 += " " + str(pcaDirectory)
+        output2 += " " + str(maxNumberOfEigenVectors)
+        #output += " \"" + str(labelListAsString) + " \""
+        output2 += " $::acLabelListAsString"
+        output2 += " " + str(saveFileFormat)
+        output2 += " " + str(combineStructures)
 
-        return output
+        self.debug("Invoking TCL code: " + output1)
+        self.debug("invoking TCL code: " + output1b)
+        self.debug("Invoking TCL code: " + output2)
+        
+        if not dryRun:
+            slicer.TkCall(output2)
 
 
 

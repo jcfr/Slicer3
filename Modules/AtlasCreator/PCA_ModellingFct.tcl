@@ -23,7 +23,7 @@
 
 # -----------------------------------------------------------------------------
 # This script has important functions for PCA modelling 
-#source [file join $env(SCRIPT_HOME) HelperFct.tcl]
+#source [file join $env(SCRIPT_HOME) tcl/HelperFct.tcl]
 
 proc GenerateDistanceMapWrapper { INPUT_FILE LABEL MAXDIST DISTBOUND OUTPUT_FILE } {
 
@@ -73,30 +73,30 @@ proc FindMinBoundingBoxOfVolumeList {VolumePathList} {
     MaxBound SetNumberOfValues 3
 
     foreach VolumePath $VolumePathList {
-  VolumeReader VolumeBlub $VolumePath
+    VolumeReader VolumeBlub $VolumePath
 
-  vtkImageClipAutomatic blub
-  blub DetermineOutputWholeExtent [Volume(VolumeBlub,vol) GetOutput] MinBound MaxBound
-  blub Delete
+    vtkImageClipAutomatic blub
+    blub DetermineOutputWholeExtent [Volume(VolumeBlub,vol) GetOutput] MinBound MaxBound
+    blub Delete
 
-  Volume(VolumeBlub,vol) Delete
+    Volume(VolumeBlub,vol) Delete
 
-  set MinX [MinBound GetValue 0]
-  set MinY [MinBound GetValue 1]
-  set MinZ [MinBound GetValue 2]
+    set MinX [MinBound GetValue 0]
+    set MinY [MinBound GetValue 1]
+    set MinZ [MinBound GetValue 2]
 
-  set MaxX [MaxBound GetValue 0]
-  set MaxY [MaxBound GetValue 1]
-  set MaxZ [MaxBound GetValue 2]
+    set MaxX [MaxBound GetValue 0]
+    set MaxY [MaxBound GetValue 1]
+    set MaxZ [MaxBound GetValue 2]
 
-  if {$BoundMinX > $MinX ||  $BoundMinX < 0 } {set BoundMinX $MinX }
-  if {$BoundMaxX < $MaxX } {set BoundMaxX $MaxX }
-  if {$BoundMinY > $MinY ||  $BoundMinY < 0 } {set BoundMinY $MinY }
-  if {$BoundMaxY < $MaxY } {set BoundMaxY $MaxY }
-  if {$BoundMinZ > $MinZ ||  $BoundMinZ < 0 } {set BoundMinZ $MinZ }
-  if {$BoundMaxZ < $MaxZ } {set BoundMaxZ $MaxZ }
-  # puts "Res: $MinX $MaxX $MinY $MaxY $MinZ $MaxZ"
-  # puts "Box: $BoundMinX $BoundMaxX $BoundMinY $BoundMaxY $BoundMinZ $BoundMaxZ"
+    if {$BoundMinX > $MinX ||  $BoundMinX < 0 } {set BoundMinX $MinX }
+    if {$BoundMaxX < $MaxX } {set BoundMaxX $MaxX }
+    if {$BoundMinY > $MinY ||  $BoundMinY < 0 } {set BoundMinY $MinY }
+    if {$BoundMaxY < $MaxY } {set BoundMaxY $MaxY }
+    if {$BoundMinZ > $MinZ ||  $BoundMinZ < 0 } {set BoundMinZ $MinZ }
+    if {$BoundMaxZ < $MaxZ } {set BoundMaxZ $MaxZ }
+    # puts "Res: $MinX $MaxX $MinY $MaxY $MinZ $MaxZ"
+    # puts "Box: $BoundMinX $BoundMaxX $BoundMinY $BoundMaxY $BoundMinZ $BoundMaxZ"
     }
     MinBound Delete
     MaxBound Delete
@@ -108,11 +108,11 @@ proc PrintPCAEigenvalues {NumberOfValues StructureName vtkPCA PCAPath } {
     global fid
     set EigenValuesFiles $PCAPath/PCA$StructureName/EigenValues_${StructureName}.txt 
     if  {[assert "set ::fidEigen [open $EigenValuesFiles w]" $fid] == 0} { 
-  Print "Saved Eigenvalues in $EigenValuesFiles" $fid
-  for {set i 0} { $i < $NumberOfValues } {incr i } {                 
-      assert "puts $::fidEigen [format "%f" [$vtkPCA GetEigenValue $i]]" $fid
-  }  
-  assert "close $::fidEigen" $fid      
+    Print "Saved Eigenvalues in $EigenValuesFiles" $fid
+    for {set i 0} { $i < $NumberOfValues } {incr i } {                 
+        assert "puts $::fidEigen [format "%f" [$vtkPCA GetEigenValue $i]]" $fid
+    }  
+    assert "close $::fidEigen" $fid      
     }
 }
 
@@ -122,26 +122,26 @@ proc AddEmptySlide {PATH FullMin FullMax ImageMin ImageMax} {
     # ------------------------------
     # Add Empty slices if necessary 
     for {set j $FullMin} {$j < $ImageMin} {incr j} {
-  set Number $j 
-  if { [expr $j < 10] } { set Number "00$j"
-  } else {if { [expr $j < 100]} { set Number "0$j" } }
-  assert "exec cp $MathImage(PCAPath)/EmptySlices1/I.$Number  $PATH/." $fid
+    set Number $j 
+    if { [expr $j < 10] } { set Number "00$j"
+    } else {if { [expr $j < 100]} { set Number "0$j" } }
+    assert "exec cp $MathImage(PCAPath)/EmptySlices1/I.$Number  $PATH/." $fid
     }
     for {set j [expr $ImageMax +1] } {$j <= $FullMax} {incr j} {
-  set Number $j 
-  if { [expr $j < 10] } { set Number "00$j"
-  } else { if { [expr $j < 100] } { set Number "0$j" }  }
-  assert "exec cp $MathImage(PCAPath)/EmptySlices2/I.$Number  $PATH/." $fid
+    set Number $j 
+    if { [expr $j < 10] } { set Number "00$j"
+    } else { if { [expr $j < 100] } { set Number "0$j" }  }
+    assert "exec cp $MathImage(PCAPath)/EmptySlices2/I.$Number  $PATH/." $fid
     }        
 }
-       
+         
 proc SeperateAndSaveCombinedPCAVolumes {vtkImage Extent BoundingBox FileDir FileName FileExtension MATRIX origEXTENT fid } {
     vtkImageClip Clip
       Clip SetInput $vtkImage 
       eval Clip SetOutputWholeExtent $Extent 
       Clip ClipDataOn
       Clip Update 
-   
+     
     # Now you have to extent id to normal size 
     # that is not correct yet - first push cliped extent to the right location 
     vtkImageTranslateExtent translate
@@ -161,7 +161,7 @@ proc SeperateAndSaveCombinedPCAVolumes {vtkImage Extent BoundingBox FileDir File
     puts "ClipExtent  [[Clip GetOutput] GetExtent]"
     puts "TransExtent [[translate GetOutput] GetExtent]"  
     puts "PaddiExtent [[pad GetOutput] GetExtent]" 
-   
+     
     Print "[VolumeMathWriter [pad GetOutput]  $FileDir $FileName $FileExtension $MATRIX ]" $fid
     pad Delete 
     translate Delete
@@ -171,32 +171,34 @@ proc SeperateAndSaveCombinedPCAVolumes {vtkImage Extent BoundingBox FileDir File
 
 # -----------------------------------------
 # Generate PCA model from shape data
-proc GeneratePCAModel { PCAPath MaxNumberOfEigenVectors StructureList FileExtension PCACombineStructures } {
-  global tcl_platform  tcl_precision fid
-  if {[catch {set CaseList [exec ls -1 $MathImage(PCAPath) | grep case]}]  } {
-    PrintError "Error: No cases as input for GeneratePCAModel in directory $MathImage(PCAPath)"
+
+proc GeneratePCAModel  { PCAPath  MaxNumberOfEigenVectors StructureList  FileExtension PCACombineStructures } {
+  # puts " GeneratePCAModel  $PCAPath  $MaxNumberOfEigenVectors \"$StructureList\"  $FileExtension $PCACombineStructures"
+ 
+  global tcl_platform  tcl_precision fid 
+    if {[catch {set CaseList [exec ls -1 $PCAPath | grep case]}]  } {
+    PrintError "Error: No cases as input for GeneratePCAModel in directory $PCAPath"
     return
   }
 
-  #vset CaseList [lrange $CaseList 0 19]
+  # set CaseList [lrange $CaseList 0 19]
   # puts "Just Debugging "
-  puts "Warning: Currently no more than 20 cases" 
+  # puts "Warning: Currently no more than 20 cases" 
   set LengthCaseList [llength $CaseList]
   set NumberOfEigenVectors [expr $MaxNumberOfEigenVectors < $LengthCaseList  ? $MaxNumberOfEigenVectors : $LengthCaseList ]  
  
   # MathImageFct.tcl specific parameters
-  set PrintToLogFile 0
-  
-  # Open Log File - still has to be completed 
-  if { $PrintToLogFile } { 
-      set ::MathImage(PrintToLogFile ) 1 
+
+  set ::MathImage(PrintToLogFile) 0
+
+ # Open Log File - still has to be completed 
+  if { $::MathImage(PrintToLogFile) } { 
       set fid [OpenLogFile $LogFile GeneratePCAModel "PCATrainingFolder $PCAPath - StructureDirList $StructureList"]
       if {$fid == ""} {exit 1}
   } else {
-    set fid ""
+     set fid ""
   }
-
-
+ 
   Print "------------------------------------------------------------------------" $fid 
   Print "-- Generate PCA Parameters" $fid 
   Print "------------------------------------------------------------------------" $fid 
@@ -208,11 +210,11 @@ proc GeneratePCAModel { PCAPath MaxNumberOfEigenVectors StructureList FileExtens
    
       set CombinationName ""
       foreach STRUCTURE $StructureList {
-    if { $CombinationName == "" } {
-        set CombinationName "[string range $STRUCTURE 0 3]"
-    } else {
-        set CombinationName "${CombinationName}_[string range $STRUCTURE 0 3]"
-    }
+      if { $CombinationName == "" } {
+          set CombinationName "[string range $STRUCTURE 0 3]"
+      } else {
+          set CombinationName "${CombinationName}_[string range $STRUCTURE 0 3]"
+      }
       }
 
       vtkImagePCATraining PCA
@@ -221,10 +223,10 @@ proc GeneratePCAModel { PCAPath MaxNumberOfEigenVectors StructureList FileExtens
       # Now find out the maximum of the bounding box 
       set VolumeList ""
       foreach CASE $CaseList  {
-    set CASE_NO [file tail $CASE] 
-    foreach STRUCTURE $MathImage(StructureList) {
-        set VolumeList "$VolumeList $MathImage(PCAPath)/$CASE_NO/${STRUCTURE}.${FileExtension}"
-    }
+      set CASE_NO [file tail $CASE] 
+      foreach STRUCTURE $StructureList {
+          set VolumeList "$VolumeList  $PCAPath/$CASE_NO/${STRUCTURE}.${FileExtension}"
+      }
       }
   
       # Clip so you have more space 
@@ -240,33 +242,33 @@ proc GeneratePCAModel { PCAPath MaxNumberOfEigenVectors StructureList FileExtens
 
       foreach CASE $CaseList  {
           set CASE_NO [file tail $CASE] 
-    vtkImageAppend imageAllStructures($CASE_NO)
-    # Add images along the z Axis 
-    imageAllStructures($CASE_NO) SetAppendAxis 2
+      vtkImageAppend imageAllStructures($CASE_NO)
+      # Add images along the z Axis 
+      imageAllStructures($CASE_NO) SetAppendAxis 2
   
-    foreach STRUCTURE $StructureList {
-        # Now designed for warfiled files 
-             assert "VolumeReader VolumeBlub $PCAPath//$CASE_NO/$STRUCTURE.${FileExtension}" $fid  
+      foreach STRUCTURE $StructureList {
+          # Now designed for warfiled files 
+             assert "VolumeReader VolumeBlub $PCAPath//$CASE_NO/$STRUCTURE.${FileExtension}" $fid   
               if { $MATRIX == "" } {
-      set MATRIX [vtkMatrix4x4 New] 
+          set MATRIX [vtkMatrix4x4 New] 
                   $MATRIX Copy [Volume(VolumeBlub,vol) GetRasToIjkMatrix ]
                   set EXTENT [Volume(VolumeBlub,vol)  GetExtent]
-        }
+          }
           
-        
-        vtkImageClip Clip(${CASE_NO},$STRUCTURE)
-          Clip(${CASE_NO},$STRUCTURE) SetInput [Volume(VolumeBlub,vol) GetOutput]
-           eval Clip(${CASE_NO},$STRUCTURE) SetOutputWholeExtent $BoundingBox
-           Clip(${CASE_NO},$STRUCTURE) ClipDataOn
-           Clip(${CASE_NO},$STRUCTURE) Update
+          
+          vtkImageClip Clip(${CASE_NO},$STRUCTURE)
+            Clip(${CASE_NO},$STRUCTURE) SetInput [Volume(VolumeBlub,vol) GetOutput]
+             eval Clip(${CASE_NO},$STRUCTURE) SetOutputWholeExtent $BoundingBox
+             Clip(${CASE_NO},$STRUCTURE) ClipDataOn
+             Clip(${CASE_NO},$STRUCTURE) Update
 
-       Volume(VolumeBlub,vol) Delete 
-       imageAllStructures($CASE_NO) AddInput [Clip(${CASE_NO},$STRUCTURE) GetOutput]
-       imageAllStructures($CASE_NO) Update
-   }
-   imageAllStructures($CASE_NO) Update
-   PCA SetInput $InputIndex  [imageAllStructures($CASE_NO)  GetOutput] 
-   incr InputIndex 
+         Volume(VolumeBlub,vol) Delete 
+         imageAllStructures($CASE_NO) AddInput [Clip(${CASE_NO},$STRUCTURE) GetOutput]
+         imageAllStructures($CASE_NO) Update
+     }
+     imageAllStructures($CASE_NO) Update
+     PCA SetInput $InputIndex  [imageAllStructures($CASE_NO)  GetOutput] 
+     incr InputIndex 
      }
 
      # puts [[imageAllStructures($CASE_NO) GetOutput] Print]
@@ -274,9 +276,11 @@ proc GeneratePCAModel { PCAPath MaxNumberOfEigenVectors StructureList FileExtens
      # Calculate EigenVectors and save results
      PCA Update
 
-     assert "exec rm -r $PCAPath/PCA$CombinationName" $fid
+        assert "exec rm -r $PCAPath/PCA$CombinationName" $fid
+    
      assert "file mkdir $PCAPath/PCA${CombinationName}" $fid
-     PrintPCAEigenvalues  [expr $LengthCaseList - 1] $CombinationName PCA $PCAPath
+
+     PrintPCAEigenvalues  $NumberOfEigenVectors $CombinationName PCA $PCAPath
 
      # -----------------------------------
      # Write it out by returning to the case list 
@@ -288,77 +292,87 @@ proc GeneratePCAModel { PCAPath MaxNumberOfEigenVectors StructureList FileExtens
      set BoundExtentMaxY [expr [lindex $BoundingBox 3] -[lindex $BoundingBox 2]]
  
      foreach STRUCTURE $StructureList {
-   assert "file mkdir $PCAPath/PCA${CombinationName}/$STRUCTURE" $fid
-   # This might be wrong -I 
-   set Extent "0 $BoundExtentMaxX  0 $BoundExtentMaxY [expr $NumberSlices * $StructureIndex]  [expr $NumberSlices * ($StructureIndex +1) - 1]"
-   SeperateAndSaveCombinedPCAVolumes [PCA GetMean] "$Extent" "$BoundingBox" "$PCAPath/PCA${CombinationName}/$STRUCTURE" MeanImage $FileExtension $MATRIX $EXTENT $fid
-   incr StructureIndex 
+     assert "file mkdir $PCAPath/PCA${CombinationName}/$STRUCTURE" $fid
+     # This might be wrong -I 
+     set Extent "0 $BoundExtentMaxX  0 $BoundExtentMaxY [expr $NumberSlices * $StructureIndex]  [expr $NumberSlices * ($StructureIndex +1) - 1]"
+     SeperateAndSaveCombinedPCAVolumes [PCA GetMean] "$Extent" "$BoundingBox" "$PCAPath/PCA${CombinationName}/$STRUCTURE" MeanImage $FileExtension $MATRIX $EXTENT $fid
+     incr StructureIndex 
      }
 
      for {set i 0} {$i < $NumberOfEigenVectors} {incr i} {
          set StructureIndex 0
-   foreach STRUCTURE $StructureList {
-       set Extent "0 $BoundExtentMaxX  0 $BoundExtentMaxY [expr $NumberSlices * $StructureIndex]  [expr $NumberSlices * ($StructureIndex +1) - 1]"
+     foreach STRUCTURE $StructureList {
+         set Extent "0 $BoundExtentMaxX  0 $BoundExtentMaxY [expr $NumberSlices * $StructureIndex]  [expr $NumberSlices * ($StructureIndex +1) - 1]"
              SeperateAndSaveCombinedPCAVolumes [PCA GetEigenVectorIndex $i]  "$Extent" "$BoundingBox" "$PCAPath/PCA${CombinationName}/$STRUCTURE" EigenVector$i $FileExtension $MATRIX $EXTENT $fid   
-       incr StructureIndex 
-   }
+         incr StructureIndex 
+     }
      }
      PCA Delete
      $MATRIX Delete
      # Do not need them anymore 
      foreach CASE $CaseList  {
-    set CASE_NO [file tail $CASE] 
-    foreach STRUCTURE $StructureList {
-        Clip(${CASE_NO},$STRUCTURE) Delete 
-    }
+      set CASE_NO [file tail $CASE] 
+      foreach STRUCTURE $StructureList {
+          Clip(${CASE_NO},$STRUCTURE) Delete 
+      }
      }
 
   } else {
     foreach STRUCTURE $StructureList { 
-    Print "---- $STRUCTURE ----" $fid 
-    assert "exec rm -r $PCAPath/PCA$STRUCTURE" $fid
-    assert "file mkdir $PCAPath/PCA$STRUCTURE" $fid
-    
-    if {1} {
-        vtkImagePCATraining PCA
-        PCA SetNumberOfEigenVectors $NumberOfEigenVectors
+      Print "---- $STRUCTURE ----" $fid 
+          set pcaStructDir   $PCAPath/PCA$STRUCTURE 
+           if { [ file exists $pcaStructDir ] } { 
+          assert "exec rm -r $pcaStructDir " $fid
+       }
 
-        set InputIndex 0
+           assert "file mkdir $pcaStructDir" $fid
 
-        # ------------------------------
-        # Read in Cases
-        foreach CASE $CaseList  {
-      # Load In image 
-      set CASE_NO [file tail $CASE] 
-      # Now designed for warfiled files 
-      assert "VolumeReader $CASE_NO $PCAPath/$CASE_NO/$STRUCTURE.$FileExtension " $fid
-      PCA SetInput $InputIndex [Volume($CASE_NO,vol)  GetOutput] 
-      incr InputIndex
+          vtkImagePCATraining PCA
+              # PCA DebugOn
+
+          PCA SetNumberOfEigenVectors $NumberOfEigenVectors
+          set InputIndex 0
+               
+              set VolumeIDList "" 
+
+          # ------------------------------
+          # Read in Cases
+          foreach CASE $CaseList  {
+          # Load In image 
+          set CASE_NO [file tail $CASE] 
+                  # puts "Reading $CASE_NO"
+          # Now designed for warfiled files 
+          assert "VolumeReader $CASE_NO $PCAPath/$CASE_NO/$STRUCTURE.$FileExtension " $fid
+                  set VolumeIDList "${VolumeIDList} $CASE_NO" 
+          PCA SetInput $InputIndex [Volume($CASE_NO,vol)  GetOutput] 
+          incr InputIndex
                  if { $MATRIX == "" } {
-         set MATRIX [vtkMatrix4x4 New] 
-                     $MATRIX Copy [Volume($CASE_NO,vol) GetRasToIjkMatrix ]
-              }
-        }
+             set MATRIX [vtkMatrix4x4 New] 
+                     $MATRIX DeepCopy [Volume($CASE_NO,vol) GetRasToIjkMatrix ]
+                }
+          }
 
-        # ------------------------------
-        # Calculate EigenVectors and save results
-        PCA Update
-        PrintPCAEigenvalues  [expr $LengthCaseList - 1] $STRUCTURE PCA  $PCAPath
+          # ------------------------------
+          # Calculate EigenVectors and save results
+          puts "finished reading"
+              PCA Update
+              puts "Finished training "
+          PrintPCAEigenvalues   $NumberOfEigenVectors  $STRUCTURE PCA  $PCAPath
 
-        Print "[VolumeMathWriter [PCA GetMean]  $PCAPath/PCA$STRUCTURE MeanImage  $FileExtension $MATRIX ]" $fid
-        for {set i 0} {$i < $NumberOfEigenVectors} {incr i} {
-      assert "VolumeMathWriter [PCA GetEigenVectorIndex $i]  $PCAPath/PCA$STRUCTURE EigenVector$i  $FileExtension $MATRIX " $fid
-        }
+          assert "[VolumeMathWriter [PCA GetMean]  $pcaStructDir  MeanImage  .$FileExtension $MATRIX ]" $fid
+          for {set i 0} {$i < $NumberOfEigenVectors} {incr i} {
+          assert "VolumeMathWriter [PCA GetEigenVectorIndex $i] $pcaStructDir  EigenVector$i  .$FileExtension $MATRIX " $fid
+          }
              $MATRIX  Delete
-        foreach CASE $CaseList  {
-      Volume([file tail $CASE],vol) Delete 
-        }
-        PCA Delete
-    }
+             set MATRIX ""
+          foreach ID $VolumeIDList   {
+          Volume($ID,vol) Delete 
+          }
+          PCA Delete
       }
   }
   # Closing Log File
-  if {$PrintToLogFile} {assert "close $fid" ""}
+  if {$::MathImage(PrintToLogFile)} {assert "close $fid" ""}
 }
 
 # -----------------------------------------
@@ -367,10 +381,10 @@ proc GeneratePCAModel { PCAPath MaxNumberOfEigenVectors StructureList FileExtens
 proc LoadPCAModel {PCAApply } {
     global MathImage
     if {$MathImage(PCACombineStructures)} { 
-  set CombineName [string range [file tail $MathImage(PCAPath)] 3 end]
-  set EigenValueList [ReadASCIIFile [file join $MathImage(PCAPath)/EigenValues_$CombineName.txt]]
+    set CombineName [string range [file tail $MathImage(PCAPath)] 3 end]
+    set EigenValueList [ReadASCIIFile [file join $MathImage(PCAPath)/EigenValues_$CombineName.txt]]
     } else {
-  set EigenValueList [ReadASCIIFile [file join $MathImage(PCAPath)/PCA$MathImage(StructureList)/EigenValues_$MathImage(StructureList).txt]]
+    set EigenValueList [ReadASCIIFile [file join $MathImage(PCAPath)/PCA$MathImage(StructureList)/EigenValues_$MathImage(StructureList).txt]]
     }
     set NumEigenValues [llength $EigenValueList]
 
@@ -378,42 +392,42 @@ proc LoadPCAModel {PCAApply } {
     while {($index < $NumEigenValues) && ([lindex $EigenValueList $index] > 0.0)} {incr index }
     
     if {$index <  $NumEigenValues} {
-  puts "Ignored all Eigenvalues after the $index position, bc they were smaller or equal to zero"
-  set EigenValueList [lrange $EigenValueList 0 [expr $index -1]]
-  set NumEigenValues $index
+    puts "Ignored all Eigenvalues after the $index position, bc they were smaller or equal to zero"
+    set EigenValueList [lrange $EigenValueList 0 [expr $index -1]]
+    set NumEigenValues $index
     }
 
     # Take those out of the list for whom we do not have a fit 
     set index 0
     set SortedEigenVectorList ""
     if {$MathImage(PCACombineStructures)} { 
-  if {[catch {set EigenVectorList [exec ls -1 $MathImage(PCAPath)/$MathImage(StructureList) | grep EigenVector]}]  } {
-      PrintError "Error: No EigenVectors as input for ViewPCAModel in $MathImage(PCAPath)/PCA$MathImage(StructureList)"
-      exit 1
-  }
+    if {[catch {set EigenVectorList [exec ls -1 $MathImage(PCAPath)/$MathImage(StructureList) | grep EigenVector]}]  } {
+        PrintError "Error: No EigenVectors as input for ViewPCAModel in $MathImage(PCAPath)/PCA$MathImage(StructureList)"
+        exit 1
+    }
     } else {
-  if {[catch {set EigenVectorList [exec ls -1 $MathImage(PCAPath)/PCA$MathImage(StructureList) | grep EigenVector]}]  } {
-      PrintError "Error: No EigenVectors as input for ViewPCAModel in $MathImage(PCAPath)/PCA$MathImage(StructureList)"
-      exit 1
-  }
+    if {[catch {set EigenVectorList [exec ls -1 $MathImage(PCAPath)/PCA$MathImage(StructureList) | grep EigenVector]}]  } {
+        PrintError "Error: No EigenVectors as input for ViewPCAModel in $MathImage(PCAPath)/PCA$MathImage(StructureList)"
+        exit 1
+    }
     }
 
 
     for {set i 0} {$i < $NumEigenValues} {incr i} {
-  set position [lsearch $EigenVectorList  EigenVector$i]  
-  if {$position < 0} {
-      set EigenValueList [lreplace $EigenValueList $index $index ]
-  } else {
-      incr index
-      lappend SortedEigenVectorList EigenVector$i
-  }
+    set position [lsearch $EigenVectorList  EigenVector$i]  
+    if {$position < 0} {
+        set EigenValueList [lreplace $EigenValueList $index $index ]
+    } else {
+        incr index
+        lappend SortedEigenVectorList EigenVector$i
+    }
     }
     set NumEigenModes  $index
 
     if {$NumEigenValues > $MathImage(MaxNumberOfEigenVectors) }  {
-  set EigenValueList  [lrange  $EigenValueList 0 [expr $MathImage(MaxNumberOfEigenVectors) -1]]
-  set SortedEigenVectorList  [lrange  $SortedEigenVectorList 0 [expr $MathImage(MaxNumberOfEigenVectors) -1]]
-  set NumEigenModes  $MathImage(MaxNumberOfEigenVectors)
+    set EigenValueList  [lrange  $EigenValueList 0 [expr $MathImage(MaxNumberOfEigenVectors) -1]]
+    set SortedEigenVectorList  [lrange  $SortedEigenVectorList 0 [expr $MathImage(MaxNumberOfEigenVectors) -1]]
+    set NumEigenModes  $MathImage(MaxNumberOfEigenVectors)
     }
 
 
@@ -422,9 +436,9 @@ proc LoadPCAModel {PCAApply } {
     set MathImage(volDataType) Float
 
     if {$MathImage(PCACombineStructures)} { 
-  set Volume(Mean,filePrefix)  $MathImage(PCAPath)/$MathImage(StructureList)/MeanImage/I
+    set Volume(Mean,filePrefix)  $MathImage(PCAPath)/$MathImage(StructureList)/MeanImage/I
     } else {
-  set Volume(Mean,filePrefix)  $MathImage(PCAPath)/PCA$MathImage(StructureList)/MeanImage/I
+    set Volume(Mean,filePrefix)  $MathImage(PCAPath)/PCA$MathImage(StructureList)/MeanImage/I
     }
 
     set MathImage(Mean,littleEndian) $MathImage(littleEndian)
@@ -434,29 +448,29 @@ proc LoadPCAModel {PCAApply } {
 
     set InputIndex 0
     foreach EV $SortedEigenVectorList  {
-  if {$MathImage(PCACombineStructures)} { 
-      set Volume(Eigen$InputIndex,filePrefixLoad)  $MathImage(PCAPath)/$MathImage(StructureList)/$EV/I
-  } else {
-      set Volume(Eigen$InputIndex,filePrefixLoad)  $MathImage(PCAPath)/PCA$MathImage(StructureList)/$EV/I
-  }
-  set Volume(Eigen$InputIndex,littleEndian) $MathImage(littleEndian)
-  VolumeReader Eigen$InputIndex
-  $PCAApply SetEigenVectorIndex $InputIndex [Volume(Eigen$InputIndex,vol)  GetOutput] 
-  incr InputIndex
+    if {$MathImage(PCACombineStructures)} { 
+        set Volume(Eigen$InputIndex,filePrefixLoad)  $MathImage(PCAPath)/$MathImage(StructureList)/$EV/I
+    } else {
+        set Volume(Eigen$InputIndex,filePrefixLoad)  $MathImage(PCAPath)/PCA$MathImage(StructureList)/$EV/I
+    }
+    set Volume(Eigen$InputIndex,littleEndian) $MathImage(littleEndian)
+    VolumeReader Eigen$InputIndex
+    $PCAApply SetEigenVectorIndex $InputIndex [Volume(Eigen$InputIndex,vol)  GetOutput] 
+    incr InputIndex
     }
 
     set index 0
     foreach EV $EigenValueList {
-  $PCAApply SetEigenValue $index $EV
-  incr index
+    $PCAApply SetEigenValue $index $EV
+    incr index
     }
     $PCAApply Update
 
     # I can delete EigenVectors now bc they are copied to filter - saves space 
     set index 0
     foreach EV $SortedEigenVectorList  {
-  Volume(Eigen$index,vol) Delete
-  incr index
+    Volume(Eigen$index,vol) Delete
+    incr index
     }
 
     set MathImage(volDataType) $volDataTyp 
@@ -468,34 +482,34 @@ proc  Generate_3DModel_of_PCA { } {
     global MathImage Volume
 
     proc ReturnToDistanceManifold {vtkInput vtkThres vtkDistance  } {
-  global MathImage BorderValue
+    global MathImage BorderValue
 
-  $vtkThres SetOutputScalarTypeTo$MathImage(volDataType)
-  $vtkThres SetInput $vtkInput
-  $vtkThres ThresholdByUpper 10
-  $vtkThres SetInValue 1
-  $vtkThres SetOutValue 0
-  $vtkThres Update
-  # [$vtkThres GetOutput] ReleaseDataFlagOn
+    $vtkThres SetOutputScalarTypeTo$MathImage(volDataType)
+    $vtkThres SetInput $vtkInput
+    $vtkThres ThresholdByUpper 10
+    $vtkThres SetInValue 1
+    $vtkThres SetOutValue 0
+    $vtkThres Update
+    # [$vtkThres GetOutput] ReleaseDataFlagOn
 
-  $vtkDistance SetAlgorithmToSaito
-  $vtkDistance SignedDistanceMapOn
-  $vtkDistance SetObjectValue  1
+    $vtkDistance SetAlgorithmToSaito
+    $vtkDistance SignedDistanceMapOn
+    $vtkDistance SetObjectValue  1
         $vtkDistance SetZeroBoundaryInside
         $vtkDistance SquareRootDistance
         $vtkDistance SetMaximumDistance 100
         $vtkDistance ConsiderAnisotropyOff
-  $vtkDistance SetInput [$vtkThres GetOutput]
-  $vtkDistance  Update
-  # [$vtkDistance  GetOutput] ReleaseDataFlagOn
+    $vtkDistance SetInput [$vtkThres GetOutput]
+    $vtkDistance  Update
+    # [$vtkDistance  GetOutput] ReleaseDataFlagOn
     }
 
     vtkImagePCAApply PCA
     set NumEigenModes [LoadPCAModel PCA]
     set Setting ""
     for {set i 0} { $i < $NumEigenModes } {incr i} {
-  set Setting "${Setting}0.0 "
-  set bValue($i) 0.0
+    set Setting "${Setting}0.0 "
+    set bValue($i) 0.0
     }
 
     # Return to distance manifold
@@ -591,11 +605,11 @@ proc View_PCA_Model { } {
     # PCA specific window functions 
     
     proc SetWindowEigenValue {index value} {
-  global b  EigenImage window level ColorBlub
-  b SetValue $index $value 
-  PCA GetParameterisedShape b EigenImage
-  viewer SetColorLevel $level
-  SetWindow $window
+    global b  EigenImage window level ColorBlub
+    b SetValue $index $value 
+    PCA GetParameterisedShape b EigenImage
+    viewer SetColorLevel $level
+    SetWindow $window
     }
 
 
@@ -606,7 +620,7 @@ proc View_PCA_Model { } {
       VolumeWriter EigenImage PCAModel  PCAModel  [lindex $MathImage(volRange) 0 ] [lindex $MathImage(volRange) 1] 
       set Settings ""
       for {set i 0} { $i < $NumEigenModes } {incr i} {
-  set Settings "${Settings}$bValue($i) "
+    set Settings "${Settings}$bValue($i) "
       }
       WriteASCIIFile PCAModel/PCAModel.txt "Parameters: $Settings"
       puts "Saved in data format Float"
@@ -640,8 +654,8 @@ proc View_PCA_Model { } {
     set NumEigenModes [LoadPCAModel PCA]
     set Setting ""
     for {set i 0} { $i < $NumEigenModes } {incr i} {
-  set Setting "${Setting}0.0 "
-  set bValue($i) 0.0
+    set Setting "${Setting}0.0 "
+    set bValue($i) 0.0
     }
 
     vtkImageData EigenImage 
@@ -702,7 +716,7 @@ proc Transfere_Representation_Into_PCAParameters { } {
     set EigenValueList [ReadASCIIFile [file join $MathImage(PCAPath)/PCA$MathImage(StructureList)/EigenValues_$MathImage(StructureList).txt]]
 
     for {set i 0 } {$i < $NumEigenModes} {incr i} {
-  lappend Result "[ResultArray GetValue $i] ([expr [ResultArray GetValue $i]*sqrt([lindex $EigenValueList $i])])"
+    lappend Result "[ResultArray GetValue $i] ([expr [ResultArray GetValue $i]*sqrt([lindex $EigenValueList $i])])"
     }
 
     cast Delete
@@ -729,7 +743,7 @@ proc Transfere_PCAParameters_Into_Representation {vtkPCA vtkResult vtkFloat Sett
     set index 0 
     foreach val $Setting {
         $vtkFloat SetValue $index $val
-  incr index
+    incr index
     }
     $vtkPCA GetParameterisedShape $vtkFloat $vtkResult
 }
