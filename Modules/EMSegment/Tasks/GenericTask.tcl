@@ -1157,27 +1157,41 @@ namespace eval EMSegmenterPreProcessingTcl {
         return "$inputNode_SkullStripped"
     }
 
-
+    # comment: This function is using the fixed mode, is the dynamic mode possible?
     # Input:  target, directories(manual segmentation + original volumes)
-    # Output: new atlas(template + probability atlas for each label) in outputDir
-    proc AtlasCreator { _template _segmentationsDir _imagesDir _outputDir target } {
+    # Output: new probability atlas for each label already registered on template=target in outputDir
+    proc AtlasCreator { _segmentationsDir _imagesDir _outputDir targetNode } {
         variable SCENE
         variable LOGIC
         variable inputAtlasNode
         variable mrmlManager
         variable workingDN
 
+        #variable SCENE
+        #set SCENE [$::slicer3::Application GetMRMLScene]
+
+        # Use only the first volume for the registration
+        set targetVolumeNode [$targetNode GetNthVolumeNode 0]
+        set targetVolumeFileName [WriteDataToTemporaryDir $targetVolumeNode Volume]
+        if { $targetVolumeFileName == "" } { return 1 }
+
+        set template         $targetVolumeFileName
+        set outputDir        $_outputDir
+        set segmentationsDir $_segmentationsDir
+        set imagesDir        $_imagesDir
+
+
+        set skipRegistration 1
         set debug 0
         set dryrun 0
         set cluster 0
         set schedulerCommand ""
-        set skipRegistration 0
         set transformsDir ""
         set existingTemplate ""
         set useCMTK 1
         set fixed 1
         set nonRigid 0
-        set labels "3 4 5 6 7 8 9"
+        set labels "0 3 4 5 6 7 8 9"
 
         set writeTransforms 0
         set keepAligned 0
@@ -1187,24 +1201,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         set outputCast short
 
 
-        #variable SCENE
-        set SCENE [$::slicer3::Application GetMRMLScene]
-
-
         # we create a new vtkMRMLAtlasCreatorNode and configure it..
         set node [vtkMRMLAtlasCreatorNode New]
 
-
-        set outputDir        $_outputDir
-        set template         $_template
-        set segmentationsDir $_segmentationsDir
-        set imagesDir        $_imagesDir
-
-
         #for more options look into Modules/AtlasCreator/Cxx/vtkMRMLAtlasCreatorNode.h
-        $node SetTemplateType fixed
-        $node SetRegistrationType Affine
-        $node SetOutputCast short
 
         if { $debug || $dryrun } {
             $node SetDebugMode 1
@@ -1299,10 +1299,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         $node Delete
 
 
-        # initialize
-        set newVolumeNodeList ""
-
-
         set atlasRegistrationVolumeIndex -1;
         if {[[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey] != "" } {
             set atlasRegistrationVolumeKey [[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey]
@@ -1310,17 +1306,25 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
 
+        set outputAtlasNode [ $mrmlManager CloneAtlasNode $inputAtlasNode "AC"]
+
+        # Atlas creator returns a directory with priors
+        # loop through this directory and add volume nodes to the scene
+        # for each leaf in the tree set/replace the atlasnode by the ac atlas node
+        # how to find the right atlas volume?
+
         # Read a volume for each label
         for { set i 0 } { $i < [$inputAtlasNode GetNumberOfVolumes] } { incr i } {
 
             set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
 
 
+            set tmpTreeNodeKEY [$inputAtlasNode GetKeyByNodeID [$inputAtlasVolumeNode GetID]]
+            set tmpIndex [$inputAtlasNode GetIndexByNodeID [$inputAtlasVolumeNode GetID]]
             if { $i == $atlasRegistrationVolumeIndex} {
                 # replace with template
                 set outputAtlasVolumeFileName $outputDir/template.nrrd
             } else {
-                set tmpTreeNodeKEY [$inputAtlasNode GetKeyByNodeID [$inputAtlasVolumeNode GetID]]
                 set tmpTreeNode [$SCENE GetNodeByID $tmpTreeNodeKEY]
                 set tmpTreeParameterNode [$SCENE GetNodeByID [$tmpTreeNode GetTreeParametersNodeID]]
                 set tmpLeafParametersNode [$SCENE GetNodeByID [$tmpTreeParameterNode GetLeafParametersNodeID]]
@@ -1337,18 +1341,16 @@ namespace eval EMSegmenterPreProcessingTcl {
             $outputAtlasVolumeData Delete
 
 
-
             ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
-            #file delete -force $outputVolumeFileName
+            #file delete -force $outputAtlasVolumeFileName
+            
+            set oldVolumeNode [$outputAtlasNode GetNthNode $i]
+            $outputAtlasNode SetNthNodeID $tmpIndex [$outputAtlasVolumeNode GetID]
+            DeleteNode $oldVolumeNode
 
-            set newVolumeNodeList "${newVolumeNodeList}$outputAtlasVolumeNode "
-            $LOGIC PrintText "TCL: List of volume nodes: $newVolumeNodeList"
         }
-        return "$newVolumeNodeList"
 
-        set outputAtlasNode [ $mrmlManager CloneAtlasNode $inputAtlasNode "AC"]
         $workingDN SetReferenceAlignedAtlasNodeID [$outputAtlasNode GetID]
-
     }
 
 

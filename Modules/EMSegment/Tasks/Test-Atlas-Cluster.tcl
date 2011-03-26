@@ -108,58 +108,6 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
-        set Slicer3_HOME $::env(Slicer3_HOME)
-        set template     "$Slicer3_HOME/../Slicer3/Modules/AtlasCreator/TestData/originals/case62.nrrd"
-
-        set list [AtlasCreator $template $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir "-1"]
-        puts $list
-
-
-        #  virtual void      SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID, vtkIdType volumeID);
-        #  virtual vtkIdType GetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID);
-#        set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
-#        set mrmlManager [$MOD GetMRMLManager]
-#        set node_id 1004
-#        set vol_id [$mrmlManager GetTreeNodeSpatialPriorVolumeID $node_id]
-#        puts "$node_id $vol_id"
-#        set vol_id 1010
-#        $mrmlManager SetTreeNodeSpatialPriorVolumeID $node_id $vol_id
-#        set vol_id [$mrmlManager GetTreeNodeSpatialPriorVolumeID $node_id]
-#        puts "$node_id $vol_id"
-
-        # Atlas creator returns a directory with priors
-        # loop through this directory and add volume nodes to the scene
-        # for each leaf in the tree set/replace the atlasnode by the ac atlas node
-        # how to find the right atlas volume?
-
-        # In MRML it looks like:
-
-        # <EMSAtlas
-        #  id="vtkMRMLEMSAtlasNode1"  name="vtkMRMLEMSAtlasNode1"  hideFromEditors="false"  selectable="true"  selected="false"  NodeIDs="
-        #Key vtkMRMLEMSTreeNode4 NodeID vtkMRMLScalarVolumeNode2
-        #Key vtkMRMLEMSTreeNode3 NodeID vtkMRMLScalarVolumeNode1
-        #Key vtkMRMLEMSTreeNode6 NodeID vtkMRMLScalarVolumeNode3
-        #Key vtkMRMLEMSTreeNode7 NodeID vtkMRMLScalarVolumeNode4
-        #Key vtkMRMLEMSTreeNode8 NodeID vtkMRMLScalarVolumeNode6
-        #Key atlas_registration_image0 NodeID vtkMRMLScalarVolumeNode7"   NumberOfTrainingSamples="82"  ></EMSAtlas>
-        #
-#        $inputAtlasNode GetIndexByKey vtkMRMLEMSTreeNode3
-
-#        $inputAtlasNode GetNodeIDByKey  vtkMRMLEMSTreeNode4
-#        vtkMRMLScalarVolumeNode2
-#        $mrmlManager MRMLNodeIDToVTKNodeIDMap vtkMRMLScalarVolumeNode2  ???
-
-        #        set atlasRegistrationVolumeIndex -1;
-        #         $LOGIC PrintText [[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey]
-        #         $LOGIC PrintText [[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey]
-        #         $LOGIC PrintText [$inputAtlasNode GetIndexByKey $atlasRegistrationVolumeKey]
-
-        # ----------------------------------------------------------------------------
-        # We have to create this function so that we can run it in command line mode
-        #
-
-        $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
-
 
         # -------------------------------------
         # Step 4: Perform Intensity Correction
@@ -177,15 +125,19 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCLMRI: Skipping intensity correction"
         }
 
-        # write results over to alignedTargetNode
+
+        $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
+        set Slicer3_HOME $::env(Slicer3_HOME)
+        set list [AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $alignedTargetNode]
+
 
         # -------------------------------------
         # Step 5: Atlas Alignment - you will also have to include the masks
         # Defines $workingDN GetAlignedAtlasNode
-        if { [RegisterAtlas $atlasAlignedFlag] } {
-            PrintError "Run: Atlas alignment failed !"
-            return 1
-        }
+#        if { [RegisterAtlas $atlasAlignedFlag] } {
+#            PrintError "Run: Atlas alignment failed !"
+#            return 1
+#        }
 
 
         # -------------------------------------
