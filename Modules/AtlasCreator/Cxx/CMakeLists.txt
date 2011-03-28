@@ -56,6 +56,7 @@ set(AtlasCreatorCxxModule_SRCS
   vtkMRMLAtlasCreatorNode.cxx
   vtkImageKilianDistanceTransform.cxx
   vtkImagePCAFilter.cxx
+  vtkImagePCATraining.cxx
   )
 
 include("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
