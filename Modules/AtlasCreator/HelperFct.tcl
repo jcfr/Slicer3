@@ -76,10 +76,4 @@ proc assert { command fid} {
   return 0
 } 
 
-proc splitList { list } {
-
-  set $::acLabelListAsString [split $list ,]
-  return 1
-
-}
 

@@ -1118,9 +1118,9 @@ class AtlasCreatorLogic(object):
             Returns
                 TRUE or FALSE depending on success
         '''
-        if len(labelsList) == 0:
-            self.Helper().info("Empty labelsList for PerformPCAAnalysis() command. Aborting..")
-            return False
+        #if len(labelsList) == 0:
+        #    self.Helper().info("Empty labelsList for PerformPCAAnalysis() command. Aborting..")
+        #    return False
             
         if len(filePathsList) == 0:
             self.Helper().info("Empty filePathsList for PerformPCAAnalysis() command. Aborting..")
@@ -1160,11 +1160,11 @@ class AtlasCreatorLogic(object):
                 outputDistanceMapFilePath = os.path.join(casePcaDistanceMapDirectory,str(label)+".nrrd")
                 
                 # generate distance maps
-                self.Helper().PCAGenerateDistanceMaps(inputAtlasFilePath,label,outputDistanceMapFilePath)
+                self.Helper().PCAGenerateDistanceMaps(inputAtlasFilePath,label,outputDistanceMapFilePath, self.__dryRun)
                 
         # now after creating all the distance maps,
         # we can generate the PCA shape representations
-        self.Helper().PCAGenerateModel(pcaOutputDirectory,labelsList)
+        self.Helper().PCAGenerateModel(pcaOutputDirectory,labelsList, self.__dryRun)
             
         return True
             

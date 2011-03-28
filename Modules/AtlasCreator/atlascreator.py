@@ -241,7 +241,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.29")
+    info("Version v0.3")
     info("")
     
     if len(argv) == 0:

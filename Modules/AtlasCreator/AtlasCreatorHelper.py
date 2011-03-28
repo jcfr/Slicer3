@@ -863,6 +863,8 @@ class AtlasCreatorHelper(object):
         
         if not dryRun:
             slicer.TkCall(output)
+        else:
+            self.info("Skipping execution of GeneratePCAModel..")            
     
     
     
@@ -901,27 +903,23 @@ class AtlasCreatorHelper(object):
         # set the variable for the labelList
         if not dryRun:
             slicer.TkCall(output1)
-        
-        output1b = "splitList $::acLabelListAsString"
-        
-        # now convert the list to a real list
-        if not dryRun:
-            slicer.TkCall(output1b)
             
-        output2 = "GeneratePCAModel"
+        # we use the wrapper to start the generation of PCA models
+        # we pass all arguments but the labelList which gets handled using the global variable,
+        # since we can not pass space divided lists via the Slicer Python<->Tcl interface!!
+        output2 = "GeneratePCAModelWrapper"
         output2 += " " + str(pcaDirectory)
         output2 += " " + str(maxNumberOfEigenVectors)
-        #output += " \"" + str(labelListAsString) + " \""
-        output2 += " $::acLabelListAsString"
         output2 += " " + str(saveFileFormat)
         output2 += " " + str(combineStructures)
 
         self.debug("Invoking TCL code: " + output1)
-        self.debug("invoking TCL code: " + output1b)
         self.debug("Invoking TCL code: " + output2)
         
         if not dryRun:
             slicer.TkCall(output2)
+        else:
+            self.info("Skipping execution of GeneratePCAModel..")
 
 
 

@@ -172,6 +172,20 @@ proc SeperateAndSaveCombinedPCAVolumes {vtkImage Extent BoundingBox FileDir File
 # -----------------------------------------
 # Generate PCA model from shape data
 
+# The wrapper is used in Slicer to pass a labelList correctly.
+# Background: space divided lists can not be passed from Slicer - so we use a global variable as a workaround!
+proc GeneratePCAModelWrapper {PCAPath  MaxNumberOfEigenVectors FileExtension PCACombineStructures} {
+
+  # we fetch the global labelList
+  set labelList [split $::acLabelListAsString ,]
+  
+  GeneratePCAModel $PCAPath $MaxNumberOfEigenVectors $labelList $FileExtension $PCACombineStructures
+  
+  return 1
+
+}
+
+
 proc GeneratePCAModel  { PCAPath  MaxNumberOfEigenVectors StructureList  FileExtension PCACombineStructures } {
   # puts " GeneratePCAModel  $PCAPath  $MaxNumberOfEigenVectors \"$StructureList\"  $FileExtension $PCACombineStructures"
  
