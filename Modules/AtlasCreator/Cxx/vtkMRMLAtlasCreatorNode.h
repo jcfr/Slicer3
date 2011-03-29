@@ -57,6 +57,18 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   //ETX
 
   // Description: Initialize the configuration with default values
+  //   The default values are:
+  //   - all input and output filePaths, filePathLists and labelLists to ""
+  //   - Toolkit: BRAINSFit
+  //   - Template Type: Fixed
+  //   - DynamicTemplateIterations: 5
+  //   - Affine Registration
+  //   - Save Transforms and keep aligned images
+  //   - Deactivate Normalization including all settings
+  //   - Deactivate PCA including all settings
+  //   - Deactivate Cluster including all settings
+  //   - Deactivate SkipRegistration including all settings
+  //   - Deactivate Debug and Dryrun Mode
   void InitializeByDefault();
 
   // Description: Launch the Atlas Creator computation with the assigned parameters
