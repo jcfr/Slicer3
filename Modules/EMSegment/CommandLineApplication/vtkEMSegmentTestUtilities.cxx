@@ -27,7 +27,7 @@ bool ImageDiff(vtkImageData* resultData, std::string standardFilename)
   }
   catch (...)
   {
-    std::cerr << "Error reading standard image: " << std::endl;
+    std::cerr << "Error: EMSegmenter: Error reading standard image: " << std::endl;
     standardReader->Delete();
     return true;
   }
@@ -43,22 +43,22 @@ bool ImageDiff(vtkImageData* resultData, std::string standardFilename)
     {
       //
       // display spacing and origin info for resultData
-      std::cerr << "Image spacing and/or origin does not match standard!" 
+      std::cerr << "Error: EMSegmenter: Image spacing and/or origin does not match standard!" 
                 << std::endl;
-      std::cerr << "result origin: " 
+      std::cerr << "Error: EMSegmenter: result origin: " 
                 << resultData->GetOrigin()[0] << " "
                 << resultData->GetOrigin()[1] << " "
                 << resultData->GetOrigin()[2] << std::endl;
-      std::cerr << "result spacing: " 
+      std::cerr << "Error: EMSegmenter: result spacing: " 
                 << resultData->GetSpacing()[0] << " "
                 << resultData->GetSpacing()[1] << " "
                 << resultData->GetSpacing()[2] << std::endl;
 
-      std::cerr << "Standard origin: " 
+      std::cerr << "Error: EMSegmenter: Standard origin: " 
                 << standardReader->GetOutput()->GetOrigin()[0] << " "
                 << standardReader->GetOutput()->GetOrigin()[1] << " "
                 << standardReader->GetOutput()->GetOrigin()[2] << std::endl;
-      std::cerr << "Standard spacing: " 
+      std::cerr << "Error: EMSegmenter: Standard spacing: " 
                 << standardReader->GetOutput()->GetSpacing()[0] << " "
                 << standardReader->GetOutput()->GetSpacing()[1] << " "
                 << standardReader->GetOutput()->GetSpacing()[2] << std::endl;
@@ -67,7 +67,7 @@ bool ImageDiff(vtkImageData* resultData, std::string standardFilename)
   }
   if (!imagesDiffer)
   {
-    std::cerr << "Result image origin and spacing match." << std::endl;
+    std::cout << "Result image origin and spacing match." << std::endl;
   }
 
   //
@@ -89,7 +89,7 @@ bool ImageDiff(vtkImageData* resultData, std::string standardFilename)
     
   if (imagesDiffer)
   {
-    std::cerr << "((temporarily not) ignoring zero) Num / Min / Max / Mean difference = " 
+    std::cerr << "Error: EMSegmenter: ((temporarily not) ignoring zero) Num / Min / Max / Mean difference = " 
               << differenceAccumulator->GetVoxelCount()  << " / "
               << differenceAccumulator->GetMin()[0]      << " / "
               << differenceAccumulator->GetMax()[0]      << " / "
@@ -97,7 +97,7 @@ bool ImageDiff(vtkImageData* resultData, std::string standardFilename)
   }
   else
   {
-    std::cerr << "Result image voxels match." << std::endl;
+    std::cout << "Result image voxels match." << std::endl;
   }
 
   standardReader->Delete();
