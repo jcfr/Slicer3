@@ -413,7 +413,9 @@ class AtlasCreatorLogic(object):
             
             self.PerformPCAAnalysis(labelsList,
                                     resampledSegmentationsFilePathList,
-                                    outputDir)
+                                    outputDir,
+                                    node.GetPCAMaxEigenVectors(),
+                                    node.GetPCACombine())
             
         else:
             #
@@ -1104,7 +1106,7 @@ class AtlasCreatorLogic(object):
 
 
 
-    def PerformPCAAnalysis(self,labelsList,filePathsList,outputDirectory):
+    def PerformPCAAnalysis(self,labelsList,filePathsList,outputDirectory,maxEigenVectors,combine):
         '''
             Performs PCA Analysis on top of the Atlas Generation.
             
@@ -1114,6 +1116,10 @@ class AtlasCreatorLogic(object):
                 list of existing filepaths to segmentations
             outputDirectory
                 directory to write the PCA analysis, trailing slash is required
+            maxEigenVectors
+                number of max EigenVectors to use for PCA as integer
+            combine
+                TRUE if all structures should be combined or FALSE
                 
             Returns
                 TRUE or FALSE depending on success
@@ -1164,7 +1170,7 @@ class AtlasCreatorLogic(object):
                 
         # now after creating all the distance maps,
         # we can generate the PCA shape representations
-        self.Helper().PCAGenerateModel(pcaOutputDirectory,labelsList, self.__dryRun)
+        self.Helper().PCAGenerateModel(pcaOutputDirectory,labelsList, self.__dryRun, int(maxEigenVectors),"nrrd" ,int(combine))
             
         return True
             

@@ -52,7 +52,7 @@ vtkMRMLNode* vtkMRMLAtlasCreatorNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLAtlasCreatorNode::vtkMRMLAtlasCreatorNode()
 {
-  this->OriginalImagesFilePathList = 0;
+
   this->OriginalImagesFilePathList = 0;
   this->SegmentationsFilePathList = 0;
   this->OutputDirectory = 0;
@@ -76,6 +76,8 @@ vtkMRMLAtlasCreatorNode::vtkMRMLAtlasCreatorNode()
   this->OutputCast = 0;
 
   this->PCAAnalysis = 0;
+  this->PCAMaxEigenVectors = 0;
+  this->PCACombine = 0;
 
   this->UseCluster = 0;
   this->SchedulerCommand = 0;
@@ -237,6 +239,8 @@ void vtkMRMLAtlasCreatorNode::WriteXML(ostream& of, int nIndent)
     }
 
   of << " PCAAnalysis =\"" << this->PCAAnalysis << "\"";
+  of << " PCAMaxEigenVectors =\"" << this->PCAMaxEigenVectors << "\"";
+  of << " PCACombine =\"" << this->PCACombine << "\"";
 
 
   of << " SchedulerCommand =\"" << this->SchedulerCommand << "\"";
@@ -406,6 +410,28 @@ void vtkMRMLAtlasCreatorNode::ReadXMLAttributes(const char** atts)
       this->SetPCAAnalysis(val);
       }
 
+    if ( !strcmp(attName, "PCAMaxEigenVectors") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetPCAMaxEigenVectors(val);
+      }
+
+    if ( !strcmp(attName, "PCACombine") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetPCACombine(val);
+      }
+
 
     if ( !strcmp(attName, "UseCluster") )
       {
@@ -502,6 +528,8 @@ void vtkMRMLAtlasCreatorNode::Copy(vtkMRMLNode *anode)
   this->SetOutputCast( node->GetOutputCast());
 
   this->SetPCAAnalysis( node->GetPCAAnalysis());
+  this->SetPCAMaxEigenVectors( node->GetPCAMaxEigenVectors());
+  this->SetPCACombine( node->GetPCACombine());
 
   this->SetUseCluster( node->GetUseCluster());
   this->SetSchedulerCommand( node->GetSchedulerCommand());
@@ -543,6 +571,8 @@ void vtkMRMLAtlasCreatorNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "OutputCast: " << (this->GetOutputCast() ? this->GetOutputCast() : "(none)") << "\n";
 
   os << indent << "PCAAnalysis: " << this->GetPCAAnalysis() << "\n";
+  os << indent << "PCAMaxEigenVectors: " << this->GetPCAMaxEigenVectors() << "\n";
+  os << indent << "PCACombine: " << this->GetPCACombine() << "\n";
 
   os << indent << "UseCluster: " << this->GetUseCluster() << "\n";
   os << indent << "SchedulerCommand: " << (this->GetSchedulerCommand() ? this->GetSchedulerCommand() : "(none)") << "\n";
@@ -554,6 +584,47 @@ void vtkMRMLAtlasCreatorNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "DebugMode: " << this->GetDebugMode() << "\n";
   os << indent << "DryrunMode: " << this->GetDryrunMode() << "\n";
 
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLAtlasCreatorNode::InitializeByDefault()
+{
+
+  this->OriginalImagesFilePathList = "";
+  this->SegmentationsFilePathList = "";
+  this->OutputDirectory = "";
+
+  this->Toolkit = "BRAINSFit";
+
+  this->TemplateType = "Fixed";
+  this->DynamicTemplateIterations = 5;
+  this->FixedTemplateDefaultCaseFilePath = "";
+
+  this->LabelsList = "";
+
+  this->RegistrationType = "Affine";
+
+  this->SaveTransforms = 1;
+  this->DeleteAlignedImages = 0;
+  this->DeleteAlignedSegmentations = 0;
+  this->NormalizeAtlases = 0;
+  this->NormalizeTo = 1;
+
+  this->OutputCast = "Short";
+
+  this->PCAAnalysis = 0;
+  this->PCAMaxEigenVectors = 10;
+  this->PCACombine = 0;
+
+  this->UseCluster = 0;
+  this->SchedulerCommand = "";
+
+  this->SkipRegistration = 0;
+  this->ExistingTemplate = "";
+  this->TransformsDirectory = "";
+
+  this->DebugMode = 0;
+  this->DryrunMode = 0;
 }
 
 //----------------------------------------------------------------------------

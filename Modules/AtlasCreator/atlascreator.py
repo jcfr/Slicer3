@@ -179,8 +179,15 @@ def usage():
     info("                The executable to use as a scheduler in cluster mode, f.e. \"qsub\".")
     info("")
     info("--pca")
-    info("        Perform PCA Analysis on top of Atlas Generation.")
+    info("        Perform PCA Analysis on top of Resampling.")
     info("")
+    info("        --pcaMaxEigenVectors INT")
+    info("                The number of maximal Eigenvectors to use for model generation.")
+    info("                DEFAULT: 10")
+    info("")
+    info("        --pcaCombine")
+    info("                Combine the PCA output.")
+    info("")    
     info("--slicer FILEPATH")
     info("        Filepath to the 3D Slicer launcher including arguments, f.e. \"/usr/bin/Slicer3 --tmp_dir /var/tmp\".")
     info("        DEFAULT: Find the 3D Slicer launcher automatically.")
@@ -273,6 +280,8 @@ def main(argv):
                                                         "cluster",
                                                         "schedulerCommand=",
                                                         "pca",
+                                                        "pcaMaxEigenVectors=",
+                                                        "pcaCombine",
                                                         "slicer=",
                                                         "debug",
                                                         "dryrun",
@@ -320,6 +329,8 @@ def main(argv):
     schedulerCommand = None
     
     pca = False
+    pcaMaxEigenVectors = 10
+    pcaCombine = False
     
     debug = False
     
@@ -372,6 +383,12 @@ def main(argv):
             schedulerCommand = arg
         elif opt in ("--pca"):
             pca = True
+        elif opt in ("--pcaMaxEigenVectors"):
+            pca = True
+            pcaMaxEigenVectors = arg
+        elif opt in ("--pcaCombine"):
+            pca = True
+            pcaCombine = True
         elif opt in ("--slicer"):
             slicerLauncherFilePath = arg
         elif opt in ("-d", "--debug"):
@@ -527,6 +544,13 @@ def main(argv):
         info("Error: Value of --normalizeTo: " + str(normalizeTo))
         errorOccured = True
         
+    # check if pcaMaxEigenVectors is an integer
+    if not is_int(pcaMaxEigenVectors):
+        info("Error: The pcaMaxEigenVectors value must be an integer.")
+        info("Error: Value of --pcaMaxEigenVectors: " + str(pcaMaxEigenVectors))
+        errorOccured = True
+                
+        
     # check if we have a valid outputCast
     if outputCast and is_int(outputCast):
         
@@ -640,15 +664,24 @@ def main(argv):
         
     if normalize:
         evalpythonCommand += "n.SetNormalizeAtlases(1);"
-        evalpythonCommand += "n.SetNormalizeTo(" + str(normalizeTo) + ");";
+        evalpythonCommand += "n.SetNormalizeTo(" + str(normalizeTo) + ");"
     else:
         evalpythonCommand += "n.SetNormalizeAtlases(0);"
         evalpythonCommand += "n.SetNormalizeTo(-1);"
 
     if pca:
         evalpythonCommand += "n.SetPCAAnalysis(1);"
+        evalpythonCommand += "n.SetPCAMaxEigenVectors(" + str(pcaMaxEigenVectors) + ");"
     else:
         evalpythonCommand += "n.SetPCAAnalysis(0);"
+        evalpythonCommand += "n.SetPCAMaxEigenVectors(10);"
+        
+    if pcaCombine:
+        evalpythonCommand += "n.SetPCACombine(1);"
+    else:
+        evalpythonCommand += "n.SetPCACombine(0);"
+        
+    
 
     evalpythonCommand += "n.SetOutputCast('" + outputCast + "');"
     

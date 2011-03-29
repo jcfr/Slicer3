@@ -56,6 +56,9 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   };
   //ETX
 
+  // Description: Initialize the configuration with default values
+  void InitializeByDefault();
+
   // Description: Launch the Atlas Creator computation with the assigned parameters
   void Launch();
 
@@ -140,6 +143,14 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkGetMacro(PCAAnalysis,int);
   vtkSetMacro(PCAAnalysis,int);
 
+  // Description: The Number of Max EigenVectors to use for PCA Analysis
+  vtkGetMacro(PCAMaxEigenVectors,int);
+  vtkSetMacro(PCAMaxEigenVectors,int);
+
+  // Description: 1: Combine all PCA output 0: Don't combine all PCA output
+  vtkGetMacro(PCACombine,int);
+  vtkSetMacro(PCACombine,int);
+
 
   // Description: 1: Use Cluster 0: Don't use cluster
   vtkGetMacro(UseCluster,int);
@@ -197,6 +208,8 @@ protected:
   char *OutputCast;
 
   int PCAAnalysis;
+  int PCAMaxEigenVectors;
+  int PCACombine;
 
   int UseCluster;
   char *SchedulerCommand;
