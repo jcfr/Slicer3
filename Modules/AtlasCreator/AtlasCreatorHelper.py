@@ -711,6 +711,62 @@ class AtlasCreatorHelper(object):
                 listOfFilePaths.append(os.path.normpath(entry))
                 
         return listOfFilePaths
+
+
+
+    '''=========================================================================================='''    
+    def ConvertDirectoryToString(directory):
+        '''
+            Convert a directory to a string of filePaths with space as delimiter. While reading the directory,
+            only real files are added to the list, sub-directories as well as links are ignored.
+            
+            directory
+                a String containing the path to the directory
+                
+            Returns
+                string of filePaths with space as delimiter
+        '''
+        output = ""
+        
+        if not directory:
+            return listOfFilePaths
+        
+        if not os.path.isdir(directory):
+            return listOfFilePaths
+        
+        # loop through the directory
+        for entry in glob.glob(os.path.join(directory, '*.*')):
+            
+            if os.path.isfile(entry) and not os.path.islink(entry):
+                
+                # this is a real file and not a link or subdir
+                # add it to the string
+                output += str(os.path.normpath(entry))
+                # add the delimiter
+                output += " "
+                
+        return output.rstrip()
+
+        
+    
+    '''=========================================================================================='''    
+    def ConvertListToString(list):
+        '''
+            Convert a list to a string of items with space as delimiter.
+            
+            list
+                a list object
+                
+            Returns
+                string of list items with space as delimiter
+        '''
+        output = ""
+        
+        for i in list:
+            output += str(i)
+            output += " "
+    
+        return output.rstrip()    
     
     
     

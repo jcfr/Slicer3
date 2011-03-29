@@ -51,6 +51,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._secondFrame = slicer.vtkSlicerModuleCollapsibleFrame()
 
+        self._toolkitCombo = slicer.vtkKWComboBoxWithLabel()
+
         self._defaultCaseFrame = slicer.vtkKWFrameWithLabel()
 
         self._dynamicRadio = slicer.vtkKWRadioButton()
@@ -62,6 +64,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._defaultCaseEntry = slicer.vtkKWComboBoxWithLabel()
 
         self._regTypeRadios = slicer.vtkKWRadioButtonSetWithLabel()
+
+
 
         self._saveTransformsCheckBox = slicer.vtkKWCheckButtonWithLabel()
 
@@ -82,9 +86,19 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._clusterCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._schedulerEntry = slicer.vtkKWEntryWithLabel()
         
+        self._pcaFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        self._pcaCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._maxEigenVectors = slicer.vtkKWSpinBoxWithLabel()
+        self._pcaCombine = slicer.vtkKWCheckButtonWithLabel()
+                
+        
         self._fifthFrame = slicer.vtkSlicerModuleCollapsibleFrame()
         
         self._normalizeValueEntry = slicer.vtkKWEntryWithLabel()
+        
+        self._debugCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        
+        self._dryrunCheckBox = slicer.vtkKWCheckButtonWithLabel()
 
         self._generateButton = slicer.vtkKWPushButton()
 
@@ -131,23 +145,30 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         if not self._updating:
 
             if caller == self._generateButton and event == vtkKWPushButton_InvokedEvent:
+                self.UpdateMRML()
                 self.GenerateAtlas()
-            elif caller == self._origDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
+            elif caller == self._origDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:                
                 self.UpdateCaseCombobox()
+                self.UpdateMRML()
             elif caller == self._segDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
                 self.UpdateCaseCombobox()
+                self.UpdateMRML()
             elif caller == self._fixedRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
                 self.ToggleMeanAndDefaultCase1()
+                self.UpdateMRML()
             elif caller == self._dynamicRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
                 self.ToggleMeanAndDefaultCase2()
+                self.UpdateMRML()
             elif caller == self._normalizeAtlasCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
                 self.ToggleNormalize()
+                self.UpdateMRML()
             elif caller == self._defaultCaseEntry.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
                 self.GetHelper().debug("defaultCaseEntry changed")
                 self.UpdateLabelList()
+                self.UpdateMRML()
             elif caller == self._transformsTemplateButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
                 self.UpdateLabelList()
-            
+                self.UpdateMRML()
                 
                 
     def ToggleNormalize(self):
@@ -371,6 +392,145 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         if not self._updating:
 
             self._updating = 1
+            
+            if not self._associatedMRMLNode:
+                # if we do not have an associated MRML Node, we will create one right here!!
+                self._associatedMRMLNode = slicer.vtkMRMLAtlasCreatorNode()
+                self._associatedMRMLNode.InitializeByDefault()
+            
+            # TODO debug
+            
+            # TODO dryrun
+            
+            # cluster stuff
+            if self._clusterCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetUseCluster(1)
+            else:
+                self._associatedMRMLNode.SetUseCluster(0)
+                
+            schedCommand = self._schedulerEntry.GetWidget().GetValue()
+            if schedCommand:
+                self._associatedMRMLNode.SetSchedulerCommand(schedCommand)
+                
+            ###############################################################
+            
+            # input panel
+            imagesDir = self._origDirButton.GetWidget().GetFileName()
+            if imagesDir:
+                self._associatedMRMLNode.SetOriginalImagesFilePathList(self.GetHelper().ConvertDirectoryToString(imagesDir))
+
+            segmentationsDir = self._segDirButton.GetWidget().GetFileName()
+            if segmentationsDir:
+                self._associatedMRMLNode.SetSegmentationsFilePathList(self.GetHelper().ConvertDirectoryToString(segmentationsDir))
+                
+            outputDir = self._origDirButton.GetWidget().GetFileName()
+            if outputDir:
+                self._associatedMRMLNode.SetOutputDirectory(outputDir)
+            
+            # input panel, skip registration frame
+            if self._transformsDirCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetSkipRegistration(1)
+            else:
+                self._associatedMRMLNode.SetSkipRegistration(0)
+                
+            transformsDir = self._transformsDirButton.GetWidget().GetFileName()
+            if transformsDir:
+                self._associatedMRMLNode.SetTransformsDir(self.GetHelper().ConvertDirectoryToString(transformsDir))
+                
+            transformsTemplate = self._transformsTemplateButton.GetWidget().GetFileName()
+            if transformsTemplate:
+                self._associatedMRMLNode.SetExistingTemplate(os.path.normpath(transformsTemplate))
+            
+            ###############################################################
+                    
+            
+                
+            # TODO CMTK/BRAINSFit
+                
+            '''
+            
+               
+                if debug or dryrun:
+                    evalpythonCommand += "n.SetDebugMode(1);"
+            
+                if dryrun:
+                    evalpythonCommand += "n.SetDryrunMode(1);"
+            
+                # set special settings if clusterMode or skipRegistrationMode is requested
+                if cluster:
+                    # cluster Mode
+                    evalpythonCommand += "n.SetUseCluster(1);"
+                    evalpythonCommand += "n.SetSchedulerCommand('" + schedulerCommand + "');"
+                elif skipRegistration:
+                    # skipRegistration Mode
+                    evalpythonCommand += "n.SetSkipRegistration(1);"
+                    evalpythonCommand += "n.SetTransformsDirectory('" + transformsDir + "');"
+                    evalpythonCommand += "n.SetExistingTemplate('" + existingTemplate + "');"
+                    
+                # now the configuration options which are valid for all
+                if imagesDir:
+                    evalpythonCommand += "n.SetOriginalImagesFilePathList('" + ConvertDirectoryToString(imagesDir) + "');"
+                
+                if segmentationsDir:
+                    evalpythonCommand += "n.SetSegmentationsFilePathList('" + ConvertDirectoryToString(segmentationsDir) + "');"
+                
+                if outputDir:
+                    evalpythonCommand += "n.SetOutputDirectory('" + outputDir + "');"
+                
+                if useCMTK:
+                    evalpythonCommand += "n.SetToolkit('CMTK');"
+                else:
+                    evalpythonCommand += "n.SetToolkit('BRAINSFit');"
+                
+                if fixed:
+                    evalpythonCommand += "n.SetTemplateType('fixed');"
+                    evalpythonCommand += "n.SetFixedTemplateDefaultCaseFilePath('" + template + "');"
+                else:
+                    evalpythonCommand += "n.SetTemplateType('dynamic');"
+                    evalpythonCommand += "n.SetDynamicTemplateIterations(" + str(meanIterations) + ");"
+                
+                evalpythonCommand += "n.SetLabelsList('" + ConvertListToString(labels) + "');"
+                        
+                if nonRigid:
+                    evalpythonCommand += "n.SetRegistrationType('Non-Rigid');"
+                else:
+                    evalpythonCommand += "n.SetRegistrationType('Affine');"
+                        
+                if writeTransforms:
+                    evalpythonCommand += "n.SetSaveTransforms(1);"
+                else:
+                    evalpythonCommand += "n.SetSaveTransforms(0);"
+            
+                if keepAligned:
+                    evalpythonCommand += "n.SetDeleteAlignedImages(0);"
+                    evalpythonCommand += "n.SetDeleteAlignedSegmentations(0);"
+                else:
+                    evalpythonCommand += "n.SetDeleteAlignedImages(1);"
+                    evalpythonCommand += "n.SetDeleteAlignedSegmentations(1);"
+                    
+                if normalize:
+                    evalpythonCommand += "n.SetNormalizeAtlases(1);"
+                    evalpythonCommand += "n.SetNormalizeTo(" + str(normalizeTo) + ");"
+                else:
+                    evalpythonCommand += "n.SetNormalizeAtlases(0);"
+                    evalpythonCommand += "n.SetNormalizeTo(-1);"
+            
+                if pca:
+                    evalpythonCommand += "n.SetPCAAnalysis(1);"
+                    evalpythonCommand += "n.SetPCAMaxEigenVectors(" + str(pcaMaxEigenVectors) + ");"
+                else:
+                    evalpythonCommand += "n.SetPCAAnalysis(0);"
+                    evalpythonCommand += "n.SetPCAMaxEigenVectors(10);"
+                    
+                if pcaCombine:
+                    evalpythonCommand += "n.SetPCACombine(1);"
+                else:
+                    evalpythonCommand += "n.SetPCACombine(0);"
+                    
+                
+            
+                evalpythonCommand += "n.SetOutputCast('" + outputCast + "');"
+                '''             
 
             self._updating = 0
 
@@ -524,6 +684,17 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._secondFrame.ExpandFrame()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._secondFrame.GetWidgetName())
 
+        self._toolkitCombo.SetParent(self._secondFrame.GetFrame())
+        self._toolkitCombo.Create()
+        self._toolkitCombo.GetWidget().ReadOnlyOn()
+        self._toolkitCombo.SetLabelText("Toolkit:")
+        self._toolkitCombo.SetBalloonHelpString("The toolkit to use for Registration.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._toolkitCombo.GetWidgetName())
+
+        self._toolkitCombo.GetWidget().AddValue("BRAINSFit")
+        self._toolkitCombo.GetWidget().AddValue("CMTK")
+        self._toolkitCombo.GetWidget().SetValue("BRAINSFit")
+
         self._defaultCaseFrame.SetParent(self._secondFrame.GetFrame())
         self._defaultCaseFrame.Create()
         self._defaultCaseFrame.SetLabelText("Registration Template:")
@@ -634,6 +805,33 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._schedulerEntry.SetLabelText("Scheduler Command:")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._schedulerEntry.GetWidgetName())
 
+        self._pcaFrame.SetParent(self._moduleFrame.GetFrame())
+        self._pcaFrame.Create()
+        self._pcaFrame.SetLabelText("PCA")
+        self._pcaFrame.CollapseFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaFrame.GetWidgetName())   
+
+        self._pcaCheckBox.SetParent(self._pcaFrame.GetFrame())
+        self._pcaCheckBox.Create()
+        self._pcaCheckBox.SetLabelText("Generate PCA Models:")
+        self._pcaCheckBox.GetWidget().SetSelectedState(0)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCheckBox.GetWidgetName())
+
+        self._maxEigenVectors.SetParent(self._pcaFrame.GetFrame())
+        self._maxEigenVectors.Create()
+        self._maxEigenVectors.GetWidget().SetRange(1,100)
+        self._maxEigenVectors.GetWidget().SetIncrement(1)
+        self._maxEigenVectors.GetWidget().SetValue(10)
+        self._maxEigenVectors.SetLabelText("Max. Number of EigenVectors:")
+        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._maxEigenVectors.GetWidgetName())
+
+        self._pcaCombine.SetParent(self._pcaFrame.GetFrame())
+        self._pcaCombine.Create()
+        self._pcaCombine.SetLabelText("Combine PCA for all Labels:")
+        self._pcaCombine.GetWidget().SetSelectedState(0)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCombine.GetWidgetName())
+        
+
         self._fifthFrame.SetParent(self._moduleFrame.GetFrame())
         self._fifthFrame.Create()
         self._fifthFrame.SetLabelText("Advanced")
@@ -657,6 +855,19 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._deleteAlignedSegmentationsCheckBox.SetLabelText("Delete Aligned Segmentations:")
         self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(1)
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deleteAlignedSegmentationsCheckBox.GetWidgetName())        
+        
+        self._debugCheckBox.SetParent(self._fifthFrame.GetFrame())
+        self._debugCheckBox.Create()
+        self._debugCheckBox.SetLabelText("Debug Output:")
+        self._debugCheckBox.GetWidget().SetSelectedState(0)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._debugCheckBox.GetWidgetName())
+        
+        self._dryrunCheckBox.SetParent(self._fifthFrame.GetFrame())
+        self._dryrunCheckBox.Create()
+        self._dryrunCheckBox.SetLabelText("Dryrun (Do not execute, just print commands):")
+        self._dryrunCheckBox.GetWidget().SetSelectedState(0)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._dryrunCheckBox.GetWidgetName())
+                
         
         self._generateButton.SetParent(self._moduleFrame.GetFrame())
         self._generateButton.Create()
