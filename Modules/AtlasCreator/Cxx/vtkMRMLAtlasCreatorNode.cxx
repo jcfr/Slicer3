@@ -590,19 +590,19 @@ void vtkMRMLAtlasCreatorNode::PrintSelf(ostream& os, vtkIndent indent)
 void vtkMRMLAtlasCreatorNode::InitializeByDefault()
 {
 
-  this->OriginalImagesFilePathList = "";
-  this->SegmentationsFilePathList = "";
-  this->OutputDirectory = "";
+  this->SetOriginalImagesFilePathList("");
+  this->SetSegmentationsFilePathList("");
+  this->SetOutputDirectory("");
 
-  this->Toolkit = "BRAINSFit";
+  this->SetToolkit("BRAINSFit");
 
-  this->TemplateType = "Fixed";
+  this->SetTemplateType("Fixed");
   this->DynamicTemplateIterations = 5;
-  this->FixedTemplateDefaultCaseFilePath = "";
+  this->SetFixedTemplateDefaultCaseFilePath("");
 
-  this->LabelsList = "";
+  this->SetLabelsList("");
 
-  this->RegistrationType = "Affine";
+  this->SetRegistrationType("Affine");
 
   this->SaveTransforms = 1;
   this->DeleteAlignedImages = 0;
@@ -610,18 +610,18 @@ void vtkMRMLAtlasCreatorNode::InitializeByDefault()
   this->NormalizeAtlases = 0;
   this->NormalizeTo = 1;
 
-  this->OutputCast = "Short";
+  this->SetOutputCast("Short");
 
   this->PCAAnalysis = 0;
   this->PCAMaxEigenVectors = 10;
   this->PCACombine = 0;
 
   this->UseCluster = 0;
-  this->SchedulerCommand = "";
+  this->SetSchedulerCommand("");
 
   this->SkipRegistration = 0;
-  this->ExistingTemplate = "";
-  this->TransformsDirectory = "";
+  this->SetExistingTemplate("");
+  this->SetTransformsDirectory("");
 
   this->DebugMode = 0;
   this->DryrunMode = 0;
