@@ -38,70 +38,75 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self.SetGUIName("AtlasCreator")
 
         self._moduleFrame = slicer.vtkSlicerModuleCollapsibleFrame()
-        self._topFrame = slicer.vtkSlicerModuleCollapsibleFrame()
 
+        # Basic Frame
+        
+        self._basicFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        self._inputOutputFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        self._parametersFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        
+        # I/O Frame
         self._origDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
         self._segDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
-        self._outDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
+        self._outDirButton = slicer.vtkKWLoadSaveButtonWithLabel()                
+        self._registrationTypeRadios = slicer.vtkKWRadioButtonSetWithLabel()
+        # End I/O Frame
         
-        self._transformsFrame = slicer.vtkKWFrameWithLabel()
-        self._transformsDirCheckBox = slicer.vtkKWCheckButtonWithLabel()
-        self._transformsDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
-        self._transformsTemplateButton = slicer.vtkKWLoadSaveButtonWithLabel()
-
-        self._secondFrame = slicer.vtkSlicerModuleCollapsibleFrame()
-
+        # Parameters Frame
         self._toolkitCombo = slicer.vtkKWComboBoxWithLabel()
-
-        self._defaultCaseFrame = slicer.vtkKWFrameWithLabel()
-
-        self._dynamicRadio = slicer.vtkKWRadioButton()
-
-        self._meanSpinBox = slicer.vtkKWSpinBoxWithLabel()
-
-        self._fixedRadio = slicer.vtkKWRadioButton()
-
-        self._defaultCaseEntry = slicer.vtkKWComboBoxWithLabel()
-
-        self._regTypeRadios = slicer.vtkKWRadioButtonSetWithLabel()
-
-
-
-        self._saveTransformsCheckBox = slicer.vtkKWCheckButtonWithLabel()
-
-        self._deleteAlignedImagesCheckBox = slicer.vtkKWCheckButtonWithLabel()
-
-        self._deleteAlignedSegmentationsCheckBox = slicer.vtkKWCheckButtonWithLabel()
-
-        self._thirdFrame = slicer.vtkSlicerModuleCollapsibleFrame()
-
-        self._labelsEntry = slicer.vtkKWEntryWithLabel()
-
-        self._normalizeAtlasCheckBox = slicer.vtkKWCheckButtonWithLabel()
-
-        self._outputCastCombo = slicer.vtkKWComboBoxWithLabel()
+        self._deformationTypeRadios = slicer.vtkKWRadioButtonSetWithLabel()
+        self._meanIterationsSpinBox = slicer.vtkKWSpinBoxWithLabel()
+        self._defaultCaseCombo = slicer.vtkKWComboBoxWithLabel()
+        # End Parameters Frame
         
-        self._fourthFrame = slicer.vtkSlicerModuleCollapsibleFrame()
-
-        self._clusterCheckBox = slicer.vtkKWCheckButtonWithLabel()
-        self._schedulerEntry = slicer.vtkKWEntryWithLabel()
+        # End Basic Frame
         
+        
+        # Advanced Frame
+        
+        self._advancedFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        self._clusterFrame = slicer.vtkSlicerModuleCollapsibleFrame()
         self._pcaFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        self._transformsFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        self._miscFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        
+        # Cluster Frame
+        self._clusterCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._schedulerEntry = slicer.vtkKWEntryWithLabel()        
+        # End Cluster Frame
+        
+        # PCA Frame
         self._pcaCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._maxEigenVectors = slicer.vtkKWSpinBoxWithLabel()
         self._pcaCombine = slicer.vtkKWCheckButtonWithLabel()
-                
+        # End PCA Frame
         
-        self._fifthFrame = slicer.vtkSlicerModuleCollapsibleFrame()
+        # ExistingTransforms Frame
+        self._transformsDirCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._transformsDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
+        self._transformsTemplateButton = slicer.vtkKWLoadSaveButtonWithLabel()
+        # End ExistingTransforms Frame
         
+        # Misc. Frame
+        self._labelsEntry = slicer.vtkKWEntryWithLabel()
+        self._normalizeAtlasCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._normalizeValueEntry = slicer.vtkKWEntryWithLabel()
-        
+        self._outputCastCombo = slicer.vtkKWComboBoxWithLabel()
+        self._saveTransformsCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._deleteAlignedImagesCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._deleteAlignedSegmentationsCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._debugCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._dryrunCheckBox = slicer.vtkKWCheckButtonWithLabel() 
+        # End Misc. Frame
         
-        self._dryrunCheckBox = slicer.vtkKWCheckButtonWithLabel()
-
+        # End Advanced Frame
+        
+        
+        # The Start Button
         self._generateButton = slicer.vtkKWPushButton()
+        
 
+        # Internal Classes and Flags
         self._helper = AtlasCreatorHelper(self)
 
         self._logic = AtlasCreatorLogic(self)
@@ -130,10 +135,11 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._generateButtonTag = self.AddObserverByNumber(self._generateButton,vtkKWPushButton_InvokedEvent)
         self._origDirButtonTag = self.AddObserverByNumber(self._origDirButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
         self._segDirButtonTag = self.AddObserverByNumber(self._segDirButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
-        self._fixedRadioTag = self.AddObserverByNumber(self._fixedRadio,vtkKWRadioButton_SelectedStateChangedEvent)
-        self._dynamicRadioTag = self.AddObserverByNumber(self._dynamicRadio,vtkKWRadioButton_SelectedStateChangedEvent)
+        self._pairFixedRadioTag = self.AddObserverByNumber(self._pairFixedRadio,vtkKWRadioButton_SelectedStateChangedEvent)
+        self._pairOnlineRadioTag = self.AddObserverByNumber(self._pairOnlineRadio,vtkKWRadioButton_SelectedStateChangedEvent)
+        # TODO Group Online Tag..
         self._normalizeAtlasCheckBoxTag = self.AddObserverByNumber(self._normalizeAtlasCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
-        self._defaultCaseEntryTag = self.AddObserverByNumber(self._defaultCaseEntry.GetWidget(),vtkKWEntry_EntryValueChangedEvent)
+        self._defaultCaseEntryTag = self.AddObserverByNumber(self._defaultCaseCombo.GetWidget(),vtkKWEntry_EntryValueChangedEvent)
         self._transformsTemplateButtonTag = self.AddObserverByNumber(self._transformsTemplateButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
         self._mrmlNodeAddedTag = self.AddMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_NodeAddedEvent)
 
@@ -153,16 +159,16 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             elif caller == self._segDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
                 self.UpdateCaseCombobox()
                 self.UpdateMRML()
-            elif caller == self._fixedRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
+            elif caller == self._pairFixedRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
                 self.ToggleMeanAndDefaultCase1()
                 self.UpdateMRML()
-            elif caller == self._dynamicRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
+            elif caller == self._pairOnlineRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
                 self.ToggleMeanAndDefaultCase2()
                 self.UpdateMRML()
             elif caller == self._normalizeAtlasCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
                 self.ToggleNormalize()
                 self.UpdateMRML()
-            elif caller == self._defaultCaseEntry.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
+            elif caller == self._defaultCaseCombo.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
                 self.GetHelper().debug("defaultCaseEntry changed")
                 self.UpdateLabelList()
                 self.UpdateMRML()
@@ -187,13 +193,13 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         if useDefCase:
             self._dynamicRadio.SetSelectedState(0)
             #self._fixedRadio.SetSelectedState(1)
-            self._defaultCaseEntry.SetEnabled(1)
-            self._meanSpinBox.SetEnabled(0)
+            self._defaultCaseCombo.SetEnabled(1)
+            self._meanIterationsSpinBox.SetEnabled(0)
         else:
             self._dynamicRadio.SetSelectedState(1)
             #self._fixedRadio.SetSelectedState(0)
-            self._defaultCaseEntry.SetEnabled(0)
-            self._meanSpinBox.SetEnabled(1)
+            self._defaultCaseCombo.SetEnabled(0)
+            self._meanIterationsSpinBox.SetEnabled(1)
 
     def ToggleMeanAndDefaultCase2(self):
         useMean = self._dynamicRadio.GetSelectedState()
@@ -201,13 +207,13 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         if useMean:
             #self._dynamicRadio.SetSelectedState(1)
             self._fixedRadio.SetSelectedState(0)
-            self._defaultCaseEntry.SetEnabled(0)
-            self._meanSpinBox.SetEnabled(1)
+            self._defaultCaseCombo.SetEnabled(0)
+            self._meanIterationsSpinBox.SetEnabled(1)
         else:
             #self._dynamicRadio.SetSelectedState(0)
             self._fixedRadio.SetSelectedState(1)
-            self._defaultCaseEntry.SetEnabled(1)
-            self._meanSpinBox.SetEnabled(0)
+            self._defaultCaseCombo.SetEnabled(1)
+            self._meanIterationsSpinBox.SetEnabled(0)
 
     def UpdateCaseCombobox(self):
         if self._origDirButton.GetWidget().GetFileName() and self._segDirButton.GetWidget().GetFileName():
@@ -233,8 +239,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 caseFile = os.path.basename(nrrdFile)
                 if os.path.isfile(os.path.join(self._segDirButton.GetWidget().GetFileName(),caseFile)):
                     # file exists in originals and segmentations directory, so we can add it to our list of cases
-                    self._defaultCaseEntry.GetWidget().AddValue(caseFile)
-                    self._defaultCaseEntry.GetWidget().SetValue(caseFile)
+                    self._defaultCaseCombo.GetWidget().AddValue(caseFile)
+                    self._defaultCaseCombo.GetWidget().SetValue(caseFile)
                     
             self._updating = 0
             
@@ -251,7 +257,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 if len(listOfSegmentations) > 1:
                     defaultCaseSegmentationFilePath = listOfSegmentations[0]
             else:
-                caseFile = self._defaultCaseEntry.GetWidget().GetValue()
+                caseFile = self._defaultCaseCombo.GetWidget().GetValue()
                 defaultCaseSegmentationFilePath = self._segDirButton.GetWidget().GetFileName() + os.sep + caseFile
                 
             labelList = self.ReadLabelsFromImage(defaultCaseSegmentationFilePath)
@@ -322,10 +328,10 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             configuration.SetTemplateType("dynamic")
             
         # set the mean iterations
-        configuration.SetDynamicTemplateIterations(self._meanSpinBox.GetWidget().GetValue())    
+        configuration.SetDynamicTemplateIterations(self._meanIterationsSpinBox.GetWidget().GetValue())    
         
         # set the default case
-        defCaseFileName = self._defaultCaseEntry.GetWidget().GetValue()
+        defCaseFileName = self._defaultCaseCombo.GetWidget().GetValue()
         if not self._transformsDirCheckBox.GetWidget().GetSelectedState():     
             defCaseFilePath = os.path.join(self._origDirButton.GetWidget().GetFileName(),defCaseFileName)
             # ... normalize it and set it
@@ -335,7 +341,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         configuration.SetLabelsList(labels)
             
         # set the registration type
-        if self._regTypeRadios.GetWidget().GetWidget(0).GetSelectedState():
+        if self._deformationTypeRadios.GetWidget().GetWidget(0).GetSelectedState():
             # this means, affine registration is selected
             configuration.SetRegistrationType("Affine")
         else:
@@ -616,78 +622,95 @@ Scheduler Command: Executable to run before the commands for registering images.
         aboutText = "This module was developed by Daniel Haehn and Kilian Pohl, University of Pennsylvania. The research was funded by an ARRA supplement to NIH NCRR (P41 RR13218)."
         self._helpAboutFrame = self.BuildHelpAndAboutFrame(self._atlascreatorPage,helpText,aboutText)
 
-
         self._moduleFrame.SetParent(self._atlascreatorPage)
         self._moduleFrame.Create()
         self._moduleFrame.SetLabelText("AtlasCreator")
         self._moduleFrame.ExpandFrame()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s" % (self._moduleFrame.GetWidgetName(),self._atlascreatorPage.GetWidgetName()))
 
-        self._topFrame.SetParent(self._moduleFrame.GetFrame())
-        self._topFrame.Create()
-        self._topFrame.SetLabelText("Input/Output")
-        self._topFrame.ExpandFrame()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._topFrame.GetWidgetName())
+        # starting Basic Frame
+        self._basicFrame.SetParent(self._moduleFrame.GetFrame())
+        self._basicFrame.Create()
+        self._basicFrame.SetLabelText("Basic")
+        self._basicFrame.ExpandFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._basicFrame.GetWidgetName())
 
-        self._origDirButton.SetParent(self._topFrame.GetFrame())
+        # starting I/O Frame
+        self._inputOutputFrame.SetParent(self._basicFrame.GetFrame())
+        self._inputOutputFrame.Create()
+        self._inputOutputFrame.SetLabelText("Input/Output")
+        self._inputOutputFrame.ExpandFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._inputOutputFrame.GetWidgetName())
+
+        self._origDirButton.SetParent(self._inputOutputFrame.GetFrame())
         self._origDirButton.Create()
         self._origDirButton.GetWidget().SetText("Click to pick a directory")
+        self._origDirButton.SetLabelWidth(20)
         self._origDirButton.SetLabelText("Original images:")
         self._origDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
+        self._origDirButton.SetBalloonHelpString("The folder of the original Images.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._origDirButton.GetWidgetName())
 
         self._origDirButton.GetWidget().GetLoadSaveDialog().Create()
 
-        self._segDirButton.SetParent(self._topFrame.GetFrame())
+        self._segDirButton.SetParent(self._inputOutputFrame.GetFrame())
         self._segDirButton.Create()
         self._segDirButton.GetWidget().SetText("Click to pick a directory")
+        self._segDirButton.SetLabelWidth(20)
         self._segDirButton.SetLabelText("Segmentations:")
         self._segDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
+        self._segDirButton.SetBalloonHelpString("The folder of the Segmentations.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._segDirButton.GetWidgetName())
 
         self._segDirButton.GetWidget().GetLoadSaveDialog().Create()
 
-        self._outDirButton.SetParent(self._topFrame.GetFrame())
+        self._outDirButton.SetParent(self._inputOutputFrame.GetFrame())
         self._outDirButton.Create()
+        self._outDirButton.SetLabelWidth(20)
         self._outDirButton.GetWidget().SetText("Click to pick a directory")
         self._outDirButton.SetLabelText("Output directory:")
         self._outDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
+        self._outDirButton.SetBalloonHelpString("The Output Folder. Note: a new folder based on the same name will be created.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._outDirButton.GetWidgetName())
 
-        self._transformsFrame.SetParent(self._topFrame.GetFrame())
-        self._transformsFrame.Create()
-        self._transformsFrame.SetLabelText("Optional Input")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsFrame.GetWidgetName())
 
-        self._transformsDirCheckBox.SetParent(self._transformsFrame.GetFrame())
-        self._transformsDirCheckBox.Create()
-        self._transformsDirCheckBox.SetLabelText("Skip Registration and use Existing:")
-        self._transformsDirCheckBox.GetWidget().SetSelectedState(0)
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsDirCheckBox.GetWidgetName())
+        self._registrationTypeRadios.SetParent(self._inputOutputFrame.GetFrame())
+        self._registrationTypeRadios.Create()
+        self._registrationTypeRadios.SetLabelWidth(20)
+        self._registrationTypeRadios.SetLabelText("Registration Type:")
 
-        self._transformsDirButton.SetParent(self._transformsFrame.GetFrame())
-        self._transformsDirButton.Create()
-        self._transformsDirButton.GetWidget().SetText("Click to pick a directory")
-        self._transformsDirButton.SetLabelText("Transforms directory:")
-        self._transformsDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsDirButton.GetWidgetName())
+        self._pairFixedRadio = self._registrationTypeRadios.GetWidget().AddWidget(0)
+        self._pairFixedRadio.SetText("Pair Fixed")
+        self._pairFixedRadio.SetBalloonHelpString("Pair the cases against a fixed template.")
 
-        self._transformsTemplateButton.SetParent(self._transformsFrame.GetFrame())
-        self._transformsTemplateButton.Create()
-        self._transformsTemplateButton.GetWidget().SetText("Click to pick a template")
-        self._transformsTemplateButton.SetLabelText("Existing Template:")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsTemplateButton.GetWidgetName())
+        self._pairOnlineRadio = self._registrationTypeRadios.GetWidget().AddWidget(1)
+        self._pairOnlineRadio.SetText("Pair Online")
+        self._pairOnlineRadio.SetBalloonHelpString("Pair the cases against a dynamic template calculated as a mean Image.")
+        
+        self._groupOnlineRadio = self._registrationTypeRadios.GetWidget().AddWidget(2)
+        self._groupOnlineRadio.SetText("Group Online")
+        self._groupOnlineRadio.SetEnabled(0) # TODO disabled for now :)
+        self._groupOnlineRadio.SetBalloonHelpString("Use un-biased registration: each case against each case. UNDER CONSTRUCTION!")
+        
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._registrationTypeRadios.GetWidgetName())
 
-        self._secondFrame.SetParent(self._moduleFrame.GetFrame())
-        self._secondFrame.Create()
-        self._secondFrame.SetLabelText("Registration/Resampling")
-        self._secondFrame.ExpandFrame()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._secondFrame.GetWidgetName())
+        self._registrationTypeRadios.GetWidget().GetWidget(0).SetSelectedState(1) # by default, Pair Fixed
+        self._defaultCaseCombo.SetEnabled(1)
+        self._meanIterationsSpinBox.SetEnabled(0)        
+        # ending I/O Frame
+        
+        # starting Parameter Frame
+        self._parametersFrame.SetParent(self._basicFrame.GetFrame())
+        self._parametersFrame.Create()
+        self._parametersFrame.SetLabelText("Parameters")
+        self._parametersFrame.CollapseFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._parametersFrame.GetWidgetName())
 
-        self._toolkitCombo.SetParent(self._secondFrame.GetFrame())
+        self._toolkitCombo.SetParent(self._parametersFrame.GetFrame())
         self._toolkitCombo.Create()
         self._toolkitCombo.GetWidget().ReadOnlyOn()
         self._toolkitCombo.SetLabelText("Toolkit:")
+        self._toolkitCombo.SetLabelWidth(20)
         self._toolkitCombo.SetBalloonHelpString("The toolkit to use for Registration.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._toolkitCombo.GetWidgetName())
 
@@ -695,85 +718,185 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._toolkitCombo.GetWidget().AddValue("CMTK")
         self._toolkitCombo.GetWidget().SetValue("BRAINSFit")
 
-        self._defaultCaseFrame.SetParent(self._secondFrame.GetFrame())
-        self._defaultCaseFrame.Create()
-        self._defaultCaseFrame.SetLabelText("Registration Template:")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._defaultCaseFrame.GetWidgetName())
+        self._deformationTypeRadios.SetParent(self._parametersFrame.GetFrame())
+        self._deformationTypeRadios.Create()
+        self._deformationTypeRadios.SetLabelWidth(20)
+        self._deformationTypeRadios.SetLabelText("Deformation:")
 
-        self._dynamicRadio.SetParent(self._defaultCaseFrame.GetFrame())
-        self._dynamicRadio.Create()
-        self._dynamicRadio.SetText("Dynamic")
-        self._dynamicRadio.SetBalloonHelpString("Align to mean of Original Images")
-        slicer.TkCall("pack %s -side left -anchor nw -fill x -padx 2 -pady 1" % self._dynamicRadio.GetWidgetName())
-
-        self._meanSpinBox.SetParent(self._defaultCaseFrame.GetFrame())
-        self._meanSpinBox.Create()
-        self._meanSpinBox.GetWidget().SetRange(1,10)
-        self._meanSpinBox.GetWidget().SetIncrement(1)
-        self._meanSpinBox.GetWidget().SetValue(5)
-        self._meanSpinBox.SetLabelText("Alignment Iterations:")        
-        self._meanSpinBox.SetBalloonHelpString("The number of iterations for aligning to the mean of the Original Images.")
-        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._meanSpinBox.GetWidgetName())
-
-        self._fixedRadio.SetParent(self._defaultCaseFrame.GetFrame())
-        self._fixedRadio.Create()
-        self._fixedRadio.SetText("Fixed")
-        self._fixedRadio.SetBalloonHelpString("Align to Default Case")
-        slicer.TkCall("pack %s -side left -anchor nw -fill x -padx 2 -pady 1" % self._fixedRadio.GetWidgetName())
-
-        self._defaultCaseEntry.SetParent(self._defaultCaseFrame.GetFrame())
-        self._defaultCaseEntry.Create()
-        self._defaultCaseEntry.GetWidget().ReadOnlyOn()
-        self._defaultCaseEntry.SetLabelText("Default case:")
-        self._defaultCaseEntry.SetBalloonHelpString("The filename of the default case used for registration.")
-        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._defaultCaseEntry.GetWidgetName())
-
-        self._dynamicRadio.SetSelectedState(0)
-        self._fixedRadio.SetSelectedState(1)
-        self._defaultCaseEntry.SetEnabled(1)
-        self._meanSpinBox.SetEnabled(0)
-
-        self._regTypeRadios.SetParent(self._secondFrame.GetFrame())
-        self._regTypeRadios.Create()
-        self._regTypeRadios.SetLabelText("Registration Type:")
-
-        affineRadio = self._regTypeRadios.GetWidget().AddWidget(0)
+        affineRadio = self._deformationTypeRadios.GetWidget().AddWidget(0)
         affineRadio.SetText("Affine")
+        affineRadio.SetBalloonHelpString("Use affine deformation.")
 
-        nonRigidRadio = self._regTypeRadios.GetWidget().AddWidget(1)
+        nonRigidRadio = self._deformationTypeRadios.GetWidget().AddWidget(1)
         nonRigidRadio.SetText("Non-Rigid")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._regTypeRadios.GetWidgetName())
+        nonRigidRadio.SetBalloonHelpString("Use non-rigid deformation.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deformationTypeRadios.GetWidgetName())
 
-        self._regTypeRadios.GetWidget().GetWidget(0).SetSelectedState(1)
+        self._deformationTypeRadios.GetWidget().GetWidget(0).SetSelectedState(1)
 
-        self._saveTransformsCheckBox.SetParent(self._secondFrame.GetFrame())
+
+        self._meanIterationsSpinBox.SetParent(self._parametersFrame.GetFrame())
+        self._meanIterationsSpinBox.Create()
+        self._meanIterationsSpinBox.GetWidget().SetRange(1,10)
+        self._meanIterationsSpinBox.GetWidget().SetIncrement(1)
+        self._meanIterationsSpinBox.GetWidget().SetValue(5)
+        self._meanIterationsSpinBox.SetLabelWidth(20)
+        self._meanIterationsSpinBox.SetLabelText("Alignment Iterations:")        
+        self._meanIterationsSpinBox.SetBalloonHelpString("The number of iterations for aligning to the mean of the Original Images.")
+        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._meanIterationsSpinBox.GetWidgetName())
+
+        self._defaultCaseCombo.SetParent(self._parametersFrame.GetFrame())
+        self._defaultCaseCombo.Create()
+        self._defaultCaseCombo.GetWidget().ReadOnlyOn()
+        self._defaultCaseCombo.SetLabelText("Default case:")
+        self._defaultCaseCombo.SetLabelWidth(20)
+        self._defaultCaseCombo.SetBalloonHelpString("The filename of the default case used for registration.")
+        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._defaultCaseCombo.GetWidgetName())
+
+        # ending Parameter Frame
+        # ending Basic Frame
+
+        # starting Advanced Frame
+        self._advancedFrame.SetParent(self._moduleFrame.GetFrame())
+        self._advancedFrame.Create()
+        self._advancedFrame.SetLabelText("Advanced")
+        self._advancedFrame.CollapseFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._advancedFrame.GetWidgetName())
+
+        # starting Cluster Frame
+        self._clusterFrame.SetParent(self._advancedFrame.GetFrame())
+        self._clusterFrame.Create()
+        self._clusterFrame.SetLabelText("Cluster Configuration")
+        self._clusterFrame.CollapseFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._clusterFrame.GetWidgetName())
+
+        self._clusterCheckBox.SetParent(self._clusterFrame.GetFrame())
+        self._clusterCheckBox.Create()
+        self._clusterCheckBox.SetLabelText("Use Cluster:")
+        self._clusterCheckBox.GetWidget().SetSelectedState(0)
+        self._clusterCheckBox.SetLabelWidth(20)
+        self._clusterCheckBox.SetBalloonHelpString("Use the cluster configuration to perform all computations.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._clusterCheckBox.GetWidgetName())
+
+        self._schedulerEntry.SetParent(self._clusterFrame.GetFrame())
+        self._schedulerEntry.Create()
+        self._schedulerEntry.SetLabelText("Scheduler Command:")
+        self._schedulerEntry.SetLabelWidth(20)
+        self._schedulerEntry.SetBalloonHelpString("The scheduler command is used to execute computations in a cluster configuration.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._schedulerEntry.GetWidgetName())
+        # ending Cluster Frame
+
+        # starting PCA Frame
+        self._pcaFrame.SetParent(self._advancedFrame.GetFrame())
+        self._pcaFrame.Create()
+        self._pcaFrame.SetLabelText("Principal Component Analysis")
+        self._pcaFrame.CollapseFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaFrame.GetWidgetName())   
+
+        self._pcaCheckBox.SetParent(self._pcaFrame.GetFrame())
+        self._pcaCheckBox.Create()
+        self._pcaCheckBox.SetLabelText("Activate PCA:")
+        self._pcaCheckBox.GetWidget().SetSelectedState(0)
+        self._pcaCheckBox.SetBalloonHelpString("Activate PCA Analysis on top of Atlas Creation.")
+        self._pcaCheckBox.SetLabelWidth(20)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCheckBox.GetWidgetName())
+
+        self._maxEigenVectors.SetParent(self._pcaFrame.GetFrame())
+        self._maxEigenVectors.Create()
+        self._maxEigenVectors.GetWidget().SetRange(1,100)
+        self._maxEigenVectors.GetWidget().SetIncrement(1)
+        self._maxEigenVectors.GetWidget().SetValue(10)
+        self._maxEigenVectors.SetLabelText("Max. EigenVectors:")
+        self._maxEigenVectors.SetLabelWidth(20)
+        self._maxEigenVectors.SetBalloonHelpString("Set the maximal number of EigenVectors to use for PCA.")
+        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._maxEigenVectors.GetWidgetName())
+
+        self._pcaCombine.SetParent(self._pcaFrame.GetFrame())
+        self._pcaCombine.Create()
+        self._pcaCombine.SetLabelText("Combine PCAs:")
+        self._pcaCombine.GetWidget().SetSelectedState(0)
+        self._pcaCombine.SetLabelWidth(20)
+        self._pcaCombine.SetBalloonHelpString("Generate only one PCA output for all labels.")        
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCombine.GetWidgetName())
+        # ending PCA Frame
+
+        # starting ExistingTransforms Frame
+        self._transformsFrame.SetParent(self._advancedFrame.GetFrame())
+        self._transformsFrame.Create()
+        self._transformsFrame.SetLabelText("Use Existing Transforms")
+        self._transformsFrame.CollapseFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsFrame.GetWidgetName())
+
+        self._transformsDirCheckBox.SetParent(self._transformsFrame.GetFrame())
+        self._transformsDirCheckBox.Create()
+        self._transformsDirCheckBox.SetLabelText("Skip Registration:")
+        self._transformsDirCheckBox.SetLabelWidth(20)
+        self._transformsDirCheckBox.GetWidget().SetSelectedState(0)
+        self._transformsDirCheckBox.SetBalloonHelpString("Use existing Transforms and skip Registration.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsDirCheckBox.GetWidgetName())
+
+        self._transformsDirButton.SetParent(self._transformsFrame.GetFrame())
+        self._transformsDirButton.Create()
+        self._transformsDirButton.GetWidget().SetText("Click to pick a directory")
+        self._transformsDirButton.SetLabelText("Transforms directory:")
+        self._transformsDirButton.SetLabelWidth(20)
+        self._transformsDirButton.SetBalloonHelpString("Select the folder containing existing transforms.")
+        self._transformsDirButton.GetWidget().GetLoadSaveDialog().ChooseDirectoryOn()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsDirButton.GetWidgetName())
+
+        self._transformsTemplateButton.SetParent(self._transformsFrame.GetFrame())
+        self._transformsTemplateButton.Create()
+        self._transformsTemplateButton.GetWidget().SetText("Click to pick a template")
+        self._transformsTemplateButton.SetLabelText("Existing Template:")
+        self._transformsTemplateButton.SetLabelWidth(20)
+        self._transformsTemplateButton.SetBalloonHelpString("Pick an existing template to use as Resampling space.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsTemplateButton.GetWidgetName())
+        # ending ExistingTransforms Frame
+        
+        # starting Misc. Frame
+        self._miscFrame.SetParent(self._advancedFrame.GetFrame())
+        self._miscFrame.Create()
+        self._miscFrame.SetLabelText("Misc.")
+        self._miscFrame.CollapseFrame()
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._miscFrame.GetWidgetName())        
+
+        self._labelsEntry.SetParent(self._miscFrame.GetFrame())
+        self._labelsEntry.Create()
+        self._labelsEntry.SetLabelText("Labels:")
+        self._labelsEntry.SetLabelWidth(20)
+        self._labelsEntry.SetBalloonHelpString("Set the labels to generate Atlases for.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._labelsEntry.GetWidgetName())
+
+        self._saveTransformsCheckBox.SetParent(self._miscFrame.GetFrame())
         self._saveTransformsCheckBox.Create()
         self._saveTransformsCheckBox.SetLabelText("Save Transforms:")
         self._saveTransformsCheckBox.GetWidget().SetSelectedState(1)
+        self._saveTransformsCheckBox.SetLabelWidth(20)
+        self._saveTransformsCheckBox.SetBalloonHelpString("Save all generated transforms to the Output Directory.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._saveTransformsCheckBox.GetWidgetName())
-
-        self._thirdFrame.SetParent(self._moduleFrame.GetFrame())
-        self._thirdFrame.Create()
-        self._thirdFrame.SetLabelText("Atlas Generation")
-        self._thirdFrame.ExpandFrame()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._thirdFrame.GetWidgetName())
-
-        self._labelsEntry.SetParent(self._thirdFrame.GetFrame())
-        self._labelsEntry.Create()
-        self._labelsEntry.SetLabelText("Labels:")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._labelsEntry.GetWidgetName())
-
-        self._normalizeAtlasCheckBox.SetParent(self._thirdFrame.GetFrame())
+        
+        self._normalizeAtlasCheckBox.SetParent(self._miscFrame.GetFrame())
         self._normalizeAtlasCheckBox.Create()
         self._normalizeAtlasCheckBox.SetLabelText("Normalize Atlases:")
         self._normalizeAtlasCheckBox.GetWidget().SetSelectedState(0)
+        self._normalizeAtlasCheckBox.SetLabelWidth(20)
+        self._normalizeAtlasCheckBox.SetBalloonHelpString("Normalize all Atlases to a given value. If enabled, the outputCast will be Float.")        
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._normalizeAtlasCheckBox.GetWidgetName())
 
-        self._outputCastCombo.SetParent(self._thirdFrame.GetFrame())
+        self._normalizeValueEntry.SetParent(self._miscFrame.GetFrame())
+        self._normalizeValueEntry.Create()
+        self._normalizeValueEntry.SetLabelText("Normalize to:")
+        self._normalizeValueEntry.GetWidget().SetValue("1")
+        self._normalizeValueEntry.SetLabelWidth(20)
+        self._normalizeValueEntry.SetBalloonHelpString("Set the value to normalize all Atlases to.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._normalizeValueEntry.GetWidgetName())
+
+        self._outputCastCombo.SetParent(self._miscFrame.GetFrame())
         self._outputCastCombo.Create()
         self._outputCastCombo.GetWidget().ReadOnlyOn()
         self._outputCastCombo.SetLabelText("Output cast for Atlases:")
-        self._outputCastCombo.SetBalloonHelpString("The output cast for the atlases.")
+        self._outputCastCombo.SetLabelWidth(20)
+        self._outputCastCombo.SetBalloonHelpString("The output cast for the Atlases.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._outputCastCombo.GetWidgetName())
 
         self._outputCastCombo.GetWidget().AddValue('Char')              
@@ -788,92 +911,47 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._outputCastCombo.GetWidget().AddValue('Unsigned Short')
         self._outputCastCombo.GetWidget().SetValue('Short')
 
-        self._fourthFrame.SetParent(self._moduleFrame.GetFrame())
-        self._fourthFrame.Create()
-        self._fourthFrame.SetLabelText("Cluster Configuration")
-        self._fourthFrame.CollapseFrame()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._fourthFrame.GetWidgetName())
-
-        self._clusterCheckBox.SetParent(self._fourthFrame.GetFrame())
-        self._clusterCheckBox.Create()
-        self._clusterCheckBox.SetLabelText("Use Cluster:")
-        self._clusterCheckBox.GetWidget().SetSelectedState(0)
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._clusterCheckBox.GetWidgetName())
-
-        self._schedulerEntry.SetParent(self._fourthFrame.GetFrame())
-        self._schedulerEntry.Create()
-        self._schedulerEntry.SetLabelText("Scheduler Command:")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._schedulerEntry.GetWidgetName())
-
-        self._pcaFrame.SetParent(self._moduleFrame.GetFrame())
-        self._pcaFrame.Create()
-        self._pcaFrame.SetLabelText("PCA")
-        self._pcaFrame.CollapseFrame()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaFrame.GetWidgetName())   
-
-        self._pcaCheckBox.SetParent(self._pcaFrame.GetFrame())
-        self._pcaCheckBox.Create()
-        self._pcaCheckBox.SetLabelText("Generate PCA Models:")
-        self._pcaCheckBox.GetWidget().SetSelectedState(0)
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCheckBox.GetWidgetName())
-
-        self._maxEigenVectors.SetParent(self._pcaFrame.GetFrame())
-        self._maxEigenVectors.Create()
-        self._maxEigenVectors.GetWidget().SetRange(1,100)
-        self._maxEigenVectors.GetWidget().SetIncrement(1)
-        self._maxEigenVectors.GetWidget().SetValue(10)
-        self._maxEigenVectors.SetLabelText("Max. Number of EigenVectors:")
-        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._maxEigenVectors.GetWidgetName())
-
-        self._pcaCombine.SetParent(self._pcaFrame.GetFrame())
-        self._pcaCombine.Create()
-        self._pcaCombine.SetLabelText("Combine PCA for all Labels:")
-        self._pcaCombine.GetWidget().SetSelectedState(0)
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCombine.GetWidgetName())
-        
-
-        self._fifthFrame.SetParent(self._moduleFrame.GetFrame())
-        self._fifthFrame.Create()
-        self._fifthFrame.SetLabelText("Advanced")
-        self._fifthFrame.CollapseFrame()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._fifthFrame.GetWidgetName())        
-
-        self._normalizeValueEntry.SetParent(self._fifthFrame.GetFrame())
-        self._normalizeValueEntry.Create()
-        self._normalizeValueEntry.SetLabelText("Normalize to:")
-        self._normalizeValueEntry.GetWidget().SetValue("1")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._normalizeValueEntry.GetWidgetName())
-        
-        self._deleteAlignedImagesCheckBox.SetParent(self._fifthFrame.GetFrame())
+        self._deleteAlignedImagesCheckBox.SetParent(self._miscFrame.GetFrame())
         self._deleteAlignedImagesCheckBox.Create()
         self._deleteAlignedImagesCheckBox.SetLabelText("Delete Aligned Images:")
         self._deleteAlignedImagesCheckBox.GetWidget().SetSelectedState(1)
+        self._deleteAlignedImagesCheckBox.SetLabelWidth(20)
+        self._deleteAlignedImagesCheckBox.SetBalloonHelpString("If selected, all aligned images will be deleted after use.")        
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deleteAlignedImagesCheckBox.GetWidgetName())
 
-        self._deleteAlignedSegmentationsCheckBox.SetParent(self._fifthFrame.GetFrame())
+        self._deleteAlignedSegmentationsCheckBox.SetParent(self._miscFrame.GetFrame())
         self._deleteAlignedSegmentationsCheckBox.Create()
-        self._deleteAlignedSegmentationsCheckBox.SetLabelText("Delete Aligned Segmentations:")
+        self._deleteAlignedSegmentationsCheckBox.SetLabelText("Delete Aligned Segs.:")
         self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(1)
+        self._deleteAlignedSegmentationsCheckBox.SetLabelWidth(20)
+        self._deleteAlignedSegmentationsCheckBox.SetBalloonHelpString("If selected, all aligned segmentations will be deleted after use.")        
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deleteAlignedSegmentationsCheckBox.GetWidgetName())        
         
-        self._debugCheckBox.SetParent(self._fifthFrame.GetFrame())
+        self._debugCheckBox.SetParent(self._miscFrame.GetFrame())
         self._debugCheckBox.Create()
         self._debugCheckBox.SetLabelText("Debug Output:")
         self._debugCheckBox.GetWidget().SetSelectedState(0)
+        self._debugCheckBox.SetLabelWidth(20)
+        self._debugCheckBox.SetBalloonHelpString("If selected, print debug output to the console.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._debugCheckBox.GetWidgetName())
         
-        self._dryrunCheckBox.SetParent(self._fifthFrame.GetFrame())
+        self._dryrunCheckBox.SetParent(self._miscFrame.GetFrame())
         self._dryrunCheckBox.Create()
-        self._dryrunCheckBox.SetLabelText("Dryrun (Do not execute, just print commands):")
+        self._dryrunCheckBox.SetLabelText("Dry-Run (Simulation):")
         self._dryrunCheckBox.GetWidget().SetSelectedState(0)
+        self._dryrunCheckBox.SetLabelWidth(20)
+        self._dryrunCheckBox.SetBalloonHelpString("If selected, no computation is really executed - only commands are printed to the console.")        
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._dryrunCheckBox.GetWidgetName())
-                
+        # ending Misc. Frame
         
+        # ending Advanced Frame
+
+
         self._generateButton.SetParent(self._moduleFrame.GetFrame())
         self._generateButton.Create()
         self._generateButton.SetEnabled(1)
-        self._generateButton.SetText("Generate Atlas!")
-        self._generateButton.SetBalloonHelpString("Click to generate the atlas")
+        self._generateButton.SetText("Start!")
+        self._generateButton.SetBalloonHelpString("Click to generate the atlases! After computation, they will be loaded into 3D Slicer.")
         slicer.TkCall("pack %s -side top -anchor e -padx 2 -pady 2" % self._generateButton.GetWidgetName())
 
 
