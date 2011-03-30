@@ -117,6 +117,7 @@ int main(int argc, char** argv)
 
       //
       //  Transform to new style
+      //  GetNumberOfParameterSets calls RemoveLegacyNodes , which removes the old nodes 
       //
       int numParameterSets = emMRMLManager->GetNumberOfParameterSets();
       std::cerr << "Imported: " << mrmlScene->GetNumberOfNodes()
