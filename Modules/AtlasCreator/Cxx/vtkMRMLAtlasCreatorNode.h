@@ -92,7 +92,7 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkSetStringMacro (Toolkit);
 
 
-  // Description: The Template Type: "fixed" or "dynamic"
+  // Description: The Template Type: "fixed", "dynamic" or "group"
   vtkGetStringMacro (TemplateType);
   vtkSetStringMacro (TemplateType);
 
