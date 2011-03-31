@@ -1317,18 +1317,14 @@ namespace eval EMSegmenterPreProcessingTcl {
         for { set i 0 } { $i < [$inputAtlasNode GetNumberOfVolumes] } { incr i } {
 
             set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
-
-
-            set tmpTreeNodeKEY [$inputAtlasNode GetKeyByNodeID [$inputAtlasVolumeNode GetID]]
             set tmpIndex [$inputAtlasNode GetIndexByNodeID [$inputAtlasVolumeNode GetID]]
             if { $i == $atlasRegistrationVolumeIndex} {
                 # replace with template
                 set outputAtlasVolumeFileName $outputDir/template.nrrd
             } else {
-                set tmpTreeNode [$SCENE GetNodeByID $tmpTreeNodeKEY]
-                set tmpTreeParameterNode [$SCENE GetNodeByID [$tmpTreeNode GetTreeParametersNodeID]]
-                set tmpLeafParametersNode [$SCENE GetNodeByID [$tmpTreeParameterNode GetLeafParametersNodeID]]
-                set tmpIntensityLabel [$tmpLeafParametersNode GetIntensityLabel]
+                 set tmpTreeNodeKEY [$inputAtlasNode GetKeyByNodeID [$inputAtlasVolumeNode GetID]]
+                #                 set tmpTreeNode [$SCENE GetNodeByID $tmpTreeNodeKEY]
+                set tmpIntensityLabel  [$mrmlManager  GetTreeNodeIntensityLabel  $tmpTreeNodeKEY]
                 $LOGIC PrintText "TCL: [$inputAtlasVolumeNode GetName] has label $tmpIntensityLabel"
                 set outputAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel.nrrd
             }
