@@ -294,16 +294,13 @@ class AtlasCreatorLogic(object):
                 for i in range(0, node.GetDynamicTemplateIterations()):
                     
                     self.Helper().info("Starting iteration " + str(i + 1) + "...")
-            
-                                       
-                                
                     
                     # create directories for the current registration iteration as subdirs of the registrationDir
                     iterationString = "iteration" + str(i + 1)
                     uniqueRegisteredDirectory = registeredDirectory + iterationString + os.sep
                     os.makedirs(uniqueRegisteredDirectory)
                     
-                    # TODO create a temporary meanImage which might get used
+                    # create a temporary meanImage which might get used
                     meanImageFilePath = tempfile.mkstemp(".nrrd", "acTmpMeanImage", uniqueRegisteredDirectory)[1]                    
                     
                     uniqueScriptsDirectory = scriptsRegistrationDirectory + iterationString + os.sep
@@ -382,9 +379,6 @@ class AtlasCreatorLogic(object):
             # update reference to defaultCase to new location, only if templateType is dynamic
             if node.GetTemplateType() == "dynamic":
                 defaultCase = pathToTemplate
-            
-            # now delete the temporary mean template
-            # TODO os.remove(meanImageFilePath)
                     
         else:
             # we are skipping the registration

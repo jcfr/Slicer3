@@ -6,10 +6,8 @@ import os
 
 from AtlasCreatorHelper import AtlasCreatorHelper
 from AtlasCreatorLogic import AtlasCreatorLogic
-from AtlasCreatorConfiguration import AtlasCreatorConfiguration
-from AtlasCreatorSkipRegistrationConfiguration import AtlasCreatorSkipRegistrationConfiguration
-from AtlasCreatorGridConfiguration import AtlasCreatorGridConfiguration
 
+# Set the event numbers for KWWidgets for easy access
 vtkKWPushButton_InvokedEvent = 10000
 
 vtkKWFileBrowserDialog_FileNameChangedEvent = 15000
@@ -20,6 +18,10 @@ vtkKWCheckButton_SelectedStateChangedEvent = 10000
 
 vtkKWEntry_EntryValueChangedEvent = 10000
 
+vtkKWComboBox_EntryValueChangedEvent = 10000
+
+vtkKWSpinBox_SpinBoxValueChangedEvent = 10000
+
 vtkMRMLScene_NodeAddedEvent = 66000
 
 vtkMRMLScene_CloseEvent = 66003
@@ -28,9 +30,18 @@ vtkMRMLAtlasCreatorNode_LaunchComputationEvent = 31337
 
 vtkSlicerNodeSelectorWidget_NodeSelectedEvent = 11000
 
-class AtlasCreatorGUI(ScriptedModuleGUI):
 
+class AtlasCreatorGUI(ScriptedModuleGUI):
+    '''
+    The AtlasCreator GUI class.
+    '''
+
+
+    '''=========================================================================================='''
     def __init__(self):
+        '''
+        Constructor of the AtlasCreator GUI class. Sets category, name of the module and creates GUI objects.
+        '''
 
         ScriptedModuleGUI.__init__(self)
 
@@ -72,12 +83,12 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         # PCA Frame
         self._pcaCheckBox = slicer.vtkKWCheckButtonWithLabel()
-        self._maxEigenVectors = slicer.vtkKWSpinBoxWithLabel()
-        self._pcaCombine = slicer.vtkKWCheckButtonWithLabel()
+        self._maxEigenVectorsSpinBox = slicer.vtkKWSpinBoxWithLabel()
+        self._pcaCombineCheckBox = slicer.vtkKWCheckButtonWithLabel()
         # End PCA Frame
         
         # ExistingTransforms Frame
-        self._transformsDirCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._useExistingTransformsCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._transformsDirButton = slicer.vtkKWLoadSaveButtonWithLabel()
         self._transformsTemplateButton = slicer.vtkKWLoadSaveButtonWithLabel()
         # End ExistingTransforms Frame
@@ -98,7 +109,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         
         # The Start Button
-        self._generateButton = slicer.vtkKWPushButton()
+        self._launchButton = slicer.vtkKWPushButton()
         
 
         # Internal Classes and Flags
@@ -107,73 +118,266 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._logic = AtlasCreatorLogic(self)
 
         self._associatedMRMLNode = None
+        self._associatedMRMLNodeTag = None
 
         self._updating = 0
         
         
 
-
+    '''=========================================================================================='''
     def Destructor(self):
-
+        '''
+        Destruct this class. Gets called automatically.
+        '''
         self._helper = None
         self._logic = None
         self._associatedMRMLNode = None
-            
+        self._associatedMRMLNodeTag = None
         
-
-    def RemoveMRMLNodeObservers(self):
-        pass
-    
-    def RemoveLogicObservers(self):
-        pass
-
+        self._updating = None
+        
+        
+        
+    '''=========================================================================================='''
     def AddGUIObservers(self):
-        self._generateButtonTag = self.AddObserverByNumber(self._generateButton,vtkKWPushButton_InvokedEvent)
+        '''
+        Add the Observers. This method gets called automatically when the module gets created.
+        
+        For convenience, we also add the MRML observers here.
+        '''
+        
+        # I/O panel
         self._origDirButtonTag = self.AddObserverByNumber(self._origDirButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
         self._segDirButtonTag = self.AddObserverByNumber(self._segDirButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
+        self._outDirButtonTag = self.AddObserverByNumber(self._outDirButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
         self._pairFixedRadioTag = self.AddObserverByNumber(self._pairFixedRadio,vtkKWRadioButton_SelectedStateChangedEvent)
         self._pairOnlineRadioTag = self.AddObserverByNumber(self._pairOnlineRadio,vtkKWRadioButton_SelectedStateChangedEvent)
-        # TODO Group Online Tag..
-        self._normalizeAtlasCheckBoxTag = self.AddObserverByNumber(self._normalizeAtlasCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
-        self._defaultCaseEntryTag = self.AddObserverByNumber(self._defaultCaseCombo.GetWidget(),vtkKWEntry_EntryValueChangedEvent)
+        self._groupOnlineRadioTag = self.AddObserverByNumber(self._groupOnlineRadio,vtkKWRadioButton_SelectedStateChangedEvent)
+        
+        # parameters panel
+        self._toolkitComboTag = self.AddObserverByNumber(self._toolkitCombo.GetWidget(),vtkKWComboBox_EntryValueChangedEvent)
+        self._affineRadioTag = self.AddObserverByNumber(self._affineRadio,vtkKWRadioButton_SelectedStateChangedEvent)
+        self._nonRigidRadioTag = self.AddObserverByNumber(self._nonRigidRadio,vtkKWRadioButton_SelectedStateChangedEvent)
+        self._meanIterationsSpinBoxTag = self.AddObserverByNumber(self._meanIterationsSpinBox.GetWidget(),vtkKWSpinBox_SpinBoxValueChangedEvent)
+        self._defaultCaseComboTag = self.AddObserverByNumber(self._defaultCaseCombo.GetWidget(),vtkKWComboBox_EntryValueChangedEvent)
+        
+        # advanced panel
+        
+        # cluster configuration panel
+        self._clusterCheckBoxTag = self.AddObserverByNumber(self._clusterCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        self._schedulerEntryTag = self.AddObserverByNumber(self._schedulerEntry.GetWidget(), vtkKWEntry_EntryValueChangedEvent)
+        
+        # pca panel
+        self._pcaCheckBoxTag = self.AddObserverByNumber(self._pcaCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        self._maxEigenVectorsSpinBoxTag = self.AddObserverByNumber(self._maxEigenVectorsSpinBox.GetWidget(), vtkKWSpinBox_SpinBoxValueChangedEvent)
+        self._pcaCombineCheckBoxTag = self.AddObserverByNumber(self._pcaCombineCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        
+        # use existing transforms panel
+        self._useExistingTransformsCheckBoxTag = self.AddObserverByNumber(self._useExistingTransformsCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        self._transformsDirButtonTag = self.AddObserverByNumber(self._transformsDirButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
         self._transformsTemplateButtonTag = self.AddObserverByNumber(self._transformsTemplateButton.GetWidget().GetLoadSaveDialog(),vtkKWFileBrowserDialog_FileNameChangedEvent)
+        
+        # misc. panel
+        self._labelsEntryTag = self.AddObserverByNumber(self._labelsEntry.GetWidget(), vtkKWEntry_EntryValueChangedEvent)
+        self._saveTransformsCheckBoxTag = self.AddObserverByNumber(self._saveTransformsCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        self._normalizeAtlasCheckBoxTag = self.AddObserverByNumber(self._normalizeAtlasCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
+        self._normalizeValueEntryTag = self.AddObserverByNumber(self._normalizeValueEntry.GetWidget(), vtkKWEntry_EntryValueChangedEvent)
+        self._outputCastComboTag = self.AddObserverByNumber(self._outputCastCombo.GetWidget(),vtkKWComboBox_EntryValueChangedEvent)
+        self._deleteAlignedImagesCheckBoxTag = self.AddObserverByNumber(self._deleteAlignedImagesCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        self._deleteAlignedSegmentationsCheckBoxTag = self.AddObserverByNumber(self._deleteAlignedSegmentationsCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        self._debugCheckBoxTag = self.AddObserverByNumber(self._debugCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
+        self._dryrunCheckBoxTag = self.AddObserverByNumber(self._dryrunCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
+
+        # the launch button
+        self._launchButtonTag = self.AddObserverByNumber(self._launchButton,vtkKWPushButton_InvokedEvent)
+        
+        # MRML observer
         self._mrmlNodeAddedTag = self.AddMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_NodeAddedEvent)
 
 
-    def RemoveGUIObservers(self):
-        pass
 
+    '''=========================================================================================='''
+    def RemoveGUIObservers(self):
+        '''
+        Removes all created GUI observers. Gets called automatically.
+        
+        For convenience, we also remove the MRML Scene observers here.
+        '''
+        
+        # I/O panel
+        self.RemoveObserver(self._origDirButtonTag)
+        self.RemoveObserver(self._segDirButtonTag)
+        self.RemoveObserver(self._outDirButtonTag)
+        self.RemoveObserver(self._pairFixedRadioTag)
+        self.RemoveObserver(self._pairOnlineRadioTag)
+        self.RemoveObserver(self._groupOnlineRadioTag)
+        
+        # parameters panel
+        self.RemoveObserver(self._toolkitComboTag)
+        self.RemoveObserver(self._affineRadioTag)
+        self.RemoveObserver(self._nonRigidRadioTag)
+        self.RemoveObserver(self._meanIterationsSpinBoxTag)
+        self.RemoveObserver(self._defaultCaseComboTag)
+        
+        # advanced panel
+        
+        # cluster configuration panel
+        self.RemoveObserver(self._clusterCheckBoxTag)
+        self.RemoveObserver(self._schedulerEntryTag)
+        
+        # pca panel
+        self.RemoveObserver(self._pcaCheckBoxTag)
+        self.RemoveObserver(self._maxEigenVectorsSpinBoxTag)
+        self.RemoveObserver(self._pcaCombineCheckBoxTag)
+        
+        # use existing transforms model
+        self.RemoveObserver(self._useExistingTransformsCheckBoxTag)
+        self.RemoveObserver(self._transformsDirButtonTag)
+        self.RemoveObserver(self._transformsTemplateButtonTag)
+        
+        # misc. panel
+        self.RemoveObserver(self._labelsEntryTag)
+        self.RemoveObserver(self._saveTransformsCheckBoxTag)
+        self.RemoveObserver(self._normalizeAtlasCheckBoxTag)
+        self.RemoveObserver(self._normalizeValueEntryTag)
+        self.RemoveObserver(self._outputCastComboTag)
+        self.RemoveObserver(self._deleteAlignedImagesCheckBox)
+        self.RemoveObserver(self._deleteAlignedSegmentationsCheckBox)
+        self.RemoveObserver(self._debugCheckBoxTag)
+        self.RemoveObserver(self._dryrunCheckBoxTag)
+        
+        # the launch button
+        self.RemoveObserver(self._launchButtonTag)
+        
+        # MRML observers
+        self.RemoveObserver(self._mrmlNodeAddedTag)
+        
+        if self._associatedMRMLNodeTag:
+            self.RemoveObserver(self._associatedMRMLNodeTag)
+        
+
+
+    '''=========================================================================================='''
     def ProcessGUIEvents(self,caller,event):
+        '''
+        Gets called on GUI Events to handle them.
+        '''
+        
+        # check if we already process an update event
+        # and jump out if yes
         if not self._updating:
 
-            if caller == self._generateButton and event == vtkKWPushButton_InvokedEvent:
+            # the launch button
+            if caller == self._launchButton and event == vtkKWPushButton_InvokedEvent:
                 self.UpdateMRML()
-                self.GenerateAtlas()
+                self.Launch()
+                
+            # I/O panel
             elif caller == self._origDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:                
                 self.UpdateCaseCombobox()
                 self.UpdateMRML()
+                
             elif caller == self._segDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
                 self.UpdateCaseCombobox()
                 self.UpdateMRML()
+                
+            elif caller == self._outDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
+                self.UpdateMRML()             
+                   
             elif caller == self._pairFixedRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
                 self.ToggleMeanAndDefaultCase1()
                 self.UpdateMRML()
+                
             elif caller == self._pairOnlineRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
                 self.ToggleMeanAndDefaultCase2()
                 self.UpdateMRML()
-            elif caller == self._normalizeAtlasCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
-                self.ToggleNormalize()
+                
+            elif caller == self._groupOnlineRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
+                self.UpdateMRML()                
+                
+            # parameter panel
+            elif caller == self._toolkitCombo.GetWidget() and event == vtkKWComboBox_EntryValueChangedEvent:
                 self.UpdateMRML()
-            elif caller == self._defaultCaseCombo.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
-                self.GetHelper().debug("defaultCaseEntry changed")
+                
+            elif caller == self._affineRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._nonRigidRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._meanIterationsSpinBox.GetWidget() and event == vtkKWSpinBox_SpinBoxValueChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._defaultCaseCombo.GetWidget() and event == vtkKWComboBox_EntryValueChangedEvent:
                 self.UpdateLabelList()
                 self.UpdateMRML()
+                
+            # advanced panel
+            
+            # cluster configuration panel
+            elif caller == self._clusterCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+            
+            elif caller == self._schedulerEntry.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
+                self.UpdateMRML()
+                
+            # pca panel
+            elif caller == self._pcaCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._maxEigenVectorsSpinBox.GetWidget() and event == vtkKWSpinBox_SpinBoxValueChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._pcaCombineCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+                
+            # use existing transforms panel
+            elif caller == self._useExistingTransformsCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._transformsDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
+                self.UpdateMRML()
+            
             elif caller == self._transformsTemplateButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
                 self.UpdateLabelList()
                 self.UpdateMRML()
+                        
+            # misc panel
+            elif caller == self._labelsEntry.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
+                self.UpdateMRML()
                 
+            elif caller == self._saveTransformsCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
                 
+            elif caller == self._normalizeAtlasCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.ToggleNormalize()
+                self.UpdateMRML()
+                
+            elif caller == self._normalizeValueEntry.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._outputCastCombo.GetWidget() and event == vtkKWComboBox_EntryValueChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._deleteAlignedImagesCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._deleteAlignedSegmentationsCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._debugCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+                
+            elif caller == self._dryrunCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+                self.UpdateMRML()
+            
+            
+        
+    '''=========================================================================================='''                
     def ToggleNormalize(self):
+        '''
+        Callback for the normalize checkbox. Gets called when the user clicks on it.
+        '''
         normalize = self._normalizeAtlasCheckBox.GetWidget().GetSelectedState()
         
         if normalize:
@@ -184,9 +388,14 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             self._outputCastCombo.SetEnabled(1)
             self._normalizeValueEntry.SetEnabled(0)
                 
+                
+                
+    '''=========================================================================================='''                
     def ToggleMeanAndDefaultCase1(self):
+        '''
+        Callback for the pairFixed checkbox. Gets called when the user clicks on the checkbox.
+        '''
         useDefCase = self._pairFixedRadio.GetSelectedState()
-        useMean = self._pairOnlineRadio.GetSelectedState()
 
         if useDefCase:
             self._pairOnlineRadio.SetSelectedState(0)
@@ -199,7 +408,13 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             self._defaultCaseCombo.SetEnabled(0)
             self._meanIterationsSpinBox.SetEnabled(1)
 
+
+
+    '''=========================================================================================='''
     def ToggleMeanAndDefaultCase2(self):
+        '''
+        Callback for the pairOnline checkbox. Gets called when the user clicks on the checkbox.
+        '''
         useMean = self._pairOnlineRadio.GetSelectedState()
 
         if useMean:
@@ -213,7 +428,14 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             self._defaultCaseCombo.SetEnabled(1)
             self._meanIterationsSpinBox.SetEnabled(0)
 
+
+
+    '''=========================================================================================='''
     def UpdateCaseCombobox(self):
+        '''
+        Updates the defaultCaseCombobox by checking which files are available as originals and segmentations and
+        reading the basenames of these files.
+        '''
         if self._origDirButton.GetWidget().GetFileName() and self._segDirButton.GetWidget().GetFileName():
             # originals and segmentations dir were configured, now we parse for potential image data
             nrrdFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.nrrd'))
@@ -246,9 +468,15 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             self.UpdateLabelList()
                     
                     
+                    
+    '''=========================================================================================='''                    
     def UpdateLabelList(self):
+        '''
+        Updates the list of labels in the GUI according to the first of all segmentations or if a defaultCase is
+        specified, then takes the labels from this file.
+        '''
         if not self._updating:
-            if self._transformsDirCheckBox.GetWidget().GetSelectedState():
+            if self._useExistingTransformsCheckBox.GetWidget().GetSelectedState():
                 # use existing transforms mode
                 listOfSegmentations = self.GetHelper().ConvertDirectoryToList(self._segDirButton.GetWidget().GetFileName())
                 
@@ -256,7 +484,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                     defaultCaseSegmentationFilePath = listOfSegmentations[0]
             else:
                 caseFile = self._defaultCaseCombo.GetWidget().GetValue()
-                defaultCaseSegmentationFilePath = self._segDirButton.GetWidget().GetFileName() + os.sep + caseFile
+                defaultCaseSegmentationFilePath = str(self._segDirButton.GetWidget().GetFileName()) + os.sep + str(caseFile)
                 
             labelList = self.ReadLabelsFromImage(defaultCaseSegmentationFilePath)
             
@@ -266,12 +494,18 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 
             self._labelsEntry.GetWidget().SetValue(labelListAsString)
                                
-
-    def GenerateAtlas(self):
-        ''' call the logic '''
+                               
+                               
+    '''=========================================================================================='''
+    def Launch(self):
+        ''' 
+        Starts an Atlas Creator computation by passing the associated MRML Node to the logic.
+        
+        Returns FALSE on failure
+        '''
 
         # sanity checks
-        if not self._origDirButton.GetWidget().GetFileName() and not self._transformsDirCheckBox.GetWidget().GetSelectedState():
+        if not self._origDirButton.GetWidget().GetFileName() and not self._useExistingTransformsCheckBox.GetWidget().GetSelectedState():
             # we only need the original images if we do not skip the registration
             self.GetHelper().info("ERROR! The Original Images Directory was not set.. Aborting..")
             return False
@@ -284,88 +518,17 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             self.GetHelper().info("ERROR! The Output Directory was not set.. Aborting..")
             return False            
 
-        # create a configuration container
-        configuration = AtlasCreatorConfiguration()
+        # the associated MRML Node holds the configuration of the AtlasCreator
+        # we definitely need it here!
+        if not self._associatedMRMLNode:
+            self.GetHelper().info("ERROR! No MRML Node was configured.. Aborting..")
+            return False
 
-        # if we have a special scenario, create a specific container
-        if self._transformsDirCheckBox.GetWidget().GetSelectedState():
-            # use the existing deformation field mode and skip the registration
-            configuration = AtlasCreatorSkipRegistrationConfiguration()
-            
-            # now set the directory to the transforms
-            configuration.SetTransformDirectory(os.path.normpath(self._transformsDirButton.GetWidget().GetFileName())+os.sep)
+        result = self.GetMyLogic().Start(self._associatedMRMLNode)
         
-            if not self._transformsTemplateButton.GetWidget().GetFileName():
-                # we need an existing template here
-                self.GetHelper().info("ERROR! There was no template set.. Aborting..")
-                return False
-            
-            configuration.SetExistingTemplate(self._transformsTemplateButton.GetWidget().GetFileName())
-        
-        elif self._clusterCheckBox.GetWidget().GetSelectedState():
-            # cluster mode
-            configuration = AtlasCreatorGridConfiguration()
-            
-            #now set the scheduler command
-            schedCommand = self._schedulerEntry.GetWidget().GetValue()
-            configuration.SetSchedulerCommand(schedCommand)
-        
-        # set the list of original images    
-        configuration.SetOriginalImagesFilePathList(self.GetHelper().ConvertDirectoryToList(self._origDirButton.GetWidget().GetFileName()))
-        
-        # set the list of segmentations
-        configuration.SetSegmentationsFilePathList(self.GetHelper().ConvertDirectoryToList(self._segDirButton.GetWidget().GetFileName()))
-        
-        # set the output directory        
-        configuration.SetOutputDirectory(os.path.normpath(self._outDirButton.GetWidget().GetFileName())+os.sep)
-        
-        # set the template type
-        if self._fixedRadio.GetSelectedState():
-            configuration.SetTemplateType("fixed")
-        else:
-            configuration.SetTemplateType("dynamic")
-            
-        # set the mean iterations
-        configuration.SetDynamicTemplateIterations(self._meanIterationsSpinBox.GetWidget().GetValue())    
-        
-        # set the default case
-        defCaseFileName = self._defaultCaseCombo.GetWidget().GetValue()
-        if not self._transformsDirCheckBox.GetWidget().GetSelectedState():     
-            defCaseFilePath = os.path.join(self._origDirButton.GetWidget().GetFileName(),defCaseFileName)
-            # ... normalize it and set it
-            configuration.SetFixedTemplateDefaultCaseFilePath(os.path.normpath(defCaseFilePath))
-            
-        labels = self._labelsEntry.GetWidget().GetValue()
-        configuration.SetLabelsList(labels)
-            
-        # set the registration type
-        if self._deformationTypeRadios.GetWidget().GetWidget(0).GetSelectedState():
-            # this means, affine registration is selected
-            configuration.SetRegistrationType("Affine")
-        else:
-            # this means, non-rigid registration is selected
-            configuration.SetRegistrationType("Non-Rigid")
-            
-        # set save deformation fields and transforms
-        configuration.SetSaveTransforms(self._saveTransformsCheckBox.GetWidget().GetSelectedState())
+        if result and not self._pcaCheckBox.GetWidget().GetSelectedState():
+            # we can only display atlases if we did not activate PCA
 
-        # set delete aligned images
-        configuration.SetDeleteAlignedImages(self._deleteAlignedImagesCheckBox.GetWidget().GetSelectedState())
-
-        # set delete aligned segmentations
-        configuration.SetDeleteAlignedSegmentations(self._deleteAlignedSegmentationsCheckBox.GetWidget().GetSelectedState())
-
-        # set normalize atlases
-        configuration.SetNormalizeAtlases(self._normalizeAtlasCheckBox.GetWidget().GetSelectedState())
-        configuration.SetNormalizeTo(self._normalizeValueEntry.GetWidget().GetValue())
-        
-        # set output cast
-        configuration.SetOutputCast(self._outputCastCombo.GetWidget().GetValue())
-        
-        # now start the calculation
-        result = self._logic.Start(configuration)
-        
-        if result:
 
             # now loading the template
             templateID = self.GetHelper().DisplayImageInSlicer(os.path.normpath(self._outDirButton.GetWidget().GetFileName()+"/template.nrrd"),'Template')
@@ -380,45 +543,35 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             selectionNode = slicer.ApplicationLogic.GetSelectionNode()
             selectionNode.SetReferenceActiveVolumeID(templateID)
             slicer.ApplicationLogic.PropagateVolumeSelection()
+            
 
 
-                  
-    def CreateOutVolumeNodes(self):
-
-        if not self._outVolumeSelector.GetSelected():
-
-            self._outVolumeSelector.SetSelectedNew("vtkMRMLScalarVolumeNode")
-            self._outVolumeSelector.ProcessNewNodeCommand("vtkMRMLScalarVolumeNode", "AtlasOutput")
-
-
+    '''=========================================================================================='''
     def UpdateMRML(self):
+        '''
+        Writes the current GUI to the MRML Node. This is called whenever an element on the GUI
+        changes.
+        '''
 
+
+        # check if we already process an update event
+        # and jump out if yes
         if not self._updating:
 
+            # start blocking of update events
             self._updating = 1
             
             if not self._associatedMRMLNode:
                 # if we do not have an associated MRML Node, we will create one right here!!
                 self._associatedMRMLNode = slicer.vtkMRMLAtlasCreatorNode()
                 self._associatedMRMLNode.InitializeByDefault()
-            
-            # TODO debug
-            
-            # TODO dryrun
-            
-            # cluster stuff
-            if self._clusterCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetUseCluster(1)
-            else:
-                self._associatedMRMLNode.SetUseCluster(0)
+                # add it to the scene
+                slicer.MRMLScene.AddNode(self._associatedMRMLNode)
                 
-            schedCommand = self._schedulerEntry.GetWidget().GetValue()
-            if schedCommand:
-                self._associatedMRMLNode.SetSchedulerCommand(schedCommand)
-                
+
             ###############################################################
-            
             # input panel
+            
             imagesDir = self._origDirButton.GetWidget().GetFileName()
             if imagesDir:
                 self._associatedMRMLNode.SetOriginalImagesFilePathList(self.GetHelper().ConvertDirectoryToString(imagesDir))
@@ -427,154 +580,219 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             if segmentationsDir:
                 self._associatedMRMLNode.SetSegmentationsFilePathList(self.GetHelper().ConvertDirectoryToString(segmentationsDir))
                 
-            outputDir = self._origDirButton.GetWidget().GetFileName()
+            outputDir = self._outDirButton.GetWidget().GetFileName()
             if outputDir:
-                self._associatedMRMLNode.SetOutputDirectory(outputDir)
+                self._associatedMRMLNode.SetOutputDirectory(str(outputDir))
             
-            # input panel, skip registration frame
-            if self._transformsDirCheckBox.GetWidget().GetSelectedState():
+            if self._groupOnlineRadio.GetSelectedState():
+                self._associatedMRMLNode.SetTemplateType("group")            
+            elif self._pairOnlineRadio.GetSelectedState():
+                self._associatedMRMLNode.SetTemplateType("dynamic")
+            else:
+                self._associatedMRMLNode.SetTemplateType("fixed")
+
+            
+            ###############################################################    
+            # parameters panel
+            
+            toolkit = self._toolkitCombo.GetWidget().GetValue()
+            if toolkit:
+                self._associatedMRMLNode.SetToolkit(str(toolkit))
+                
+            if self._nonRigidRadio.GetSelectedState():
+                self._associatedMRMLNode.SetRegistrationType("Non-Rigid")
+            else:
+                self._associatedMRMLNode.SetRegistrationType("Affine")
+
+            meanIterations = self._meanIterationsSpinBox.GetWidget().GetValue()
+            if meanIterations:
+                self._associatedMRMLNode.SetDynamicTemplateIterations(int(meanIterations))
+            
+            defaultCase = self._defaultCaseCombo.GetWidget().GetValue()
+            if defaultCase:
+                self._associatedMRMLNode.SetFixedTemplateDefaultCaseFilePath(defaultCase)
+            
+            
+            ###############################################################    
+            # advanced panel
+            
+            # cluster configuration
+            #
+            if self._clusterCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetUseCluster(1)
+            else:
+                self._associatedMRMLNode.SetUseCluster(0)
+                
+            schedCommand = self._schedulerEntry.GetWidget().GetValue()
+            if schedCommand:
+                self._associatedMRMLNode.SetSchedulerCommand(str(schedCommand))
+                
+            # principal component analysis
+            #
+            if self._pcaCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetPCAAnalysis(1)
+            else:
+                self._associatedMRMLNode.SetPCAAnalysis(0)
+            
+            pcaMaxEigenVectors = self._maxEigenVectorsSpinBox.GetWidget().GetValue()
+            if pcaMaxEigenVectors:
+                self._associatedMRMLNode.SetPCAMaxEigenVectors(int(pcaMaxEigenVectors))
+                
+            if self._pcaCombineCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetPCACombine(1)
+            else:
+                self._associatedMRMLNode.SetPCACombine(0)
+            
+            # use existing transforms
+            #
+            if self._useExistingTransformsCheckBox.GetWidget().GetSelectedState():
                 self._associatedMRMLNode.SetSkipRegistration(1)
             else:
                 self._associatedMRMLNode.SetSkipRegistration(0)
                 
             transformsDir = self._transformsDirButton.GetWidget().GetFileName()
             if transformsDir:
-                self._associatedMRMLNode.SetTransformsDir(self.GetHelper().ConvertDirectoryToString(transformsDir))
+                self._associatedMRMLNode.SetTransformsDir(str(self.GetHelper().ConvertDirectoryToString(transformsDir)))
                 
             transformsTemplate = self._transformsTemplateButton.GetWidget().GetFileName()
             if transformsTemplate:
-                self._associatedMRMLNode.SetExistingTemplate(os.path.normpath(transformsTemplate))
+                self._associatedMRMLNode.SetExistingTemplate(str(os.path.normpath(transformsTemplate)))
             
-            ###############################################################
-                    
-            
+            # Misc.
+            #
+            labels = self._labelsEntry.GetWidget().GetValue()
+            if labels:
+                self._associatedMRMLNode.SetLabelsList(str(self.GetHelper().ConvertListToString(labels)))
                 
-            # TODO CMTK/BRAINSFit
+            if self._saveTransformsCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetSaveTransforms(1)
+            else:
+                self._associatedMRMLNode.SetSaveTransforms(0)
                 
-            '''
-            
-               
-                if debug or dryrun:
-                    evalpythonCommand += "n.SetDebugMode(1);"
-            
-                if dryrun:
-                    evalpythonCommand += "n.SetDryrunMode(1);"
-            
-                # set special settings if clusterMode or skipRegistrationMode is requested
-                if cluster:
-                    # cluster Mode
-                    evalpythonCommand += "n.SetUseCluster(1);"
-                    evalpythonCommand += "n.SetSchedulerCommand('" + schedulerCommand + "');"
-                elif skipRegistration:
-                    # skipRegistration Mode
-                    evalpythonCommand += "n.SetSkipRegistration(1);"
-                    evalpythonCommand += "n.SetTransformsDirectory('" + transformsDir + "');"
-                    evalpythonCommand += "n.SetExistingTemplate('" + existingTemplate + "');"
-                    
-                # now the configuration options which are valid for all
-                if imagesDir:
-                    evalpythonCommand += "n.SetOriginalImagesFilePathList('" + ConvertDirectoryToString(imagesDir) + "');"
+            if self._normalizeAtlasCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetNormalizeAtlases(1)
+            else:
+                self._associatedMRMLNode.SetNormalizeAtlases(0)
                 
-                if segmentationsDir:
-                    evalpythonCommand += "n.SetSegmentationsFilePathList('" + ConvertDirectoryToString(segmentationsDir) + "');"
+            normalizeTo = self._normalizeValueEntry.GetWidget().GetValue()
+            if normalizeTo:
+                self._associatedMRMLNode.SetNormalizeTo(str(normalizeTo))
                 
-                if outputDir:
-                    evalpythonCommand += "n.SetOutputDirectory('" + outputDir + "');"
+            outputCast = self._outputCastCombo.GetWidget().GetValue()
+            if outputCast:
+                self._associatedMRMLNode.SetOutputCast(str(outputCast))
                 
-                if useCMTK:
-                    evalpythonCommand += "n.SetToolkit('CMTK');"
-                else:
-                    evalpythonCommand += "n.SetToolkit('BRAINSFit');"
+            if self._deleteAlignedImagesCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetDeleteAlignedImages(1)
+            else:
+                self._associatedMRMLNode.SetDeleteAlignedImages(0)
                 
-                if fixed:
-                    evalpythonCommand += "n.SetTemplateType('fixed');"
-                    evalpythonCommand += "n.SetFixedTemplateDefaultCaseFilePath('" + template + "');"
-                else:
-                    evalpythonCommand += "n.SetTemplateType('dynamic');"
-                    evalpythonCommand += "n.SetDynamicTemplateIterations(" + str(meanIterations) + ");"
+            if self._deleteAlignedSegmentationsCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetDeleteAlignedSegmentations(1)
+            else:
+                self._associatedMRMLNode.SetDeleteAlignedSegmentations(0)
                 
-                evalpythonCommand += "n.SetLabelsList('" + ConvertListToString(labels) + "');"
-                        
-                if nonRigid:
-                    evalpythonCommand += "n.SetRegistrationType('Non-Rigid');"
-                else:
-                    evalpythonCommand += "n.SetRegistrationType('Affine');"
-                        
-                if writeTransforms:
-                    evalpythonCommand += "n.SetSaveTransforms(1);"
-                else:
-                    evalpythonCommand += "n.SetSaveTransforms(0);"
-            
-                if keepAligned:
-                    evalpythonCommand += "n.SetDeleteAlignedImages(0);"
-                    evalpythonCommand += "n.SetDeleteAlignedSegmentations(0);"
-                else:
-                    evalpythonCommand += "n.SetDeleteAlignedImages(1);"
-                    evalpythonCommand += "n.SetDeleteAlignedSegmentations(1);"
-                    
-                if normalize:
-                    evalpythonCommand += "n.SetNormalizeAtlases(1);"
-                    evalpythonCommand += "n.SetNormalizeTo(" + str(normalizeTo) + ");"
-                else:
-                    evalpythonCommand += "n.SetNormalizeAtlases(0);"
-                    evalpythonCommand += "n.SetNormalizeTo(-1);"
-            
-                if pca:
-                    evalpythonCommand += "n.SetPCAAnalysis(1);"
-                    evalpythonCommand += "n.SetPCAMaxEigenVectors(" + str(pcaMaxEigenVectors) + ");"
-                else:
-                    evalpythonCommand += "n.SetPCAAnalysis(0);"
-                    evalpythonCommand += "n.SetPCAMaxEigenVectors(10);"
-                    
-                if pcaCombine:
-                    evalpythonCommand += "n.SetPCACombine(1);"
-                else:
-                    evalpythonCommand += "n.SetPCACombine(0);"
-                    
+            if self._debugCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetDebugMode(1)
+            else:
+                self._associatedMRMLNode.SetDebugMode(0)
                 
-            
-                evalpythonCommand += "n.SetOutputCast('" + outputCast + "');"
-                '''             
+            if self._dryrunCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetDryrunMode(1)
+            else:
+                self._associatedMRMLNode.SetDryrunMode(0)
 
+            # stop blocking of update events
             self._updating = 0
 
 
-    def UpdateGUI(self):
 
+    '''=========================================================================================='''
+    def UpdateGUI(self):
+        '''
+        Reads the MRML node and propagates it to the GUI. This is called whenever the MRML node gets
+        changed externally.
+        '''
+        
+        
+        # check if we already process an update event
+        # and jump out if yes        
         if not self._updating:
 
+            # start blocking of update events
             self._updating = 1
 
+            # I/O panel
+            
+            # Parameters panel
+            
+            
+            # Advanced panel
+            #
+            
+            # Cluster configuration panel
+            
+            # PCA panel
+            
+            # Use Existing Registration panel
+            
+            # Misc. panel
+            
+
+            # stop blocking of update events
             self._updating = 0
 
 
 
+    '''=========================================================================================='''
     def ProcessMRMLEvents(self,callerID,event,callDataID = None):
+        '''
+        Gets called on MRML Events to handle them.
+        '''
         
-        
-        if self._associatedMRMLNode:
-            # check if the callerID is still a valid Node in the scene
-            if slicer.MRMLScene.GetNodeByID(callerID):
-                # check if the callerID equals the associated MRML Node but only if the event is the launch event
-                # we do not want to react to Modify events etc.
-                if event == vtkMRMLAtlasCreatorNode_LaunchComputationEvent and callerID == self._associatedMRMLNode.GetID():
-                    # the observed node was launched!
-                    self.GetMyLogic().Start(self._associatedMRMLNode)
+        # check if we already process an update event
+        # and jump out if yes        
+        if not self._updating:        
+            
+            if self._associatedMRMLNode:
+                # check if the callerID is still a valid Node in the scene
+                if slicer.MRMLScene.GetNodeByID(callerID):
+                    # check if the callerID equals the associated MRML Node but only if the event is the launch event
+                    # we do not want to react to Modify events etc.
+                    if event == vtkMRMLAtlasCreatorNode_LaunchComputationEvent and callerID == self._associatedMRMLNode.GetID():
+                        # quickly store the MRML configuration to the GUI
+                        self.UpdateGUI()
+                        
+                        # the observed node was launched!
+                        self.GetMyLogic().Start(self._associatedMRMLNode)
+                        
+                        # jump out
+                        return True
+    
+    
+            # observe MRMLScene events
+            if callerID == "MRMLScene" and event == vtkMRMLScene_NodeAddedEvent and callDataID:
+                
+                callDataAsMRMLNode = slicer.MRMLScene.GetNodeByID(callDataID)
+                
+                if isinstance(callDataAsMRMLNode, slicer.vtkMRMLAtlasCreatorNode):
+                    self.GetHelper().info("A new vtkMRMLAtlasCreatorNode was added: " + str(callDataID))
+                    self._associatedMRMLNode = callDataAsMRMLNode
+                    self._associatedMRMLNodeTag = self.AddMRMLObserverByNumber(self._associatedMRMLNode,vtkMRMLAtlasCreatorNode_LaunchComputationEvent)
                     
-
-        # observe MRMLScene events
-        if callerID == "MRMLScene" and event == vtkMRMLScene_NodeAddedEvent and callDataID:
-            
-            callDataAsMRMLNode = slicer.MRMLScene.GetNodeByID(callDataID)
-            
-            if isinstance(callDataAsMRMLNode, slicer.vtkMRMLAtlasCreatorNode):
-                self.GetHelper().info("A new vtkMRMLAtlasCreatorNode was added: " + str(callDataID))
-                self._associatedMRMLNode = callDataAsMRMLNode
-                self.AddMRMLObserverByNumber(self._associatedMRMLNode,vtkMRMLAtlasCreatorNode_LaunchComputationEvent)
+                    # now we should propagate the MRML configuration to the GUI
+                    self.UpdateGUI()
+                    
+                    #jump out
+                    return True
 
 
 
+    '''=========================================================================================='''
     def BuildGUI(self):
+        '''
+        Creates the Graphical User Interface (GUI) of the AtlasCreator. Gets called once during loading of the module.
+        '''
 
         self.GetUIPanel().AddPage("AtlasCreator","AtlasCreator","")
         self._atlascreatorPage = self.GetUIPanel().GetPageWidget("AtlasCreator")
@@ -714,13 +932,13 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._deformationTypeRadios.SetLabelWidth(20)
         self._deformationTypeRadios.SetLabelText("Deformation:")
 
-        affineRadio = self._deformationTypeRadios.GetWidget().AddWidget(0)
-        affineRadio.SetText("Affine")
-        affineRadio.SetBalloonHelpString("Use affine deformation.")
+        self._affineRadio = self._deformationTypeRadios.GetWidget().AddWidget(0)
+        self._affineRadio.SetText("Affine")
+        self._affineRadio.SetBalloonHelpString("Use affine deformation.")
 
-        nonRigidRadio = self._deformationTypeRadios.GetWidget().AddWidget(1)
-        nonRigidRadio.SetText("Non-Rigid")
-        nonRigidRadio.SetBalloonHelpString("Use non-rigid deformation.")
+        self._nonRigidRadio = self._deformationTypeRadios.GetWidget().AddWidget(1)
+        self._nonRigidRadio.SetText("Non-Rigid")
+        self._nonRigidRadio.SetBalloonHelpString("Use non-rigid deformation.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deformationTypeRadios.GetWidgetName())
 
         self._deformationTypeRadios.GetWidget().GetWidget(0).SetSelectedState(1)
@@ -792,23 +1010,23 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._pcaCheckBox.SetLabelWidth(20)
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCheckBox.GetWidgetName())
 
-        self._maxEigenVectors.SetParent(self._pcaFrame.GetFrame())
-        self._maxEigenVectors.Create()
-        self._maxEigenVectors.GetWidget().SetRange(1,100)
-        self._maxEigenVectors.GetWidget().SetIncrement(1)
-        self._maxEigenVectors.GetWidget().SetValue(10)
-        self._maxEigenVectors.SetLabelText("Max. EigenVectors:")
-        self._maxEigenVectors.SetLabelWidth(20)
-        self._maxEigenVectors.SetBalloonHelpString("Set the maximal number of EigenVectors to use for PCA.")
-        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._maxEigenVectors.GetWidgetName())
+        self._maxEigenVectorsSpinBox.SetParent(self._pcaFrame.GetFrame())
+        self._maxEigenVectorsSpinBox.Create()
+        self._maxEigenVectorsSpinBox.GetWidget().SetRange(1,100)
+        self._maxEigenVectorsSpinBox.GetWidget().SetIncrement(1)
+        self._maxEigenVectorsSpinBox.GetWidget().SetValue(10)
+        self._maxEigenVectorsSpinBox.SetLabelText("Max. EigenVectors:")
+        self._maxEigenVectorsSpinBox.SetLabelWidth(20)
+        self._maxEigenVectorsSpinBox.SetBalloonHelpString("Set the maximal number of EigenVectors to use for PCA.")
+        slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._maxEigenVectorsSpinBox.GetWidgetName())
 
-        self._pcaCombine.SetParent(self._pcaFrame.GetFrame())
-        self._pcaCombine.Create()
-        self._pcaCombine.SetLabelText("Combine PCAs:")
-        self._pcaCombine.GetWidget().SetSelectedState(0)
-        self._pcaCombine.SetLabelWidth(20)
-        self._pcaCombine.SetBalloonHelpString("Generate only one PCA output for all labels.")        
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCombine.GetWidgetName())
+        self._pcaCombineCheckBox.SetParent(self._pcaFrame.GetFrame())
+        self._pcaCombineCheckBox.Create()
+        self._pcaCombineCheckBox.SetLabelText("Combine PCAs:")
+        self._pcaCombineCheckBox.GetWidget().SetSelectedState(0)
+        self._pcaCombineCheckBox.SetLabelWidth(20)
+        self._pcaCombineCheckBox.SetBalloonHelpString("Generate only one PCA output for all labels.")        
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._pcaCombineCheckBox.GetWidgetName())
         # ending PCA Frame
 
         # starting ExistingTransforms Frame
@@ -818,13 +1036,13 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._transformsFrame.CollapseFrame()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsFrame.GetWidgetName())
 
-        self._transformsDirCheckBox.SetParent(self._transformsFrame.GetFrame())
-        self._transformsDirCheckBox.Create()
-        self._transformsDirCheckBox.SetLabelText("Skip Registration:")
-        self._transformsDirCheckBox.SetLabelWidth(20)
-        self._transformsDirCheckBox.GetWidget().SetSelectedState(0)
-        self._transformsDirCheckBox.SetBalloonHelpString("Use existing Transforms and skip Registration.")
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._transformsDirCheckBox.GetWidgetName())
+        self._useExistingTransformsCheckBox.SetParent(self._transformsFrame.GetFrame())
+        self._useExistingTransformsCheckBox.Create()
+        self._useExistingTransformsCheckBox.SetLabelText("Skip Registration:")
+        self._useExistingTransformsCheckBox.SetLabelWidth(20)
+        self._useExistingTransformsCheckBox.GetWidget().SetSelectedState(0)
+        self._useExistingTransformsCheckBox.SetBalloonHelpString("Use existing Transforms and skip Registration.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._useExistingTransformsCheckBox.GetWidgetName())
 
         self._transformsDirButton.SetParent(self._transformsFrame.GetFrame())
         self._transformsDirButton.Create()
@@ -939,25 +1157,52 @@ Scheduler Command: Executable to run before the commands for registering images.
         # ending Advanced Frame
 
 
-        self._generateButton.SetParent(self._moduleFrame.GetFrame())
-        self._generateButton.Create()
-        self._generateButton.SetEnabled(1)
-        self._generateButton.SetText("Start!")
-        self._generateButton.SetBalloonHelpString("Click to generate the atlases! After computation, they will be loaded into 3D Slicer.")
-        slicer.TkCall("pack %s -side top -anchor e -padx 2 -pady 2" % self._generateButton.GetWidgetName())
+        self._launchButton.SetParent(self._moduleFrame.GetFrame())
+        self._launchButton.Create()
+        self._launchButton.SetEnabled(1)
+        self._launchButton.SetText("Start!")
+        self._launchButton.SetBalloonHelpString("Click to generate the atlases! After computation, they will be loaded into 3D Slicer. If PCA was selected, the output will be written to disk.")
+        slicer.TkCall("pack %s -side top -anchor e -padx 2 -pady 2" % self._launchButton.GetWidgetName())
 
 
+
+    '''=========================================================================================='''
     def TearDownGUI(self):
+        '''
+        Deletes the GUI
+        '''
         if self.GetUIPanel().GetUserInterfaceManager():
             self.GetUIPanel().RemovePage("AtlasCreator")
 
+
+
+    '''=========================================================================================='''
     def GetHelper(self):
+        '''
+        Returns the current Helper class.
+        '''
         return self._helper
 
+
+
+    '''=========================================================================================='''
     def GetMyLogic(self):
+        '''
+        Returns the current logic class.
+        '''
         return self._logic
 
+
+
+    '''=========================================================================================='''
     def ReadLabelsFromImage(self,path):
+        '''
+        Read labels from an image.
+        
+        path - the filePath to an existing Image
+        
+        Returns a list of labels
+        '''
         
         node = self.GetHelper().LoadVolume(os.path.normpath(path))
         labels = self.GetHelper().GetLabels(node.GetImageData())
@@ -965,3 +1210,4 @@ Scheduler Command: Executable to run before the commands for registering images.
         
         return labels
     
+

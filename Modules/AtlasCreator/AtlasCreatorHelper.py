@@ -1012,8 +1012,9 @@ class AtlasCreatorHelper(object):
             # let's look for older versions in the last 100 revisions
             topLevelExtensionFolder = str(slicer.Application.GetExtensionsInstallPath())
             
-            # now check if any of the 100 revisions before had CMTK
-            for i in range(0,100):
+            # now check if any of the revisions before had CMTK
+            # TODO go through all revisions
+            for i in range(1,currentSVNRevision):
                 
                 rev = currentSVNRevision - i 
                 
