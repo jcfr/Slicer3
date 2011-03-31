@@ -39,9 +39,6 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self._moduleFrame = slicer.vtkSlicerModuleCollapsibleFrame()
 
-        # Basic Frame
-        
-        self._basicFrame = slicer.vtkSlicerModuleCollapsibleFrame()
         self._inputOutputFrame = slicer.vtkSlicerModuleCollapsibleFrame()
         self._parametersFrame = slicer.vtkSlicerModuleCollapsibleFrame()
         
@@ -58,8 +55,6 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._meanIterationsSpinBox = slicer.vtkKWSpinBoxWithLabel()
         self._defaultCaseCombo = slicer.vtkKWComboBoxWithLabel()
         # End Parameters Frame
-        
-        # End Basic Frame
         
         
         # Advanced Frame
@@ -120,10 +115,11 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
     def Destructor(self):
 
-
-
         self._helper = None
         self._logic = None
+        self._associatedMRMLNode = None
+            
+        
 
     def RemoveMRMLNodeObservers(self):
         pass
@@ -182,36 +178,38 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         if normalize:
             self._outputCastCombo.SetEnabled(0)
-            self._outputCastCombo.GetWidget().SetValue("Double")
+            self._outputCastCombo.GetWidget().SetValue("Float")
+            self._normalizeValueEntry.SetEnabled(1)
         else:
             self._outputCastCombo.SetEnabled(1)
+            self._normalizeValueEntry.SetEnabled(0)
                 
     def ToggleMeanAndDefaultCase1(self):
-        useDefCase = self._fixedRadio.GetSelectedState()
-        useMean = self._dynamicRadio.GetSelectedState()
+        useDefCase = self._pairFixedRadio.GetSelectedState()
+        useMean = self._pairOnlineRadio.GetSelectedState()
 
         if useDefCase:
-            self._dynamicRadio.SetSelectedState(0)
+            self._pairOnlineRadio.SetSelectedState(0)
             #self._fixedRadio.SetSelectedState(1)
             self._defaultCaseCombo.SetEnabled(1)
             self._meanIterationsSpinBox.SetEnabled(0)
         else:
-            self._dynamicRadio.SetSelectedState(1)
+            self._pairOnlineRadio.SetSelectedState(1)
             #self._fixedRadio.SetSelectedState(0)
             self._defaultCaseCombo.SetEnabled(0)
             self._meanIterationsSpinBox.SetEnabled(1)
 
     def ToggleMeanAndDefaultCase2(self):
-        useMean = self._dynamicRadio.GetSelectedState()
+        useMean = self._pairOnlineRadio.GetSelectedState()
 
         if useMean:
             #self._dynamicRadio.SetSelectedState(1)
-            self._fixedRadio.SetSelectedState(0)
+            self._pairFixedRadio.SetSelectedState(0)
             self._defaultCaseCombo.SetEnabled(0)
             self._meanIterationsSpinBox.SetEnabled(1)
         else:
             #self._dynamicRadio.SetSelectedState(0)
-            self._fixedRadio.SetSelectedState(1)
+            self._pairFixedRadio.SetSelectedState(1)
             self._defaultCaseCombo.SetEnabled(1)
             self._meanIterationsSpinBox.SetEnabled(0)
 
@@ -628,15 +626,8 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._moduleFrame.ExpandFrame()
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s" % (self._moduleFrame.GetWidgetName(),self._atlascreatorPage.GetWidgetName()))
 
-        # starting Basic Frame
-        self._basicFrame.SetParent(self._moduleFrame.GetFrame())
-        self._basicFrame.Create()
-        self._basicFrame.SetLabelText("Basic")
-        self._basicFrame.ExpandFrame()
-        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._basicFrame.GetWidgetName())
-
         # starting I/O Frame
-        self._inputOutputFrame.SetParent(self._basicFrame.GetFrame())
+        self._inputOutputFrame.SetParent(self._moduleFrame.GetFrame())
         self._inputOutputFrame.Create()
         self._inputOutputFrame.SetLabelText("Input/Output")
         self._inputOutputFrame.ExpandFrame()
@@ -700,7 +691,7 @@ Scheduler Command: Executable to run before the commands for registering images.
         # ending I/O Frame
         
         # starting Parameter Frame
-        self._parametersFrame.SetParent(self._basicFrame.GetFrame())
+        self._parametersFrame.SetParent(self._moduleFrame.GetFrame())
         self._parametersFrame.Create()
         self._parametersFrame.SetLabelText("Parameters")
         self._parametersFrame.CollapseFrame()
@@ -754,7 +745,7 @@ Scheduler Command: Executable to run before the commands for registering images.
         slicer.TkCall("pack %s -side top -anchor ne -fill x -padx 2 -pady 2" % self._defaultCaseCombo.GetWidgetName())
 
         # ending Parameter Frame
-        # ending Basic Frame
+
 
         # starting Advanced Frame
         self._advancedFrame.SetParent(self._moduleFrame.GetFrame())
@@ -888,6 +879,7 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._normalizeValueEntry.SetLabelText("Normalize to:")
         self._normalizeValueEntry.GetWidget().SetValue("1")
         self._normalizeValueEntry.SetLabelWidth(20)
+        self._normalizeValueEntry.SetEnabled(0)
         self._normalizeValueEntry.SetBalloonHelpString("Set the value to normalize all Atlases to.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._normalizeValueEntry.GetWidgetName())
 

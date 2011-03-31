@@ -31,12 +31,23 @@ class AtlasCreatorHelper(object):
         # deactivated by default
         self.__debugMode = 0
         
-        self.__lookupIJKRAS = dict()
-        
         # create one instance of the EMSegment logic
         self.__emlogic = slicer.vtkEMSegmentLogic()
 
         self.__pcaDistanceSourced = 0
+        
+
+
+    '''=========================================================================================='''
+    def Destructor(self):
+        '''
+            Destruct this class
+            
+            Returns
+                n/a
+        '''
+        self.__emlogic = None
+        self.__parentClass = None
         
 
 
@@ -715,7 +726,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def ConvertDirectoryToString(directory):
+    def ConvertDirectoryToString(self,directory):
         '''
             Convert a directory to a string of filePaths with space as delimiter. While reading the directory,
             only real files are added to the list, sub-directories as well as links are ignored.
@@ -750,7 +761,7 @@ class AtlasCreatorHelper(object):
         
     
     '''=========================================================================================='''    
-    def ConvertListToString(list):
+    def ConvertListToString(self,list):
         '''
             Convert a list to a string of items with space as delimiter.
             
@@ -987,18 +998,38 @@ class AtlasCreatorHelper(object):
             Returns
                 The installation directory as String or None if CMTK was not found
         '''
-        extensionsDirForCurrentRev = os.path.join(str(slicer.Application.GetExtensionsInstallPath()),str(slicer.Application.GetSvnRevision()))
+        currentSVNRevision = slicer.Application.GetSvnRevision()
+        extensionsDirForCurrentRev = os.path.join(str(slicer.Application.GetExtensionsInstallPath()),str(currentSVNRevision))
         self.debug("Looking for CMTK in " + str(extensionsDirForCurrentRev))
         
-        if not os.path.isdir(extensionsDirForCurrentRev):
+        if not os.path.isdir(slicer.Application.GetExtensionsInstallPath()):
             # extension directory does not exist
             return None
         
         cmtkDir = os.path.join(extensionsDirForCurrentRev,"CMTK4Slicer")
         if not os.path.isdir(cmtkDir):
-            # CMTK directory does not exist
-            return None
+            # CMTK directory for current version of Slicer does not exist
+            # let's look for older versions in the last 100 revisions
+            topLevelExtensionFolder = str(slicer.Application.GetExtensionsInstallPath())
+            
+            # now check if any of the 100 revisions before had CMTK
+            for i in range(0,100):
+                
+                rev = currentSVNRevision - i 
+                
+                extensionsDirForFormerRev = os.path.join(str(slicer.Application.GetExtensionsInstallPath()),str(rev))
+                
+                if os.path.isdir(extensionsDirForFormerRev):
+                    # found a folder for a former revision
+                    
+                    # now check if there is CMTK present
+                    potentialCmtkDir = os.path.join(extensionsDirForFormerRev,"CMTK4Slicer")
+                    if os.path.isdir(potentialCmtkDir):
+                        # we found an old CMTK, let's try it
+                        cmtkDir = potentialCmtkDir
+                        break 
         
+        # check if the cmtkDir really has a registration tool
         if not os.path.isfile(os.path.join(cmtkDir,"registration")):
             # CMTK registration command not found
             return None

@@ -34,6 +34,17 @@ class AtlasCreatorLogic(object):
         self.__dryRun = 0
 
 
+    '''=========================================================================================='''
+    def Destructor(self):
+        '''
+            Destruct this class
+            
+            Returns
+                n/a
+        '''
+        self.__parentClass = None
+
+
 
     '''=========================================================================================='''
     def EnableDryrunMode(self):
