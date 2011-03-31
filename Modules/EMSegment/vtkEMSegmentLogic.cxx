@@ -802,7 +802,7 @@ double vtkEMSegmentLogic::GuessRegistrationBackgroundLevel(vtkMRMLVolumeNode* vo
 {
   if (!volumeNode ||  !volumeNode->GetImageData())  
     {
-      vtkWarningMacro(" volumeNode or volumeNode->GetImageData is null");
+      std::cerr << "double vtkEMSegmentLogic::GuessRegistrationBackgroundLevel(vtkMRMLVolumeNode* volumeNode) : volumeNode or volumeNode->GetImageData is null" << std::endl;
       return -1;
     }
 
@@ -907,7 +907,7 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
     segmenter->Update();
     vtkstd::cout << "[Done]  Segmentation algorithm." << vtkstd::endl;
     }
-  catch (std::exception e)
+  catch (std::exception& e)
     {
     ErrorMsg = "Exception thrown during segmentation: "  + std::string(e.what()) + "\n";
     vtkErrorMacro( << ErrorMsg );

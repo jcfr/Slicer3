@@ -100,7 +100,7 @@ public:
   static void TransferRASToIJK(vtkMRMLVolumeNode* volumeNode, double ras[3], int ijk[3]);
 
 
-  double GuessRegistrationBackgroundLevel(vtkMRMLVolumeNode* volumeNode);
+  static double GuessRegistrationBackgroundLevel(vtkMRMLVolumeNode* volumeNode);
 
   static void 
   SlicerImageResliceWithGrid(vtkMRMLVolumeNode* inputVolumeNode,
