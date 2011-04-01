@@ -332,6 +332,11 @@ void vtkScriptedModuleGUI::ProcessMRMLEvents(vtkObject *caller,
           // we have valid callData and forward it to the python script
           pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui'].ProcessMRMLEvents('MRMLScene'," << event << ",'" << mrmlNodeFromCallData->GetID() << "')\n";
           }
+        else
+          {
+          // we don't have a valid calldata, so we just forward the event to the python script
+          pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui'].ProcessMRMLEvents('MRMLScene'," << event << ")\n";
+          }
         }
       
       if (PyRun_SimpleString( pythonCommand.str().c_str() ) != 0)
