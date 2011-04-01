@@ -1245,9 +1245,9 @@ vtkEMSegmentMRMLManager::
 GetTreeNodeExcludeFromIncompleteEStep(vtkIdType nodeID)
 {
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
-  if (n == NULL || !n->GetParentParametersNode() )
+  if (n == NULL  )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+    vtkErrorMacro("Tree node is null for nodeID: " << nodeID  );
     return 0;
     }
 
