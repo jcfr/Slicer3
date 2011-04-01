@@ -243,7 +243,7 @@ void vtkMRMLAtlasCreatorNode::WriteXML(ostream& of, int nIndent)
   of << " PCACombine =\"" << this->PCACombine << "\"";
 
 
-  of << " SchedulerCommand =\"" << this->SchedulerCommand << "\"";
+  of << " UseCluster =\"" << this->UseCluster << "\"";
 
   if (this->SchedulerCommand != 0)
     {
