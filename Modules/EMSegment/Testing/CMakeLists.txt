@@ -34,7 +34,7 @@ set(EMSEG_RUN_COMPARE_TESTS   OFF
   )
 mark_as_advanced(EMSEG_RUN_COMPARE_TESTS)
 
-set(EMSEG_RUN_LOCAL_TESTS   OFF
+set(EMSEG_RUN_LOCAL_TESTS   ON
   CACHE BOOL "Enable local EMSegment tests." FORCE
   )
 mark_as_advanced(EMSEG_RUN_LOCAL_TESTS)
@@ -43,19 +43,22 @@ set(EMSEG_RUN_VALGRIND_TESTS    OFF
   CACHE BOOL "Enable EMSegment Valgrind test." FORCE
   )
 mark_as_advanced(EMSEG_RUN_VALGRIND_TESTS)
-set(EMSEG_RUN_EXTRA_SHORT_TESTS  OFF
+
+set(EMSEG_RUN_EXTRA_SHORT_TESTS  ON
   CACHE BOOL "Enable EMSegment extra, short tests." FORCE
   )
 mark_as_advanced(EMSEG_RUN_EXTRA_SHORT_TESTS)
+
 set(EMSEG_RUN_EXTRA_LONG_TESTS   OFF
   CACHE BOOL "Enable EMSegment extra, long tests." FORCE
   )
 mark_as_advanced(EMSEG_RUN_EXTRA_LONG_TESTS)
 
-mark_as_advanced(EMSEG_RUN_REG_TESTS)
-set(EMSEG_RUN_REG_TESTS   OFF
+set(EMSEG_RUN_REG_TESTS   ON
   CACHE BOOL "Enable EMSegment extra, registration tests."
   )
+mark_as_advanced(EMSEG_RUN_REG_TESTS)
+
 
 # Set to 1 to remove temporary test output files
 set(EMSEG_REMOVE_TMP_TEST_DATA   "1"
@@ -70,7 +73,6 @@ if(NOT DISABLE_CXX_TESTING)
   add_executable(
     vtkEMSegmentRemoteIOTest
     vtkEMSegmentRemoteIOTest.cxx
-
     )
   target_link_libraries(
     vtkEMSegmentRemoteIOTest
@@ -158,16 +160,14 @@ if(NOT DISABLE_CXX_TESTING)
   ############################################################################
 
   # Does the mrml manager's api function correctly?
-  add_test(
-    vtkEMSegmentMRMLManagerTest
+  add_test( vtkEMSegmentMRMLManagerTest
     ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentMRMLManagerTest
     ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml
     "EMSegment Tutorial Template"
     )
 
   # Does the preprocessing function correctly?
-  #add_test(
-  #  vtkEMSegmentPreprocessingManagerTest
+  #add_test( vtkEMSegmentPreprocessingManagerTest
   #  ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentPreprocessingManagerTest
   #  ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml
   #  "EMSegment Tutorial Template"
@@ -175,8 +175,7 @@ if(NOT DISABLE_CXX_TESTING)
 
   # Test that the segmentation results match what the expected
   # results.  This is a legacy test that should not be removed.
-  add_test(
-    vtkEMSegmentBlackBoxSegmentationTest_TutorialDataSmallRead
+  add_test( vtkEMSegmentBlackBoxSegmentationTest_TutorialDataSmallRead
     ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentBlackBoxSegmentationTest
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     ${EMSegment_TUTORIAL_DIR}
@@ -185,8 +184,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
 
   # Build parameters from scratch and run the segmentation
-  #add_test(
-  #  vtkEMSegmentBuildAndRunNewSegmentationParameters001
+  #add_test( vtkEMSegmentBuildAndRunNewSegmentationParameters001
   #  ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentBuildAndRunNewSegmentationParameters001
   #  ${EMSegment_SOURCE_DIR}/Testing/TestData/MiscVolumeData/R.mhd
   #  ${EMSegment_SOURCE_DIR}/Testing/TestData/MiscVolumeData/G.mhd
@@ -195,8 +193,7 @@ if(NOT DISABLE_CXX_TESTING)
   #  )
 
   # Does help work right?
-  add_test(
-    EMSegCL_Help
+  add_test( EMSegCL_Help
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --help
     )
@@ -226,8 +223,8 @@ if(NOT DISABLE_CXX_TESTING)
       --mrmlSceneFileName ${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_med.mrml
       --resultVolumeFileName "${test_file_prefix}.nhdr"
       )
-    add_test(
-      ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+    add_test( ${test_name}
+      ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
       "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
       "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
       "-Drm_files:STRING=${test_rm_files}"
@@ -252,8 +249,8 @@ if(NOT DISABLE_CXX_TESTING)
       --mrmlSceneFileName ${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_NoReg_med.mrml 
       --resultVolumeFileName "${test_file_prefix}.nhdr"
       )
-    add_test(
-      ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+    add_test( ${test_name}
+      ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
       "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
       "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
       "-Drm_files:STRING=${test_rm_files}"
@@ -278,8 +275,8 @@ if(NOT DISABLE_CXX_TESTING)
       --mrmlSceneFileName ${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_T2TReg_med.mrml 
       --resultVolumeFileName "${test_file_prefix}.nhdr"
       )
-    add_test(
-      ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+    add_test( ${test_name}
+      ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
       "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
       "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
       "-Drm_files:STRING=${test_rm_files}"
@@ -304,8 +301,7 @@ if(NOT DISABLE_CXX_TESTING)
       --mrmlSceneFileName ${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_A2TReg_med.mrml 
       --resultVolumeFileName "${test_file_prefix}.nhdr"
       )
-    add_test(
-      ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+    add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
       "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
       "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
       "-Drm_files:STRING=${test_rm_files}"
@@ -332,8 +328,8 @@ if(NOT DISABLE_CXX_TESTING)
     --resultVolumeFileName "${test_file_prefix}.mhd"
     --disableCompression
     )
-  add_test(
-    ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+  add_test( ${test_name}
+    ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
     "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
     "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
     "-Drm_files:STRING=${test_rm_files}"
@@ -359,8 +355,7 @@ if(NOT DISABLE_CXX_TESTING)
     --resultVolumeFileName "${test_file_prefix}.mhd"
     --disableCompression
     )
-  #add_test(
-  #  ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+  #add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
   #  "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
   #  "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
   #  "-Drm_files:STRING=${test_rm_files}"
@@ -389,8 +384,7 @@ if(NOT DISABLE_CXX_TESTING)
     --resultVolumeFileName "${test_file_prefix}.mhd"
     --disableCompression
     )
-  add_test(
-    ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+  add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
     "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
     "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
     "-Drm_files:STRING=${test_rm_files}"
@@ -398,8 +392,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
 
   # Is multithreading disabled when the command line flag is given?
-  add_test(
-    EMSegCL_DisableMultithreading
+  add_test( EMSegCL_DisableMultithreading
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
@@ -412,8 +405,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
 
   # Does it fail elegently when a bogus parameter node is specified?
-  add_test(
-    EMSegCL_EFBogusParameterNode
+  add_test( EMSegCL_EFBogusParameterNode
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
     --verbose --dontWriteResults --mrmlSceneFileName 
@@ -427,8 +419,7 @@ if(NOT DISABLE_CXX_TESTING)
     "ERROR: no EMSegment parameters found in scene with name ")
 
   # Does it fail elegently when a bogus mrml scene is specified?
-  add_test(
-    EMSegCL_EFBogusMRMLScene
+  add_test( EMSegCL_EFBogusMRMLScene
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
     --verbose --dontWriteResults --mrmlSceneFileName ${Slicer3_BINARY_DIR}/Testing/Temporary/bogus_file_scene.mrml
@@ -440,8 +431,7 @@ if(NOT DISABLE_CXX_TESTING)
     "Error: MRML scene file does not exist.")
 
   # Does it fail elegently when a bogus target images are specified?
-  add_test(
-    EMSegCL_EFBogusTargetImages
+  add_test( EMSegCL_EFBogusTargetImages
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
     --verbose --dontWriteResults --mrmlSceneFileName 
@@ -456,8 +446,7 @@ if(NOT DISABLE_CXX_TESTING)
     "Error: target volume file ")
 
   # Does it fail elegently when too many target images are specified?
-  add_test(
-    EMSegCL_EFTooManyImages
+  add_test( EMSegCL_EFTooManyImages
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
     --verbose --dontWriteResults --mrmlSceneFileName 
@@ -472,8 +461,7 @@ if(NOT DISABLE_CXX_TESTING)
     "ERROR: Number of input channels")
 
   # Does it fail elegently when too few target images are specified?
-  add_test(
-    EMSegCL_EFTooFewImages
+  add_test( EMSegCL_EFTooFewImages
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
     --verbose --dontWriteResults --mrmlSceneFileName 
@@ -488,8 +476,7 @@ if(NOT DISABLE_CXX_TESTING)
     "ERROR: Number of input channels")
 
   # Does the option --intermediateResultsDirectory work?
-  add_test(
-    EMSegCL_IntermediateResults
+  add_test( EMSegCL_IntermediateResults
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
     --verbose --mrmlSceneFileName
@@ -509,523 +496,11 @@ if(NOT DISABLE_CXX_TESTING)
     )
 
 
-  # Task test - small
-  add_test(
-    EMSegCL_TaskMRIHumanBrain_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrain_T1_aligned.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskMRIHumanBrain_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-  if(EMSEG_RUN_COMPARE_TESTS)
-    midas_add_test(EMSegCL_TaskMRIHumanBrain_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
-             ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrain_T1_aligned.nrrd
-                               MIDAS{RESULT_small_MRIHumanBrain_T1_aligned.nrrd.md5}
-    )
-  endif(EMSEG_RUN_COMPARE_TESTS)
-
-
-  # Task test - very small
-  add_test(
-    EMSegCL_TaskMRIHumanBrain_very_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain_very_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/very_small_MRIHumanBrain_T1_aligned.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrain_T1_aligned.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskMRIHumanBrain_very_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-  if(EMSEG_RUN_COMPARE_TESTS)
-    midas_add_test(NAME EMSegCL_TaskMRIHumanBrain_very_smallCompareTest
-                   COMMAND ${Slicer3_EXE} --launch vtkCompareDriverTest --no-error-popup
-                   ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrain_T1_aligned.nrrd
-                                     MIDAS{RESULT_very_small_MRIHumanBrain_T1_aligned.nrrd.md5}
-    )
-  endif(EMSEG_RUN_COMPARE_TESTS)
-
-
-  # Task test - small
-  add_test(
-    EMSegCL_TaskMRIHumanBrainParcellation_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/small_MRIHumanBrainParcellation_T1.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainParcellation_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskMRIHumanBrainParcellation_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-  if(EMSEG_RUN_COMPARE_TESTS)
-    midas_add_test(EMSegCL_TaskMRIHumanBrainParcellation_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
-             ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainParcellation_T1.nrrd
-                               MIDAS{RESULT_small_MRIHumanBrainParcellation_T1.nrrd.md5}
-    )
-  endif(EMSEG_RUN_COMPARE_TESTS)
-    
-    
-
-  # Task test - very small
-  add_test(
-    EMSegCL_TaskMRIHumanBrainParcellation_very_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation_very_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/very_small_MRIHumanBrainParcellation_T1.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrainParcellation_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskMRIHumanBrainParcellation_very_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-  if(EMSEG_RUN_COMPARE_TESTS)
-    midas_add_test(EMSegCL_TaskMRIHumanBrainParcellation_very_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
-             ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrainParcellation_T1.nrrd
-                               MIDAS{RESULT_very_small_MRIHumanBrainParcellation_T1.nrrd.md5}
-    )
-  endif(EMSEG_RUN_COMPARE_TESTS)
-
-
-  # Task test - small
-  add_test(
-    EMSegCL_TaskMRIHumanBrainFullParcellation_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainFullParcellation_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskMRIHumanBrainFullParcellation_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-  if(EMSEG_RUN_COMPARE_TESTS)
-    midas_add_test(EMSegCL_TaskMRIHumanBrainFullParcellation_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
-             ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainFullParcellation_T1.nrrd
-                               MIDAS{RESULT_small_MRIHumanBrainFullParcellation_T1.nrrd.md5}
-    )
-  endif(EMSEG_RUN_COMPARE_TESTS)
-
-    
-
-  # Task test - very small
-  add_test(
-    EMSegCL_TaskMRIHumanBrainFullParcellation_very_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation_very_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/very_small_MRIHumanBrain_T1_aligned.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrainFullParcellation_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskMRIHumanBrainFullParcellation_very_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-  if(EMSEG_RUN_COMPARE_TESTS)
-    midas_add_test(EMSegCL_TaskMRIHumanBrainFullParcellation_very_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
-             ${EMSegment_BINARY_DIR}/RESULT_very_small_MRIHumanBrainFullParcellation_T1.nrrd
-                               MIDAS{RESULT_very_small_MRIHumanBrainFullParcellation_T1.nrrd.md5}
-    )
-  endif(EMSEG_RUN_COMPARE_TESTS)
-
-
-  # Task test - small
-  add_test(
-    EMSegCL_TaskNonHumanPrimate_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/small_NonHumanPrimate_T1.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_small_NonHumanPrimate_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskNonHumanPrimate_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-  if(EMSEG_RUN_COMPARE_TESTS)
-    midas_add_test(NAME EMSegCL_TaskNonHumanPrimate_smallCompareTest
-                   COMMAND ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
-                   ${EMSegment_BINARY_DIR}/RESULT_small_NonHumanPrimate_T1.nrrd
-                                     MIDAS{RESULT_small_NonHumanPrimate_T1.nrrd.md5}
-    )
-  endif(EMSEG_RUN_COMPARE_TESTS)
-    
-
-  # Task test - very small
-  add_test(
-    EMSegCL_TaskNonHumanPrimate_very_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate_very_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/very_small_NonHumanPrimate_T1.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_very_small_NonHumanPrimate_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskNonHumanPrimate_very_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-  if(EMSEG_RUN_COMPARE_TESTS)
-    midas_add_test(EMSegCL_TaskNonHumanPrimate_very_smallCompareTest ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
-             ${EMSegment_BINARY_DIR}/RESULT_very_small_NonHumanPrimate_T1.nrrd
-                               MIDAS{RESULT_very_small_NonHumanPrimate_T1.nrrd.md5}
-    )
-  endif(EMSEG_RUN_COMPARE_TESTS)
-
-
-#==== Scalartype tests ============================
-
-if ( EMSEG_RUN_LOCAL_TESTS )
-
-  set (scalartypes float char double int short uchar uint ushort)
-  foreach (scalartype ${scalartypes})
-
-  # Task test - small - scalartypes - CMTK
-  midas_add_test(
-    EMSegCL_Task_CMTK_MRIHumanBrain_${scalartype}
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
-    --targetVolumeFileNames
-     MIDAS{MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_CMTK_MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_CMTK_MRIHumanBrain_${scalartype}
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-  # Task test - small - scalartypes - BRAINS
-  midas_add_test(
-    EMSegCL_Task_BRAINS_MRIHumanBrain_${scalartype}
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/BRAINS_MRI-Human-Brain_small.mrml
-    --targetVolumeFileNames
-     MIDAS{MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_BRAINS_MRIHumanBrain_${scalartype}
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-  endforeach (scalartype ${scalartypes})
-
-endif ( EMSEG_RUN_LOCAL_TESTS )
-
-
-  # Task test - small
-  add_test(
-    EMSegCL_Task_CMTK_MRIHumanBrain_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_CMTK_small_MRIHumanBrain_T1_aligned.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_CMTK_MRIHumanBrain_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-
-  # Task test - small
-  add_test(
-    EMSegCL_Task_CMTK_MRIHumanBrainParcellation_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain-Parcellation_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/small_MRIHumanBrainParcellation_T1.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainParcellation_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_CMTK_MRIHumanBrainParcellation_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-  # Task test - small
-  add_test(
-    EMSegCL_Task_CMTK_MRIHumanBrainFullParcellation_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/CMTK_MRI-Human-Brain-Full-Parcellation_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_small_MRIHumanBrainFullParcellation_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_CMTK_MRIHumanBrainFullParcellation_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-  # Task test - small
-  add_test(
-    EMSegCL_Task_CMTK_NonHumanPrimate_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/CMTK_Non-Human-Primate_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/small_NonHumanPrimate_T1.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_small_NonHumanPrimate_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_CMTK_NonHumanPrimate_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-#==================================
-
-#====BRAINS============================
-
-  # Task test - small
-  add_test(
-    EMSegCL_Task_BRAINS_MRIHumanBrain_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/BRAINS_MRI-Human-Brain_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_small_MRIHumanBrain_T1_aligned.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_BRAINS_MRIHumanBrain_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-
-
-  # Task test - small
-  add_test(
-    EMSegCL_Task_BRAINS_MRIHumanBrainParcellation_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/BRAINS_MRI-Human-Brain-Parcellation_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/small_MRIHumanBrainParcellation_T1.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_small_MRIHumanBrainParcellation_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_BRAINS_MRIHumanBrainParcellation_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-  # Task test - small
-  add_test(
-    EMSegCL_Task_BRAINS_MRIHumanBrainFullParcellation_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/BRAINS_MRI-Human-Brain-Full-Parcellation_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/small_MRIHumanBrain_T1_aligned.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_small_MRIHumanBrainFullParcellation_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_BRAINS_MRIHumanBrainFullParcellation_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-  # Task test - small
-  add_test(
-    EMSegCL_Task_BRAINS_NonHumanPrimate_small
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/BRAINS_Non-Human-Primate_small.mrml
-    --targetVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/small_NonHumanPrimate_T1.nrrd
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_BRAINS_small_NonHumanPrimate_T1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_Task_BRAINS_NonHumanPrimate_small
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-#==================================
-
-if ( EMSEG_RUN_LOCAL_TESTS )
-
-  # Task test - CT Hand Bone
-midas_add_test(
-    NAME EMSegCL_TaskCTHandBone_Subject1
-    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/CT-Hand-Bone.mrml
-    --targetVolumeFileNames
-    MIDAS{CT_Hand_Bone_Subject_1.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskCTHandBone_Subject1
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-  # Task test - CT Hand Bone
-midas_add_test(
-    NAME EMSegCL_TaskCTHandBone_Subject2
-    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
-    --targetVolumeFileNames
-    MIDAS{CT_Hand_Bone_Subject_2.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_2.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskCTHandBone_Subject1
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-  # Task test - CT Hand Bone
-midas_add_test(
-    NAME EMSegCL_TaskCTHandBone_Subject3
-    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
-    --targetVolumeFileNames
-    MIDAS{CT_Hand_Bone_Subject_3.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_3.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskCTHandBone_Subject1
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-
-  # Task test - very small
-midas_add_test(
-    NAME EMS_MIDAS_Test
-    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
-    --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain_very_small.mrml
-    --targetVolumeFileNames
-    MIDAS{x4_atlas_t1.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/very_small_MRIHumanBrain_T1.nrrd
-    )
-  set_tests_properties(
-    EMS_MIDAS_Test
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
-
-
-add_test(
-  RemoteIOTest2
-  ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentRemoteIOTest
-  http://slicer.org/EMSegmentUpdates/
-  /tmp/sdfsd.hmtl
-)
-
-endif ( EMSEG_RUN_LOCAL_TESTS )
-
-
   # Does it fail elegently when a bogus result standard is specified?
-  add_test(
-    EMSegCL_EFBogusResultStandardImage
+  add_test( EMSegCL_EFBogusResultStandardImage
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
-    --verbose --dontWriteResults --mrmlSceneFileName 
+    --verbose --dontWriteResults --mrmlSceneFileName
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --resultStandardVolumeFileName
     ${EMSegment_TEST_DIR}/bogus_file.mhd
@@ -1033,8 +508,10 @@ endif ( EMSEG_RUN_LOCAL_TESTS )
   set_tests_properties(
     EMSegCL_EFBogusResultStandardImage
     PROPERTIES
-    PASS_REGULAR_EXPRESSION 
+    PASS_REGULAR_EXPRESSION
     "Error: result standard volume file does not exist")
+
+
 
   if(EMSEG_RUN_EXTRA_LONG_TESTS)
     # run tutorial data
@@ -1048,20 +525,21 @@ endif ( EMSEG_RUN_LOCAL_TESTS )
     else(${EMSEG_REMOVE_TMP_TEST_DATA})
       set(test_rm_files)
     endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args 
+    set(test_args
       ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --verbose 
-      --mrmlSceneFileName ${EMSegment_TUTORIAL_DIR}/Template_large.mrml 
+      --verbose
+      --mrmlSceneFileName ${EMSegment_TUTORIAL_DIR}/Template_large.mrml
       --resultVolumeFileName "${test_file_prefix}.mhd"
       )
-    add_test(
-      ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+    add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
       "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
       "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
       "-Drm_files:STRING=${test_rm_files}"
       -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
       )
   endif(EMSEG_RUN_EXTRA_LONG_TESTS)
+
+
 
   ############################################################################
   #
@@ -1085,18 +563,17 @@ endif ( EMSEG_RUN_LOCAL_TESTS )
     else(${EMSEG_REMOVE_TMP_TEST_DATA})
       set(test_rm_files)
     endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args 
+    set(test_args
       ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
       --verbose --generateEmptyMRMLSceneAndQuit ${test_cmp_file}
       )
-    add_test(
-      ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+    add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
       "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
       "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
       "-Drm_files:STRING=${test_rm_files}"
       -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
       )
-    
+
     # Test that the mrml readers/writers work.
     set(test_name        "EMSegMRML_DiffReadWriteNodes")
     set(test_exe         "${Slicer3_EXE}")
@@ -1108,18 +585,20 @@ endif ( EMSEG_RUN_LOCAL_TESTS )
     else(${EMSEG_REMOVE_TMP_TEST_DATA})
       set(test_rm_files)
     endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args 
+    set(test_args
       ${WRAPPED_EXE_PREFIX}/vtkEMSegmentReadWriteMRMLTest
       ${test_std_file} ${test_cmp_file}
       )
-    add_test(
-      ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
+    add_test( ${test_name}
+      ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
       "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
       "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
       "-Drm_files:STRING=${test_rm_files}"
       -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
       )
   endif(EMSEG_RUN_EXTRA_SHORT_TESTS)
+
+
 
   ############################################################################
   #
@@ -1128,30 +607,280 @@ endif ( EMSEG_RUN_LOCAL_TESTS )
   ############################################################################
 
   if(EMSEG_RUN_VALGRIND_TESTS)
-    add_test(
-      EMSegMRML_ValgrindTest
-      valgrind --leak-check=full 
+    add_test( EMSegMRML_ValgrindTest
+      valgrind --leak-check=full
       ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/EMSegmentCommandLine
-      --verbose 
-      --mrmlSceneFileName 
+      --verbose
+      --mrmlSceneFileName
       ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml
       --dontWriteResults
       )
   endif(EMSEG_RUN_VALGRIND_TESTS)
 
-  if(EMSEG_RUN_EXTRA_SHORT_TESTS)
+
+
+  set (registrationpackages CMTK BRAINS)
+  set (scalartypes float char double int short uchar uint ushort)
+
+
+  #==== Scalartype tests ============================
+  if( EMSEG_RUN_LOCAL_TESTS )
+
+    foreach (registrationpackage ${registrationpackages})
+
+      foreach (scalartype ${scalartypes})
+
+        # Task test - small - scalartypes - registrationpackages
+        midas_add_test( EMSegCL_Task_${registrationpackage}_MRIHumanBrain_${scalartype}
+          ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+          --no-error-popup
+          --verbose --mrmlSceneFileName
+          ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
+          --targetVolumeFileNames
+          MIDAS{MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd.md5}
+          --resultVolumeFileName
+          ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd
+          --taskPreProcessingSetting
+          "|C1|C0"
+          --registrationPackage
+          ${registrationpackage}
+          --registrationAffineType
+          1
+          --registrationDeformableType
+          1
+          )
+        set_tests_properties(
+          EMSegCL_Task_${registrationpackage}_MRIHumanBrain_${scalartype}
+          PROPERTIES
+          FAIL_REGULAR_EXPRESSION
+          "ERROR"
+          )
+
+      endforeach (scalartype ${scalartypes})
+
+    endforeach (registrationpackage ${registrationpackages})
+
+  endif( EMSEG_RUN_LOCAL_TESTS )
+
+
+
+
+
+  set (sizes small very_small)
+  foreach (size ${sizes})
+    set (registrationpackage CMTK)
+
+    # Task MRI-Human-Brain
+    add_test(
+      EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
+      --targetVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_MRIHumanBrain_T1_aligned.nrrd
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
+      --taskPreProcessingSetting
+      "|C0|C0"
+      --registrationPackage
+      ${registrationpackage}
+      --atlasVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_skulneck.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_air.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_csf.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_greymatter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_whitematter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_t1.nrrd
+      )
+    set_tests_properties(
+      EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
+    if(EMSEG_RUN_COMPARE_TESTS)
+      midas_add_test(
+        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
+                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
+        )
+    endif(EMSEG_RUN_COMPARE_TESTS)
+
+
+
+    # Task MRI-Human-Brain-Parcellation
+    add_test( EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Parcellation.mrml
+      --targetVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_MRIHumanBrainParcellation_T1.nrrd
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${size}_MRIHumanBrainParcellation_T1.nrrd
+      --registrationPackage
+      ${registrationpackage}
+    --taskPreProcessingSetting
+    "|C0|C0"
+    --atlasVolumeFileNames
+    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_bg_atlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_csf_atlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_subwm_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_subgm_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_t1_atlas.nrrd
+    )
+    set_tests_properties(
+      EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
+    if(EMSEG_RUN_COMPARE_TESTS)
+      midas_add_test(
+        EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}_CompareTest
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainParcellation_T1.nrrd
+                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainParcellation_T1.nrrd.md5}
+      )
+    endif(EMSEG_RUN_COMPARE_TESTS)
     
-  endif(EMSEG_RUN_EXTRA_SHORT_TESTS)
+
+    # Task MRI-Human-Brain-Full-Parcellation 
+    add_test( EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Full-Parcellation.mrml
+      --targetVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_MRIHumanBrain_T1_aligned.nrrd
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${size}_MRIHumanBrainFullParcellation_T1.nrrd
+      --registrationPackage
+      ${registrationpackage}
+    --taskPreProcessingSetting
+    "|C0|C0"
+    --atlasVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_skulneck.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_air.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_csf.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_greymatter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_whitematter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_t1.nrrd
+      )
+    set_tests_properties(
+      EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
+    if(EMSEG_RUN_COMPARE_TESTS)
+      midas_add_test(
+        EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}_CompareTest
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainFullParcellation_T1.nrrd
+                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainFullParcellation_T1.nrrd.md5}
+        )
+    endif(EMSEG_RUN_COMPARE_TESTS)
+
+
+    # Task Non-Human-Primate
+    add_test(
+      EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/Non-Human-Primate.mrml
+      --targetVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_NonHumanPrimate_T1.nrrd
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${size}_NonHumanPrimate_T1.nrrd
+      --taskPreProcessingSetting
+      "|C0|C0"
+      --registrationPackage
+      ${registrationpackage}
+      --atlasVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_rhip_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_rput_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_rcau_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_lhip_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_lput_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_lcau_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_gm_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_wm_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_csf_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_cb_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_bs_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_rest_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_template.nrrd
+      )
+    set_tests_properties(
+      EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
+    if(EMSEG_RUN_COMPARE_TESTS)
+      midas_add_test(
+        NAME
+        EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}_CompareTest
+        COMMAND
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_NonHumanPrimate_T1.nrrd
+                          MIDAS{RESULT_${registrationpackage}_${size}_NonHumanPrimate_T1.nrrd.md5}
+        )
+    endif(EMSEG_RUN_COMPARE_TESTS)
+
+  endforeach (size ${sizes})
+
+
+if( EMSEG_RUN_LOCAL_TESTS )
+
+  # Task test - CT Hand Bone
+  midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject1
+    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_TESTDATA_DIR}/CT-Hand-Bone.mrml
+    --targetVolumeFileNames
+    MIDAS{CT_Hand_Bone_Subject_1.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_1.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskCTHandBone_Subject1
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - CT Hand Bone
+  midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject2
+    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
+    --targetVolumeFileNames
+    MIDAS{CT_Hand_Bone_Subject_2.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_2.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskCTHandBone_Subject1
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  # Task test - CT Hand Bone
+  midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject3
+    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+    --no-error-popup
+    --verbose --mrmlSceneFileName
+    ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
+    --targetVolumeFileNames
+    MIDAS{CT_Hand_Bone_Subject_3.nrrd.md5}
+    --resultVolumeFileName
+    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_3.nrrd
+    )
+  set_tests_properties(
+    EMSegCL_TaskCTHandBone_Subject1
+    PROPERTIES
+    FAIL_REGULAR_EXPRESSION
+    "ERROR"
+    )
+
+  add_test( RemoteIOTest2
+    ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentRemoteIOTest
+    http://slicer.org/EMSegmentUpdates/
+    ${EMSegment_TEST_DIR}/RemoteIOTest2sdfsd.hmtl
+    )
+
+  # Are we able to download our update file ?
+  add_test( RemoteIOTest
+    ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentRemoteIOTest
+    http://slicer.org/EMSegmentUpdates/
+    ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegmenterUpdates
+    )
+
+endif( EMSEG_RUN_LOCAL_TESTS )
+
+
 
 endif(NOT DISABLE_CXX_TESTING)
-
-
-
-# Are we able to download our update file ?
-add_test(
-  RemoteIOTest
-  ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentRemoteIOTest
-  http://slicer.org/EMSegmentUpdates/
-  ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegmenterUpdates
-)
 
