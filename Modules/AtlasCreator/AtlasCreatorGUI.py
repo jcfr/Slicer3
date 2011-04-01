@@ -129,6 +129,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         '''
         Destruct this class. Gets called automatically.
         '''
+        self.GetHelper().info("Destructor")
         self._helper = None
         self._logic = None
         self._associatedMRMLNode = None
@@ -136,16 +137,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         self._updating = None
     
-    
-    
-    '''=========================================================================================='''    
-    def RemoveMRMLNodeObservers(self):
-        '''
-        Placeholder to remove observers. Does not get used here but needs to exist.
-        '''
-        pass
-    
-    
+        
     
     '''=========================================================================================='''
     def RemoveLogicObservers(self):
@@ -211,6 +203,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         # MRML observer
         self._mrmlNodeAddedTag = self.AddMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_NodeAddedEvent)
+        self._mrmlSceneCloseTag = self.AddMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_CloseEvent)
 
 
 
@@ -221,7 +214,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         For convenience, we also remove the MRML Scene observers here.
         '''
-        
+
         # I/O panel
         self.RemoveObserver(self._origDirButtonTag)
         self.RemoveObserver(self._segDirButtonTag)
@@ -266,12 +259,20 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         # the launch button
         self.RemoveObserver(self._launchButtonTag)
+    
+    
+    
+    '''=========================================================================================='''    
+    def RemoveMRMLNodeObservers(self):
+        '''
+        Remove MRML Node and MRML Scene Observers
+        '''
         
-        # MRML observers
-        self.RemoveObserver(self._mrmlNodeAddedTag)
+        self.RemoveMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_NodeAddedEvent)
+        self.RemoveMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_CloseEvent)
         
         if self._associatedMRMLNode and self._associatedMRMLNodeTag:
-            self.RemoveObserver(self._associatedMRMLNodeTag)
+            self.RemoveMRMLObserverByNumber(self._associatedMRMLNode,vtkMRMLAtlasCreatorNode_LaunchComputationEvent)
         
 
 
@@ -737,28 +738,175 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         # and jump out if yes        
         if not self._updating:
 
+            if not self._associatedMRMLNode:
+                # no MRML node associated, jump out
+                return False
+
             # start blocking of update events
             self._updating = 1
 
-            # I/O panel
+            # reset everything to default
+            self.InitializeByDefault()
+
+            n = self._associatedMRMLNode
+
+            ###############################################################
+            # input panel
             
-            # Parameters panel
+            imagesDirListString = n.GetOriginalImagesFilePathList()
+            # split the string by space
+            imagesDirList = imagesDirListString.split(" ")
+            if imagesDirList:
+                firstItem = imagesDirList[0]
+                
+                if firstItem:
+                    # get the directory of the first item
+                    imagesDir = os.path.split(firstItem)[0]
+                    if imagesDir:
+                        # propagate it to the GUI
+                        self._origDirButton.GetWidget().SetInitialFileName(str(imagesDir))
+                        # but we only display the last folderName
+                        self._origDirButton.GetWidget().SetText(os.path.basename(imagesDir))
+                        
+                        
+            # stop blocking of update events
+            self._updating = 0
+                
+            '''
+            
+            imagesDir = self._origDirButton.GetWidget().GetFileName()
+            if imagesDir:
+                self._associatedMRMLNode.SetOriginalImagesFilePathList(self.GetHelper().ConvertDirectoryToString(imagesDir))
+
+            segmentationsDir = self._segDirButton.GetWidget().GetFileName()
+            if segmentationsDir:
+                self._associatedMRMLNode.SetSegmentationsFilePathList(self.GetHelper().ConvertDirectoryToString(segmentationsDir))
+                
+            outputDir = self._outDirButton.GetWidget().GetFileName()
+            if outputDir:
+                self._associatedMRMLNode.SetOutputDirectory(str(outputDir))
+            
+            if self._groupOnlineRadio.GetSelectedState():
+                self._associatedMRMLNode.SetTemplateType("group")            
+            elif self._pairOnlineRadio.GetSelectedState():
+                self._associatedMRMLNode.SetTemplateType("dynamic")
+            else:
+                self._associatedMRMLNode.SetTemplateType("fixed")
+
+            
+            ###############################################################    
+            # parameters panel
+            
+            toolkit = self._toolkitCombo.GetWidget().GetValue()
+            if toolkit:
+                self._associatedMRMLNode.SetToolkit(str(toolkit))
+                
+            if self._nonRigidRadio.GetSelectedState():
+                self._associatedMRMLNode.SetRegistrationType("Non-Rigid")
+            else:
+                self._associatedMRMLNode.SetRegistrationType("Affine")
+
+            meanIterations = self._meanIterationsSpinBox.GetWidget().GetValue()
+            if meanIterations:
+                self._associatedMRMLNode.SetDynamicTemplateIterations(int(meanIterations))
+            
+            defaultCase = self._defaultCaseCombo.GetWidget().GetValue()
+            if defaultCase:
+                self._associatedMRMLNode.SetFixedTemplateDefaultCaseFilePath(defaultCase)
             
             
-            # Advanced panel
+            ###############################################################    
+            # advanced panel
+            
+            # cluster configuration
             #
+            if self._clusterCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetUseCluster(1)
+            else:
+                self._associatedMRMLNode.SetUseCluster(0)
+                
+            schedCommand = self._schedulerEntry.GetWidget().GetValue()
+            if schedCommand:
+                self._associatedMRMLNode.SetSchedulerCommand(str(schedCommand))
+                
+            # principal component analysis
+            #
+            if self._pcaCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetPCAAnalysis(1)
+            else:
+                self._associatedMRMLNode.SetPCAAnalysis(0)
             
-            # Cluster configuration panel
+            pcaMaxEigenVectors = self._maxEigenVectorsSpinBox.GetWidget().GetValue()
+            if pcaMaxEigenVectors:
+                self._associatedMRMLNode.SetPCAMaxEigenVectors(int(pcaMaxEigenVectors))
+                
+            if self._pcaCombineCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetPCACombine(1)
+            else:
+                self._associatedMRMLNode.SetPCACombine(0)
             
-            # PCA panel
+            # use existing transforms
+            #
+            if self._useExistingTransformsCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetSkipRegistration(1)
+            else:
+                self._associatedMRMLNode.SetSkipRegistration(0)
+                
+            transformsDir = self._transformsDirButton.GetWidget().GetFileName()
+            if transformsDir:
+                self._associatedMRMLNode.SetTransformsDir(str(self.GetHelper().ConvertDirectoryToString(transformsDir)))
+                
+            transformsTemplate = self._transformsTemplateButton.GetWidget().GetFileName()
+            if transformsTemplate:
+                self._associatedMRMLNode.SetExistingTemplate(str(os.path.normpath(transformsTemplate)))
             
-            # Use Existing Registration panel
-            
-            # Misc. panel
-            
+            # Misc.
+            #
+            labels = self._labelsEntry.GetWidget().GetValue()
+            if labels:
+                self._associatedMRMLNode.SetLabelsList(str(self.GetHelper().ConvertListToString(labels)))
+                
+            if self._saveTransformsCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetSaveTransforms(1)
+            else:
+                self._associatedMRMLNode.SetSaveTransforms(0)
+                
+            if self._normalizeAtlasCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetNormalizeAtlases(1)
+            else:
+                self._associatedMRMLNode.SetNormalizeAtlases(0)
+                
+            normalizeTo = self._normalizeValueEntry.GetWidget().GetValue()
+            if normalizeTo:
+                self._associatedMRMLNode.SetNormalizeTo(str(normalizeTo))
+                
+            outputCast = self._outputCastCombo.GetWidget().GetValue()
+            if outputCast:
+                self._associatedMRMLNode.SetOutputCast(str(outputCast))
+                
+            if self._deleteAlignedImagesCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetDeleteAlignedImages(1)
+            else:
+                self._associatedMRMLNode.SetDeleteAlignedImages(0)
+                
+            if self._deleteAlignedSegmentationsCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetDeleteAlignedSegmentations(1)
+            else:
+                self._associatedMRMLNode.SetDeleteAlignedSegmentations(0)
+                
+            if self._debugCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetDebugMode(1)
+            else:
+                self._associatedMRMLNode.SetDebugMode(0)
+                
+            if self._dryrunCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetDryrunMode(1)
+            else:
+                self._associatedMRMLNode.SetDryrunMode(0)
 
             # stop blocking of update events
             self._updating = 0
+            '''
 
 
 
@@ -767,7 +915,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         '''
         Gets called on MRML Events to handle them.
         '''
-        
+    
         # check if we already process an update event
         # and jump out if yes        
         if not self._updating:        
@@ -788,7 +936,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                         return True
     
     
-            # observe MRMLScene events
+            # observe MRMLScene NodeAdded events
             if callerID == "MRMLScene" and event == vtkMRMLScene_NodeAddedEvent and callDataID:
                 
                 callDataAsMRMLNode = slicer.MRMLScene.GetNodeByID(callDataID)
@@ -803,6 +951,18 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                     
                     #jump out
                     return True
+                
+            # observe MRMLScene Close events
+            elif callerID == "MRMLScene" and event == vtkMRMLScene_CloseEvent:
+                
+                # caught MRMLScene close event
+                # reset all GUI values to default
+                self.InitializeByDefault()
+                # remove the associated MRMLNode
+                self._associatedMRMLNode = None
+                self._associatedMRMLNodeTag = None
+                
+                return True                    
 
 
 
@@ -1189,10 +1349,15 @@ Scheduler Command: Executable to run before the commands for registering images.
         '''
         Deletes the GUI
         '''
+        #
+        # The shutdown sequence is
+        # 1. RemoveGUIObservers
+        # 2. TearDownGUI
+        # 3. RemoveMRMLNodeObervers 
+        #
+        
         if self.GetUIPanel().GetUserInterfaceManager():
              self.GetUIPanel().RemovePage("AtlasCreator")
-
-        self._updating = 0
         
         
 
@@ -1231,3 +1396,28 @@ Scheduler Command: Executable to run before the commands for registering images.
         return labels
     
 
+
+    '''=========================================================================================='''
+    def InitializeByDefault(self):
+        '''
+        Resets the GUI to default values.
+        
+        Returns nothing.
+        '''
+        
+        # block all updating events
+        self._updating = 1
+        
+        # I/O Panel
+        self._origDirButton.GetWidget().SetInitialFileName("")
+        self._origDirButton.GetWidget().SetText("Click to pick a directory")
+        
+        #TODO
+        
+        # stop blocking updating events
+        self._updating = 0
+        
+        
+        
+    
+    

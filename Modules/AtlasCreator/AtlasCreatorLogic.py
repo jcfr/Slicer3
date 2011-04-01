@@ -34,6 +34,7 @@ class AtlasCreatorLogic(object):
         self.__dryRun = 0
 
 
+
     '''=========================================================================================='''
     def Destructor(self):
         '''
@@ -784,6 +785,8 @@ class AtlasCreatorLogic(object):
             for index in range(1, uniqueID + 1):
                 
                 file = outputNotifyDirectory + str(index) + ".ac"
+                
+                # TODO check here if job crashed and relaunch
                 
                 if not os.path.isfile(file):
                     self.Helper().debug("Registration Job with id " + str(index) + " not completed!")
