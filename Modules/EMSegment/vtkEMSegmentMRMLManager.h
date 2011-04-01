@@ -447,8 +447,10 @@ public:
   // convenience functions for managing MRML nodes
   //
   virtual vtkMRMLEMSVolumeCollectionNode*           GetTargetInputNode();
-  virtual vtkMRMLEMSAtlasNode*            GetAtlasInputNode();
-  virtual vtkMRMLEMSVolumeCollectionNode*  GetSubParcellationInputNode();
+  virtual vtkMRMLEMSAtlasNode*                               GetAtlasInputNode();
+  virtual vtkMRMLEMSVolumeCollectionNode*           GetSubParcellationInputNode();
+  virtual vtkMRMLEMSAtlasNode*                               GetAtlasAlignedNode();
+
 
   virtual vtkMRMLScalarVolumeNode*        GetOutputVolumeNode();
   virtual void                            CreateOutputVolumeNode();

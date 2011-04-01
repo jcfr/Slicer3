@@ -1163,7 +1163,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc AtlasCreator { _segmentationsDir _imagesDir _outputDir targetNode } {
         variable SCENE
         variable LOGIC
-        variable inputAtlasNode
+        variable outputAtlasNode
         variable mrmlManager
         variable workingDN
 
@@ -1298,52 +1298,40 @@ namespace eval EMSegmenterPreProcessingTcl {
         $node Print
         $node Delete
 
-
-        set atlasRegistrationVolumeIndex -1;
-        if {[[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey] != "" } {
-            set atlasRegistrationVolumeKey [[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey]
-            set atlasRegistrationVolumeIndex [$inputAtlasNode GetIndexByKey $atlasRegistrationVolumeKey]
-        }
-
-
-        set outputAtlasNode [ $mrmlManager CloneAtlasNode $inputAtlasNode "AC"]
-
+        set outputAtlasNode [$mrmlManager GetAtlasAlignedNode] 
+    if { $outputAtlasNode == "" } {
+        set outputAtlasNode [vtkMRMLEMSVolumeCollectionNode New]
+        $outputAtlasNode SetName "AtlasCreatorOutput"
+            $SCENE AddNode   $outputAtlasNode
+            $outputAtlasNode Delete
+    }  else {
+           $outputAtlasNode RemoveAllNodes
+    }
+  
         # Atlas creator returns a directory with priors
         # loop through this directory and add volume nodes to the scene
         # for each leaf in the tree set/replace the atlasnode by the ac atlas node
         # how to find the right atlas volume?
 
         # Read a volume for each label
-        for { set i 0 } { $i < [$inputAtlasNode GetNumberOfVolumes] } { incr i } {
+        foreach ID [GetAllLeafNodeIDsInTree] {
+              set tmpIntensityLabel  [$mrmlManager  GetTreeNodeIntensityLabel  $ID]
+          set tmpName [$mrmlManager  GetTreeNodeName $ID ]
+              $LOGIC PrintText "TCL: $tmpName($ID) has label $tmpIntensityLabel"
+              set outputAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel.nrrd
+        
+            set outputAtlasVolumeNode  [ vtkMRMLScalarVolumeNode  New]
+          $outputAtlasVolumeNode SetName "AtlasCreator$tmpName"
+              $SCENE AddNode   $outputAtlasVolumeNode
+              $outputAtlasVolumeNode Delete
 
-            set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode $i]
-            set tmpIndex [$inputAtlasNode GetIndexByNodeID [$inputAtlasVolumeNode GetID]]
-            if { $i == $atlasRegistrationVolumeIndex} {
-                # replace with template
-                set outputAtlasVolumeFileName $outputDir/template.nrrd
-            } else {
-                 set tmpTreeNodeKEY [$inputAtlasNode GetKeyByNodeID [$inputAtlasVolumeNode GetID]]
-                #                 set tmpTreeNode [$SCENE GetNodeByID $tmpTreeNodeKEY]
-                set tmpIntensityLabel  [$mrmlManager  GetTreeNodeIntensityLabel  $tmpTreeNodeKEY]
-                $LOGIC PrintText "TCL: [$inputAtlasVolumeNode GetName] has label $tmpIntensityLabel"
-                set outputAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel.nrrd
-            }
+              set outputAtlasVolumeData [vtkImageData New]
+              $outputAtlasVolumeNode SetAndObserveImageData $outputAtlasVolumeData
+             $outputAtlasVolumeData Delete
 
-
-            # create a new node for our output-list
-            set outputAtlasVolumeNode [CreateVolumeNode $inputAtlasVolumeNode "[$inputAtlasVolumeNode GetName]_AC"]
-            set outputAtlasVolumeData [vtkImageData New]
-            $outputAtlasVolumeNode SetAndObserveImageData $outputAtlasVolumeData
-            $outputAtlasVolumeData Delete
-
-
-            ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
-            #file delete -force $outputAtlasVolumeFileName
-            
-            set oldVolumeNode [$outputAtlasNode GetNthNode $i]
-            $outputAtlasNode SetNthNodeID $tmpIndex [$outputAtlasVolumeNode GetID]
-            DeleteNode $oldVolumeNode
-
+              ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
+              #file delete -force $outputAtlasVolumeFileName          
+              $outputAtlasNode AddNode $outputAtlasVolumeNode 
         }
 
         $workingDN SetReferenceAlignedAtlasNodeID [$outputAtlasNode GetID]
@@ -2498,7 +2486,26 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: ERROR: EMSegmenterPreProcessingTcl::${TEXT}"
     }
 
+    proc GetAllLeafNodeIDsInTree { } {
+        variable mrmlManager
+        set rootID [$mrmlManager GetTreeRootNodeID]
+        return "[GetAllLeafNodeIDs $rootID]"
+    }
 
+    proc GetAllLeafNodeIDs  {  parentNodeID } {
+        variable mrmlManager
+        set n [$mrmlManager GetTreeNodeNumberOfChildren $parentNodeID ]
+        set LeafList ""
+        for {set i 0 } { $i < $n  } { incr i } {
+            set id [ $mrmlManager GetTreeNodeChildNodeID $parentNodeID $i ]
+            if { [ $mrmlManager GetTreeNodeIsLeaf $id ] } {
+                set LeafList "${LeafList} $id"
+        } else {
+        set LeafList "${LeafList} [GetAllLeafNodeIDs $id]"
+        }
+    }
+    return "$LeafList"
+    }
 }
 
 namespace eval EMSegmenterSimpleTcl {

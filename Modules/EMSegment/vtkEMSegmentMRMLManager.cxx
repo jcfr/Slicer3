@@ -3036,6 +3036,17 @@ GetAtlasInputNode()
     }
 }
 
+
+//----------------------------------------------------------------------------
+vtkMRMLEMSAtlasNode* vtkEMSegmentMRMLManager::GetAtlasAlignedNode()
+{
+  if (!this->GetWorkingDataNode() ) {
+      return NULL;
+    }
+  
+  return  this->GetWorkingDataNode()->GetAlignedAtlasNode();
+}
+
 //----------------------------------------------------------------------------
 vtkMRMLEMSVolumeCollectionNode* vtkEMSegmentMRMLManager::GetSubParcellationInputNode()
 {
