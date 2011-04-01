@@ -120,21 +120,6 @@ void vtkMRMLEMSTreeParametersParentNode::WriteXML(ostream& of, int nIndent)
 }
 
 //-----------------------------------------------------------------------------
-void
-vtkMRMLEMSTreeParametersParentNode::
-UpdateReferenceID(const char* oldID, const char* newID)
-{
-}
-
-//-----------------------------------------------------------------------------
-void 
-vtkMRMLEMSTreeParametersParentNode::
-UpdateReferences()
-{
-  Superclass::UpdateReferences();
-}
-
-//-----------------------------------------------------------------------------
 void vtkMRMLEMSTreeParametersParentNode::ReadXMLAttributes(const char** attrs)
 {
   Superclass::ReadXMLAttributes(attrs);

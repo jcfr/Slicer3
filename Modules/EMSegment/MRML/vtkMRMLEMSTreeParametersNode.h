@@ -8,6 +8,7 @@
 #include "vtkMRMLEMSTreeParametersParentNode.h"
 #include <vector>
 
+// Only for legacy purposes 
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSTreeParametersNode : 
   public vtkMRMLNode
 {
@@ -42,11 +43,6 @@ public:
   // Description:
   // Update the stored reference to another node in the scene
   virtual void UpdateReferenceID(const char *oldID, const char *newID);  
-
-  // manipulate tree structure
-  virtual void AddChildNode(const char* childNodeID);
-  virtual void RemoveNthChildNode(int n);
-  virtual void MoveNthChildNode(int fromIndex, int toIndex);
 
   // manipulate target input channels
   vtkGetMacro(NumberOfTargetInputChannels, unsigned int);
@@ -107,7 +103,7 @@ protected:
   double                              ColorRGB[3];
 
   //BTX
-  typedef vtkstd::vector<double>      ChannelWeightListType;
+  typedef    vtkstd::vector<double> ChannelWeightListType ;
   ChannelWeightListType               InputChannelWeights;
   //ETX
 

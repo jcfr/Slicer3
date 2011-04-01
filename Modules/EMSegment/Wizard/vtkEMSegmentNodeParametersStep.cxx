@@ -1192,8 +1192,10 @@ void vtkEMSegmentNodeParametersStep::DisplaySelectedNodeParametersCallback()
               static_cast<int>(sel_vol_id));
       this->NodeParametersAlphaScale->SetEndCommand(this, buffer);
       this->NodeParametersAlphaScale->SetEntryCommand(this, buffer);
-      this->NodeParametersAlphaScale->SetValue(
-        mrmlManager->GetTreeNodeAlpha(sel_vol_id));
+      if (!sel_is_leaf_node) 
+    {
+           this->NodeParametersAlphaScale->SetValue(mrmlManager->GetTreeNodeAlpha(sel_vol_id));
+    }
       }
     else
       {
@@ -1748,10 +1750,11 @@ void vtkEMSegmentNodeParametersStep::DisplaySelectedNodeParametersCallback()
       sprintf(buffer, "ExcludeIncompleteEStepCallback %d", 
               static_cast<int>(sel_vol_id));
       cb->SetCommand(this, buffer);
-      cb->SetSelectedState(
-        mrmlManager->GetTreeNodeExcludeFromIncompleteEStep(sel_vol_id));
-      this->NodeParametersExcludeIncompleteEStepCheckButton->SetEnabled(
-        enabled);
+      if (!sel_is_leaf_node) 
+    {
+          cb->SetSelectedState(mrmlManager->GetTreeNodeExcludeFromIncompleteEStep(sel_vol_id));
+    }
+    this->NodeParametersExcludeIncompleteEStepCheckButton->SetEnabled(enabled);
       }
     else
       {

@@ -32,15 +32,6 @@ public:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "EMSTreeParametersParent";}
 
-  // Description:
-  // Updates this node if it depends on other nodes
-  // when the node is deleted in the scene
-  virtual void UpdateReferences();
-
-  // Description:
-  // Update the stored reference to another node in the scene
-  virtual void UpdateReferenceID(const char *oldID, const char *newID);  
-
   // manipulate target input channels
   vtkGetMacro(NumberOfTargetInputChannels, unsigned int);
   vtkSetMacro(NumberOfTargetInputChannels, unsigned int);

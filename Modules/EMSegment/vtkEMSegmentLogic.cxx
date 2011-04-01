@@ -1022,7 +1022,6 @@ PopulateTestingData()
   vtkDebugMacro("Setting parameters for root node");
   double color[3];
   vtkIdType rootNodeID         = this->MRMLManager->GetTreeRootNodeID();
-  this->MRMLManager->SetTreeNodeLabel(rootNodeID, "Root");
   this->MRMLManager->SetTreeNodeName(rootNodeID, "Root");
   color[0] = 1.0; color[1] = 0.0; color[2] = 0.0;
   this->MRMLManager->SetTreeNodeColor(rootNodeID, color);
@@ -1039,7 +1038,6 @@ PopulateTestingData()
 
   vtkDebugMacro("Setting parameters for background node");
   vtkIdType backgroundNodeID   = this->MRMLManager->AddTreeNode(rootNodeID);
-  this->MRMLManager->SetTreeNodeLabel(backgroundNodeID, "Background");
   this->MRMLManager->SetTreeNodeName(backgroundNodeID, "Background");
   color[0] = 0.0; color[1] = 0.0; color[2] = 0.0;
   this->MRMLManager->SetTreeNodeColor(backgroundNodeID, color);
@@ -1049,7 +1047,6 @@ PopulateTestingData()
 
   vtkDebugMacro("Setting parameters for icc node");
   vtkIdType iccNodeID          = this->MRMLManager->AddTreeNode(rootNodeID);
-  this->MRMLManager->SetTreeNodeLabel(iccNodeID, "ICC");
   this->MRMLManager->SetTreeNodeName(iccNodeID, "ICC");
   color[0] = 0.0; color[1] = 1.0; color[2] = 0.0;
   this->MRMLManager->SetTreeNodeColor(iccNodeID, color);
@@ -1066,7 +1063,6 @@ PopulateTestingData()
 
   vtkDebugMacro("Setting parameters for grey matter node");
   vtkIdType greyMatterNodeID   = this->MRMLManager->AddTreeNode(iccNodeID);
-  this->MRMLManager->SetTreeNodeLabel(greyMatterNodeID, "Grey Matter");
   this->MRMLManager->SetTreeNodeName(greyMatterNodeID, "Grey Matter");
   color[0] = 0.0; color[1] = 1.0; color[2] = 1.0;
   this->MRMLManager->SetTreeNodeColor(greyMatterNodeID, color);
@@ -1076,7 +1072,6 @@ PopulateTestingData()
 
   vtkDebugMacro("Setting parameters for white matter node");
   vtkIdType whiteMatterNodeID  = this->MRMLManager->AddTreeNode(iccNodeID);
-  this->MRMLManager->SetTreeNodeLabel(whiteMatterNodeID, "White Matter");
   this->MRMLManager->SetTreeNodeName(whiteMatterNodeID, "White Matter");
   color[0] = 1.0; color[1] = 1.0; color[2] = 0.0;
   this->MRMLManager->SetTreeNodeColor(whiteMatterNodeID, color);
@@ -1086,7 +1081,6 @@ PopulateTestingData()
 
   vtkDebugMacro("Setting parameters for csf node");
   vtkIdType csfNodeID  = this->MRMLManager->AddTreeNode(iccNodeID);
-  this->MRMLManager->SetTreeNodeLabel(csfNodeID, "CSF");
   this->MRMLManager->SetTreeNodeName(csfNodeID, "CSF");
 
   //
@@ -1425,7 +1419,7 @@ CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericClass* node,
   if (atlasNode)
     {
     vtkDebugMacro("Setting spatial prior: node=" 
-                  << this->MRMLManager->GetTreeNodeLabel(nodeID));
+                  << this->MRMLManager->GetTreeNodeName(nodeID));
     vtkImageData* imageData = atlasNode->GetImageData();
     node->SetProbDataPtr(imageData);
     }
@@ -1729,7 +1723,7 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkKWApplication* app, v
   // propagate data to mrml node
   //
 
-  vtkMRMLEMSTreeParametersLeafNode* leafNode = this->MRMLManager->GetTreeNode(nodeID)->GetParametersNode()->GetLeafParametersNode();  
+  vtkMRMLEMSTreeParametersLeafNode* leafNode = this->MRMLManager->GetTreeParametersLeafNode(nodeID);  
   for (int r = 0; r < numTargetImages; ++r)
     {
       {

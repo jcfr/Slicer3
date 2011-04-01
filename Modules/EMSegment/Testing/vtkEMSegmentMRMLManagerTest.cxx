@@ -222,8 +222,6 @@ int main(int vtkNotUsed(argc), char** argv)
                             MAGIC_INT, treeNodeID);
 
     vtkTestSetGetStringMacroIndex(pass, m,
-                                  TreeNodeLabel, MAGIC_STRING.c_str(), treeNodeID);
-    vtkTestSetGetStringMacroIndex(pass, m,
                                   TreeNodeName, MAGIC_STRING.c_str(), treeNodeID);
     double color[3] = { MAGIC_DOUBLE, MAGIC_DOUBLE2, MAGIC_DOUBLE3 };
     vtkTestSetGetPoint3DMacroIndex(pass, m,

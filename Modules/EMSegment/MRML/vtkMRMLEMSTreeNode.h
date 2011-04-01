@@ -5,8 +5,12 @@
 
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
+#include "vtkMRMLScene.h"
 #include "vtkEMSegment.h"
-#include "vtkMRMLEMSTreeParametersNode.h"
+class vtkMRMLEMSTreeParametersParentNode;
+class vtkMRMLEMSTreeParametersLeafNode;
+// Legacy
+class vtkMRMLEMSTreeParametersNode;
 
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSTreeNode : 
   public vtkMRMLNode
@@ -43,18 +47,6 @@ public:
   // Update the stored reference to another node in the scene
   virtual void UpdateReferenceID(const char *oldID, const char *newID);
 
-  // associated parameters nodes
-  vtkGetStringMacro(ParentNodeID);
-  vtkSetReferenceStringMacro(ParentNodeID);
-  virtual vtkMRMLEMSTreeNode* GetParentNode();
-
-  vtkGetStringMacro(TreeParametersNodeID);
-  vtkSetReferenceStringMacro(TreeParametersNodeID);
-  virtual vtkMRMLEMSTreeParametersNode* GetParametersNode();
-
-  // the label is from a controlled vocabulary
-  vtkGetStringMacro(Label);
-  vtkSetStringMacro(Label);
 
   // access child nodes
   virtual void AddChildNode(const char* childNodeID);
@@ -67,8 +59,61 @@ public:
   virtual void RemoveNthChildNode(int index);
   virtual void MoveNthChildNode(int fromIndex, int toIndex);  
   virtual int GetChildIndexByMRMLID(const char* childID);
-  
 
+  // manipulate target input channels
+  vtkGetMacro(NumberOfTargetInputChannels, unsigned int);
+  virtual void SetNumberOfTargetInputChannels(unsigned int n);
+  virtual void AddTargetInputChannel();
+  virtual void RemoveNthTargetInputChannel(int index);
+  virtual void MoveNthTargetInputChannel(int fromIndex, int toIndex);
+
+  // The parent EMSTreeNode 
+  vtkGetStringMacro(ParentNodeID);
+  vtkSetReferenceStringMacro(ParentNodeID);
+  virtual vtkMRMLEMSTreeNode* GetParentNode();
+
+  // for legacy 
+  virtual vtkMRMLEMSTreeParametersNode* GetTreeParametersNode();
+
+  // additional parameters valid for leaf nodes
+  vtkSetReferenceStringMacro(LeafParametersNodeID);
+  vtkGetStringMacro(LeafParametersNodeID);
+  virtual vtkMRMLEMSTreeParametersLeafNode* GetLeafParametersNode();
+  
+  // additional parameters valid for parent nodes
+  vtkSetReferenceStringMacro(ParentParametersNodeID);
+  vtkGetStringMacro(ParentParametersNodeID);
+  virtual vtkMRMLEMSTreeParametersParentNode* GetParentParametersNode();
+
+  // input channel weights; length=NumberOfTargetInputChannels
+  virtual double GetInputChannelWeight(int index) const;
+  virtual void SetInputChannelWeight(int index, double value);
+  
+  // name of the spatial prior volume in the atlas
+  vtkGetStringMacro(SpatialPriorVolumeName);
+  vtkSetStringMacro(SpatialPriorVolumeName);
+
+  // regulates the influence of the spatial prior
+  // 0 => no influence, 1 => maximum influence
+  vtkGetMacro(SpatialPriorWeight, double);
+  vtkSetMacro(SpatialPriorWeight, double);
+  
+  // the relative probability of this class verses other classes at
+  // the same level
+  vtkGetMacro(ClassProbability, double);
+  vtkSetMacro(ClassProbability, double);
+
+  // Kilian: fill this in
+  vtkGetMacro(ExcludeFromIncompleteEStep, int);
+  vtkSetMacro(ExcludeFromIncompleteEStep, int);
+  
+  // Kilian: fill this in
+  vtkGetMacro(PrintWeights, int);
+  vtkSetMacro(PrintWeights, int);
+
+  vtkSetVectorMacro(ColorRGB, double, 3);
+  vtkGetVectorMacro(ColorRGB, double, 3);
+  
 protected:
   vtkMRMLEMSTreeNode();
   ~vtkMRMLEMSTreeNode();
@@ -82,12 +127,31 @@ protected:
   //BTX
   std::vector<std::string>            ChildNodeIDs;
   //ETX
+  
+  // For legacy purpose 
+  vtkGetStringMacro(TreeParametersNodeID);
+  vtkSetReferenceStringMacro(TreeParametersNodeID);
+  char*                                 TreeParametersNodeID;
+  // references to other nodes
+  char*                               LeafParametersNodeID;
+  char*                               ParentParametersNodeID;
 
-  // associated algorithm parameters
-  char*                               TreeParametersNodeID;
+  double                              ColorRGB[3];
 
-  // structure label from controlled vocabulary
-  char*                               Label;
+  //BTX
+  typedef vtkstd::vector<double>      ChannelWeightListType;
+ ChannelWeightListType  InputChannelWeights;
+  //ETX
+
+  char*                               SpatialPriorVolumeName;
+  double                              SpatialPriorWeight;
+
+  double                              ClassProbability;
+  int                                 ExcludeFromIncompleteEStep;
+  int                                 PrintWeights;
+
+  unsigned int                        NumberOfTargetInputChannels;
+
 };
 
 #endif

@@ -1084,7 +1084,7 @@ int vtkEMSegmentParametersSetStep::LoadDefaultData(const char *mrmlFile, bool wa
     }
 
   cout << "==========================================================================" << endl;
-  cout << "== Completed loading task data " << endl;
+  cout << "== Completed loading task data " << scene->GetURL() << endl;
   cout << "==========================================================================" << endl;
 
   this->GetGUI()->GetApplicationGUI()->SelectModule("EMSegmenter");

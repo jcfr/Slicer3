@@ -20,9 +20,9 @@ int main(int argc, char** argv)
 
   // make sure arguments are sufficient and unique
   bool argsOK = true;
-  if (inputMRMLFileName.empty() || !vtksys::SystemTools::FileExists(inputMRMLFileName.c_str()) )
+  if (inputMRMLFileName.empty() || !vtksys::SystemTools::FileExists(inputMRMLFileName.c_str()) || !vtksys::SystemTools::FileIsFullPath(inputMRMLFileName.c_str()))
     {
-      std::cerr << "Error: inputMRMLFileName must be specified or file does not exists." << std::endl;
+      std::cerr << "Error: inputMRMLFileName must be specified or file does not exists or it is not specified via the absolute path." << std::endl;
       argsOK = false;
     }
 

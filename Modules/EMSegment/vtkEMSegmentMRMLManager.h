@@ -84,9 +84,6 @@ public:
   //
 
   // Step 1
-  virtual const char* GetTreeNodeLabel(vtkIdType id);
-  virtual void        SetTreeNodeLabel(vtkIdType id, const char* label);
-
   virtual int      GetTreeNodeIntensityLabel(vtkIdType nodeID);
   virtual void     SetTreeNodeIntensityLabel(vtkIdType nodeID, int label);
 
@@ -459,27 +456,34 @@ public:
   virtual vtkMRMLEMSGlobalParametersNode* GetGlobalParametersNode();
   virtual vtkMRMLEMSTreeNode*             GetTreeRootNode();
   virtual vtkMRMLEMSTreeNode*             GetTreeNode(vtkIdType);
-  virtual vtkMRMLEMSTreeParametersNode*   GetTreeParametersNode(vtkIdType);  
   virtual vtkMRMLEMSTreeParametersLeafNode* 
     GetTreeParametersLeafNode(vtkIdType);  
-  virtual vtkMRMLEMSTreeParametersParentNode* 
-    GetTreeParametersParentNode(vtkIdType);  
 
   virtual vtkMRMLVolumeNode*              GetVolumeNode(vtkIdType);
   virtual vtkMRMLEMSWorkingDataNode*       GetWorkingDataNode();
 
-  virtual vtkMRMLEMSVolumeCollectionNode* CloneTargetNode(vtkMRMLEMSVolumeCollectionNode* target,
-                                                const char* name);
+  virtual vtkMRMLEMSVolumeCollectionNode* CloneTargetNode(vtkMRMLEMSVolumeCollectionNode* target, const char* name)
+  {
+    return CloneVolumeCollectionNode(target, name);
+  }
+  virtual vtkMRMLEMSVolumeCollectionNode*  CloneSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* target, const char* name)
+  {
+    return CloneVolumeCollectionNode(target, name);
+  }
 
   virtual vtkMRMLEMSAtlasNode*  CloneAtlasNode(vtkMRMLEMSAtlasNode* target, const char* name);
-  virtual vtkMRMLEMSVolumeCollectionNode*  CloneSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* target, const char* name);
 
-  virtual void SynchronizeTargetNode(vtkMRMLEMSVolumeCollectionNode* templateNode,
-                                     vtkMRMLEMSVolumeCollectionNode* changingNode,
-                                     const char* name);
+  virtual void SynchronizeTargetNode(vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name)
+  {
+       this->SynchronizeVolumeCollectionNode(templateNode, changingNode, name);
+  }
+
+  virtual void SynchronizeSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name)
+  {
+       this->SynchronizeVolumeCollectionNode(templateNode, changingNode, name);
+  }
+
   virtual void SynchronizeAtlasNode(vtkMRMLEMSAtlasNode* templateNode, vtkMRMLEMSAtlasNode* changingNode, const char* name);
-  virtual void SynchronizeSubParcellationNode(vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name);
-
 
   virtual vtkIdType    MapMRMLNodeIDToVTKNodeID(const char* MRMLNodeID);
 
@@ -597,6 +601,12 @@ private:
 
   // Reset the correction of the node as well as subtree 
   void ResetLogCovarianceCorrectionsOfAllNodes(vtkIdType rootID);
+
+  void TurnFromParentToLeafNode(vtkMRMLEMSTreeNode* treeNode) ;
+
+
+  virtual vtkMRMLEMSVolumeCollectionNode*  CloneVolumeCollectionNode(vtkMRMLEMSVolumeCollectionNode* target, const char* name);
+  virtual void SynchronizeVolumeCollectionNode(vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name);
 
   //ETX
 

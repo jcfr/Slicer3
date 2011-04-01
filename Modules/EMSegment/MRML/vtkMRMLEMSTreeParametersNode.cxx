@@ -68,6 +68,7 @@ vtkMRMLEMSTreeParametersNode::~vtkMRMLEMSTreeParametersNode()
 //-----------------------------------------------------------------------------
 void vtkMRMLEMSTreeParametersNode::WriteXML(ostream& of, int nIndent)
 {
+  cout << " vtkMRMLEMSTreeParametersNode::WriteXML: Depreciated - should not be used anymore " << endl;
   Superclass::WriteXML(of, nIndent);
   vtkIndent indent(nIndent);
 
@@ -286,48 +287,6 @@ void vtkMRMLEMSTreeParametersNode::PrintSelf(ostream& os,
   os << indent << "ExcludeFromIncompleteEStep: " 
      << this->ExcludeFromIncompleteEStep << "\n";
   os << indent << "PrintWeights: " << this->PrintWeights << "\n";
-}
-
-//-----------------------------------------------------------------------------
-void 
-vtkMRMLEMSTreeParametersNode::
-AddChildNode(const char* childNodeID)
-{
-  // nothing for the parameters in this class, but pass it on to leaf
-  // and parent parameter nodes
-
-  if (this->GetLeafParametersNode() != NULL)
-    {
-    this->GetLeafParametersNode()->AddChildNode(childNodeID);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-vtkMRMLEMSTreeParametersNode::
-RemoveNthChildNode(int n)
-{
-  // nothing for the parameters in this class, but pass it on to leaf
-  // and parent parameter nodes
-
-  if (this->GetLeafParametersNode() != NULL)
-    {
-    this->GetLeafParametersNode()->RemoveNthChildNode(n);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void 
-vtkMRMLEMSTreeParametersNode::
-MoveNthChildNode(int fromIndex, int toIndex)
-{
-  // nothing for the parameters in this class, but pass it on to leaf
-  // and parent parameter nodes
-
-  if (this->GetLeafParametersNode() != NULL)
-    {
-    this->GetLeafParametersNode()->MoveNthChildNode(fromIndex, toIndex);
-    }
 }
 
 //-----------------------------------------------------------------------------

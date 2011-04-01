@@ -114,7 +114,6 @@ itcl::body EMSegmenterGraph::constructor { } {
     set EMSegment(Cattrib,$ID,Label)      [$_mrmlManager GetTreeNodeName $ID]
     set node  [$_mrmlManager GetTreeNode $ID]
     if { $node != "" } {
-        set PAR [$node GetParametersNode ] 
         # did not work set EMSegment(Cattrib,$ID,ColorCode)  [ConvertToHex [$PAR GetColorRGB ] ]
         set RGB [lrange [$ColorTable GetTableValue [$_mrmlManager GetTreeNodeIntensityLabel $ID]] 0 2]
         set EMSegment(Cattrib,$ID,ColorCode)  [ConvertToHex $RGB ]

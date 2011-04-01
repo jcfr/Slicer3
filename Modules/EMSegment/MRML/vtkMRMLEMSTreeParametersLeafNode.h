@@ -34,10 +34,6 @@ public:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "EMSTreeParametersLeaf";}
 
-  // manipulate tree structure
-  virtual void AddChildNode(const char* childNodeID);
-  virtual void RemoveNthChildNode(int n);
-  virtual void MoveNthChildNode(int fromIndex, int toIndex);
 
   // manipulate target input channels
   vtkGetMacro(NumberOfTargetInputChannels, unsigned int);
