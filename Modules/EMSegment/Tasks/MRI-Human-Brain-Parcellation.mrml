@@ -241,7 +241,6 @@ Key vtkMRMLEMSTreeNode26 NodeID vtkMRMLScalarVolumeNode15
 Key vtkMRMLEMSTreeNode27 NodeID vtkMRMLScalarVolumeNode16
 Key vtkMRMLEMSTreeNode19 NodeID vtkMRMLScalarVolumeNode18
 Key vtkMRMLEMSTreeNode5 NodeID vtkMRMLScalarVolumeNode21
-Key atlas_registration_image NodeID vtkMRMLScalarVolumeNode19
 Key atlas_registration_image0 NodeID vtkMRMLScalarVolumeNode19"   NumberOfTrainingSamples="82"  ></EMSAtlas>
  <Volume
   id="vtkMRMLScalarVolumeNode20"  name="bg_atlas"  hideFromEditors="false"  selectable="true"  selected="false"  storageNodeRef="vtkMRMLVolumeArchetypeStorageNode20"  userTags=""  displayNodeRef="vtkMRMLScalarVolumeDisplayNode20"  ijkToRASDirections="-1   0   -0 0   -0   1 -0 -1 -0 "  spacing="0.9375 0.9375 0.9375"  origin="119.531 -102.656 119.531"  labelMap="0" ></Volume>
