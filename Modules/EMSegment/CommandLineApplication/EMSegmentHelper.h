@@ -24,7 +24,7 @@
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
 #include "vtkImageData.h"
-
+#include "vtkSlicerVolumesLogic.h"
 
 // -============================
 // This is necessary to load EMSegment package in TCL interp.
@@ -182,6 +182,16 @@ vtkSlicerApplicationLogic* InitializeApplication(Tcl_Interp *interp, vtkSlicerAp
   app->Script(CMD.c_str());
   return  appLogic;
 }
+vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene)
+{
+  vtkSlicerVolumesLogic* volLogic  = vtkSlicerVolumesLogic::New();
+  volLogic->SetMRMLScene(mrmlScene);
+  volLogic->SetApplicationLogic(appLogic);
+  vtkMRMLScalarVolumeNode* volNode = volLogic->AddArchetypeScalarVolume(filename, volname,2);
+  volLogic->Delete();
+  return  volNode;
+}
+
 
 void CleanUp(vtkSlicerApplication* app, vtkSlicerApplicationLogic* appLogic  )
 {
@@ -390,73 +400,6 @@ AddNewScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
     }
   return volumeNode;
 }
-
-vtkMRMLVolumeNode*
-AddScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
-                         const char* filename,
-                         int centerImage,
-                         int labelMap,
-                         const char* volname)
-{
-  vtkMRMLVolumeNode        *volumeNode   = NULL;
-  vtkMRMLScalarVolumeDisplayNode *displayNode  = NULL;
-  vtkMRMLScalarVolumeNode  *scalarNode   = vtkMRMLScalarVolumeNode::New();
-
-  // i/o mechanism
-  vtkMRMLVolumeArchetypeStorageNode *storageNode =
-    vtkMRMLVolumeArchetypeStorageNode::New();
-  storageNode->SetFileName(filename);
-  storageNode->SetCenterImage(centerImage);
-
-  // try to read the image
-  if (storageNode->ReadData(scalarNode))
-    {
-      displayNode = vtkMRMLScalarVolumeDisplayNode::New();
-      scalarNode->SetLabelMap(labelMap);
-      volumeNode  = scalarNode;
-    }
-
-  if (volumeNode != NULL)
-    {
-      // set the volume's name
-      if (volname == NULL)
-        {
-          const vtksys_stl::string fname(filename);
-          vtksys_stl::string name = vtksys::SystemTools::GetFilenameName(fname);
-          volumeNode->SetName(name.c_str());
-        }
-      else
-        {
-          volumeNode->SetName(volname);
-        }
-
-      // set basic display info
-      double range[2];
-      volumeNode->GetImageData()->GetScalarRange(range);
-      displayNode->SetLowerThreshold(range[0]);
-      displayNode->SetUpperThreshold(range[1]);
-      displayNode->SetWindow(range[1] - range[0]);
-      displayNode->SetLevel(0.5 * (range[1] + range[0]) );
-      displayNode->SetAndObserveColorNodeID("vtkMRMLColorTableNodeGrey");
-
-      // add nodes to scene
-      mrmlScene->AddNodeNoNotify(storageNode);
-      mrmlScene->AddNodeNoNotify(displayNode);
-      mrmlScene->AddNodeNoNotify(volumeNode);
-
-      volumeNode->SetAndObserveStorageNodeID(storageNode->GetID());
-      volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
-    }
-
-  scalarNode->Delete();
-  storageNode->Delete();
-  if (displayNode)
-    {
-      displayNode->Delete();
-    }
-  return volumeNode;
-}
-
 
 class ProgressReporter
 {

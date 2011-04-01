@@ -125,6 +125,17 @@ int main(int argc, char** argv)
         }
     }
 
+  for (unsigned int i = 0; i < atlasVolumeFileNames.size(); ++i)
+    {
+      if (!vtksys::SystemTools::
+          FileExists(atlasVolumeFileNames[i].c_str()))
+        {
+          std::cerr << "Error: atlas volume file " << i << " does not exist."
+                    << std::endl;
+          std::cerr << atlasVolumeFileNames[i] << std::endl;
+          return EXIT_FAILURE;
+        }
+    }
 
   // =======================================================================
   //  Initialize TCL
@@ -375,7 +386,7 @@ int main(int argc, char** argv)
         try
           {
           // load image into scene
-          vtkMRMLVolumeNode* volumeNode = AddScalarArchetypeVolume(mrmlScene,  targetVolumeFileNames[imageIndex].c_str(), false, false, NULL);
+            vtkMRMLVolumeNode* volumeNode = AddArchetypeScalarVolume(targetVolumeFileNames[imageIndex].c_str(),targetVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene);
 
           if (!volumeNode)
             {
@@ -427,67 +438,85 @@ int main(int argc, char** argv)
     // =======================================================================
     // Define Atlas Images
     // =======================================================================
+
     // cout << "useDefaultAtlas " << useDefaultAtlas << " " << atlasVolumeFileNames.empty() << endl;
+
     if (!useDefaultAtlas)
-    {
-      if (!emMRMLManager->GetAtlasInputNode())
-        {
-           throw std::runtime_error("ERROR: parameters must already contain an atlas node if you wish to speficy atlas volumes.");
-        }
-      vtkMRMLEMSAtlasNode* atlasNode = emMRMLManager->GetAtlasInputNode();
-      if (int(atlasNode->GetNumberOfVolumes()) != int(atlasVolumeFileNames.size()))
-    {
-          std::stringstream ss;
-          ss << "ERROR: number of volumes defined by atlasVolumeFileNames ("<< int(atlasVolumeFileNames.size())
-             << ") does not match number of atlas volumes originally defined by template (" << atlasNode->GetNumberOfVolumes() << ")";
-          throw std::runtime_error(ss.str());
-    }
-
-      for (unsigned int imageIndex = 0; imageIndex < atlasVolumeFileNames.size(); ++imageIndex)
       {
-        if (verbose) std::cout << "Loading atlas image " << imageIndex << "..." << std::endl;
-        try
-        {
-          // load image into scene
-          vtkMRMLVolumeNode* volumeNode = AddScalarArchetypeVolume(mrmlScene,  atlasVolumeFileNames[imageIndex].c_str(), false, false, NULL);
-
-          if (!volumeNode)
-            {
-          throw std::runtime_error("failed to load image.");
-            }
-
-          // set volume name
-      atlasNode->SetNthNodeID(imageIndex,volumeNode->GetID());
-        }
-       catch(...)
+        vtkMRMLEMSAtlasNode* atlasNode = emMRMLManager->GetAtlasInputNode();
+        if (!atlasNode)
           {
-          vtkstd::stringstream ss;
-          ss << "ERROR: failed to load atlas image " << targetVolumeFileNames[imageIndex];
-          throw std::runtime_error(ss.str());
+            throw std::runtime_error("ERROR: parameters must already contain an atlas node if you wish to specify atlas volumes.");
           }
-      }
-      if (verbose)
-      {
-        cout << "Done downloading atlases - here is the assignment between class and atlas volumes " << endl;
+
+        if (int(atlasNode->GetNumberOfVolumes()) != int(atlasVolumeFileNames.size()))
+          {
+            std::stringstream ss;
+            ss << "ERROR: number of volumes defined by atlasVolumeFileNames ("<< int(atlasVolumeFileNames.size())
+               << ") does not match number of atlas volumes originally defined by template (" << atlasNode->GetNumberOfVolumes() << ")";
+            throw std::runtime_error(ss.str());
+          }
+
+        if (verbose)
+          {
+            std::cerr << "Adding " << atlasVolumeFileNames.size() << " atlas images..." << std::endl;
+          }
+
         for (unsigned int imageIndex = 0; imageIndex < atlasVolumeFileNames.size(); ++imageIndex)
-        {
-          // This assumes that the keys are defined by the EMSTree node ids - which they were so far !
-          // if needed can be made more fancy
-          const char* treeNodeID =  atlasNode->GetNthKey(imageIndex);
-          vtkMRMLNode* tNode = mrmlScene->GetNodeByID(treeNodeID);
-          if (tNode)
           {
-              cout << "Class: " << setw(30) << std::left << tNode->GetName() << "File name: " << atlasVolumeFileNames[imageIndex].c_str() << endl;
-          }
-          else
-          {
-              // then just make the method more fancy so that you first go through all the nodes in the tree - and then look where the index of the corresponding key defined by the spatialnode ID
-              cout << "Could not retrieve class name for: " << atlasVolumeFileNames[imageIndex].c_str() << endl;
-          }
-        }
-      }
-    }
+            if (verbose) std::cout << "Loading atlas image " << imageIndex << "..." << std::endl;
+            try
+              {
+                // load image into scene
+                vtkMRMLVolumeNode* volumeNode = AddArchetypeScalarVolume( atlasVolumeFileNames[imageIndex].c_str(), atlasVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene);
+                if (!volumeNode)
+                  {
+                    throw std::runtime_error("failed to load image.");
+                  }
 
+                // set volume name and ID in map
+                // cout << "Updated Node :" << atlasNode->AddVolume( atlasNode->GetNthKey(imageIndex),  volumeNode->GetID() ) << endl;
+                atlasNode->SetNthNodeID(imageIndex,volumeNode->GetID());
+              }
+            catch(...)
+              {
+                vtkstd::stringstream ss;
+                ss << "ERROR: failed to load atlas image " << atlasVolumeFileNames[imageIndex];
+                throw std::runtime_error(ss.str());
+              }
+          }
+
+        if (verbose)
+          {
+            cout << "Done downloading atlases - here is the assignment between class and atlas volumes " << endl;
+             // iterate over tree nodes
+            for (unsigned int imageIndex = 0; imageIndex < atlasVolumeFileNames.size(); ++imageIndex)
+              {
+                // This assumes that the keys are defined by the EMSTree node ids - which they were so far !
+                // if needed can be made more fancy
+                const char* volumeNodeID =  atlasNode->GetNthNodeID(imageIndex);
+                vtkMRMLNode* vNode =  mrmlScene->GetNodeByID(volumeNodeID );
+                if (vNode)
+                  {
+                     const char* treeNodeID =  atlasNode->GetNthKey(imageIndex);
+                     vtkMRMLNode* tNode = mrmlScene->GetNodeByID(treeNodeID);
+                      if (tNode)
+                        {
+                          cout << "Class: " << setw(30) << std::left << tNode->GetName() <<  " " << vNode->GetName() << " " << volumeNodeID << endl;
+                        }
+                      else
+                        {
+                           cout << "AtlasTemplateID: " << setw(30) << std::left << treeNodeID <<  " " << vNode->GetName() <<  " " << volumeNodeID << endl;
+                        }
+                  }
+                else
+                  {
+                    // then just make the method more fancy so that you first go through all the nodes in the tree - and then look where the index of the corresponding key defined by the spatialnode ID
+                    cout << "Could not retrieve class name or volume for: " << atlasVolumeFileNames[imageIndex].c_str() << endl;
+                  }
+              }
+          }
+      }
 
     // =======================================================================
     // Define Generated Segmentation Volume
@@ -560,6 +589,27 @@ int main(int argc, char** argv)
     progressReporter.ReportProgress("Updating Parameters...",
                                      currentStep++ / totalSteps,
                                      0.0f);
+
+
+    //
+    // set registrationMethod from command line
+    if (registrationPackage=="CMTK")
+      {
+        emMRMLManager->SetRegistrationPackageType(0); //CMTK
+      }
+    else
+      {
+        emMRMLManager->SetRegistrationPackageType(1); // BRAINS
+      }
+    if (verbose)
+      std::cout << "Registration Package is "
+                << registrationPackage
+                << std::endl;
+
+    //TODO, review
+    emMRMLManager->SetRegistrationAffineType(atoi(registrationAffineType.c_str()));
+    emMRMLManager->SetRegistrationDeformableType(atoi(registrationDeformableType.c_str()));
+
     //
     // update logic parameters from command line
     emMRMLManager->SetEnableMultithreading(!disableMultithreading);
