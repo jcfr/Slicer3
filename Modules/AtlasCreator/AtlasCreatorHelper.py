@@ -46,8 +46,11 @@ class AtlasCreatorHelper(object):
             Returns
                 n/a
         '''
+        
         self.__emlogic = None
         self.__parentClass = None
+        self.__debugMode = None
+        self.__pcaDistanceSourced = None
         
 
 

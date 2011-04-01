@@ -135,8 +135,26 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._associatedMRMLNodeTag = None
         
         self._updating = None
-        
-        
+    
+    
+    
+    '''=========================================================================================='''    
+    def RemoveMRMLNodeObservers(self):
+        '''
+        Placeholder to remove observers. Does not get used here but needs to exist.
+        '''
+        pass
+    
+    
+    
+    '''=========================================================================================='''
+    def RemoveLogicObservers(self):
+        '''
+        Placeholder to remove logic observers. Does not get used here but needs to exist.
+        '''
+        pass
+    
+    
         
     '''=========================================================================================='''
     def AddGUIObservers(self):
@@ -241,8 +259,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self.RemoveObserver(self._normalizeAtlasCheckBoxTag)
         self.RemoveObserver(self._normalizeValueEntryTag)
         self.RemoveObserver(self._outputCastComboTag)
-        self.RemoveObserver(self._deleteAlignedImagesCheckBox)
-        self.RemoveObserver(self._deleteAlignedSegmentationsCheckBox)
+        self.RemoveObserver(self._deleteAlignedImagesCheckBoxTag)
+        self.RemoveObserver(self._deleteAlignedSegmentationsCheckBoxTag)
         self.RemoveObserver(self._debugCheckBoxTag)
         self.RemoveObserver(self._dryrunCheckBoxTag)
         
@@ -252,7 +270,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         # MRML observers
         self.RemoveObserver(self._mrmlNodeAddedTag)
         
-        if self._associatedMRMLNodeTag:
+        if self._associatedMRMLNode and self._associatedMRMLNodeTag:
             self.RemoveObserver(self._associatedMRMLNodeTag)
         
 
@@ -1172,9 +1190,11 @@ Scheduler Command: Executable to run before the commands for registering images.
         Deletes the GUI
         '''
         if self.GetUIPanel().GetUserInterfaceManager():
-            self.GetUIPanel().RemovePage("AtlasCreator")
+             self.GetUIPanel().RemovePage("AtlasCreator")
 
-
+        self._updating = 0
+        
+        
 
     '''=========================================================================================='''
     def GetHelper(self):

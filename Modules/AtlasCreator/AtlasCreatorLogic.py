@@ -43,6 +43,7 @@ class AtlasCreatorLogic(object):
                 n/a
         '''
         self.__parentClass = None
+        self.__dryRun = None
 
 
 
