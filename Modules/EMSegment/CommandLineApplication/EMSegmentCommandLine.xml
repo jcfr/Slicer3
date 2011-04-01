@@ -9,7 +9,7 @@
   <description>
   EMSegment command-line module description and help.
   </description>
-  <documentation-url>http://wiki.na-mic.org/Wiki/index.php/Slicer3:EM</documentation-url>
+  <documentation-url>http://www.slicer.org/slicerWiki/index.php/EMSegmenter-Overview</documentation-url>
   <license></license>
   <contributor>Brad Davis</contributor>
 
@@ -164,7 +164,29 @@
       <default>false</default>
     </boolean>
 
+    <string>
+      <name>registrationPackage</name>
+      <longflag>registrationPackage</longflag>
+      <description>specify the registration package for preprocessing (CMTK or BRAINS)</description>
+      <label>Registration Package</label>
+      <default>CMTK</default>
+    </string>
+
+    <string>
+      <name>registrationAffineType</name>
+      <longflag>registrationAffineType</longflag>
+      <description>specify the accuracy of the affine registration</description>
+      <label>Registration Affine Type</label>
+      <default>1</default>
+    </string>
+
+    <string>
+      <name>registrationDeformableType</name>
+      <longflag>registrationDeformableType</longflag>
+      <description>specify the accuracy of the deformable registration</description>
+      <label>Registration Deformable Type</label>
+      <default>1</default>
+    </string>
 
   </parameters>
 </executable>
-
