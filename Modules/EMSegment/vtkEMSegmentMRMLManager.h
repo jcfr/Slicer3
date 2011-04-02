@@ -34,6 +34,7 @@ public:
 
   // Prints out important info about the current template / task 
   void PrintInfo(ostream& os);
+  void PrintInfo();
 
   // Get/Set the current mrml scene
   vtkSetObjectMacro(MRMLScene, vtkMRMLScene);

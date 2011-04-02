@@ -168,6 +168,10 @@ void vtkEMSegmentMRMLManager::PrintSelf(ostream& os, vtkIndent indent)
      << "\n";
 }
 
+void vtkEMSegmentMRMLManager::PrintInfo() {
+    this->PrintInfo(cout); 
+}
+
 //----------------------------------------------------------------------------
 void vtkEMSegmentMRMLManager::PrintInfo(ostream& os)
 {
@@ -2178,10 +2182,21 @@ AddTargetSelectedVolume(vtkIdType volumeID)
     name = volumeNode->GetID();
     }
 
+
   // set volume name and ID in map
+  if (!this->GetTargetInputNode()) 
+    {
+       vtkErrorMacro("No TargetInputNode defined "); 
+       return; 
+    }
   this->GetTargetInputNode()->AddVolume(name.c_str(), mrmlID);
 
   // aligned targets are no longer valid
+  if (!this->GetWorkingDataNode()) 
+    {
+       vtkErrorMacro("No WorkingDataNode defined "); 
+       return; 
+    }
   this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
 
   // propogate change to parameters nodes
@@ -2274,9 +2289,15 @@ bool
 vtkEMSegmentMRMLManager::
 DoTargetAndAtlasDataTypesMatch(vtkMRMLEMSVolumeCollectionNode* targetNode, vtkMRMLEMSAtlasNode* atlasNode)
 {
-  if (targetNode == NULL || atlasNode == NULL)
+  if (targetNode == NULL)
     {
-    std::cout << "Target or atlas node is null!" << std::endl;
+    std::cout << "WARNING: Target node is null!" << std::endl;
+    return false;
+    }
+
+  if (atlasNode == NULL)
+    {
+    std::cout << "WARNING: Atlas node is null!" << std::endl;
     return false;
     }
 
