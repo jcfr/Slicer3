@@ -753,7 +753,7 @@ if(NOT DISABLE_CXX_TESTING)
     --taskPreProcessingSetting
     "|C0|C0"
     --atlasVolumeFileNames
-      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_skulneck.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_air.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_csf.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_greymatter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_whitematter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_t1.nrrd
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_skullneck.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_air.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_csf.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_greymatter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_whitematter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_t1.nrrd
       )
     set_tests_properties(
       EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}
