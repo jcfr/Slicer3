@@ -386,7 +386,7 @@ int main(int argc, char** argv)
         try
           {
           // load image into scene
-            vtkMRMLVolumeNode* volumeNode = AddArchetypeScalarVolume(targetVolumeFileNames[imageIndex].c_str(),targetVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene);
+            vtkMRMLVolumeNode* volumeNode = emLogic->AddArchetypeScalarVolume(targetVolumeFileNames[imageIndex].c_str(),targetVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene);
 
           if (!volumeNode)
             {
@@ -468,7 +468,7 @@ int main(int argc, char** argv)
             try
               {
                 // load image into scene
-                vtkMRMLVolumeNode* volumeNode = AddArchetypeScalarVolume( atlasVolumeFileNames[imageIndex].c_str(), atlasVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene);
+                vtkMRMLVolumeNode* volumeNode = emLogic->AddArchetypeScalarVolume( atlasVolumeFileNames[imageIndex].c_str(), atlasVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene);
                 if (!volumeNode)
                   {
                     throw std::runtime_error("failed to load image.");

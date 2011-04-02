@@ -34,6 +34,7 @@
 #include "vtkMRMLEMSGlobalParametersNode.h"
 
 #include "vtkImageIslandFilter.h"
+#include "vtkSlicerVolumesLogic.h"
 
 // needed to translate between enums
 #include "EMLocalInterface.h"
@@ -106,6 +107,19 @@ void vtkEMSegmentLogic::PrintSelf(ostream& os, vtkIndent indent)
   this->Superclass::PrintSelf(os,indent);
   // !!! todo
 }
+
+
+vtkMRMLScalarVolumeNode* 
+vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene)
+{
+  vtkSlicerVolumesLogic* volLogic  = vtkSlicerVolumesLogic::New();
+  volLogic->SetMRMLScene(mrmlScene);
+  volLogic->SetApplicationLogic(appLogic);
+  vtkMRMLScalarVolumeNode* volNode = volLogic->AddArchetypeScalarVolume(filename, volname,2);
+  volLogic->Delete();
+  return  volNode;
+}
+
 
 //----------------------------------------------------------------------------
 bool

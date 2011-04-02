@@ -24,7 +24,6 @@
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
 #include "vtkImageData.h"
-#include "vtkSlicerVolumesLogic.h"
 
 // -============================
 // This is necessary to load EMSegment package in TCL interp.
@@ -181,15 +180,6 @@ vtkSlicerApplicationLogic* InitializeApplication(Tcl_Interp *interp, vtkSlicerAp
   CMD += " }  "; 
   app->Script(CMD.c_str());
   return  appLogic;
-}
-vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene)
-{
-  vtkSlicerVolumesLogic* volLogic  = vtkSlicerVolumesLogic::New();
-  volLogic->SetMRMLScene(mrmlScene);
-  volLogic->SetApplicationLogic(appLogic);
-  vtkMRMLScalarVolumeNode* volNode = volLogic->AddArchetypeScalarVolume(filename, volname,2);
-  volLogic->Delete();
-  return  volNode;
 }
 
 

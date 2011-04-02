@@ -126,6 +126,9 @@ public:
   void DefineValidSegmentationBoundary(); 
   void AutoCorrectSpatialPriorWeight(vtkIdType nodeID);
 
+  vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene);
+
+
   //BTX
   std::string GetErrorMessage() {return this->ErrorMsg;}
   //ETX 
