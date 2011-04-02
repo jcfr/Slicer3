@@ -128,8 +128,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
         set Slicer3_HOME $::env(Slicer3_HOME)
-        set list [AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $alignedTargetNode]
-
+        AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $alignedTargetNode
+        return 0
 
         # -------------------------------------
         # Step 5: Atlas Alignment - you will also have to include the masks

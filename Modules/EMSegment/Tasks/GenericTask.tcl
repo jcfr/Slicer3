@@ -220,7 +220,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: $inputNum targetNodes detected"
 
         # replace each volume
-        for { set i 0 } {$i < $inputNum } { incr i } {
+        for { set i 0 } { $i < $inputNum } { incr i } {
             set newVolumeNode [lindex $newVolumeCollectionNode $i]
             if {$newVolumeNode == "" } {
                 PrintError "Run: Processed target node is incomplete !"
@@ -1230,7 +1230,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         } elseif { $skipRegistration } {
             # skipRegistration Mode
             $node SetSkipRegistration 1
-            $node SetTransformsDirectory  $transformsDir
+            $node SetTransformsDirectory $transformsDir
             $node SetExistingTemplate $existingTemplate
         }
 
@@ -1306,16 +1306,18 @@ namespace eval EMSegmenterPreProcessingTcl {
         $node Print
         $node Delete
 
-        set outputAtlasNode [$mrmlManager GetAtlasAlignedNode] 
-    if { $outputAtlasNode == "" } {
-        set outputAtlasNode [vtkMRMLEMSVolumeCollectionNode New]
-        $outputAtlasNode SetName "AtlasCreatorOutput"
-            $SCENE AddNode   $outputAtlasNode
+        set outputAtlasNode [$mrmlManager GetAtlasAlignedNode]
+        if { $outputAtlasNode == "" } {
+            set outputAtlasNode [vtkMRMLEMSVolumeCollectionNode New]
+            $outputAtlasNode SetName "AtlasCreatorOutput"
+            $SCENE AddNode $outputAtlasNode
+            set ID [$outputAtlasNode GetID]
             $outputAtlasNode Delete
-    }  else {
-           $outputAtlasNode RemoveAllNodes
-    }
-  
+            set outputAtlasNode [$SCENE GetNodeByID $ID]
+        } else {
+            $outputAtlasNode RemoveAllNodes
+        }
+
         # Atlas creator returns a directory with priors
         # loop through this directory and add volume nodes to the scene
         # for each leaf in the tree set/replace the atlasnode by the ac atlas node
@@ -1323,26 +1325,29 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Read a volume for each label
         foreach ID [GetAllLeafNodeIDsInTree] {
-              set tmpIntensityLabel  [$mrmlManager  GetTreeNodeIntensityLabel  $ID]
-          set tmpName [$mrmlManager  GetTreeNodeName $ID ]
-              $LOGIC PrintText "TCL: $tmpName($ID) has label $tmpIntensityLabel"
-              set outputAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel.nrrd
-        
-            set outputAtlasVolumeNode  [ vtkMRMLScalarVolumeNode  New]
-          $outputAtlasVolumeNode SetName "AtlasCreator$tmpName"
-              $SCENE AddNode   $outputAtlasVolumeNode
-              $outputAtlasVolumeNode Delete
+            set tmpIntensityLabel [$mrmlManager GetTreeNodeIntensityLabel $ID]
+            set tmpName [$mrmlManager GetTreeNodeName $ID]
+            $LOGIC PrintText "TCL: $tmpName ($ID) has label $tmpIntensityLabel"
+            set outputAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel.nrrd
 
-              set outputAtlasVolumeData [vtkImageData New]
-              $outputAtlasVolumeNode SetAndObserveImageData $outputAtlasVolumeData
-             $outputAtlasVolumeData Delete
+            set outputAtlasVolumeNode [vtkMRMLScalarVolumeNode New]
+            $outputAtlasVolumeNode SetName "AtlasCreator$tmpName"
+            $SCENE AddNode $outputAtlasVolumeNode
 
-              ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
-              #file delete -force $outputAtlasVolumeFileName          
-              $outputAtlasNode AddNode $outputAtlasVolumeNode 
+            set outputAtlasVolumeData [vtkImageData New]
+            $outputAtlasVolumeNode SetAndObserveImageData $outputAtlasVolumeData
+
+            ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
+            #file delete -force $outputAtlasVolumeFileName
+
+            $outputAtlasNode AddVolume [$outputAtlasVolumeNode GetID] [$outputAtlasVolumeNode GetID]
+
+            $outputAtlasVolumeData Delete
+            $outputAtlasVolumeNode Delete
         }
-
         $workingDN SetReferenceAlignedAtlasNodeID [$outputAtlasNode GetID]
+        $LOGIC PrintText "TCL: GetInputTargetNode:  [[$mrmlManager GetWorkingDataNode] GetInputTargetNode]"
+        $LOGIC PrintText "TCL: GetAlignedAtlasNode: [[$mrmlManager GetWorkingDataNode] GetAlignedAtlasNode]"
     }
 
 
