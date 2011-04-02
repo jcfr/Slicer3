@@ -1024,111 +1024,6 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
 }
 
 //-----------------------------------------------------------------------------
-void
-vtkEMSegmentLogic::
-PopulateTestingData()
-{
-  vtkDebugMacro("Begin populating test data");
-
-  //
-  // add some nodes to the hierarchy
-  //
-  vtkDebugMacro("Setting parameters for root node");
-  double color[3];
-  vtkIdType rootNodeID         = this->MRMLManager->GetTreeRootNodeID();
-  this->MRMLManager->SetTreeNodeName(rootNodeID, "Root");
-  color[0] = 1.0; color[1] = 0.0; color[2] = 0.0;
-  this->MRMLManager->SetTreeNodeColor(rootNodeID, color);
-  this->MRMLManager->SetTreeNodeSpatialPriorWeight(rootNodeID, 0.5);
-  this->MRMLManager->SetTreeNodeClassProbability(rootNodeID, 0.5);
-  this->MRMLManager->SetTreeNodeAlpha(rootNodeID, 0.5);
-  this->MRMLManager->SetTreeNodePrintWeight(rootNodeID, 1);
-  this->MRMLManager->SetTreeNodeStoppingConditionEMType(rootNodeID, 1);
-  this->MRMLManager->SetTreeNodeStoppingConditionEMIterations(rootNodeID, 15);
-  this->MRMLManager->SetTreeNodeStoppingConditionEMValue(rootNodeID, 0.5);
-  this->MRMLManager->SetTreeNodeStoppingConditionMFAType(rootNodeID, 2);
-  this->MRMLManager->SetTreeNodeStoppingConditionMFAIterations(rootNodeID, 16);
-  this->MRMLManager->SetTreeNodeStoppingConditionMFAValue(rootNodeID, 0.6);
-
-  vtkDebugMacro("Setting parameters for background node");
-  vtkIdType backgroundNodeID   = this->MRMLManager->AddTreeNode(rootNodeID);
-  this->MRMLManager->SetTreeNodeName(backgroundNodeID, "Background");
-  color[0] = 0.0; color[1] = 0.0; color[2] = 0.0;
-  this->MRMLManager->SetTreeNodeColor(backgroundNodeID, color);
-  this->MRMLManager->SetTreeNodeSpatialPriorWeight(backgroundNodeID, 0.4);
-  this->MRMLManager->SetTreeNodeClassProbability(backgroundNodeID, 0.4);
-  this->MRMLManager->SetTreeNodePrintWeight(backgroundNodeID, 1);
-
-  vtkDebugMacro("Setting parameters for icc node");
-  vtkIdType iccNodeID          = this->MRMLManager->AddTreeNode(rootNodeID);
-  this->MRMLManager->SetTreeNodeName(iccNodeID, "ICC");
-  color[0] = 0.0; color[1] = 1.0; color[2] = 0.0;
-  this->MRMLManager->SetTreeNodeColor(iccNodeID, color);
-  this->MRMLManager->SetTreeNodeSpatialPriorWeight(iccNodeID, 0.3);
-  this->MRMLManager->SetTreeNodeClassProbability(iccNodeID, 0.3);
-  this->MRMLManager->SetTreeNodeAlpha(iccNodeID, 0.3);
-  this->MRMLManager->SetTreeNodePrintWeight(iccNodeID, 1);
-  this->MRMLManager->SetTreeNodeStoppingConditionEMType(iccNodeID, 0);
-  this->MRMLManager->SetTreeNodeStoppingConditionEMIterations(iccNodeID, 13);
-  this->MRMLManager->SetTreeNodeStoppingConditionEMValue(iccNodeID, 0.3);
-  this->MRMLManager->SetTreeNodeStoppingConditionMFAType(iccNodeID, 1);
-  this->MRMLManager->SetTreeNodeStoppingConditionMFAIterations(iccNodeID, 14);
-  this->MRMLManager->SetTreeNodeStoppingConditionMFAValue(iccNodeID, 0.4);
-
-  vtkDebugMacro("Setting parameters for grey matter node");
-  vtkIdType greyMatterNodeID   = this->MRMLManager->AddTreeNode(iccNodeID);
-  this->MRMLManager->SetTreeNodeName(greyMatterNodeID, "Grey Matter");
-  color[0] = 0.0; color[1] = 1.0; color[2] = 1.0;
-  this->MRMLManager->SetTreeNodeColor(greyMatterNodeID, color);
-  this->MRMLManager->SetTreeNodeSpatialPriorWeight(greyMatterNodeID, 0.2);
-  this->MRMLManager->SetTreeNodeClassProbability(greyMatterNodeID, 0.2);
-  this->MRMLManager->SetTreeNodePrintWeight(greyMatterNodeID, 1);
-
-  vtkDebugMacro("Setting parameters for white matter node");
-  vtkIdType whiteMatterNodeID  = this->MRMLManager->AddTreeNode(iccNodeID);
-  this->MRMLManager->SetTreeNodeName(whiteMatterNodeID, "White Matter");
-  color[0] = 1.0; color[1] = 1.0; color[2] = 0.0;
-  this->MRMLManager->SetTreeNodeColor(whiteMatterNodeID, color);
-  this->MRMLManager->SetTreeNodeSpatialPriorWeight(whiteMatterNodeID, 0.1);
-  this->MRMLManager->SetTreeNodeClassProbability(whiteMatterNodeID, 0.1);
-  this->MRMLManager->SetTreeNodePrintWeight(whiteMatterNodeID, 1);
-
-  vtkDebugMacro("Setting parameters for csf node");
-  vtkIdType csfNodeID  = this->MRMLManager->AddTreeNode(iccNodeID);
-  this->MRMLManager->SetTreeNodeName(csfNodeID, "CSF");
-
-  //
-  // set registration parameters
-  //
-  vtkDebugMacro("Setting registration parameters");
-  this->MRMLManager->SetRegistrationAffineType(0);
-  this->MRMLManager->SetRegistrationDeformableType(0);
-  this->MRMLManager->SetRegistrationInterpolationType(1);
-
-  //
-  // set save parameters
-  //
-  vtkDebugMacro("Setting save parameters");
-  this->MRMLManager->SetSaveWorkingDirectory("/tmp");
-  this->MRMLManager->SetSaveTemplateFilename("/tmp/EMSTemplate.mrml");
-  this->MRMLManager->SetSaveTemplateAfterSegmentation(1);
-  this->MRMLManager->SetSaveIntermediateResults(1);
-  this->MRMLManager->SetSaveSurfaceModels(1);
-  
-  this->MRMLManager->SetEnableMultithreading(1);
-  this->SetProgressGlobalFractionCompleted(0.9);
-
-  vtkDebugMacro("Done populating test data");
-}
-
-//-----------------------------------------------------------------------------
-void
-vtkEMSegmentLogic::
-SpecialTestingFunction()
-{
-}
-
-//-----------------------------------------------------------------------------
 vtkIntArray*
 vtkEMSegmentLogic::
 NewObservableEvents()
@@ -2375,4 +2270,457 @@ void vtkEMSegmentLogic::SubParcelateSegmentation(vtkImageData* segmentation, vtk
       }
 
     }
+}
+
+//----------------------------------------------------------------------------
+// Updates the .tcl Tasks from an external website and replaces the content
+// in $tmpDir/EMSegmentTask (e.g. /home/Slicer3USER/EMSegmentTask)
+//----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+int vtkEMSegmentLogic::UpdateTasks(vtkSlicerApplication* app)
+{
+
+  { // we want our own scope in this one :D
+  
+  //
+  // ** THE URL **
+  //
+  // the url to the EMSegment task repository
+  //std::string taskRepository = "http://people.csail.mit.edu/pohl/EMSegmentUpdates/";
+  std::string taskRepository = "http://slicer.org/EMSegmentUpdates/3.6.3/";
+
+  //
+  // ** PATH MANAGEMENT **
+  //
+  // we need the slicer application to query the $tmp_dir path
+  const char* tmpDir = app->GetTemporaryDirectory();
+  if (!tmpDir)
+    {
+      vtkErrorMacro("UpdateTasksCallback: Temporary directory is not defined!");
+      return 0;
+    }
+  // also add the manifest filename
+  std::string tmpManifestFilename( std::string(tmpDir) + "/" + std::string(app->GetSvnRevision()) + std::string("/EMSegmentTasksManifest.html") );
+  std::string manifestFilename = vtksys::SystemTools::ConvertToOutputPath(tmpManifestFilename.c_str());
+
+  // and add the EMSegmentTask directory
+  std::string taskDir = this->GetTemporaryTaskDirectory(app);
+  //
+  // ** HTTP ACCESS **
+  //
+  // our HTTP handler
+  //vtkHTTPHandler* httpHandler = vtkHTTPHandler::New();
+  vtkHTTPHandler* httpHandler = vtkHTTPHandler::SafeDownCast(app->GetMRMLScene()->FindURIHandlerByName("HTTPHandler"));
+
+
+  // prevent funny behavior on windows with the side-effect of more network resources are used
+  // (o_o) who cares about traffic or the tcp/ip ports? *g
+  httpHandler->SetForbidReuse(1);
+
+  // safe-check if the handler can really handle the hardcoded uri protocol
+  if (!httpHandler->CanHandleURI(taskRepository.c_str()))
+    {
+    vtkErrorMacro("UpdateTasksCallback: Invalid URI specified and you can't do anything about it bcuz it is *hardcoded*!")
+    return 0;
+    }
+
+  //
+  // ** THE ACTION STARTS **
+  //
+  // make sure we can access the task repository
+  // TODO: this function will be provided by Wendy sooner or later :D
+  //       for now, we just assume that we are on-line!
+  
+
+  // get the directory listing of the EMSegment task repository and save it as $tmpDir/EMSegmentTasksManifest.html.
+  // the manifest always gets overwritten, but nobody should care
+  httpHandler->StageFileRead(taskRepository.c_str(),manifestFilename.c_str());
+  
+  // sanity checks: if manifestFilename does not exist or size<1, exit here before it is too late!
+  if (!vtksys::SystemTools::FileExists(manifestFilename.c_str()) || vtksys::SystemTools::FileLength(manifestFilename.c_str())<1)
+    {
+    vtkErrorMacro("UpdateTasksCallback: Could not get the manifest! Try again later..")
+    return 0;
+    }
+  
+  
+  // what happens now? answer: a three-step-processing chain!!!
+  // (1) now we got the manifest and we can parse it for filenames of EMSegment tasks.
+  // (2) then, download these files and copy them to our $tmpDir.
+  //     after we are sure we got the files (we can not be really sure but we can check if some files where downloaded), 
+  // (3) we delete all old files in $taskDir and then copy our newly downloaded EMSegment tasks from $tmpDir to $taskDir.
+  // sounds good!
+  
+  // 1) open the manifest and get the filenames
+  std::ifstream fileStream(manifestFilename.c_str());
+  std::string htmlManifestAsString;
+  if (!fileStream.fail())
+    {
+    fileStream.seekg(0,std::ios::end);
+    size_t length = fileStream.tellg();
+    fileStream.seekg(0,std::ios::beg);
+    char* htmlManifest = new char[length+1];
+    fileStream.read(htmlManifest, length);
+    htmlManifest[length] = '\n';
+    htmlManifestAsString = std::string(htmlManifest);
+    delete[] htmlManifest;
+    }
+    
+  fileStream.close();
+    
+  // when C++0x is released, we could easily do something like this to filter out the .tcl and .mrml filenames:
+  //  cmatch regexResult;
+  //  regex tclExpression("(\w*-*)+.tcl(?!\")");  
+  //  regex_search(htmlManifest, regexResult, tclExpression); 
+  //  regex mrmlExpression("(\w*-*)+.mrml(?!\")");  
+  //  regex_search(htmlManifest, regexResult, mrmlExpression);   
+  // but right now, we have to manually parse the string.
+  // at least we can use std::string methods :D
+  //
+  // Fix for recent webservers does not include a space after HTML tags
+  std::string beginTaskFilenameTag(".tcl\">");
+  std::string endTaskFilenameTag(".tcl</a>");
+  std::string beginMrmlFilenameTag(".mrml\">");
+  std::string endMrmlFilenameTag(".mrml</a>");  
+  
+  bool tclFilesExist = false;
+  bool mrmlFilesExist = false;
+  
+  std::vector<std::string> taskFilenames;
+  std::vector<std::string> mrmlFilenames;
+
+  std::string::size_type beginTaskFilenameIndex = htmlManifestAsString.find(beginTaskFilenameTag,0);
+  
+  // the loop for .tcl files
+  while(beginTaskFilenameIndex!=std::string::npos)
+    {
+    // as long as we find the beginning of a filename, do the following..
+    
+    // find the corresponding end
+    std::string::size_type endTaskFilenameIndex = htmlManifestAsString.find(endTaskFilenameTag,beginTaskFilenameIndex);
+  
+    if (endTaskFilenameIndex==std::string::npos)
+      {
+      vtkErrorMacro("UpdateTasksCallback: Error during parsing! There was no end *AAAAAAAAAAAAAAAAAAAAHHHH*")
+      return 0;
+      }
+    
+    // now get the string between begin and end, then add it to the vector
+    taskFilenames.push_back(htmlManifestAsString.substr(beginTaskFilenameIndex+beginTaskFilenameTag.size(),endTaskFilenameIndex-(beginTaskFilenameIndex+beginTaskFilenameTag.size())));
+    
+    // and try to find the next beginTag
+    beginTaskFilenameIndex = htmlManifestAsString.find(beginTaskFilenameTag,endTaskFilenameIndex);
+    }
+    
+  // enable copying of .tcl files if they exist
+  if (taskFilenames.size()!=0)
+    {
+    tclFilesExist = true;
+    }
+    
+  std::string::size_type beginMrmlFilenameIndex = htmlManifestAsString.find(beginMrmlFilenameTag,0);
+  
+  // the loop for .mrml files
+  while(beginMrmlFilenameIndex!=std::string::npos)
+    {
+    // as long as we find the beginning of a filename, do the following..
+    
+    // find the corresponding end
+    std::string::size_type endMrmlFilenameIndex = htmlManifestAsString.find(endMrmlFilenameTag,beginMrmlFilenameIndex);
+  
+    if (endMrmlFilenameIndex==std::string::npos)
+      {
+      vtkErrorMacro("UpdateTasksCallback: Error during parsing! There was no end *AAAAAAAAAAAAAAAAAAAAHHHH*")
+      return 0;
+      }
+    
+    // now get the string between begin and end, then add it to the vector
+    mrmlFilenames.push_back(htmlManifestAsString.substr(beginMrmlFilenameIndex+beginMrmlFilenameTag.size(),endMrmlFilenameIndex-(beginMrmlFilenameIndex+beginMrmlFilenameTag.size())));
+    
+    // and try to find the next beginTag
+    beginMrmlFilenameIndex = htmlManifestAsString.find(beginMrmlFilenameTag,endMrmlFilenameIndex);
+    }
+    
+  // enable copying of .mrml files if they exist
+  if (mrmlFilenames.size()!=0)
+    {
+    mrmlFilesExist = true;
+    }    
+    
+  // 2) loop through the vector and download the task files and the mrml files to the $tmpDir
+  std::string currentTaskUrl;
+  std::string currentTaskName;
+  std::string currentTaskFilepath;
+
+  std::string currentMrmlUrl;
+  std::string currentMrmlName;
+  std::string currentMrmlFilepath;
+  
+  if (tclFilesExist)
+    {
+    // loop for .tcl
+    for (std::vector<std::string>::iterator i = taskFilenames.begin(); i != taskFilenames.end(); ++i)
+      {
+      
+      currentTaskName = *i;
+      
+      // sanity checks: if the filename is "", exit here before it is too late!
+      if (!strcmp(currentTaskName.c_str(),""))
+        {
+        vtkErrorMacro("UpdateTasksCallback: At least one filename was empty, get outta here NOW! *AAAAAAAAAAAAAAAAAHHH*")
+          return 0;
+        }
+      
+      // generate the url of this task
+      currentTaskUrl = std::string(taskRepository + currentTaskName + std::string(".tcl"));
+      
+      // generate the destination filename of this task in $tmpDir
+      currentTaskFilepath = std::string(tmpDir + std::string("/") + currentTaskName + std::string(".tcl"));
+      
+      // and get the content and save it to $tmpDir
+      httpHandler->StageFileRead(currentTaskUrl.c_str(),currentTaskFilepath.c_str());
+      
+      // sanity checks: if the downloaded file does not exist or size<1, exit here before it is too late!
+      if (!vtksys::SystemTools::FileExists(currentTaskFilepath.c_str()) || vtksys::SystemTools::FileLength(currentTaskFilepath.c_str())<1)
+        {
+        vtkErrorMacro("UpdateTasksCallback: At least one file was not downloaded correctly! Aborting.. *beepbeepbeep*")
+          return 0;
+        }
+     
+      }
+    }
+  
+  if (mrmlFilesExist)
+    {  
+    // loop for .mrml
+    for (std::vector<std::string>::iterator i = mrmlFilenames.begin(); i != mrmlFilenames.end(); ++i)
+      {
+      
+      currentMrmlName = *i;
+      
+      // sanity checks: if the filename is "", exit here before it is too late!
+      if (!strcmp(currentMrmlName.c_str(),""))
+        {
+        vtkErrorMacro("UpdateTasksCallback: At least one filename was empty, get outta here NOW! *AAAAAAAAAAAAAAAAAHHH*")
+          return 0;
+        }
+      
+      // generate the url of this mrml file
+      currentMrmlUrl = std::string(taskRepository + currentMrmlName + std::string(".mrml"));
+      
+      // generate the destination filename of this task in $tmpDir
+      currentMrmlFilepath = std::string(tmpDir + std::string("/") + currentMrmlName + std::string(".mrml"));
+      
+      // and get the content and save it to $tmpDir
+      httpHandler->StageFileRead(currentMrmlUrl.c_str(),currentMrmlFilepath.c_str());
+      
+      // sanity checks: if the downloaded file does not exist or size<1, exit here before it is too late!
+      if (!vtksys::SystemTools::FileExists(currentMrmlFilepath.c_str()) || vtksys::SystemTools::FileLength(currentMrmlFilepath.c_str())<1)
+        {
+        vtkErrorMacro("UpdateTasksCallback: At least one file was not downloaded correctly! Aborting.. *beepbeepbeep*")
+         return 0;
+        }
+     
+      }    
+    }
+
+  // we got the .tcl files and the .mrml files now at a safe location and they have at least some content :P
+  // this makes it safe to delete all old EMSegment tasks and activate the new one :D
+  
+  // OMG did you realize that this is a kind of backdoor to take over your home directory?? the
+  // downloaded .tcl files get sourced later and can do whatever they want to do!! but pssst let's keep it a secret
+  // option for a Slicer backdoor :) on the other hand, the EMSegment tasks repository will be monitored closely and is not
+  // public, but what happens if someone changes the URL to the repository *evilgrin*
+  
+  // 3) copy the $taskDir to a backup folder, delete the $taskDir. and create it again. then, move our downloaded files to it
+  
+  // purge, NOW!! but only if the $taskDir exists..
+  if (vtksys::SystemTools::FileExists(taskDir.c_str()))
+  {
+    // create a backup of the old taskDir
+    std::string backupTaskDir(taskDir + std::string("_old"));
+    if (!vtksys::SystemTools::CopyADirectory(taskDir.c_str(),backupTaskDir.c_str()))
+      {
+      vtkErrorMacro("UpdateTasksCallback: Could not create backup " << backupTaskDir.c_str() << "! This is very bad, we abort the update..")
+       return 0;
+      }
+    
+    if (!vtksys::SystemTools::RemoveADirectory(taskDir.c_str()))
+      {
+      vtkErrorMacro("UpdateTasksCallback: Could not delete " << taskDir.c_str() << "! This is very bad, we abort the update..")
+       return 0 ;
+      }
+  }
+  
+  // check if the taskDir is gone now!
+  if (!vtksys::SystemTools::FileExists(taskDir.c_str()))
+    {
+    // the $taskDir does not exist, so create it
+    bool couldCreateTaskDir = vtksys::SystemTools::MakeDirectory(taskDir.c_str());
+
+    // sanity checks: if the directory could not be created, something is wrong!
+    if (!couldCreateTaskDir)
+      {
+      vtkErrorMacro("UpdateTasksCallback: Could not (re-)create the EMSegmentTask directory: " << taskDir.c_str())
+      return 0;
+      }
+    }
+    
+  std::string currentTaskDestinationFilepath;
+  std::string currentMrmlDestinationFilepath;
+  
+  if (tclFilesExist)
+    {
+    // now move the downloaded .tcl files to the $taskDir
+    for (std::vector<std::string>::iterator i = taskFilenames.begin(); i != taskFilenames.end(); ++i)
+      {
+      
+      currentTaskName = *i;    
+      
+      // generate the destination filename of this task in $tmpDir
+      currentTaskFilepath = std::string(tmpDir + std::string("/") + currentTaskName + std::string(".tcl"));
+      
+      // generate the destination filename of this task in $taskDir
+      currentTaskDestinationFilepath = std::string(taskDir + std::string("/") + currentTaskName + std::string(".tcl"));    
+      
+      if (!vtksys::SystemTools::CopyFileAlways(currentTaskFilepath.c_str(),currentTaskDestinationFilepath.c_str()))
+        {
+        vtkErrorMacro("UpdateTasksCallback: Could not copy at least one downloaded task file. Everything is lost now! Sorry :( Just kidding: there was a backup in " << taskDir << "!")
+          return 0;
+        }
+      }
+    }
+    
+  if (mrmlFilesExist)
+    {
+    // now move the downloaded .mrml files to the $taskDir
+    for (std::vector<std::string>::iterator i = mrmlFilenames.begin(); i != mrmlFilenames.end(); ++i)
+      {
+      
+      currentMrmlName = *i;    
+      
+      // generate the destination filename of this task in $tmpDir
+      currentMrmlFilepath = std::string(tmpDir + std::string("/") + currentMrmlName + std::string(".mrml"));
+      
+      // generate the destination filename of this task in $taskDir
+      currentMrmlDestinationFilepath = std::string(taskDir + std::string("/") + currentMrmlName + std::string(".mrml"));    
+      
+      if (!vtksys::SystemTools::CopyFileAlways(currentMrmlFilepath.c_str(),currentMrmlDestinationFilepath.c_str()))
+        {
+        vtkErrorMacro("UpdateTasksCallback: Could not copy at least one downloaded mrml file. Everything is lost now! Sorry :( Just kidding: there was a backup in " << taskDir << "!")
+           return 0;
+        }
+      }
+    }
+    
+ 
+  //
+  // ** ALL DONE, NOW CLEANUP **
+  //
+  
+  } // now go for destruction, donkey!!
+
+  return 1;  
+}
+
+//-----------------------------------------------------------------------------
+void vtkEMSegmentLogic::CreateDefaultTasksList(vtkSlicerApplication* app, std::vector<std::string> & DefaultTasksName,  std::vector<std::string> & DefaultTasksFile, 
+                                                                                                                         std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string> &  DefinePreprocessingTasksFile)
+{
+  DefaultTasksName.clear();
+  DefaultTasksFile.clear();
+  DefinePreprocessingTasksName.clear();
+  DefinePreprocessingTasksFile.clear();
+
+  this->AddDefaultTasksToList(this->GetTclTaskDirectory(app).c_str(), DefaultTasksName,DefaultTasksFile, DefinePreprocessingTasksName, DefinePreprocessingTasksFile);
+  this->AddDefaultTasksToList(this->GetTemporaryTaskDirectory(app).c_str(), DefaultTasksName,DefaultTasksFile, DefinePreprocessingTasksName, DefinePreprocessingTasksFile);
+}
+
+//-----------------------------------------------------------------------------
+void vtkEMSegmentLogic::AddDefaultTasksToList(const char* FilePath, std::vector<std::string> & DefaultTasksName,  std::vector<std::string> & DefaultTasksFile, 
+                                                                                                                       std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string> & DefinePreprocessingTasksFile)
+{
+ vtkDirectory *dir = vtkDirectory::New();
+  // Do not give out an error message here bc it otherwise comes up when loading slicer 
+  // the path might simply not be created !
+  
+  if (!dir->Open(FilePath))
+    {
+      dir->Delete();
+      return;
+    }
+    
+  int numberOfFiles = dir->GetNumberOfFiles();
+    
+  for (int i = 0; i < numberOfFiles; i++)
+    {
+    
+    vtksys_stl::string filename = dir->GetFile(i);
+    
+    // do nothing if file is ".", ".." 
+    if (strcmp(filename.c_str(), ".") && strcmp(filename.c_str(), ".."))
+      {
+
+      //  {
+      //  continue;
+      //  }
+   
+      vtksys_stl::string tmpFullFileName = vtksys_stl::string(FilePath) + vtksys_stl::string("/") + filename.c_str();
+      vtksys_stl::string fullFileName = vtksys::SystemTools::ConvertToOutputPath(tmpFullFileName.c_str());
+      
+      // if it has a .mrml extension but is a directory, do nothing
+      if (!vtksys::SystemTools::FileIsDirectory(fullFileName.c_str()))
+        {
+     
+        if (!strcmp(vtksys::SystemTools::GetFilenameExtension(filename.c_str()).c_str(), ".mrml") && (filename.compare(0,1,"_") ) )
+          {
+              // Generate Name of Task from File name
+              vtksys_stl::string taskName = this->MRMLManager->TurnDefaultMRMLFileIntoTaskName(filename.c_str());
+              // make sure that file is not already in the list
+              // we loop through the list and set existFlag to 1 if it exists already 
+              int existFlag = 0;
+              // we need a new index for this inner loop *grrrrr took me long to find this one
+              for (int j=0; j < int(DefaultTasksName.size()); j++)
+              {
+                 if (!DefaultTasksName[j].compare(taskName))
+                 { 
+                   existFlag =1;
+                 }
+              }
+              if (!existFlag)
+               {
+                 // Add to List if it does not exist
+                 DefaultTasksFile.push_back(fullFileName);
+                 DefaultTasksName.push_back(taskName);
+           }
+        }
+      else if ((!strcmp(vtksys::SystemTools::GetFilenameExtension(filename.c_str()).c_str(), ".tcl")) && (filename.compare(0,1,"_") ) 
+                    && strcmp(filename.c_str(), vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName()))
+        {
+              // Generate Name of Task from File name
+              vtksys_stl::string taskName = this->MRMLManager->TurnDefaultTclFileIntoPreprocessingName(filename.c_str());
+              // make sure that file is not already in the list
+              // we loop through the list and set existFlag to 1 if it exists already 
+              int existFlag = 0;
+              // we need a new index for this inner loop *grrrrr took me long to find this one
+              for (int j=0; j < int(DefinePreprocessingTasksName.size()); j++)
+              {
+                 if (!DefinePreprocessingTasksName[j].compare(taskName))
+                 { 
+                   existFlag =1;
+                 }
+              }
+              if (!existFlag)
+               {
+                  // Add to List if it does not exist
+                  DefinePreprocessingTasksFile.push_back(fullFileName);
+                  DefinePreprocessingTasksName.push_back(taskName);
+               }
+           }   
+        } // check if it is not a directory
+      } // check if the file is .,.. or does not have a .mrml extension
+    } // loop through all the files
+    
+  dir->Delete();
 }

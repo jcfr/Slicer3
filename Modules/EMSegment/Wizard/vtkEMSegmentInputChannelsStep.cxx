@@ -18,6 +18,8 @@
 #include "vtkEMSegmentPreProcessingStep.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
+#include "vtkEMSegmentDynamicFrame.h"
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentInputChannelsStep);
 vtkCxxRevisionMacro(vtkEMSegmentInputChannelsStep, "$Revision: 1.1 $");
@@ -37,6 +39,9 @@ vtkEMSegmentInputChannelsStep::vtkEMSegmentInputChannelsStep()
 
   this->TargetToTargetRegistrationFrame             = NULL;
   this->IntensityImagesAlignTargetImagesCheckButton = NULL;
+
+  // Have to do it right here bc of Generic.tcl - InitializeVariables ! 
+  this->CheckListFrame = vtkEMSegmentDynamicFrame::New();
 }
 
 //----------------------------------------------------------------------------
@@ -81,6 +86,11 @@ vtkEMSegmentInputChannelsStep::~vtkEMSegmentInputChannelsStep()
     this->IntensityImagesAlignTargetImagesCheckButton = NULL;
     }
 
+   if (this->CheckListFrame )
+    {
+      this->CheckListFrame->Delete();
+      this->CheckListFrame = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -252,25 +262,30 @@ void vtkEMSegmentInputChannelsStep::ShowUserInterface()
 
   if (!this->GetGUI()->IsSegmentationModeAdvanced()) 
     {
-      this->SourceTaskFiles();
+      this->GUI->GetLogic()->SourceTaskFiles(this->GetSlicerApplication());
       
       int showCheckList = atoi(this->Script("::EMSegmenterSimpleTcl::CreateCheckList"));
       if (showCheckList) 
       {
-          if (!this->CheckListFrame)
-          {
-            this->CheckListFrame = vtkKWFrameWithLabel::New();
-          }
-          if (!this->CheckListFrame->IsCreated())
-          {
-             this->CheckListFrame->SetParent(parent);
-             this->CheckListFrame->Create();
-             this->CheckListFrame->SetLabelText("Check List");
-          }
-          this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->CheckListFrame->GetWidgetName());
+         if (!this->CheckListFrame)
+         {
+            this->CheckListFrame = vtkEMSegmentDynamicFrame::New();
+         }
+         if (!this->CheckListFrame->IsCreated())
+         {
+            this->CheckListFrame->SetParent(parent);
+            this->CheckListFrame->Create();
+            this->CheckListFrame->SetLabelText("Check List");
+            this->CheckListFrame->SetMRMLManager(mrmlManager);
+         }
 
-          this->CreateEntryLists();
-          this->Script("::EMSegmenterSimpleTcl::ShowCheckList");
+         if (!this->GetGUI()->IsSegmentationModeAdvanced()) {
+            this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->CheckListFrame->GetWidgetName());
+         }
+         // Sets up Task Specific GUI
+         this->CheckListFrame->CreateEntryLists();
+
+        this->Script("::EMSegmenterSimpleTcl::ShowCheckList");
       }
    }
 }
@@ -482,7 +497,7 @@ void vtkEMSegmentInputChannelsStep::Validate()
          return;
        }
 
-       this->UpdateTaskPreprocessingSetting();
+       this->CheckListFrame->SaveSettingToMRML();
 
        mrmlManager->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
        mrmlManager->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
@@ -699,112 +714,3 @@ int vtkEMSegmentInputChannelsStep::GetNumberOfInputChannels()
 }
 
 
-//----------------------------------------------------------------------------
-void vtkEMSegmentInputChannelsStep::UpdateTaskPreprocessingSetting()
-{
-  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (!mrmlManager || !mrmlManager->GetGlobalParametersNode())
-    {
-      return;
-    }
-
-
-  std::string oldText;
-
-  if ( mrmlManager->GetGlobalParametersNode()->GetTaskPreProcessingSetting() ) 
-    {
-      oldText = std::string(mrmlManager->GetGlobalParametersNode()->GetTaskPreProcessingSetting());
-    }
-
-  vtksys_stl::stringstream defText;
-  size_t  startPos =0;
-  size_t  endPos   =0;
-
-  if (oldText.size())
-    {
-      endPos =oldText.find("|",1);
-    }
-  else {
-    // Nothing to update
-    return;
-  } 
-
-  for (int i =0 ; i < (int)  this->checkButton.size(); i++)
-    {
-      // assumes that the entry with index 0 is used during processing otherwise have problems
-      if (this->checkButton[i]) {
-    defText << "|C";
-    defText << this->checkButton[i]->GetWidget()->GetSelectedState();
-      } else {
-    defText << oldText.substr(startPos,endPos-startPos).c_str();
-      }
-
-      if (endPos == std::string::npos)
-    {
-      startPos = std::string::npos;
-      break;
-    } 
-      else {
-    startPos = endPos;
-    endPos ++;
-    endPos =oldText.find("|",startPos); 
-      }
-    }
-
-  for (int i =0 ; i < (int) this->volumeMenuButton.size(); i++)
-    {
-      // assumes that the entry with index 0 is used during processin otherwise have problems
-      if (this->volumeMenuButton.size()) 
-    {
-      defText << "|V";
-      vtkMRMLVolumeNode* volumeNode = mrmlManager->GetVolumeNode(this->volumeMenuButtonID[i]);
-      if (!volumeNode) 
-        {
-          vtkErrorMacro("Volume Node for ID " << this->volumeMenuButtonID[i] << " does not exists" );
-          defText << "NULL";
-        } 
-      else 
-        {
-          defText << volumeNode->GetID();
-        }
-    }
-      else 
-    {
-      defText << oldText.substr(startPos,endPos-startPos).c_str();
-    }
-      if (endPos == std::string::npos)
-    {
-      startPos = std::string::npos;
-      break;
-    } 
-      else {
-    startPos = endPos;
-    endPos ++;
-    endPos =oldText.find("|",startPos); 
-      }
-    }
-
-
-  for (int i =0 ; i < (int) this->textEntry.size(); i++)
-    {
-      // assumes that the entry with index 0 is used during processin otherwise have problems
-      if (this->textEntry[i] && this->textEntry[i]->GetWidget()) {
-    defText << "|E";
-    defText <<  this->textEntry[i]->GetWidget()->GetValue();
-      } else {
-    defText << oldText.substr(startPos,endPos-startPos).c_str();
-      }
-
-      if (endPos == std::string::npos)
-    {
-      startPos = std::string::npos;
-      break;
-    } 
-      else {
-    startPos = endPos;
-    endPos ++;
-    endPos =oldText.find("|",startPos); 
-      }
-    }
-  mrmlManager->GetGlobalParametersNode()->SetTaskPreProcessingSetting(defText.str().c_str());
-}

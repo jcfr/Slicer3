@@ -21,6 +21,11 @@ class vtkKWWizardStep;
 class vtkKWLabel;
 class vtkMRMLEMSTemplateNode;
 
+#define EMSEG_MENU_BUTTON_WIDTH 15
+#define EMSEG_WIDGETS_LABEL_WIDTH 25
+
+
+
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentGUI : 
   public vtkSlicerModuleGUI
 {
@@ -137,6 +142,10 @@ public:
 
   void StartSegmentation(); 
 
+  // Description:
+  // Initialize a menu with loaded volumes
+  static void PopulateMenuWithLoadedVolumes(vtkEMSegmentMRMLManager *mrmlManager, vtkKWMenu *menu, vtkObject* object, const char* callback); 
+
 protected:
 
 private:
@@ -184,13 +193,7 @@ private:
   vtkKWLabel *NACLabel;
   vtkKWLabel *UPennLabel;
 
-
-  // Description:
-  // Populate the logic with testing data, load some volumes
-  virtual void PopulateTestingData();
-
   int SegmentationMode;
-
 };
 
 #endif

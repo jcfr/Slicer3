@@ -4981,3 +4981,29 @@ void vtkEMSegmentMRMLManager::TurnFromParentToLeafNode(vtkMRMLEMSTreeNode* treeN
         treeNode->SetLeafParametersNodeID(parLeafNode->GetID()); 
 }
 
+void vtkEMSegmentMRMLManager::ImportMRMLFile(const char *mrmlFile,  vtksys_stl::string errMSG)
+{
+ 
+  this->MRMLScene->SetURL(mrmlFile); 
+
+  if (!this->MRMLScene->Import())
+    {
+      errMSG = vtksys_stl::string("Could not load mrml file ") + vtksys_stl::string( mrmlFile);
+      vtkErrorMacro(<< errMSG.c_str()); 
+      return;
+    }
+
+  if(this->MRMLScene->GetErrorCode())
+    {
+         std::stringstream strstream;
+         strstream << "Corrupted MRML file:"  <<  mrmlFile << " was corrupted or could not be loaded. Error code: " 
+           << this->MRMLScene->GetErrorCode()  << " Error message: " << this->MRMLScene->GetErrorMessage();
+         strstream >> errMSG;
+         vtkErrorMacro(<<errMSG.c_str()); 
+         return;
+    }
+  cout << "==========================================================================" << endl;
+  cout << "== Completed importing data " << this->MRMLScene->GetURL() << endl;
+  cout << "==========================================================================" << endl;
+
+}

@@ -8,7 +8,6 @@
 #include "vtkKWMessageDialog.h"
 #include "vtkEMSegmentLogic.h"
 #include "vtkKWWizardWorkflow.h"
-#include "vtkKWFrameWithLabel.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
 #include "vtkKWCheckButtonWithLabel.h"
 #include "vtkKWEntryWithLabel.h"
@@ -16,6 +15,7 @@
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkMRMLEMSVolumeCollectionNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
+#include "vtkEMSegmentDynamicFrame.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentPreProcessingStep);
@@ -27,11 +27,18 @@ vtkEMSegmentPreProcessingStep::vtkEMSegmentPreProcessingStep()
   this->SetName("6/9. Define Preprocessing");
   this->SetDescription("Answer questions for preprocessing of input images");
   this->askQuestionsBeforeRunningPreprocessingFlag = 1;
+  // Have to do it right here bc of Generic.tcl - InitializeVariables ! 
+  this->CheckListFrame = vtkEMSegmentDynamicFrame::New();
 }
 
 //----------------------------------------------------------------------------
 vtkEMSegmentPreProcessingStep::~vtkEMSegmentPreProcessingStep()
 {
+  if (this->CheckListFrame )
+    {
+      this->CheckListFrame->Delete();
+      this->CheckListFrame = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -39,11 +46,12 @@ void
 vtkEMSegmentPreProcessingStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
-
+  
   //
   // Source TCL Files 
   //
-  if (this->SourcePreprocessingTclFiles())
+  //----------------------------------------------------------------------------
+   if (this->GUI->GetLogic()->SourcePreprocessingTclFiles(this->GetSlicerApplication()))
     {
       return;
     }
@@ -64,25 +72,28 @@ vtkEMSegmentPreProcessingStep::ShowUserInterface()
   wizard_widget->GetCancelButton()->SetEnabled(enabled);
 
   if (!this->CheckListFrame)
-    {
-    this->CheckListFrame = vtkKWFrameWithLabel::New();
-    }
-  if (!this->CheckListFrame->IsCreated())
-    {
-    this->CheckListFrame->SetParent(parent);
-    this->CheckListFrame->Create();
-    this->CheckListFrame->SetLabelText("Check List");
-    }
+     {
+      this->CheckListFrame = vtkEMSegmentDynamicFrame::New();
+      }
+    if (!this->CheckListFrame->IsCreated())
+      {
+         this->CheckListFrame->SetParent(parent);
+         this->CheckListFrame->Create();
+         this->CheckListFrame->SetLabelText("Check List");
+         this->CheckListFrame->SetMRMLManager(mrmlManager);
+      }
 
   if (this->GetGUI()->IsSegmentationModeAdvanced()) {
-    this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->CheckListFrame->GetWidgetName());
-  }
+          this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->CheckListFrame->GetWidgetName());
+     }
 
+  // Sets up Task Specific GUI
+  this->CheckListFrame->CreateEntryLists();
+  
+  //  this->CheckListFrame->Create(parent, this->GetSlicerApplication(), mrmlManager,"Check List", this->GetGUI()->IsSegmentationModeAdvanced()); 
   //
-  // Define Task Specific GUI 
+  // Define Tas  this->CreateEntryLists();k Specific GUI 
   //
-
-  this->CreateEntryLists();
   this->Script("::EMSegmenterPreProcessingTcl::ShowUserInterface");
 
 }
@@ -145,8 +156,8 @@ vtkEMSegmentPreProcessingStep::Validate()
                }
           }
     }
-    this->SetTaskPreprocessingSetting();
-    
+    this->CheckListFrame->SaveSettingToMRML();
+
     vtkKWProgressDialog* progress = vtkKWProgressDialog::New();
     progress->SetParent(this->GetGUI ()->GetApplicationGUI ()->GetMainSlicerWindow ());
     progress->SetMasterWindow (this->GetGUI ()->GetApplicationGUI ()->GetMainSlicerWindow());
@@ -191,61 +202,4 @@ vtkEMSegmentPreProcessingStep::Validate()
     // Everything went smoothly
     this->Superclass::Validate();
 }
-
-//----------------------------------------------------------------------------
-void
-vtkEMSegmentPreProcessingStep::SetTaskPreprocessingSetting()
-{
-  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (!mrmlManager || !mrmlManager->GetGlobalParametersNode())
-    {
-      return;
-    }
-
-  vtksys_stl::stringstream defText;
-
-  for (int i =0 ; i < (int)  this->checkButton.size(); i++)
-    {
-      defText << "|C";
-      if (this->checkButton[i] && this->checkButton[i]->GetWidget())
-    {
-      defText << this->checkButton[i]->GetWidget()->GetSelectedState();
-    } 
-    }
-
-  for (int i =0 ; i < (int) volumeMenuButtonID.size() ; i++)
-    {
-       defText << "|V";
-       if (this->volumeMenuButtonID[i]) {
-     vtkMRMLVolumeNode* volumeNode = mrmlManager->GetVolumeNode(this->volumeMenuButtonID[i]);
-     if (!volumeNode) 
-       {
-         vtkErrorMacro("Volume Node for ID " << this->volumeMenuButtonID[i] << " does not exists" );
-         defText << "NULL";
-       } 
-     else 
-       {
-         defText << volumeNode->GetID();
-       }
-       }
-      else 
-    {
-      defText << "NULL";
-    }
-    }
-
-
-  for (int i =0 ; i < (int)  this->textEntry.size(); i++)
-    {
-      defText << "|E";
-      if (this->textEntry[i] && this->textEntry[i]->GetWidget())
-    {
-      defText << this->textEntry[i]->GetWidget()->GetValue();
-    } 
-    }
-
-  mrmlManager->GetGlobalParametersNode()->SetTaskPreProcessingSetting(defText.str().c_str());
-}
-
-
 

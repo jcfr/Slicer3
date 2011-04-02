@@ -12,6 +12,7 @@ class vtkKWFrame;
 class vtkKWCheckButtonWithLabel;
 class vtkKWPushButton;
 class vtkMRMLVolumeNode;
+class vtkEMSegmentDynamicFrame;
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentInputChannelsStep : public vtkEMSegmentStep
 {
@@ -38,6 +39,7 @@ public:
 
   int GetNumberOfInputChannels();
 
+  vtkGetObjectMacro(CheckListFrame,vtkEMSegmentDynamicFrame);
 protected:
   vtkEMSegmentInputChannelsStep();
   ~vtkEMSegmentInputChannelsStep();
@@ -54,6 +56,7 @@ protected:
 
   vtkKWFrameWithLabel        *TargetToTargetRegistrationFrame;
   vtkKWCheckButtonWithLabel  *IntensityImagesAlignTargetImagesCheckButton;
+ vtkEMSegmentDynamicFrame* CheckListFrame;
 
   //BTX
   std::vector<vtkKWFrameWithLabel*> InputChannelDefineLineFrame;
@@ -68,7 +71,6 @@ private:
   void UpdateInputChannelsfromMRML();
   void ChangeNumberOfInputChannel(int newLines) ;
   void CreateInputChannelFrame(int i, const char* newName, vtkMRMLVolumeNode* newVolumeNode); 
-  void UpdateTaskPreprocessingSetting();
 };
 
 #endif

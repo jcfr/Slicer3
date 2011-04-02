@@ -2,6 +2,7 @@
 #define __vtkEMSegmentPreProcessingStep_h
 
 #include "vtkEMSegmentStep.h"
+class vtkEMSegmentDynamicFrame;
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentPreProcessingStep : public vtkEMSegmentStep
 {
@@ -15,9 +16,10 @@ public:
   virtual void ShowUserInterface();
   void Validate();
   
-  void SetTaskPreprocessingSetting();
   vtkSetMacro(askQuestionsBeforeRunningPreprocessingFlag,int);
   vtkBooleanMacro(askQuestionsBeforeRunningPreprocessingFlag,int);
+
+  vtkGetObjectMacro(CheckListFrame,vtkEMSegmentDynamicFrame);
 
 protected:
   vtkEMSegmentPreProcessingStep();
@@ -27,6 +29,7 @@ private:
   vtkEMSegmentPreProcessingStep(const vtkEMSegmentPreProcessingStep&);
   void operator=(const vtkEMSegmentPreProcessingStep&);
   int askQuestionsBeforeRunningPreprocessingFlag;
+  vtkEMSegmentDynamicFrame* CheckListFrame;
 
 };
 

@@ -167,6 +167,7 @@ set(EMSegment_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentRunSegmentationStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentInputChannelsStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentPreProcessingStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentDynamicFrame.cxx
   )
 
  set(EMSegment_SRCS ${EMSegment_SRCS}

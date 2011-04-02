@@ -1,7 +1,6 @@
 #ifndef __vtkEMSegmentMRMLManager_h
 #define __vtkEMSegmentMRMLManager_h
 
-#include "vtkSlicerModuleLogic.h"
 #include "vtkEMSegment.h"
 #include <vtkSetGet.h>
 
@@ -508,7 +507,9 @@ public:
   virtual void CopyEMRelatedNodesToMRMLScene(vtkMRMLScene* newScene);
 
   virtual  void RemoveLegacyNodes();
-
+//BTX
+  void ImportMRMLFile(const char *mrmlFile,  vtksys_stl::string errMSG);  
+//ETX
 private:
   vtkEMSegmentMRMLManager();
   ~vtkEMSegmentMRMLManager();

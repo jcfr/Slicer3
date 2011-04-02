@@ -86,11 +86,6 @@ public:
       this->MRMLManager->ProcessMRMLEvents(caller, event, callData); 
       }
 
-  //
-  // special testing functions
-  virtual void      PopulateTestingData();
-  virtual void      SpecialTestingFunction();
-
   // events to observe
   virtual vtkIntArray* NewObservableEvents();
 
@@ -138,6 +133,12 @@ public:
   // and write to file 
   virtual bool PackageAndWriteData(vtkSlicerApplication* app, vtkSlicerApplicationLogic *appLogic, const char* packageDirectoryName);
 
+  int UpdateTasks(vtkSlicerApplication* app);
+
+//BTX
+  void CreateDefaultTasksList(vtkSlicerApplication* app, std::vector<std::string> & DefaultTasksName,  std::vector<std::string> & DefaultTasksFile, 
+                  std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string> & DefinePreprocessingTasksFile);
+//ETX
 
 private:
   vtkEMSegmentLogic();
@@ -206,6 +207,11 @@ private:
   vtkSetMacro(ProgressCurrentFractionCompleted, double);
 
   void UpdateIntensityDistributionAuto(vtkKWApplication* app, vtkIdType nodeID);
+
+//BTX
+  void AddDefaultTasksToList(const char* FilePath, std::vector<std::string> & DefaultTasksName,  std::vector<std::string> & DefaultTasksFile, 
+                 std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string>  & DefinePreprocessingTasksFile);
+//ETX
 
   //
   // because the mrml nodes are very complicated for this module, we

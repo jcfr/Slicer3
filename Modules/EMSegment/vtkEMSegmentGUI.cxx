@@ -11,13 +11,6 @@
 #include "vtkKWWizardWorkflow.h"
 #include "vtkKWLabel.h"
 
-// For PopulateTestingData()
-#include "vtkSlicerVolumesGUI.h"
-#include "vtkSlicerVolumesLogic.h"
-#include "vtkMRMLVolumeNode.h"
-#include "vtkDirectory.h"
-#include "vtkIntArray.h"
-
 #include "vtkEMSegmentParametersSetStep.h"
 #include "vtkEMSegmentAnatomicalStructureStep.h"
 #include "vtkEMSegmentSpatialPriorsStep.h"
@@ -579,85 +572,6 @@ AddObserverByNumber(vtkObject *observee, unsigned long event)
 
 
 //---------------------------------------------------------------------------
-void vtkEMSegmentGUI::PopulateTestingData() 
-{
-  this->Logic->PopulateTestingData();
-
-  vtkSlicerModuleGUI *m = vtkSlicerApplication::SafeDownCast(
-    this->GetApplication())->GetModuleGUIByName("Volumes"); 
-
-  if ( m != NULL ) 
-    {
-    vtkSlicerVolumesLogic* volume_logic = 
-      vtkSlicerVolumesGUI::SafeDownCast(m)->GetLogic();
-    vtksys_stl::string file_path = vtksys::SystemTools::GetEnv("HOME");
-#ifdef _WIN32
-    file_path.append("\\tmp\\EMSegmentTestImages");
-    if (!vtksys::SystemTools::FileIsDirectory(file_path.c_str()))
-      {
-      file_path = vtksys::SystemTools::GetEnv("HOME");
-      file_path.append("\\temp\\EMSegmentTestImages");
-      }
-    file_path.append("\\");
-#else
-    file_path.append("/tmp/EMSegmentTestImages/");
-#endif
-    
-    vtkDirectory *dir = vtkDirectory::New();
-    if (!dir->Open(file_path.c_str()))
-      {
-      dir->Delete();
-      return;
-      }
-    
-    for (int i = 0; i < dir->GetNumberOfFiles(); i++)
-      {
-      vtksys_stl::string filename = dir->GetFile(i);
-      //skip . and ..
-      if (strcmp(filename.c_str(), ".") == 0)
-        {
-        continue;
-        }
-      else if (strcmp(filename.c_str(), "..") == 0)
-        {
-        continue;
-        }
-
-      vtksys_stl::string fullName = file_path;
-      fullName.append(filename.c_str());
-      if (strcmp(vtksys::SystemTools::
-                 GetFilenameExtension(fullName.c_str()).c_str(), ".mhd") != 0)
-        {
-        continue;
-        }
-
-      if (vtksys::SystemTools::FileExists(fullName.c_str()) &&
-          !vtksys::SystemTools::FileIsDirectory(fullName.c_str()))
-        {
-        //volume_logic->AddArchetypeVolume((char*)(fullName.c_str()), 1, 0, 
-        //                                 filename.c_str()); 
-        int loadingOption = 2;
-        volume_logic->AddArchetypeVolume(fullName.c_str(), filename.c_str(), loadingOption); 
-
-        }
-      }
-    dir->Delete();
-       
-    this->MRMLManager->SetTreeNodeSpatialPriorVolumeID(
-      this->MRMLManager->GetTreeRootNodeID(), 
-      this->MRMLManager->GetVolumeNthID(0));
-
-    this->MRMLManager->SetRegistrationAtlasVolumeID(
-      this->MRMLManager->GetVolumeNthID(0));
-    this->MRMLManager->AddTargetSelectedVolume(
-      this->MRMLManager->GetVolumeNthID(1));
-
-    this->MRMLManager->SetSaveWorkingDirectory(file_path.c_str());
-    this->MRMLManager->SetSaveTemplateFilename(file_path.append("EMSTemplate.mrml").c_str());
-    }
-} 
-
-//---------------------------------------------------------------------------
 void vtkEMSegmentGUI::Init()
 {
   vtkMRMLScene *scene = this->Logic->GetMRMLScene();
@@ -720,3 +634,35 @@ void vtkEMSegmentGUI::StartSegmentation()
     }
   }
 
+//----------------------------------------------------------------------------
+void vtkEMSegmentGUI::PopulateMenuWithLoadedVolumes(vtkEMSegmentMRMLManager *mrmlManager, vtkKWMenu *menu, vtkObject* object, const char* callback)
+{
+  // Populate the menu with available volumes
+
+  menu->DeleteAllItems();
+  char buffer[256];
+
+  //
+  // first add a "NONE" option
+  sprintf(buffer, "%s %d", callback, -1);
+  menu->AddRadioButton("None", object, buffer);
+
+  //
+  // now populate menu with volumes loaded into slicer
+  if (!mrmlManager)
+    {
+    return;
+    }
+  int nb_of_volumes = mrmlManager->GetVolumeNumberOfChoices();
+  for(int index=0; index < nb_of_volumes; index++)
+    {
+    vtkIdType vol_id = mrmlManager->GetVolumeNthID(index);
+    sprintf(buffer, "%s %d", callback, static_cast<int>(vol_id));
+    const char *name = mrmlManager->GetVolumeName(vol_id);
+    if (name)
+      {
+      menu->AddRadioButton(name, object, buffer);
+      }
+    }
+}
+ 

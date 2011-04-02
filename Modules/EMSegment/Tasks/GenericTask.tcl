@@ -359,11 +359,18 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
 
-            set preGUI [$MOD GetPreProcessingStep]
-            if { $preGUI == "" } {
+            set preStep [$MOD GetPreProcessingStep]
+            if { $preStep == "" } {
                 PrintError "InitVariables: PreProcessingStep not defined"
                 return 1
             }
+
+            set preGUI [$preStep GetCheckListFrame]
+            if { $preGUI == "" } {
+                PrintError "InitVariables:  CheckListFrame not defined"
+                return 1
+            }
+
         } else {
             set preGUI $initPreGUI
         }
@@ -634,6 +641,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]
             $LOGIC StartPreprocessingResampleAndCastToTarget $movingVolumeNode $fixedTargetVolumeNode $outputVolumeNode
             GeneratedVoronoi [$outputVolumeNode GetImageData]
+            
         }
 
 
@@ -1472,6 +1480,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     proc WriteDataToTemporaryDir { Node Type } {
         variable SCENE
+        variable LOGIC
+ 
 
         set tmpName [CreateTemporaryFileNameForNode $Node]
         if { $tmpName == "" } { return "" }
@@ -1492,7 +1502,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         if  { $FLAG == 0 } {
             PrintError "WriteDataToTemporaryDir: could not write file $tmpName"
             return ""
-        }
+        } 
+        $LOGIC PrintText "TCL: Write to temp directory:  $tmpName"
 
         return "$tmpName"
     }
@@ -2425,8 +2436,19 @@ namespace eval EMSegmenterPreProcessingTcl {
             }
 
             # Create Voronoi diagram with correct scalar type from aligned subparcellation
+             $LOGIC PrintText "TCL:  ============= DEBUG " 
+            set tmpFileName [WriteImageDataToTemporaryDir $outputVolumeNode]
+            $LOGIC PrintText "TCL:  Aligned Segmentation before voronoi $tmpFileName"
+        # file rename $tmpFileName  ${tmpFileName}_before 
+           
             GeneratedVoronoi [$outputVolumeNode GetImageData]
+
+            set blub [WriteImageDataToTemporaryDir $movingVolumeNode]
+            $LOGIC PrintText "TCL:  Aligned Segmentation before voronoi $blub"
+            set blub [WriteImageDataToTemporaryDir $outputVolumeNode]
+            $LOGIC PrintText "TCL:  Aligned Segmentation after voronoi $blub"
         }
+
 
         $LOGIC PrintText "TCL: Atlas-to-target registration complete."
         $workingDN SetAlignedAtlasNodeIsValid 1
@@ -2528,9 +2550,15 @@ namespace eval EMSegmenterSimpleTcl {
             PrintError "InitVariables: mrmManager not defined"
             return 1
         }
-        set inputChannelGUI [$GUI GetInputChannelStep]
-        if { $inputChannelGUI == "" } {
+       
+        set inputChannelStep [$GUI GetInputChannelStep]
+        if { $inputChannelStep == "" } {
             PrintError "InitVariables: InputChannelStep not defined"
+            return 1
+        }
+        set inputChannelGUI [$inputChannelStep GetCheckListFrame]
+        if { $inputChannelGUI == "" } {
+            PrintError "InitVariables: CheckListFrame is not defined"
             return 1
         }
         return 0

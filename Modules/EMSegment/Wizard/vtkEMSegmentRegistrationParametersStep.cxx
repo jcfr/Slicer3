@@ -484,8 +484,7 @@ void vtkEMSegmentRegistrationParametersStep::AssignAtlasScansToInputChannels(int
       
       std::stringstream setCmd;
       setCmd << "RegistrationAtlasImageCallback " << i;
-      this->PopulateMenuWithLoadedVolumes(this->RegistrationParametersAtlasImageMenuButton[i]->GetWidget()->GetMenu(), this,setCmd.str().c_str());
-
+      vtkEMSegmentGUI::PopulateMenuWithLoadedVolumes(mrmlManager, this->RegistrationParametersAtlasImageMenuButton[i]->GetWidget()->GetMenu(), this,setCmd.str().c_str());
       
       if(!mrmlManager->GetVolumeNumberOfChoices() ||  !mrmlManager->ExistRegistrationAtlasVolumeKey(i) || !this->SetMenuButtonSelectedItem(this->RegistrationParametersAtlasImageMenuButton[i]->GetWidget()->GetMenu(), mrmlManager->GetRegistrationAtlasVolumeID(i)))
     {

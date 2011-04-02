@@ -1258,8 +1258,7 @@ void vtkEMSegmentAnatomicalStructureStep::AddChildNodeCallback(vtkIdType sel_vol
     return;
     }
   vtkKWTree *tree = this->AnatomicalStructureTree->GetWidget();
-  vtksys_stl::string sel_node(
-    tree->FindNodeWithUserDataAsInt(NULL, sel_vol_id));
+  vtksys_stl::string sel_node(tree->FindNodeWithUserDataAsInt(NULL, sel_vol_id));
   char child_node[256];
   vtkIdType child_id = mrmlManager->AddTreeNode(sel_vol_id);
   sprintf(child_node, "node_%d", static_cast<int>(child_id));

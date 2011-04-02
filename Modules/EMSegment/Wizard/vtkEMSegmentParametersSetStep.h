@@ -99,9 +99,6 @@ private:
 
   int SettingSegmentationMode(int flag);
 
-  void _Validate(int flag);
-
-
 };
 
 #endif
