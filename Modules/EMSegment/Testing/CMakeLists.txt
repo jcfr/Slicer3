@@ -34,7 +34,7 @@ set(EMSEG_RUN_COMPARE_TESTS   OFF
   )
 mark_as_advanced(EMSEG_RUN_COMPARE_TESTS)
 
-set(EMSEG_RUN_LOCAL_TESTS   ON
+set(EMSEG_RUN_LOCAL_TESTS   OFF
   CACHE BOOL "Enable local EMSegment tests." FORCE
   )
 mark_as_advanced(EMSEG_RUN_LOCAL_TESTS)
