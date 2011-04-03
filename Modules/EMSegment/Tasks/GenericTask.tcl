@@ -1408,7 +1408,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 return 1
             }
         }
-
+        # - no attributes after this line that start with the flag --- 
         set CMD "$CMD \"$referenceVolumeFileName\""
         set CMD "$CMD \"$transformDirName\""
 
