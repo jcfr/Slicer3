@@ -29,7 +29,7 @@
 #include "vtkSlicerApplication.h"
 #include "../../Applications/GUI/Slicer3Helper.cxx"
 #include "vtkKWTkUtilities.h"
-
+#include "vtkMRMLLabelMapVolumeDisplayNode.h"
 #include "vtkMRMLEMSAtlasNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 
@@ -975,11 +975,14 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
   outVolume->SetAndObserveImageData(postProcessing);
   postProcessing->Delete();
   // make sure the output volume is a labelmap
+  
   if (!outVolume->GetLabelMap())
   {
     vtkWarningMacro("Changing output image to labelmap");
     outVolume->LabelMapOn();
   }
+
+  // vtkstd::cout << "=== Define Display Node  === " << vtkstd::endl;
 
   vtkMRMLVolumeDisplayNode *outDisplayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(outVolume->GetDisplayNode());
   if (!outDisplayNode) 
@@ -988,17 +991,15 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
     } 
   else 
     {
-      const char* colorID = this->MRMLManager->GetColormap();
-      if (colorID) 
-    {
+      const char* colorID = this->MRMLManager->GetColorNodeID();
+      if (colorID &&   strcmp(outDisplayNode->GetColorNodeID(),  colorID) != 0)
+       {
              outDisplayNode->SetAndObserveColorNodeID(colorID);
+       }
     }
-    }
-
-    
-
+  
+  // vtkstd::cout << "=== Cleanup  === " << vtkstd::endl;
   outVolume->SetModifiedSinceRead(1);
-
   //
   // clean up
   //
@@ -2724,3 +2725,49 @@ void vtkEMSegmentLogic::AddDefaultTasksToList(const char* FilePath, std::vector<
     
   dir->Delete();
 }
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentLogic::CreateOutputVolumeNode()
+{
+
+  // Version 1 - It is a little bit slower bc it creates image data that we do not need
+  // (vtkSlicerApplication* app) 
+  // vtkSlicerVolumesGUI *vgui = vtkSlicerVolumesGUI::SafeDownCast (app->GetModuleGUIByName ( "Volumes"));
+  // if (!vgui)  
+  // {
+  //   vtkErrorMacro("CreateOutputVolumeNode: could not find vtkSlicerVolumesGUI "); 
+  //   return;
+  // }
+  // vtkSlicerVolumesLogic* volLogic  = vgui->GetLogic();
+  // if (!volLogic)  
+  // {
+  //   vtkErrorMacro("CreateOutputVolumeNode: could not find vtkSlicerVolumesLogic "); 
+  //   return;
+  // }
+  //
+  // vtkMRMLNode* snode = this->GetMRMLScene()->GetNodeByID(this->MRMLManager->GetTargetSelectedVolumeNthMRMLID(0));
+  // vtkMRMLVolumeNode* vNode = vtkMRMLVolumeNode::SafeDownCast(snode);
+  //
+  // if (vNode == NULL)
+  // {
+  //   vtkErrorMacro("Invalid volume MRMLID: " << this->MRMLManager->GetTargetSelectedVolumeNthMRMLID(0));
+  //   return;
+  // }
+  //  vtkMRMLScalarVolumeNode* outputNode = volLogic->CreateLabelVolume (this->GetMRMLScene(), vNode, "EM_MAP");
+
+  // My version
+  vtkMRMLScalarVolumeNode* outputNode = vtkMRMLScalarVolumeNode::New();
+  outputNode->SetLabelMap(1);
+   std::string uname =  this->MRMLScene->GetUniqueNameByString("EM_Map");
+  outputNode->SetName(uname.c_str());
+  this->GetMRMLScene()->AddNode(outputNode);
+
+  vtkMRMLLabelMapVolumeDisplayNode* displayNode = vtkMRMLLabelMapVolumeDisplayNode::New();
+  displayNode->SetScene(this->GetMRMLScene());
+  this->GetMRMLScene()->AddNode(displayNode);
+  displayNode->SetAndObserveColorNodeID(this->MRMLManager->GetColorNodeID());
+  outputNode->SetAndObserveDisplayNodeID(displayNode->GetID());
+
+  this->MRMLManager->SetOutputVolumeMRMLID(outputNode->GetID());
+}
+

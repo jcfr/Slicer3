@@ -92,7 +92,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         if { $NAME != "" } {
             set filename $basefilename$NAME
-            $LOGIC PrintText "TCL: Create file: $filename"
+            # $LOGIC PrintText "TCL: Create file: $filename"
             set CMD "touch \"$filename\""
             eval exec $CMD
         } else {
@@ -802,7 +802,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         return $deformationFieldFilename
     }
 
-
+    # ----------------------------------------------------------------------------
     # returns transformation when no error occurs
     # now call commandline directly
     #
@@ -877,7 +877,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             }
         }
 
-        # Linear
+        # --interpolationMode <NearestNeighbor|Linear|BSpline|WindowedSinc>
         set CMD "$CMD --interpolationMode $interpolationType"
 
         $LOGIC PrintText "TCL: Executing $CMD"
@@ -894,6 +894,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
+    # ----------------------------------------------------------------------------
     # Precondition: All the inputchannels are already aligned
     #
     # This function registers the atlas to the input (both are non-skull stripped)
@@ -1350,8 +1351,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: GetAlignedAtlasNode: [[$mrmlManager GetWorkingDataNode] GetAlignedAtlasNode]"
     }
 
-
-    proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformDirName backgroundLevel } {
+    # ----------------------------------------------------------------------------
+    proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformDirName interpolationType backgroundLevel } {
         variable SCENE
         variable LOGIC
         variable CMTKFOLDER
@@ -1375,7 +1376,21 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set CMD "$CMD --pad-out $backgroundLevel"
         set CMD "$CMD --outfile \"$outVolumeFileName\""
-        set CMD "$CMD --floating \"$inputVolumeFileName\""
+        set CMD "$CMD --floating \"$inputVolumeFileName\"  --interpolation"
+
+       # Naming convention is based on BRAINSResample
+        switch -exact  "$interpolationType" {
+       "NearestNeighbor"  { set CMD "$CMD nn" }
+       "Linear"                    { set CMD "$CMD linear" }
+           "BSpline"                 { set CMD "$CMD cubic" }
+       "WindowedSinc"     { set CMD "$CMD sinc-cosine" }
+       "PartialVolume"       { set CMD "$CMD pv" }
+           "SincHamming"      { set CMD "$CMD  sinc-hamming" }
+           default {
+                PrintError "CMTKResampleCLI: interpolation of type $interpolationType is unknown"
+                return 1
+            }
+    } 
 
         # set the right scalar type
         set referenceVolume [$referenceVolumeNode GetImageData]
@@ -1508,7 +1523,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "WriteDataToTemporaryDir: could not write file $tmpName"
             return ""
         } 
-        $LOGIC PrintText "TCL: Write to temp directory:  $tmpName"
+        # $LOGIC PrintText "TCL: Write to temp directory:  $tmpName"
 
         return "$tmpName"
     }
@@ -1724,17 +1739,27 @@ namespace eval EMSegmenterPreProcessingTcl {
         return [$SCENE GetNodeByID $transID]
     }
 
+    # ----------------------------------------------------------------------------
     proc CMTKRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel deformableType affineType} {
         variable SCENE
         variable LOGIC
         variable CMTKFOLDER
         variable mrmlManager
 
+       # Do not get rid of debug mode variable - it is sometimes very helpful ! 
+        set CMTK_DEBUG_MODE 0
+
+        if { $CMTK_DEBUG_MODE } {
+           $LOGIC PrintText "" 
+           $LOGIC PrintText "DEBUG: ==========CMTKRegistration DEBUG MODE ============="
+           $LOGIC PrintText ""
+    }
+
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Image Alignment CommandLine: $deformableType "
         $LOGIC PrintText "TCL: =========================================="
 
-        ## check arguments
+        # check arguments
 
         if { $fixedVolumeNode == "" || [$fixedVolumeNode GetImageData] == "" } {
             PrintError "CMTKRegistration: fixed volume node not correctly defined"
@@ -1802,12 +1827,17 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
         ## execute affine registration
-
-        $LOGIC PrintText "TCL: Executing $CMD"
-        catch { eval exec $CMD } errmsg
-        $LOGIC PrintText "TCL: $errmsg"
-
-        if { $deformableType != 0 } {
+        if { $CMTK_DEBUG_MODE } {
+             $LOGIC PrintText "" 
+             $LOGIC PrintText "DEBUG: ========== Skip Affine Registration ============="
+             $LOGIC PrintText ""
+    } else { 
+            $LOGIC PrintText "TCL: Executing $CMD"
+            catch { eval exec $CMD } errmsg
+            $LOGIC PrintText "TCL: $errmsg"
+    }
+  
+       if { $deformableType != 0 } {
 
             set CMD "$CMTKFOLDER/warp"
 
@@ -1839,15 +1869,35 @@ namespace eval EMSegmenterPreProcessingTcl {
             set CMD "$CMD \"$movingVolumeFileName\""
 
             ## execute bspline registration
+            if { $CMTK_DEBUG_MODE } {
+               $LOGIC PrintText "" 
+               $LOGIC PrintText "DEBUG: ========== Skip Non-Rigid Registration ============="
+               $LOGIC PrintText ""
+            } else { 
+              $LOGIC PrintText "TCL: Executing $CMD"
+              catch { eval exec $CMD } errmsg
+              $LOGIC PrintText "TCL: $errmsg"
+       }
+    }
 
-            $LOGIC PrintText "TCL: Executing $CMD"
-            catch { eval exec $CMD } errmsg
-            $LOGIC PrintText "TCL: $errmsg"
-        }
+        if { $CMTK_DEBUG_MODE } {     
+       $LOGIC PrintText "DEBUG: =========== Defining Result Files  =====" 
+           set outTransformDirName "/data/EMSegment_DataSet/3.6/DebugCMTK/4Vr63V.xform"
+           $LOGIC PrintText "DEBUG: TransformDir: $outTransformDirName"
+           set outVolumeFileName "/data/EMSegment_DataSet/3.6/DebugCMTK/dEhJZ8_vtkMRMLScalarVolumeNode18.nrrd"
+           $LOGIC PrintText "DEBUG: Output Volume File: $ outVolumeFileName"
+           set fixedVolumeFileName "/data/EMSegment_DataSet/3.6/DebugCMTK/xKdDW7_vtkMRMLScalarVolumeNode12.nrrd"
+           $LOGIC PrintText "DEBUG: Fixed Volume File: $fixedVolumeFileName"
+           set movingVolumeFileName "/data/EMSegment_DataSet/3.6/DebugCMTK/Tg6tDj_vtkMRMLScalarVolumeNode7.nrrd"
+           $LOGIC PrintText "DEBUG: Moving Volume File: $movingVolumeFileName\n"
+           set RemoveFiles ""
+    }
+
+
 
         ## Read results back to scene
         if { [ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume] == 0 } {
-            if { [file exists $outVolumeDirName] == 0 } {
+            if { [file exists $outVolumeFileName] == 0 } {
                 set outTransformDirName ""
             }
         }
@@ -1858,7 +1908,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Test:
         # $LOGIC PrintText "==> [[$SCENE GetNodeByID $transID] Print]"
-
+        # exit 0  
         foreach NAME $RemoveFiles {
             file delete -force $NAME
         }
@@ -2378,12 +2428,12 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         switch -exact "$selectedRegistrationPackage" {
             "CMTK" {
-                set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
-                if { $transformDirName == "" } {
-                    PrintError "RegisterAtlas: Transform node is null"
-                    return 1
-                }
-                set transformNodeType "CMTKTransform"
+                      set transformDirName [CMTKRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
+                      if { $transformDirName == "" } {
+                          PrintError "RegisterAtlas: Transform node is null"
+                          return 1
+              }
+                 set transformNodeType "CMTKTransform"
 
                 $LOGIC PrintText "TCL: Resampling atlas in CMTKRegistration ..."
                 if { [Resample $movingAtlasVolumeNode $fixedTargetVolumeNode $transformNode $transformDirName $transformNodeType Linear $backgroundLevel $outputAtlasVolumeNode] } {
@@ -2436,12 +2486,12 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Resampling subparcallation map  $i ..."
             set movingVolumeNode [$inputSubParcellationNode GetNthVolumeNode $i]
             set outputVolumeNode [$outputSubParcellationNode GetNthVolumeNode $i]
-            if { [Resample $movingVolumeNode  $fixedTargetVolumeNode  $transformNode "$transformDirName" $transformNodeType NearestNeighbor 0 $outputVolumeNode] } {
+            if { [Resample $movingVolumeNode  $fixedTargetVolumeNode  $transformNode "$transformDirName" $transformNodeType "NearestNeighbor" 0 $outputVolumeNode] } {
                 return 1
             }
 
             # Create Voronoi diagram with correct scalar type from aligned subparcellation
-             $LOGIC PrintText "TCL:  ============= DEBUG " 
+        $LOGIC PrintText "TCL:  ============= DEBUG [$movingVolumeNode GetName]" 
             set tmpFileName [WriteImageDataToTemporaryDir $outputVolumeNode]
             $LOGIC PrintText "TCL:  Aligned Segmentation before voronoi $tmpFileName"
         # file rename $tmpFileName  ${tmpFileName}_before 
@@ -2463,6 +2513,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     # output: outputVolumeNode
     # no side effects
+    # interpolationType : NearestNeighbor|Linear|BSpline|WindowedSinc
+    # in Addition for CMTK: PartialVolume, SincHamming
     proc Resample { inputVolumeNode referenceVolumeNode transformNode transformDirName transformType interpolationType backgroundLevel outputVolumeNode } {
         variable LOGIC
         if {[$inputVolumeNode GetImageData] == ""} {
@@ -2479,7 +2531,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         switch $transformType {
             "CMTKTransform" {
                 $LOGIC PrintText "TCL: with CMTKResampleCLI..."
-                if { [CMTKResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName $backgroundLevel] } {
+                if { [CMTKResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName $interpolationType $backgroundLevel] } {
                     return 1
                 }
             }

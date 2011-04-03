@@ -786,7 +786,7 @@ void vtkEMSegmentRunSegmentationStep::StartSegmentationCallback()
     }
 
   // Create output volume 
-  this->GetGUI()->GetMRMLManager()->CreateOutputVolumeNode();
+  this->GetGUI()->GetLogic()->CreateOutputVolumeNode();
 
   // start the segmentation
   vtkKWProgressDialog* progress = vtkKWProgressDialog::New();
@@ -813,6 +813,16 @@ void vtkEMSegmentRunSegmentationStep::StartSegmentationCallback()
   // display Results 
   vtkSlicerApplicationGUI *applicationGUI  = this->GetGUI()->GetApplicationGUI();
   vtkMRMLScalarVolumeNode* output = this->GetGUI()->GetMRMLManager()->GetOutputVolumeNode();
+ 
+  vtkSlicerVolumesGUI *vgui = vtkSlicerVolumesGUI::SafeDownCast (vtkSlicerApplication::SafeDownCast(this->GetApplication())->GetModuleGUIByName ( "Volumes"));
+   if (!vgui)  
+    {
+      vtkErrorMacro("CreateOutputVolumeNode: could not find vtkSlicerVolumesGUI "); 
+      return;
+    }
+    // If you do not do this first you get all kind of wired errors whne setting the foreground !
+   vgui->GetVolumeSelectorWidget()->SetSelected(output);
+
   applicationGUI->GetMainSliceGUI("Red")->GetSliceController()->GetForegroundSelector()->SetSelected(output);
   applicationGUI->GetMainSliceGUI("Yellow")->GetSliceController()->GetForegroundSelector()->SetSelected(output);
   applicationGUI->GetMainSliceGUI("Green")->GetSliceController()->GetForegroundSelector()->SetSelected(output);

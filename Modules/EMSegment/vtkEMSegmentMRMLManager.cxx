@@ -23,7 +23,6 @@
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkSlicerColorLogic.h"
 #include "vtkMRMLLabelMapVolumeDisplayNode.h"
-#include "vtkSlicerVolumesLogic.h"
 
 // needed to translate between enums
 #include "EMLocalInterface.h"
@@ -168,10 +167,6 @@ void vtkEMSegmentMRMLManager::PrintSelf(ostream& os, vtkIndent indent)
      << "\n";
 }
 
-void vtkEMSegmentMRMLManager::PrintInfo() {
-    this->PrintInfo(cout); 
-}
-
 //----------------------------------------------------------------------------
 void vtkEMSegmentMRMLManager::PrintInfo(ostream& os)
 {
@@ -213,6 +208,11 @@ void vtkEMSegmentMRMLManager::PrintInfo(ostream& os)
       this->GetAtlasInputNode()->PrintSelf(os,indent);
     }
 }
+
+void vtkEMSegmentMRMLManager::PrintInfo() {
+    this->PrintInfo(cout); 
+}
+
 //----------------------------------------------------------------------------
 vtkIdType 
 vtkEMSegmentMRMLManager::
@@ -2182,9 +2182,8 @@ AddTargetSelectedVolume(vtkIdType volumeID)
     name = volumeNode->GetID();
     }
 
-
   // set volume name and ID in map
-  if (!this->GetTargetInputNode()) 
+ if (!this->GetTargetInputNode()) 
     {
        vtkErrorMacro("No TargetInputNode defined "); 
        return; 
@@ -2197,7 +2196,7 @@ AddTargetSelectedVolume(vtkIdType volumeID)
        vtkErrorMacro("No WorkingDataNode defined "); 
        return; 
     }
-  this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
+   this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
 
   // propogate change to parameters nodes
   this->PropogateAdditionOfSelectedTargetImage();
@@ -2503,16 +2502,31 @@ SetEnableTargetToTargetRegistration(int enable)
 //----------------------------------------------------------------------------
 const char*
 vtkEMSegmentMRMLManager::
-GetColormap()
+GetColorNodeID()
 {
-  return this->GetGlobalParametersNode() ? this->GetGlobalParametersNode()->
-    GetColormap() : NULL;  
-}
+  if (!this->GetGlobalParametersNode()) 
+    {
+      return NULL;
+    }  
 
+  const char* colorID = this->GetGlobalParametersNode()->GetColormap();
+  if (colorID)
+    {
+      if (this->MRMLScene->GetNodeByID(colorID))
+    { 
+      return colorID;
+    }
+    }
+    // It is important that the color node exists otherwise we get wired errors - I learned the hard way!
+    vtkSlicerColorLogic* colorLogic = vtkSlicerColorLogic::New();
+    this->GetGlobalParametersNode()->SetColormap(colorLogic->GetDefaultLabelMapColorNodeID());    
+    return this->GetGlobalParametersNode()->GetColormap();  
+}
+ 
 //----------------------------------------------------------------------------
 void
 vtkEMSegmentMRMLManager::
-SetColormap(const char* colormap)
+SetColorNodeID(const char* colormap)
 {
   if (this->GetGlobalParametersNode())
     {
@@ -4582,36 +4596,6 @@ int  vtkEMSegmentMRMLManager::GetRegistrationTypeFromString(const char* type)
   return -1;
 }
 
-//----------------------------------------------------------------------------
-void vtkEMSegmentMRMLManager::CreateOutputVolumeNode() 
-{
- 
-  vtkMRMLScalarVolumeNode* outputNode = vtkMRMLScalarVolumeNode::New();
-  outputNode->SetLabelMap(1);
-  std::stringstream ss;
-  ss << this->MRMLScene->GetUniqueNameByString("EM_Map");
-  outputNode->SetName(ss.str().c_str());
-  this->GetMRMLScene()->AddNode(outputNode);
-
-  vtkMRMLLabelMapVolumeDisplayNode* displayNode = vtkMRMLLabelMapVolumeDisplayNode::New();
-  displayNode->SetScene(this->GetMRMLScene());
-  this->GetMRMLScene()->AddNode(displayNode);
-  outputNode->SetAndObserveDisplayNodeID(displayNode->GetID());
-
-  const char* colorID = this->GetColormap();
-  if (  !colorID ) 
-    {
-      vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
-      colorID = colorLogic->GetDefaultLabelMapColorNodeID();
-      colorLogic->Delete();
-    }
-  displayNode->SetAndObserveColorNodeID(colorID ); 
-  displayNode->Delete();
-
-  const char* ID = outputNode->GetID();
-  outputNode->Delete();
-  this->SetOutputVolumeMRMLID(ID);
-}
 
 //----------------------------------------------------------------------------
 vtkMRMLVolumeNode*  vtkEMSegmentMRMLManager::GetAlignedSpatialPriorFromTreeNodeID(vtkIdType nodeID)

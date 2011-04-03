@@ -541,9 +541,9 @@ void vtkEMSegmentAnatomicalStructureStep::ShowUserInterface()
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
   vtkMRMLScene            *mrmlScene   = this->ColorSelectorWidget->GetMRMLScene();
-  if (mrmlManager->GetColormap() && mrmlScene )
+  if (mrmlManager->GetColorNodeID() && mrmlScene )
     {
-    this->ColorSelectorWidget->SetSelected( mrmlScene->GetNodeByID( mrmlManager->GetColormap() ) );
+    this->ColorSelectorWidget->SetSelected( mrmlScene->GetNodeByID( mrmlManager->GetColorNodeID() ) );
     }
 
   this->ColorSelectorWidget->SetEnabled(1);
@@ -844,7 +844,7 @@ void vtkEMSegmentAnatomicalStructureStep::SelectedColormapChangedCallback(vtkObj
     return;
     }
 
-  mrmlManager->SetColormap(colorNode->GetID());
+  mrmlManager->SetColorNodeID(colorNode->GetID());
   if (tree->HasSelection())
     {
     vtksys_stl::string sel_node = tree->GetSelection();

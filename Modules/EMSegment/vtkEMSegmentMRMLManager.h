@@ -327,8 +327,8 @@ public:
   virtual int       GetEnableTargetToTargetRegistration();
   virtual void      SetEnableTargetToTargetRegistration(int enable);
 
-  virtual const char*  GetColormap();
-  virtual void         SetColormap(const char* colormap);
+  virtual const char*  GetColorNodeID();
+  virtual void         SetColorNodeID(const char* colormap);
 
   //BTX
   enum
@@ -393,7 +393,6 @@ public:
 
   virtual const char*  GetOutputVolumeMRMLID();
   virtual void         SetOutputVolumeMRMLID(const char* mrmlID);
-  virtual void         SetOutputVolumeID(vtkIdType volumeID);
 
   //
   // miscellaneous
@@ -452,7 +451,6 @@ public:
   virtual vtkMRMLEMSAtlasNode*              GetAtlasAlignedNode();
 
   virtual vtkMRMLScalarVolumeNode*          GetOutputVolumeNode();
-  virtual void                              CreateOutputVolumeNode();
 
   virtual vtkMRMLEMSGlobalParametersNode*   GetGlobalParametersNode();
   virtual vtkMRMLEMSTreeNode*               GetTreeRootNode();
@@ -611,6 +609,8 @@ private:
   virtual void SynchronizeVolumeCollectionNode(vtkMRMLEMSVolumeCollectionNode* templateNode, vtkMRMLEMSVolumeCollectionNode* changingNode, const char* name);
 
   //ETX
+
+  virtual void         SetOutputVolumeID(vtkIdType volumeID);
 
 };
 

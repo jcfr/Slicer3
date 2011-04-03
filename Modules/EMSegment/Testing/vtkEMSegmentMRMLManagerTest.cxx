@@ -360,7 +360,7 @@ int main(int vtkNotUsed(argc), char** argv)
       
       // save parameters
       vtkTestSetGetStringMacro(pass, m, 
-                               Colormap, MAGIC_STRING.c_str());
+                               ColorNodeID, MAGIC_STRING.c_str());
       vtkTestSetGetStringMacro(pass, m, 
                                SaveWorkingDirectory, MAGIC_STRING.c_str());
       vtkTestSetGetStringMacro(pass, m,    

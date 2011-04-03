@@ -140,6 +140,8 @@ public:
                   std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string> & DefinePreprocessingTasksFile);
 //ETX
 
+  virtual void                              CreateOutputVolumeNode();
+
 private:
   vtkEMSegmentLogic();
   ~vtkEMSegmentLogic();
