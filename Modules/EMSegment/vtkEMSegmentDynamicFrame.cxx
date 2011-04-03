@@ -210,7 +210,7 @@ void vtkEMSegmentDynamicFrame::DefineTextLabel(const char *label, vtkIdType ID)
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::DefineVolumeMenuButton(const char *label, vtkIdType initialVolID ,vtkIdType ID)
+void vtkEMSegmentDynamicFrame::DefineVolumeMenuButton(const char *label, vtkIdType initialVolID, vtkIdType ID)
 {
   if (ID >= (vtkIdType)this->volumeMenuButton.size())
     {
@@ -246,8 +246,17 @@ void vtkEMSegmentDynamicFrame::DefineVolumeMenuButton(const char *label, vtkIdTy
    vtkEMSegmentGUI::PopulateMenuWithLoadedVolumes(this->MRMLManager,this->volumeMenuButton[ID]->GetWidget()->GetMenu(), this, setCmd.str().c_str());
 }
 
+
 //----------------------------------------------------------------------------
 void vtkEMSegmentDynamicFrame::DefineTextEntry(const char *label, const char *initText, vtkIdType textID)
+{
+  int widgetWidth = 10;
+  this->DefineTextEntry(label, initText, textID, widgetWidth);
+}
+
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentDynamicFrame::DefineTextEntry(const char *label, const char *initText, vtkIdType textID, int widgetWidth)
 {
 
   if (textID >= (vtkIdType)this->textEntry.size())
@@ -264,7 +273,7 @@ void vtkEMSegmentDynamicFrame::DefineTextEntry(const char *label, const char *in
      {
        this->textEntry[textID]->SetParent(this->GetFrame());
        this->textEntry[textID]->Create();
-       this->textEntry[textID]->GetWidget()->SetWidth(10);
+       this->textEntry[textID]->GetWidget()->SetWidth(widgetWidth);
        this->textEntry[textID]->SetLabelText(label);
        this->textEntry[textID]->GetWidget()->SetValue(initText);
      }

@@ -16,7 +16,7 @@ class vtkSlicerApplication;
 
 
 // should be a vtkKW widget but for simplicity did it this way 
-class VTK_EMSEGMENT_EXPORT vtkEMSegmentDynamicFrame  : public vtkKWFrameWithLabel
+class VTK_EMSEGMENT_EXPORT vtkEMSegmentDynamicFrame : public vtkKWFrameWithLabel
 {
 public:
   static vtkEMSegmentDynamicFrame *New();
@@ -31,6 +31,7 @@ public:
   vtkIdType GetVolumeMenuButtonValue(vtkIdType ID); 
   void  VolumeMenuButtonCallback(vtkIdType buttonID, vtkIdType volID);
 
+  void DefineTextEntry(const char *label, const char *initText, vtkIdType entryID, int widgetWidth);
   void DefineTextEntry(const char *label, const char *initText, vtkIdType entryID);
   const char* GetTextEntryValue(vtkIdType ID); 
 
