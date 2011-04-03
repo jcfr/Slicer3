@@ -42,14 +42,15 @@ message("######### ALL: ${CMAKE_CURRENT_BINARY_DIR}/${CMTK_BINARY_DIR}/bin/regis
 message("######### CMTK_BINARY_DIR:                 ${CMTK_BINARY_DIR}")
 message("######### Slicer3_INSTALL_PLUGINS_BIN_DIR: ${Slicer3_INSTALL_PLUGINS_BIN_DIR}")
 message("######### CMAKE_CURRENT_BINARY_DIR:        ${CMAKE_CURRENT_BINARY_DIR}")
+message("######### CMAKE_CURRENT_SOURCE_DIR:        ${CMAKE_CURRENT_SOURCE_DIR}")
 
 
 
 message("######### LOCAL_CMAKE_BUILD_OPTIONS:       ${LOCAL_CMAKE_BUILD_OPTIONS}")
 if ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64 )
-  set (LOCAL_CMAKE_BUILD_OPTIONS "-C ${CMTK_SOURCE_DIR}/config/gcc-x86_64-sse.cmake")
+  set (LOCAL_CMAKE_BUILD_OPTIONS "-C ${CMAKE_SOURCE_DIR}/config/gcc-x86_64-sse.cmake")
 else ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64 )
-  set (LOCAL_CMAKE_BUILD_OPTIONS "-C ${CMTK_SOURCE_DIR}/config/gcc-p4-sse.cmake")
+  set (LOCAL_CMAKE_BUILD_OPTIONS "-C ${CMAKE_SOURCE_DIR}/config/gcc-p4-sse.cmake")
 endif ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64 )
 message("######### LOCAL_CMAKE_BUILD_OPTIONS:       ${LOCAL_CMAKE_BUILD_OPTIONS}")
 
