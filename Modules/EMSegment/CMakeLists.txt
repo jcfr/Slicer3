@@ -26,7 +26,7 @@ configure_file(
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration
@@ -42,7 +42,7 @@ include_directories(
 
 file(GLOB headers 
   "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Wizard/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/MRML/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/*.txx"
@@ -154,21 +154,21 @@ set(EMSegment_SRCS
   # module
   vtkEMSegmentMRMLManager.cxx 
   vtkEMSegmentLogic.cxx 
-  vtkEMSegmentKWLogic.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentKWLogic.cxx
   vtkEMSegmentGUI.cxx 
   # wizard
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentParametersSetStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentIntensityImagesStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentAnatomicalStructureStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentSpatialPriorsStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentNodeParametersStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentIntensityDistributionsStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentRegistrationParametersStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentRunSegmentationStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentInputChannelsStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentPreProcessingStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentKWDynamicFrame.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentParametersSetStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentIntensityImagesStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentAnatomicalStructureStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentSpatialPriorsStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentNodeParametersStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentIntensityDistributionsStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentRegistrationParametersStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentRunSegmentationStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentInputChannelsStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentPreProcessingStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentKWDynamicFrame.cxx
   )
 
  set(EMSegment_SRCS ${EMSegment_SRCS}
