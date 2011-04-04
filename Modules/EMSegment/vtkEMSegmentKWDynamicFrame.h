@@ -1,5 +1,5 @@
-#ifndef __vtkEMSegmentDynamicFrame_h
-#define __vtkEMSegmentDynamicFrame_h
+#ifndef __vtkEMSegmentKWDynamicFrame_h
+#define __vtkEMSegmentKWDynamicFrame_h
 
 #include "vtkEMSegment.h"
 #include <vtksys/stl/vector>
@@ -16,11 +16,11 @@ class vtkSlicerApplication;
 
 
 // should be a vtkKW widget but for simplicity did it this way 
-class VTK_EMSEGMENT_EXPORT vtkEMSegmentDynamicFrame : public vtkKWFrameWithLabel
+class VTK_EMSEGMENT_EXPORT vtkEMSegmentKWDynamicFrame : public vtkKWFrameWithLabel
 {
 public:
-  static vtkEMSegmentDynamicFrame *New();
-  vtkTypeRevisionMacro(vtkEMSegmentDynamicFrame,vtkKWFrameWithLabel);
+  static vtkEMSegmentKWDynamicFrame *New();
+  vtkTypeRevisionMacro(vtkEMSegmentKWDynamicFrame,vtkKWFrameWithLabel);
 
   void DefineCheckButton(const char *label, int initState, vtkIdType ID);
   int GetCheckButtonValue(vtkIdType ID); 
@@ -50,12 +50,12 @@ public:
   void CreateEntryLists();
 
 protected:
-  vtkEMSegmentDynamicFrame();
-  ~vtkEMSegmentDynamicFrame();
+  vtkEMSegmentKWDynamicFrame();
+  ~vtkEMSegmentKWDynamicFrame();
 
 private:
-  vtkEMSegmentDynamicFrame(const vtkEMSegmentDynamicFrame&);
-  void operator=(const vtkEMSegmentDynamicFrame&);
+  vtkEMSegmentKWDynamicFrame(const vtkEMSegmentKWDynamicFrame&);
+  void operator=(const vtkEMSegmentKWDynamicFrame&);
 
  //BTX
   std::vector<vtkKWMenuButtonWithLabel*> volumeMenuButton;

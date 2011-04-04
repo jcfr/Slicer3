@@ -17,7 +17,7 @@
 #include "vtkKWMatrixWidget.h"
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
-#include "vtkEMSegmentLogic.h" 
+#include "vtkEMSegmentKWLogic.h" 
 
 #include "vtkEMSegmentAnatomicalStructureStep.h"
 

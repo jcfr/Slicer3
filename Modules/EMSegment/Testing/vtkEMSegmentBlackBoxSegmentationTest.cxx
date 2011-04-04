@@ -59,16 +59,21 @@ int main(int argc, char** argv)
   mrmlScene->SetURL(mrmlSceneFilename.c_str());
 
   //
-  // create an instance of vtkEMSegmentLogic and connect it with the
+  // create an instance of vtkEMSegmentKWLogic and connect it with the
   // MRML scene
+ 
   vtkEMSegmentLogic* emLogic = vtkEMSegmentLogic::New();
   emLogic->SetAndObserveMRMLScene(mrmlScene);
   emLogic->RegisterMRMLNodesWithScene();
+  // emLogic->SetSlicerApp(vtkSlicerApplication::GetInstance());
+
   vtkIntArray *emsEvents                 = vtkIntArray::New();
   emsEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
   emsEvents->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
   emLogic->SetAndObserveMRMLSceneEvents(mrmlScene, emsEvents);
   emsEvents->Delete();
+
+  emLogic->GetMRMLManager()->SetMRMLScene( mrmlScene);
 
   try 
   {

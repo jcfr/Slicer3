@@ -13,7 +13,7 @@
 #include "vtkKWMenuButtonWithLabel.h"
 #include "vtkKWEntryWithLabel.h"
 #include "vtkKWFrameWithLabel.h"
-#include "vtkEMSegmentLogic.h"
+#include "vtkEMSegmentKWLogic.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 
 //----------------------------------------------------------------------------
@@ -159,6 +159,6 @@ vtkSlicerApplication* vtkEMSegmentStep::GetSlicerApplication()
 //----------------------------------------------------------------------------
 int vtkEMSegmentStep::SourceTclFile(const char *tclFile)
 {
-  return this->GUI->GetLogic()->SourceTclFile(this->GetSlicerApplication(),tclFile);
+  return this->GUI->GetKWLogic()->SourceTclFile(tclFile);
 }
 

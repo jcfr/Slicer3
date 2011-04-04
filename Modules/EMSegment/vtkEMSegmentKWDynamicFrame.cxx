@@ -1,4 +1,4 @@
-#include "vtkEMSegmentDynamicFrame.h"
+#include "vtkEMSegmentKWDynamicFrame.h"
 
 #include "vtkKWCheckButtonWithLabel.h"
 #include "vtkKWLabelWithLabel.h" 
@@ -12,11 +12,11 @@
 #include "vtkKWMessageDialog.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkEMSegmentDynamicFrame);
-vtkCxxRevisionMacro(vtkEMSegmentDynamicFrame, "$Revision: 1.0 $");
+vtkStandardNewMacro(vtkEMSegmentKWDynamicFrame);
+vtkCxxRevisionMacro(vtkEMSegmentKWDynamicFrame, "$Revision: 1.0 $");
 
 //----------------------------------------------------------------------------
-vtkEMSegmentDynamicFrame::vtkEMSegmentDynamicFrame()
+vtkEMSegmentKWDynamicFrame::vtkEMSegmentKWDynamicFrame()
 {
   this->checkButton.clear();
   this->textLabel.clear();
@@ -28,7 +28,7 @@ vtkEMSegmentDynamicFrame::vtkEMSegmentDynamicFrame()
 }
 
 //----------------------------------------------------------------------------
-vtkEMSegmentDynamicFrame::~vtkEMSegmentDynamicFrame()
+vtkEMSegmentKWDynamicFrame::~vtkEMSegmentKWDynamicFrame()
 {
   if ( checkButton.size()) {
     for (int i = 0 ; i < (int) checkButton.size(); i++)
@@ -78,7 +78,7 @@ vtkEMSegmentDynamicFrame::~vtkEMSegmentDynamicFrame()
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::CreateEntryLists() 
+void vtkEMSegmentKWDynamicFrame::CreateEntryLists() 
 {
 
   int newSize = atoi(this->GetApplication()->Script("expr $::EMSegmenterPreProcessingTcl::TextLabelSize"));
@@ -163,7 +163,7 @@ void vtkEMSegmentDynamicFrame::CreateEntryLists()
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::DefineCheckButton(const char *label, int initState, vtkIdType ID)
+void vtkEMSegmentKWDynamicFrame::DefineCheckButton(const char *label, int initState, vtkIdType ID)
 {
   if (ID >= (vtkIdType)this->checkButton.size())
     {
@@ -187,7 +187,7 @@ void vtkEMSegmentDynamicFrame::DefineCheckButton(const char *label, int initStat
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::DefineTextLabel(const char *label, vtkIdType ID)
+void vtkEMSegmentKWDynamicFrame::DefineTextLabel(const char *label, vtkIdType ID)
 {
   if (ID >= (vtkIdType)this->textLabel.size())
     {
@@ -210,7 +210,7 @@ void vtkEMSegmentDynamicFrame::DefineTextLabel(const char *label, vtkIdType ID)
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::DefineVolumeMenuButton(const char *label, vtkIdType initialVolID, vtkIdType ID)
+void vtkEMSegmentKWDynamicFrame::DefineVolumeMenuButton(const char *label, vtkIdType initialVolID, vtkIdType ID)
 {
   if (ID >= (vtkIdType)this->volumeMenuButton.size())
     {
@@ -248,7 +248,7 @@ void vtkEMSegmentDynamicFrame::DefineVolumeMenuButton(const char *label, vtkIdTy
 
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::DefineTextEntry(const char *label, const char *initText, vtkIdType textID)
+void vtkEMSegmentKWDynamicFrame::DefineTextEntry(const char *label, const char *initText, vtkIdType textID)
 {
   int widgetWidth = 10;
   this->DefineTextEntry(label, initText, textID, widgetWidth);
@@ -256,7 +256,7 @@ void vtkEMSegmentDynamicFrame::DefineTextEntry(const char *label, const char *in
 
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::DefineTextEntry(const char *label, const char *initText, vtkIdType textID, int widgetWidth)
+void vtkEMSegmentKWDynamicFrame::DefineTextEntry(const char *label, const char *initText, vtkIdType textID, int widgetWidth)
 {
 
   if (textID >= (vtkIdType)this->textEntry.size())
@@ -281,7 +281,7 @@ void vtkEMSegmentDynamicFrame::DefineTextEntry(const char *label, const char *in
 }
 
 //----------------------------------------------------------------------------
-int vtkEMSegmentDynamicFrame::GetCheckButtonValue(vtkIdType ID)
+int vtkEMSegmentKWDynamicFrame::GetCheckButtonValue(vtkIdType ID)
 {
   if (ID >= (int)this->checkButton.size() || !this->checkButton[ID]) 
     { 
@@ -291,7 +291,7 @@ int vtkEMSegmentDynamicFrame::GetCheckButtonValue(vtkIdType ID)
 }
 
 //----------------------------------------------------------------------------
-vtkIdType vtkEMSegmentDynamicFrame::GetVolumeMenuButtonValue(vtkIdType ID)
+vtkIdType vtkEMSegmentKWDynamicFrame::GetVolumeMenuButtonValue(vtkIdType ID)
 {
   if (ID >= (int) this->volumeMenuButtonID.size()) 
     { 
@@ -301,7 +301,7 @@ vtkIdType vtkEMSegmentDynamicFrame::GetVolumeMenuButtonValue(vtkIdType ID)
 }
 
 //----------------------------------------------------------------------------
-const char* vtkEMSegmentDynamicFrame::GetTextEntryValue(vtkIdType ID)
+const char* vtkEMSegmentKWDynamicFrame::GetTextEntryValue(vtkIdType ID)
 {
   if (ID >= (int)this->textEntry.size() || !this->textEntry[ID]) 
     { 
@@ -311,7 +311,7 @@ const char* vtkEMSegmentDynamicFrame::GetTextEntryValue(vtkIdType ID)
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::SetButtonsFromMRML()
+void vtkEMSegmentKWDynamicFrame::SetButtonsFromMRML()
 {
   if (!this->MRMLManager || !this->MRMLManager->GetGlobalParametersNode())
     {
@@ -428,7 +428,7 @@ void vtkEMSegmentDynamicFrame::SetButtonsFromMRML()
 }
 
 //----------------------------------------------------------------------------
-void  vtkEMSegmentDynamicFrame::VolumeMenuButtonCallback(vtkIdType buttonID, vtkIdType volID) 
+void  vtkEMSegmentKWDynamicFrame::VolumeMenuButtonCallback(vtkIdType buttonID, vtkIdType volID) 
 {
   if ((buttonID < (int) this->volumeMenuButtonID.size()) &&  this->volumeMenuButton[buttonID] )
     {
@@ -437,13 +437,13 @@ void  vtkEMSegmentDynamicFrame::VolumeMenuButtonCallback(vtkIdType buttonID, vtk
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::PopUpWarningWindow(const char * msg)
+void vtkEMSegmentKWDynamicFrame::PopUpWarningWindow(const char * msg)
 {
  vtkKWMessageDialog::PopupMessage(this->GetApplication(),NULL,"Warning", msg , vtkKWMessageDialog::WarningIcon | vtkKWMessageDialog::InvokeAtPointer);
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentDynamicFrame::SaveSettingToMRML()
+void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
 {
   if (!this->MRMLManager || !this->MRMLManager->GetGlobalParametersNode())
     {

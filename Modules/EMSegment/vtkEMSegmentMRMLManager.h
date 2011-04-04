@@ -10,13 +10,12 @@ class vtkMRMLEMSAtlasNode;
 class vtkMRMLEMSTreeNode;
 class vtkMRMLEMSTreeParametersNode;
 class vtkMRMLEMSTreeParametersParentNode;
-//class vtkMRMLEMSTreeParametersLeafNode;
 class vtkMRMLEMSWorkingDataNode;
 class vtkMRMLScalarVolumeNode;
 class vtkMRMLVolumeNode;
 class vtkMRMLEMSVolumeCollectionNode;
 // need enum values
-#include "MRML/vtkMRMLEMSTreeParametersLeafNode.h"
+#include "vtkMRMLEMSTreeParametersLeafNode.h"
 
 class vtkMRMLScene;
 

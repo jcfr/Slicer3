@@ -29,7 +29,7 @@
 
 #include "vtkMRMLEMSWorkingDataNode.h"
 #include "vtkMRMLEMSVolumeCollectionNode.h"
-#include "vtkEMSegmentLogic.h"
+#include "vtkEMSegmentKWLogic.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentNodeParametersStep);

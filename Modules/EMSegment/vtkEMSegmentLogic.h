@@ -9,18 +9,14 @@ class vtkImageEMLocalSegmenter;
 class vtkImageEMLocalGenericClass;
 class vtkImageEMLocalSuperClass;
 class vtkImageEMLocalClass;
-class vtkSlicerApplication;
-class vtkKWApplication;
-class vtkDataIOManagerLogic;
+class vtkSlicerApplicationLogic;
 class vtkGridTransform;
 
-class VTK_EMSEGMENT_EXPORT vtkEMSegmentLogic : 
-  public vtkSlicerModuleLogic
+class VTK_EMSEGMENT_EXPORT vtkEMSegmentLogic : public vtkSlicerModuleLogic
 {
 public:
   static vtkEMSegmentLogic *New();
   vtkTypeMacro(vtkEMSegmentLogic,vtkSlicerModuleLogic);
-  void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description: The name of the Module---this is used to construct
   // the proc invocations
@@ -30,22 +26,9 @@ public:
   //
   // actions
   //
-  virtual bool      SaveIntermediateResults(vtkSlicerApplication* app, vtkSlicerApplicationLogic *appLogic);
-
   virtual bool      StartPreprocessingInitializeInputData();
-  virtual int       SourceTclFile(vtkSlicerApplication*app,const char *tclFile);
-  virtual int       SourceTaskFiles(vtkSlicerApplication* app);
-  virtual int       SourcePreprocessingTclFiles(vtkSlicerApplication* app); 
-  virtual int       StartSegmentationWithoutPreprocessing(vtkSlicerApplication* app,vtkSlicerApplicationLogic *appLogic);
-  int               ComputeIntensityDistributionsFromSpatialPrior(vtkKWApplication* app);
-
-
   //BTX
-  vtkstd::string GetTclTaskDirectory(vtkSlicerApplication* app);
   vtkstd::string GetTclGeneralDirectory();
-  vtkstd::string DefineTclTaskFileFromMRML(vtkSlicerApplication *app);
-  vtkstd::string DefineTclTaskFullPathName(vtkSlicerApplication* app, const char* TclFileName);
-  vtkstd::string GetTemporaryTaskDirectory(vtkSlicerApplication* app);
   //ETX
   
   // Used within StartSegmentation to copy data from the MRMLManager
@@ -128,26 +111,22 @@ public:
   std::string GetErrorMessage() {return this->ErrorMsg;}
   //ETX 
 
-
-  // copy all nodes relating to the EMSegmenter into newScene
-  // and write to file 
-  virtual bool PackageAndWriteData(vtkSlicerApplication* app, vtkSlicerApplicationLogic *appLogic, const char* packageDirectoryName);
-
-  int UpdateTasks(vtkSlicerApplication* app);
-
-//BTX
-  void CreateDefaultTasksList(vtkSlicerApplication* app, std::vector<std::string> & DefaultTasksName,  std::vector<std::string> & DefaultTasksFile, 
-                  std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string> & DefinePreprocessingTasksFile);
-//ETX
-
   virtual void                              CreateOutputVolumeNode();
 
-private:
-  vtkEMSegmentLogic();
-  ~vtkEMSegmentLogic();
-  vtkEMSegmentLogic(const vtkEMSegmentLogic&);
-  void operator=(const vtkEMSegmentLogic&);
+  void SubParcelateSegmentation(vtkImageData* segmentation, vtkIdType nodeID);
 
+  // functions for packaging and writing intermediate results
+  virtual void CreatePackageFilenames(vtkMRMLScene* scene, 
+                                      const char* packageDirectoryName);
+  virtual bool CreatePackageDirectories(const char* packageDirectoryName);
+  virtual bool WritePackagedScene(vtkMRMLScene* scene);
+
+//BTX
+  void AddDefaultTasksToList(const char* FilePath, std::vector<std::string> & DefaultTasksName,  std::vector<std::string> & DefaultTasksFile, 
+                 std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string>  & DefinePreprocessingTasksFile);
+//ETX
+
+protected: 
   // the mrml manager is created in the constructor
   vtkSetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager);
 
@@ -184,8 +163,6 @@ private:
   virtual void CopyTreeLeafDataToSegmenter(vtkImageEMLocalClass* node,
                                            vtkIdType nodeID);  
 
-  void SubParcelateSegmentation(vtkImageData* segmentation, vtkIdType nodeID);
-
   //
   // convenience methods for translating enums between algorithm and
   // this module
@@ -195,25 +172,11 @@ private:
     ConvertGUIEnumToAlgorithmEnumInterpolationType(int guiEnumValue);
 
 
-  //
-  // functions for packaging and writing intermediate results
-  virtual void CreatePackageFilenames(vtkMRMLScene* scene, 
-                                      const char* packageDirectoryName);
-  virtual bool CreatePackageDirectories(const char* packageDirectoryName);
-  virtual bool WritePackagedScene(vtkMRMLScene* scene);
-
-
   // not currently used
   vtkSetStringMacro(ProgressCurrentAction);
   vtkSetMacro(ProgressGlobalFractionCompleted, double);
   vtkSetMacro(ProgressCurrentFractionCompleted, double);
 
-  void UpdateIntensityDistributionAuto(vtkKWApplication* app, vtkIdType nodeID);
-
-//BTX
-  void AddDefaultTasksToList(const char* FilePath, std::vector<std::string> & DefaultTasksName,  std::vector<std::string> & DefaultTasksFile, 
-                 std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string>  & DefinePreprocessingTasksFile);
-//ETX
 
   //
   // because the mrml nodes are very complicated for this module, we
@@ -231,6 +194,12 @@ private:
   //BTX
   std::string ErrorMsg; 
   //ETX
+  vtkEMSegmentLogic();
+  ~vtkEMSegmentLogic();
+
+private:
+  vtkEMSegmentLogic(const vtkEMSegmentLogic&);
+  void operator=(const vtkEMSegmentLogic&);
 };
 
 #endif

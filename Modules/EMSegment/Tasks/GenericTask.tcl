@@ -28,13 +28,15 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     ## Slicer
     variable GUI
-    variable LOGIC
-    variable SCENE
+     variable SCENE
 
-    ## EM GUI/MRML
+    ## EM GUI/MRML/LOGIC
+    variable LOGIC
+    variable KWLOGIC
     variable preGUI
     variable mrmlManager
     variable workingDN
+
 
     ## Input/Output
     variable inputAtlasNode
@@ -279,10 +281,11 @@ namespace eval EMSegmenterPreProcessingTcl {
     #
     # Preprocessing Functions
     #
-    proc InitVariables { {initLOGIC ""} {initManager ""} {initPreGUI "" } } {
+    proc InitVariables { {initLOGIC ""}   {initKWLOGIC ""}  {initManager ""} {initPreGUI "" } } {
         variable GUI
         variable preGUI
         variable LOGIC
+        variable KWLOGIC
         variable SCENE
         variable mrmlManager
         variable workingDN
@@ -322,6 +325,21 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: == Init Variables"
         $LOGIC PrintText "TCL: =========================================="
 
+
+        if { $initKWLOGIC == "" } {
+            set MOD [$GUI GetModuleGUIByName "EMSegmenter"]
+            if {$MOD == ""} {
+                puts stderr "ERROR: GenericTask: InitVariables: EMSegmenter not defined"
+                return 1
+            }
+            set KWLOGIC [$MOD GetKWLogic]
+            if { $KWLOGIC == "" } {
+                puts stderr "ERROR: GenericTask: InitVariables: KWLOGIC not defined"
+                return 1
+            }
+        } else {
+            set KWLOGIC $initKWLOGIC
+        }
 
         if { $initManager == "" } {
             set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
@@ -2281,14 +2299,13 @@ namespace eval EMSegmenterPreProcessingTcl {
     # -------------------------------------
     proc ComputeIntensityDistributions { } {
         variable LOGIC
-        variable GUI
-        variable mrmlManager
+        variable KWLOGIC
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Update Intensity Distribution "
         $LOGIC PrintText "TCL: =========================================="
 
         # return [$mrmlManager ComputeIntensityDistributionsFromSpatialPrior [$LOGIC GetModuleShareDirectory] [$preGUI GetApplication]]
-        if { [$LOGIC ComputeIntensityDistributionsFromSpatialPrior $GUI] } {
+        if { [$KWLOGIC ComputeIntensityDistributionsFromSpatialPrior ] } {
             return 1
         }
         return 0

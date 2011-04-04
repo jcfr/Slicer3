@@ -1,7 +1,7 @@
 #include "vtkEMSegmentInputChannelsStep.h"
 
 #include "vtkEMSegmentGUI.h"
-#include "vtkEMSegmentLogic.h"
+#include "vtkEMSegmentKWLogic.h"
 
 #include "vtkKWFrame.h"
 #include "vtkKWLabel.h"
@@ -18,7 +18,7 @@
 #include "vtkEMSegmentPreProcessingStep.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkEMSegmentDynamicFrame.h"
+#include "vtkEMSegmentKWDynamicFrame.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentInputChannelsStep);
@@ -41,7 +41,7 @@ vtkEMSegmentInputChannelsStep::vtkEMSegmentInputChannelsStep()
   this->IntensityImagesAlignTargetImagesCheckButton = NULL;
 
   // Have to do it right here bc of Generic.tcl - InitializeVariables ! 
-  this->CheckListFrame = vtkEMSegmentDynamicFrame::New();
+  this->CheckListFrame = vtkEMSegmentKWDynamicFrame::New();
 }
 
 //----------------------------------------------------------------------------
@@ -262,14 +262,14 @@ void vtkEMSegmentInputChannelsStep::ShowUserInterface()
 
   if (!this->GetGUI()->IsSegmentationModeAdvanced()) 
     {
-      this->GUI->GetLogic()->SourceTaskFiles(this->GetSlicerApplication());
+      this->GUI->GetKWLogic()->SourceTaskFiles();
       
       int showCheckList = atoi(this->Script("::EMSegmenterSimpleTcl::CreateCheckList"));
       if (showCheckList) 
       {
          if (!this->CheckListFrame)
          {
-            this->CheckListFrame = vtkEMSegmentDynamicFrame::New();
+            this->CheckListFrame = vtkEMSegmentKWDynamicFrame::New();
          }
          if (!this->CheckListFrame->IsCreated())
          {

@@ -4,6 +4,7 @@
 #include "vtkSlicerModuleGUI.h"
 #include "vtkEMSegment.h"
 
+class vtkEMSegmentKWLogic;
 class vtkEMSegmentLogic;
 class vtkEMSegmentMRMLManager;
 class vtkKWWizardWidget;
@@ -41,16 +42,12 @@ public:
   // Description: 
   // Get/Set logic node
   vtkGetObjectMacro(Logic, vtkEMSegmentLogic);
-  virtual void SetLogic(vtkEMSegmentLogic*);
+  vtkGetObjectMacro(KWLogic, vtkEMSegmentKWLogic);
 
   /// Implement setter for vtkLogic* pointer
   virtual void SetModuleLogic(vtkSlicerLogic*);
-  
-  // Get/Set mrml manager node
-  vtkGetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager);
-  virtual void SetMRMLManager(vtkEMSegmentMRMLManager*);
 
-  // Description: 
+   // Description: 
   // Get/Set MRML node
   vtkGetObjectMacro(Node, vtkMRMLEMSTemplateNode);
   virtual void SetNode(vtkMRMLEMSTemplateNode*);
@@ -146,6 +143,8 @@ public:
   // Initialize a menu with loaded volumes
   static void PopulateMenuWithLoadedVolumes(vtkEMSegmentMRMLManager *mrmlManager, vtkKWMenu *menu, vtkObject* object, const char* callback); 
 
+  vtkEMSegmentMRMLManager* GetMRMLManager();
+
 protected:
 
 private:
@@ -166,10 +165,13 @@ private:
   // Updates registration progress on the status bar of the main application. 
   virtual void UpdateRegistrationProgress();
 
+  void SetLogic(vtkEMSegmentLogic*);
+
   vtkEMSegmentLogic       *Logic;
-  vtkEMSegmentMRMLManager *MRMLManager;
-  vtkMRMLEMSTemplateNode          *Node;
-  
+  vtkEMSegmentKWLogic *KWLogic; 
+  // Never Delete it - it is needed to know what the current node is ! 
+  vtkMRMLEMSTemplateNode* Node; 
+
   char *ModuleName;
 
   // Description:

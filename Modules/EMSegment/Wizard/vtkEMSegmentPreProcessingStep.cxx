@@ -6,7 +6,7 @@
 #include "vtkKWWizardWidget.h"
 #include "vtkSlicerApplication.h"
 #include "vtkKWMessageDialog.h"
-#include "vtkEMSegmentLogic.h"
+#include "vtkEMSegmentKWLogic.h"
 #include "vtkKWWizardWorkflow.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
 #include "vtkKWCheckButtonWithLabel.h"
@@ -15,7 +15,7 @@
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkMRMLEMSVolumeCollectionNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
-#include "vtkEMSegmentDynamicFrame.h"
+#include "vtkEMSegmentKWDynamicFrame.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentPreProcessingStep);
@@ -28,7 +28,7 @@ vtkEMSegmentPreProcessingStep::vtkEMSegmentPreProcessingStep()
   this->SetDescription("Answer questions for preprocessing of input images");
   this->askQuestionsBeforeRunningPreprocessingFlag = 1;
   // Have to do it right here bc of Generic.tcl - InitializeVariables ! 
-  this->CheckListFrame = vtkEMSegmentDynamicFrame::New();
+  this->CheckListFrame = vtkEMSegmentKWDynamicFrame::New();
 }
 
 //----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ vtkEMSegmentPreProcessingStep::ShowUserInterface()
   // Source TCL Files 
   //
   //----------------------------------------------------------------------------
-   if (this->GUI->GetLogic()->SourcePreprocessingTclFiles(this->GetSlicerApplication()))
+   if (this->GUI->GetKWLogic()->SourcePreprocessingTclFiles())
     {
       return;
     }
@@ -73,7 +73,7 @@ vtkEMSegmentPreProcessingStep::ShowUserInterface()
 
   if (!this->CheckListFrame)
      {
-      this->CheckListFrame = vtkEMSegmentDynamicFrame::New();
+      this->CheckListFrame = vtkEMSegmentKWDynamicFrame::New();
       }
     if (!this->CheckListFrame->IsCreated())
       {

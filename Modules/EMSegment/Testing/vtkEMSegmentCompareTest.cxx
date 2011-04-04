@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 #include "vtkMRMLScene.h"
-#include "vtkEMSegmentLogic.h"
+#include "vtkEMSegmentKWLogic.h"
 #include "vtkEMSegmentTestUtilities.h"
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"

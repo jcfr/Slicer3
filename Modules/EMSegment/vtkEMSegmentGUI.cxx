@@ -1,6 +1,5 @@
 #include "vtkEMSegmentGUI.h"
 #include "vtkEMSegmentLogic.h"
-#include "vtkMRMLEMSTemplateNode.h"
 #include "vtkMRMLScene.h"
 
 #include "vtkSlicerApplication.h"
@@ -30,10 +29,11 @@
 
 #include <vtksys/stl/string>
 #include <vtksys/SystemTools.hxx>
+#include "vtkEMSegmentKWLogic.h"
+#include "vtkMRMLEMSTemplateNode.h"
 
 vtkCxxSetObjectMacro(vtkEMSegmentGUI,Node,vtkMRMLEMSTemplateNode);
 vtkCxxSetObjectMacro(vtkEMSegmentGUI,Logic,vtkEMSegmentLogic);
-vtkCxxSetObjectMacro(vtkEMSegmentGUI,MRMLManager,vtkEMSegmentMRMLManager);
 
 //----------------------------------------------------------------------------
 vtkEMSegmentGUI* vtkEMSegmentGUI::New()
@@ -52,8 +52,8 @@ vtkEMSegmentGUI* vtkEMSegmentGUI::New()
 //----------------------------------------------------------------------------
 vtkEMSegmentGUI::vtkEMSegmentGUI()
 {
-  this->MRMLManager  = NULL;
   this->Logic        = NULL;
+  this->KWLogic        = NULL;
   this->Node         = NULL;
   this->ModuleName   = NULL;
 
@@ -92,9 +92,14 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
   this->RemoveMRMLNodeObservers();
   this->RemoveLogicObservers();
 
-  this->SetMRMLManager(NULL);
   this->SetLogic(NULL);
   this->SetNode(NULL);
+
+  if (this->KWLogic)
+    {
+      this->KWLogic->Delete();
+      this->KWLogic = NULL;      
+    }
 
   if (this->WizardWidget)
     {
@@ -177,9 +182,18 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
 //----------------------------------------------------------------------------
 void vtkEMSegmentGUI::SetModuleLogic(vtkSlicerLogic* logic)
 {
+
+  // For the dynamic case to work the function has to be named vtkEMSegmentLogic - not any other name 
+  // otherwise you will get a seg fault 
   this->SetLogic( dynamic_cast<vtkEMSegmentLogic*> (logic) );
   this->GetLogic()->GetMRMLManager()->SetMRMLScene( this->GetMRMLScene() ); 
-  this->SetMRMLManager( this->GetLogic()->GetMRMLManager() );
+
+  if (!this->KWLogic)
+    {
+      this->KWLogic = vtkEMSegmentKWLogic::New();
+    }
+  this->KWLogic->SetEMSLogic(this->GetLogic());
+  this->KWLogic->SetSlicerApp((vtkSlicerApplication *)this->GetApplication());
 }
 
 //----------------------------------------------------------------------------
@@ -282,8 +296,7 @@ void vtkEMSegmentGUI::ProcessMRMLEvents(vtkObject *caller,
   //vtksys_stl::cout << "ProcessMRMLEvents()" << vtksys_stl::endl;
   // if parameter node has been changed externally, update GUI widgets
   // with new values 
-  vtkMRMLEMSTemplateNode* node
-    = vtkMRMLEMSTemplateNode::SafeDownCast(caller);
+  vtkMRMLEMSTemplateNode* node = vtkMRMLEMSTemplateNode::SafeDownCast(caller);
   if (node != NULL && this->GetNode() == node) 
     {
     this->UpdateGUI();
@@ -615,7 +628,7 @@ void vtkEMSegmentGUI::StartSegmentation()
           currentStep->ShowUserInterface();
           this->StartSegmentStep = NULL;
         }
-    std::string msg = this->Logic->GetErrorMessage(); 
+    std::string msg = this->KWLogic->GetErrorMessage(); 
     if (msg.size()) 
       {
         vtkKWMessageDialog::PopupMessage(this->GetApplication(),NULL,"Error In Segmentation", msg.c_str() , vtkKWMessageDialog::ErrorIcon | vtkKWMessageDialog::InvokeAtPointer);
@@ -666,3 +679,13 @@ void vtkEMSegmentGUI::PopulateMenuWithLoadedVolumes(vtkEMSegmentMRMLManager *mrm
     }
 }
  
+//----------------------------------------------------------------------------
+vtkEMSegmentMRMLManager* vtkEMSegmentGUI::GetMRMLManager()
+{
+  if (!this->Logic) 
+    {
+      vtkErrorMacro("Logic is not defined!");
+      return NULL;
+    }
+  return this->Logic->GetMRMLManager();
+}

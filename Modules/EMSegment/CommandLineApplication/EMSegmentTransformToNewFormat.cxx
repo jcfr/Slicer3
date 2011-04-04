@@ -1,17 +1,8 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include "vtkMRMLScene.h"
-#include "vtkEMSegmentMRMLManager.h"
+#include "EMSegmentAPIHelper.h"
 #include "EMSegmentTransformToNewFormatCLP.h"
-#include "vtkSlicerApplication.h"
-#include "vtkDataIOManagerLogic.h"
 #include "vtkSlicerColorLogic.h"
 #include "vtkEMSegmentLogic.h"
-#include "vtkKWTkUtilities.h"
 #include "../../../Applications/GUI/Slicer3Helper.cxx"
-#include "EMSegmentHelper.h"
-
 
 int main(int argc, char** argv)
 {
