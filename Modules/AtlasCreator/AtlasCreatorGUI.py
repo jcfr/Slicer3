@@ -505,11 +505,9 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 caseFile = self._defaultCaseCombo.GetWidget().GetValue()
                 defaultCaseSegmentationFilePath = str(self._segDirButton.GetWidget().GetFileName()) + os.sep + str(caseFile)
                 
-            labelList = self.ReadLabelsFromImage(defaultCaseSegmentationFilePath)
+            labelList = self.GetHelper().ReadLabelsFromImage(defaultCaseSegmentationFilePath)
             
-            labelListAsString = ""
-            for label in labelList:
-                labelListAsString += str(label) + " "
+            labelListAsString = self.Helper().ConvertListToString(labelList)
                 
             self._labelsEntry.GetWidget().SetValue(labelListAsString)
                                
@@ -974,7 +972,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self.GetUIPanel().AddPage("AtlasCreator","AtlasCreator","")
         self._atlascreatorPage = self.GetUIPanel().GetPageWidget("AtlasCreator")
-        helpText = """**Atlas Creator v0.3**
+        helpText = """**Atlas Creator v0.31**
         
 More Information available at <a>http://www.slicer.org/slicerWiki/index.php/Modules:AtlasCreator</a>
 
@@ -1376,24 +1374,6 @@ Scheduler Command: Executable to run before the commands for registering images.
         Returns the current logic class.
         '''
         return self._logic
-
-
-
-    '''=========================================================================================='''
-    def ReadLabelsFromImage(self,path):
-        '''
-        Read labels from an image.
-        
-        path - the filePath to an existing Image
-        
-        Returns a list of labels
-        '''
-        
-        node = self.GetHelper().LoadVolume(os.path.normpath(path))
-        labels = self.GetHelper().GetLabels(node.GetImageData())
-        slicer.MRMLScene.RemoveNode(node)
-        
-        return labels
     
 
 

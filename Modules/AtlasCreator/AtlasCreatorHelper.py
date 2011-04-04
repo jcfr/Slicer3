@@ -429,6 +429,24 @@ class AtlasCreatorHelper(object):
     
     
 
+    '''=========================================================================================='''
+    def ReadLabelsFromImage(self,path):
+        '''
+        Read labels from an image.
+        
+        path - the filePath to an existing Image
+        
+        Returns a list of labels
+        '''
+        
+        node = self.LoadVolume(os.path.normpath(path))
+        labels = self.GetLabels(node.GetImageData())
+        slicer.MRMLScene.RemoveNode(node)
+        
+        return labels
+    
+    
+    
     '''=========================================================================================='''    
     def GetBRAINSFitRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading,backgroundValue):
         '''
@@ -648,7 +666,7 @@ class AtlasCreatorHelper(object):
     '''=========================================================================================='''    
     def LoadVolume(self,filePath):
         '''
-            Loads an image as a MRMLScalarVolumeNode and add it to the MRML Scene
+            Loads an image as a MRMLScalarVolumeNode and adds it to the MRML Scene
             
             filePath
                 the file path to an existing image in any 3D Slicer readable format

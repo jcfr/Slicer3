@@ -173,6 +173,35 @@ class AtlasCreatorLogic(object):
         # convert the string based labels list to a real list is not necessary because python does it
         # automatically
         labelsList = node.GetLabelsList()
+        # check if there is only one label in the list, this is a special case
+        if type(labelsList).__name__ =='int':
+            # if yes, convert it from int to a list
+            tmpList = []
+            tmpList.append(labelsList)
+            labelsList = tmpList
+        
+        # we check now if we have a valid list of labels
+        if not type(labelsList).__name__=='list' or len(labelsList) < 1:
+            # this is not a valid list of labels,
+            # let's read them from the first segmentation
+            if len(segmentationsFilePathList) > 1:
+                
+                labelsReadFromFilePath = segmentationsFilePathList[0]
+        
+                self.Helper().info("Labels were not specified correctly..")
+                self.Helper().info("Reading labels from file: "+str(labelsReadFromFilePath))
+                labelsList = self.Helper().ReadLabelsFromImage(labelsReadFromFilePath)
+                
+                # now we save the labelList back to the node
+                node.SetLabelsList(self.Helper().ConvertListToString(labelsList))
+                
+            else:
+                # we could not get the labels.. abort.
+                self.Helper().info("Could not read labels.. ABORTING..")
+                return False
+            
+            
+            
             
         # at this point, we have a valid configuration, let's print it
         self.Helper().info("Configuration for Atlas Creator:\n" + str(node))

@@ -147,6 +147,7 @@ def usage():
     info("")    
     info("-l, --labels STRING")
     info("        List of labels to include for the atlases, f.e. \"3 4 5 6 8 10\".")
+    info("        DEFAULT: detect labels automatically")
     info("")
     info("--normalize")
     info("        Normalize Atlases to 0..1.")
@@ -248,7 +249,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.3")
+    info("Version v0.31")
     info("")
     
     if len(argv) == 0:
@@ -533,7 +534,7 @@ def main(argv):
             errorOccured = True
         else:
             labels = list(set(realLabels))
-    else:
+    elif labels:
         info("Error: At least one label (INT) is required!")
         info("Error: Value of --labels: " + str(labels))
         errorOccured = True
@@ -643,7 +644,11 @@ def main(argv):
         evalpythonCommand += "n.SetTemplateType('dynamic');"
         evalpythonCommand += "n.SetDynamicTemplateIterations(" + str(meanIterations) + ");"
     
-    evalpythonCommand += "n.SetLabelsList('" + ConvertListToString(labels) + "');"
+    if labels:
+        evalpythonCommand += "n.SetLabelsList('" + ConvertListToString(labels) + "');"
+    else:
+        # activate label auto-detection
+        evalpythonCommand += "n.SetLabelsList(None);"
             
     if nonRigid:
         evalpythonCommand += "n.SetRegistrationType('Non-Rigid');"
