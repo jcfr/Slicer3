@@ -286,7 +286,7 @@ int main(int argc, char ** argv)
     outputFile += argv[1]; // label
     outputFile += ".nrrd";
 
-    if (normalizeTo != -1)
+    if (normalizeTo == 1)
       {
       // we need a double here
       ReCastAndWriteOut(imageFloat,outputFile,static_cast<double>(0));

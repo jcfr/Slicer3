@@ -400,11 +400,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         normalize = self._normalizeAtlasCheckBox.GetWidget().GetSelectedState()
         
         if normalize:
-            self._outputCastCombo.SetEnabled(0)
-            self._outputCastCombo.GetWidget().SetValue("Float")
             self._normalizeValueEntry.SetEnabled(1)
         else:
-            self._outputCastCombo.SetEnabled(1)
             self._normalizeValueEntry.SetEnabled(0)
                 
                 
