@@ -406,7 +406,7 @@ void vtkScriptedModuleGUI::TearDownGUI ( )
 }
 
 //---------------------------------------------------------------------------
-void vtkScriptedModuleGUI::Invoke (char* method, char* args )
+void vtkScriptedModuleGUI::Invoke (char* methodAndArgs)
 {
   if (this->Language == vtkScriptedModuleGUI::Tcl)
     {
@@ -421,14 +421,33 @@ void vtkScriptedModuleGUI::Invoke (char* method, char* args )
 #ifdef Slicer3_USE_PYTHON
     std::stringstream pythonCommand;
 
-    if (args == NULL) 
+    std::vector<std::string> strings;
+    std::istringstream f(methodAndArgs);
+    std::string s;    
+    while (std::getline(f, s, ' ')) {
+      strings.push_back(s);
+    }
+
+    if (strings.size()==1) 
       {
       // no args, just plain method call
-      pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui']." << method << "()\n";
+      pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui']." << strings[0] << "()\n";
       }
     else 
       {
-      pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui']." << method << "("<< args <<")\n";
+  
+      std::string argsString;
+      for(unsigned int i=1; i<strings.size(); i++)
+        {
+        argsString += strings[i];
+        if (i+1!=strings.size())
+          {
+          // only append comma if it is not the last element
+          argsString += ",";
+          }
+        }
+      
+      pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui']." << strings[0] << "("<< argsString <<")\n";
       }
 
     if (PyRun_SimpleString( pythonCommand.str().c_str() ) != 0)
@@ -440,15 +459,6 @@ void vtkScriptedModuleGUI::Invoke (char* method, char* args )
     (void)(args); // To avoid "unused variable warning"
 #endif
     } 
-}
-
-//---------------------------------------------------------------------------
-void vtkScriptedModuleGUI::Invoke (char* method) 
-{
-
-  // no args
-  this->Invoke(method, NULL);
-
 }
 
 //---------------------------------------------------------------------------

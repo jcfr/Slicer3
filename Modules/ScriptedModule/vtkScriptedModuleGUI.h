@@ -82,8 +82,7 @@ public:
                                   void *callData);
   // Description:
   // Calls the passed method of the parentClass
-  virtual void Invoke (char* method, char* args );
-  virtual void Invoke (char* method);// Description:
+  virtual void Invoke (char* method);
 
   // Description:
   // Describe behavior at module startup and exit.
