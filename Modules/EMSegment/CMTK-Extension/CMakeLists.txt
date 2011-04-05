@@ -73,8 +73,8 @@ set(PROJECTNAME CMTK)
 ExternalProject_Add(${PROJECTNAME}
   SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/tags/Slicer3"
 #  SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/trunk"
-  SVN_USERNAME slicerbot
-  SVN_PASSWORD slicer
+  SVN_USERNAME "slicerbot"
+  SVN_PASSWORD "slicer"
   CMAKE_ARGS
     ${LOCAL_CMAKE_BUILD_OPTIONS}
     -DCMAKE_INSTALL_PREFIX:PATH=${CMTK_INSTALL_DIR}
