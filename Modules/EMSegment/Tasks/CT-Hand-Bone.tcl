@@ -97,10 +97,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         set rightHandFlag [ GetCheckButtonValueFromMRML $rightHandFlagID ]
         set inhomogeneityCorrectionFlag [ GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID ]
 
-        set inputTargetNode [$workingDN GetInputTargetNode]
+        set inputTargetNode [$mrmlManager GetTargetInputNode]
         set alignedTargetNode [$workingDN GetAlignedTargetNode]
-        set inputAtlasNode [$mrmlManager GetInputAtlasNode]
-        set alignedAtlasNode [$workingDN GetAlignedAtlasNode]
+        set inputAtlasNode [$mrmlManager GetAtlasInputNode]
+        set alignedAtlasNode [$mrmlManager GetAtlasAlignedNode]
 
         if { $inputTargetNode != "" } {
             $LOGIC PrintText "Detected [$inputTargetNode GetNumberOfVolumes] inputTargetNodeVolumes"
@@ -214,15 +214,16 @@ namespace eval EMSegmenterPreProcessingTcl {
                 PrintError "Failed to create a temporary file"
             }
             set CMD "$CMD -o $oArgument -O $deformationfield"
-            set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
+            #set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
             # fast - for debugging
-            #set CMD "$CMD -i 1,5,2,1,1 -n 5 -e --numberOfMatchPoints 16"
+            set CMD "$CMD -i 2,2,2,2,1 -n 5 -e --numberOfMatchPoints 16"
 
             $LOGIC PrintText "TCL: Executing $CMD"
             catch { eval exec $CMD } errmsg
             $LOGIC PrintText "TCL: $errmsg"
 
 
+            #TODO: check here for return code
 
             ### Call Resample ###
 

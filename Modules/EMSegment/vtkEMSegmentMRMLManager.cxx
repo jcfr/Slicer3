@@ -3076,6 +3076,7 @@ GetAtlasInputNode()
 vtkMRMLEMSAtlasNode* vtkEMSegmentMRMLManager::GetAtlasAlignedNode()
 {
   if (!this->GetWorkingDataNode() ) {
+      vtkWarningMacro("Null AtlasAlignedNode.");
       return NULL;
     }
   

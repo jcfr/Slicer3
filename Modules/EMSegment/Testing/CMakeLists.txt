@@ -816,7 +816,7 @@ if( EMSEG_RUN_LOCAL_TESTS )
     COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --no-error-popup
     --verbose --mrmlSceneFileName
-    ${EMSegment_TESTDATA_DIR}/CT-Hand-Bone.mrml
+    ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
     --targetVolumeFileNames
     MIDAS{CT_Hand_Bone_Subject_1.nrrd.md5}
     --resultVolumeFileName
