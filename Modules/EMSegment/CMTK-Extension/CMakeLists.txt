@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 project (CMTK4Slicer)
-#include(ExternalProject)
+include(ExternalProject)
 
 #http://cmake.org/gitweb?p=cmake.git;a=blob;f=Modules/ExternalProject.cmake
 
@@ -72,6 +72,7 @@ SET(CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/CMake
   ${CMAKE_MODULE_PATH}
   )
+include(ExternalProject)
 
 
 set(PROJECTNAME CMTK)
