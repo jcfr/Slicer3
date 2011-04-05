@@ -293,18 +293,18 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 
             # I/O panel
             elif caller == self._origDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:                
-                self.UpdateCaseCombobox()
+                self.UpdateCaseCombobox(self._origDirButton.GetWidget().GetFileName(),self._segDirButton.GetWidget().GetFileName())
                 self.UpdateMRML()
                 
             elif caller == self._segDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
-                self.UpdateCaseCombobox()
+                self.UpdateCaseCombobox(self._origDirButton.GetWidget().GetFileName(),self._segDirButton.GetWidget().GetFileName())
                 self.UpdateMRML()
                 
             elif caller == self._outDirButton.GetWidget().GetLoadSaveDialog() and event == vtkKWFileBrowserDialog_FileNameChangedEvent:
                 self.UpdateMRML()             
                    
             elif caller == self._pairFixedRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
-                self.UpdateCaseCombobox()
+                self.UpdateCaseCombobox(self._origDirButton.GetWidget().GetFileName(),self._segDirButton.GetWidget().GetFileName())
                 self.ToggleMeanAndDefaultCase1()
                 self.UpdateMRML()
                 
@@ -448,19 +448,24 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
 
     '''=========================================================================================='''
-    def UpdateCaseCombobox(self):
+    def UpdateCaseCombobox(self,imagesDir,segmentationsDir):
         '''
         Updates the defaultCaseCombobox by checking which files are available as originals and segmentations and
         reading the basenames of these files.
+        
+        imagesDir - the filePath to the directory of the images
+        segmentationsDir - the filePath to the directory of the segmentations
+        
         '''
+        
         # TODO change API to receive dir names
-        if self._origDirButton.GetWidget().GetFileName() and self._segDirButton.GetWidget().GetFileName():
+        if imagesDir and segmentationsDir:
             # originals and segmentations dir were configured, now we parse for potential image data
-            nrrdFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.nrrd'))
-            nhdrFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.nhdr'))
-            hdrFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.hdr'))          
-            mhdFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.mhd'))          
-            mhaFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.mha'))
+            nrrdFiles = glob.glob(os.path.join(imagesDir, '*.nrrd'))
+            nhdrFiles = glob.glob(os.path.join(imagesDir, '*.nhdr'))
+            hdrFiles = glob.glob(os.path.join(imagesDir, '*.hdr'))          
+            mhdFiles = glob.glob(os.path.join(imagesDir, '*.mhd'))          
+            mhaFiles = glob.glob(os.path.join(imagesDir, '*.mha'))
         
             listOfFiles = [
                           ('.nrrd',len(nrrdFiles)),
@@ -475,7 +480,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             self._updating = 1
             for nrrdFile in nrrdFiles:
                 caseFile = os.path.basename(nrrdFile)
-                if os.path.isfile(os.path.join(self._segDirButton.GetWidget().GetFileName(),caseFile)):
+                if os.path.isfile(os.path.join(segmentationsDir,caseFile)):
                     # file exists in originals and segmentations directory, so we can add it to our list of cases
                     self._defaultCaseCombo.GetWidget().AddValue(caseFile)
                     self._defaultCaseCombo.GetWidget().SetValue(caseFile)
@@ -493,6 +498,9 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         Updates the list of labels in the GUI according to the first of all segmentations or if a defaultCase is
         specified, then takes the labels from this file.
         '''
+        
+        defaultCaseSegmentationFilePath = ""
+        
         if not self._updating:
             if self._useExistingTransformsCheckBox.GetWidget().GetSelectedState():
                 # use existing transforms mode
@@ -502,13 +510,15 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                     defaultCaseSegmentationFilePath = listOfSegmentations[0]
             else:
                 caseFile = self._defaultCaseCombo.GetWidget().GetValue()
-                defaultCaseSegmentationFilePath = str(self._segDirButton.GetWidget().GetFileName()) + os.sep + str(caseFile)
+                if self._segDirButton.GetWidget().GetFileName():
+                    defaultCaseSegmentationFilePath = str(self._segDirButton.GetWidget().GetFileName()) + os.sep + str(caseFile)
                 
             labelList = self.GetHelper().ReadLabelsFromImage(defaultCaseSegmentationFilePath)
             
-            labelListAsString = self.GetHelper().ConvertListToString(labelList)
-                
-            self._labelsEntry.GetWidget().SetValue(labelListAsString)
+            if labelList:
+                labelListAsString = self.GetHelper().ConvertListToString(labelList)
+                    
+                self._labelsEntry.GetWidget().SetValue(labelListAsString)
                                
                                
                                
@@ -625,7 +635,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self._associatedMRMLNode.SetDynamicTemplateIterations(int(meanIterations))
             
             defaultCase = self._defaultCaseCombo.GetWidget().GetValue()
-            if defaultCase:
+            if defaultCase and segmentationsDir:
                 defaultCaseFullPath = str(self._segDirButton.GetWidget().GetFileName()) + os.sep + str(defaultCase)
                 self._associatedMRMLNode.SetFixedTemplateDefaultCaseFilePath(defaultCaseFullPath)
             
@@ -782,7 +792,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                         self._segDirButton.GetWidget().SetText(os.path.basename(segmentationsDir))
 
             # at this point, perform some updates in the GUI depending on the file selections
-            self.UpdateCaseCombobox()
+            if imagesDir and segmentationsDir:
+                self.UpdateCaseCombobox(imagesDir,segmentationsDir)
                         
             outputDirString = n.GetOutputDirectory()
             if outputDirString:

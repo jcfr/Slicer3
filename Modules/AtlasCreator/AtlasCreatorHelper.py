@@ -438,6 +438,8 @@ class AtlasCreatorHelper(object):
         
         Returns a list of labels
         '''
+        if not path:
+            return None
         
         node = self.LoadVolume(os.path.normpath(path))
         labels = self.GetLabels(node.GetImageData())
