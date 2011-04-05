@@ -921,10 +921,13 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
 
     set ::env(VS_UNICODE_OUTPUT) ""
     
+    # Note that for slicer we forcably disable the fortran compiler
+    # to workaround numpy build errors on linux machines where gfortran
+    # is installed.
     if { $::PYTHON_BUILD_TYPE == "Debug" } {
-      runcmd $::PYTHON_EXE ./setup.py build  --debug
+      runcmd $::PYTHON_EXE ./setup.py build  --debug --fcompiler=/dev/null
     } else {
-      runcmd $::PYTHON_EXE ./setup.py build
+      runcmd $::PYTHON_EXE ./setup.py build --fcompiler=/dev/null
     }
 
     runcmd $::PYTHON_EXE ./setup.py install
