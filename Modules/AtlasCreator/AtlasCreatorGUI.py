@@ -304,6 +304,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self.UpdateMRML()             
                    
             elif caller == self._pairFixedRadio and event == vtkKWRadioButton_SelectedStateChangedEvent:
+                self.UpdateCaseCombobox()
                 self.ToggleMeanAndDefaultCase1()
                 self.UpdateMRML()
                 
@@ -452,6 +453,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         Updates the defaultCaseCombobox by checking which files are available as originals and segmentations and
         reading the basenames of these files.
         '''
+        # TODO change API to receive dir names
         if self._origDirButton.GetWidget().GetFileName() and self._segDirButton.GetWidget().GetFileName():
             # originals and segmentations dir were configured, now we parse for potential image data
             nrrdFiles = glob.glob(os.path.join(self._origDirButton.GetWidget().GetFileName(), '*.nrrd'))
@@ -504,7 +506,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 
             labelList = self.GetHelper().ReadLabelsFromImage(defaultCaseSegmentationFilePath)
             
-            labelListAsString = self.Helper().ConvertListToString(labelList)
+            labelListAsString = self.GetHelper().ConvertListToString(labelList)
                 
             self._labelsEntry.GetWidget().SetValue(labelListAsString)
                                
@@ -624,7 +626,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             
             defaultCase = self._defaultCaseCombo.GetWidget().GetValue()
             if defaultCase:
-                self._associatedMRMLNode.SetFixedTemplateDefaultCaseFilePath(defaultCase)
+                defaultCaseFullPath = str(self._segDirButton.GetWidget().GetFileName()) + os.sep + str(defaultCase)
+                self._associatedMRMLNode.SetFixedTemplateDefaultCaseFilePath(defaultCaseFullPath)
             
             
             ###############################################################    
@@ -666,7 +669,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 
             transformsDir = self._transformsDirButton.GetWidget().GetFileName()
             if transformsDir:
-                self._associatedMRMLNode.SetTransformsDir(str(self.GetHelper().ConvertDirectoryToString(transformsDir)))
+                self._associatedMRMLNode.SetTransformsDirectory(str(transformsDir))
                 
             transformsTemplate = self._transformsTemplateButton.GetWidget().GetFileName()
             if transformsTemplate:
@@ -763,145 +766,171 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                         # but we only display the last folderName
                         self._origDirButton.GetWidget().SetText(os.path.basename(imagesDir))
                         
+            segmentationsDirListString = n.GetSegmentationsFilePathList()
+            # split the string by space
+            segmentationsDirList = segmentationsDirListString.split(" ")
+            if segmentationsDirList:
+                firstItem = segmentationsDirList[0]
+                
+                if firstItem:
+                    # get the directory of the first item
+                    segmentationsDir = os.path.split(firstItem)[0]
+                    if segmentationsDir:
+                        # propagate it to the GUI
+                        self._segDirButton.GetWidget().SetInitialFileName(str(segmentationsDir))
+                        # but we only display the last folderName
+                        self._segDirButton.GetWidget().SetText(os.path.basename(segmentationsDir))
+
+            # at this point, perform some updates in the GUI depending on the file selections
+            self.UpdateCaseCombobox()
                         
-            # stop blocking of update events
-            self._updating = 0
-                
-            '''
+            outputDirString = n.GetOutputDirectory()
+            if outputDirString:
+                self._outDirButton.GetWidget().SetInitialFileName(str(outputDirString))
+                self._outDirButton.GetWidget().SetText(os.path.basename(outputDirString))                                    
             
-            imagesDir = self._origDirButton.GetWidget().GetFileName()
-            if imagesDir:
-                self._associatedMRMLNode.SetOriginalImagesFilePathList(self.GetHelper().ConvertDirectoryToString(imagesDir))
+            templateTypeString = n.GetTemplateType()
+            if templateTypeString == "fixed":
+                # fixed registration
+                self._pairFixedRadio.SetSelectedState(1)
+                # call the fixed pair handler
+                self.ToggleMeanAndDefaultCase1()
+            elif templateTypeString == "dynamic":
+                # dynamic registration
+                self._pairOnlineRadio.SetSelectedState(1)
+                # call the dynamic pair handler
+                self.ToggleMeanAndDefaultCase2()
+            elif templateTypeString == "group":
+                # group online
+                self._groupOnlineRadio.SetSelectedState(1)
 
-            segmentationsDir = self._segDirButton.GetWidget().GetFileName()
-            if segmentationsDir:
-                self._associatedMRMLNode.SetSegmentationsFilePathList(self.GetHelper().ConvertDirectoryToString(segmentationsDir))
                 
-            outputDir = self._outDirButton.GetWidget().GetFileName()
-            if outputDir:
-                self._associatedMRMLNode.SetOutputDirectory(str(outputDir))
-            
-            if self._groupOnlineRadio.GetSelectedState():
-                self._associatedMRMLNode.SetTemplateType("group")            
-            elif self._pairOnlineRadio.GetSelectedState():
-                self._associatedMRMLNode.SetTemplateType("dynamic")
-            else:
-                self._associatedMRMLNode.SetTemplateType("fixed")
-
-            
-            ###############################################################    
+            ###############################################################
             # parameters panel
             
-            toolkit = self._toolkitCombo.GetWidget().GetValue()
-            if toolkit:
-                self._associatedMRMLNode.SetToolkit(str(toolkit))
+            toolkitString = n.GetToolkit()
+            if toolkitString == "CMTK":
+                self._toolkitCombo.GetWidget().SetValue("CMTK")
                 
-            if self._nonRigidRadio.GetSelectedState():
-                self._associatedMRMLNode.SetRegistrationType("Non-Rigid")
-            else:
-                self._associatedMRMLNode.SetRegistrationType("Affine")
-
-            meanIterations = self._meanIterationsSpinBox.GetWidget().GetValue()
-            if meanIterations:
-                self._associatedMRMLNode.SetDynamicTemplateIterations(int(meanIterations))
+            registrationTypeString = n.GetRegistrationType()
+            if registrationTypeString == "Non-Rigid":
+                self._nonRigidRadio.SetSelectedState(1)
+                self._affineRadio.SetSelectedState(0)
+                
+            meanIterationsInt = int(n.GetDynamicTemplateIterations())
+            if meanIterationsInt > -1:
+                self._meanIterationsSpinBox.GetWidget().SetValue(meanIterationsInt)
             
-            defaultCase = self._defaultCaseCombo.GetWidget().GetValue()
-            if defaultCase:
-                self._associatedMRMLNode.SetFixedTemplateDefaultCaseFilePath(defaultCase)
+            defaultCaseString = n.GetFixedTemplateDefaultCaseFilePath()
+            if defaultCaseString:
+                self._defaultCaseCombo.GetWidget().SetValue(os.path.basename(defaultCaseString))
+                
             
-            
-            ###############################################################    
+            ###############################################################
             # advanced panel
             
             # cluster configuration
             #
-            if self._clusterCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetUseCluster(1)
-            else:
-                self._associatedMRMLNode.SetUseCluster(0)
-                
-            schedCommand = self._schedulerEntry.GetWidget().GetValue()
-            if schedCommand:
-                self._associatedMRMLNode.SetSchedulerCommand(str(schedCommand))
+            useCluster = n.GetUseCluster()
+            if useCluster:
+                self._clusterCheckBox.GetWidget().SetSelectedState(1)
+            
+            schedCommandString = n.GetSchedulerCommand()
+            if schedCommandString:
+                self._schedulerEntry.GetWidget().SetValue(str(schedCommandString))
+    
                 
             # principal component analysis
             #
-            if self._pcaCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetPCAAnalysis(1)
-            else:
-                self._associatedMRMLNode.SetPCAAnalysis(0)
-            
-            pcaMaxEigenVectors = self._maxEigenVectorsSpinBox.GetWidget().GetValue()
-            if pcaMaxEigenVectors:
-                self._associatedMRMLNode.SetPCAMaxEigenVectors(int(pcaMaxEigenVectors))
+            usePCA = n.GetPCAAnalysis()
+            if usePCA: 
+                self._pcaCheckBox.GetWidget().SetSelectedState(1)
                 
-            if self._pcaCombineCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetPCACombine(1)
-            else:
-                self._associatedMRMLNode.SetPCACombine(0)
-            
+            pcaMaxEigenVectorsInteger = int(n.GetPCAMaxEigenVectors())
+            if pcaMaxEigenVectorsInteger > -1:
+                self._maxEigenVectorsSpinBox.GetWidget().SetValue(pcaMaxEigenVectorsInteger)
+                
+            pcaCombine = n.GetPCACombine()
+            if pcaCombine:
+                self._pcaCombineCheckBox.GetWidget().SetSelectedState(1)
+                
+                    
             # use existing transforms
             #
-            if self._useExistingTransformsCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetSkipRegistration(1)
-            else:
-                self._associatedMRMLNode.SetSkipRegistration(0)
-                
-            transformsDir = self._transformsDirButton.GetWidget().GetFileName()
-            if transformsDir:
-                self._associatedMRMLNode.SetTransformsDir(str(self.GetHelper().ConvertDirectoryToString(transformsDir)))
-                
-            transformsTemplate = self._transformsTemplateButton.GetWidget().GetFileName()
-            if transformsTemplate:
-                self._associatedMRMLNode.SetExistingTemplate(str(os.path.normpath(transformsTemplate)))
+            skipRegistration = n.GetSkipRegistration()
+            if skipRegistration:
+                self._useExistingTransformsCheckBox.GetWidget().SetSelectedState(1)
             
+            transformsDir = n.GetTransformsDirectory()
+            if transformsDir:
+                self._transformsDirButton.GetWidget().SetInitialFileName(str(transformsDir))
+                self._transformsDirButton.GetWidget().SetText(os.path.basename(transformsDir))
+
+            transformsTemplate = n.GetExistingTemplate()
+            if transformsTemplate:
+                self._transformsTemplateButton.GetWidget().SetInitialFileName(str(transformsTemplate))
+                self._transformsTemplateButton.GetWidget().SetText(os.path.basename(transformsTemplate))
+                    
             # Misc.
             #
-            labels = self._labelsEntry.GetWidget().GetValue()
-            if labels:
-                self._associatedMRMLNode.SetLabelsList(str(self.GetHelper().ConvertListToString(labels)))
+            labelsList = n.GetLabelsList()
+            if type(labelsList).__name__ =='int':
+                # if yes, convert it from int to a list
+                tmpList = []
+                tmpList.append(labelsList)
+                labelsList = tmpList
+            
+            # we check now if we have a valid list of labels
+            if type(labelsList).__name__=='list' and len(labelsList) > 1:
                 
-            if self._saveTransformsCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetSaveTransforms(1)
-            else:
-                self._associatedMRMLNode.SetSaveTransforms(0)
+                labelsListString = ""
                 
-            if self._normalizeAtlasCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetNormalizeAtlases(1)
-            else:
-                self._associatedMRMLNode.SetNormalizeAtlases(0)
+                # loop through the list and convert it to a string
+                for l in labelsList:
+                    labelsListString += str(l)
+                    labelsListString += " "
                 
-            normalizeTo = self._normalizeValueEntry.GetWidget().GetValue()
-            if normalizeTo:
-                self._associatedMRMLNode.SetNormalizeTo(str(normalizeTo))
+                # and set it to the GUI
+                self._labelsEntry.GetWidget().SetValue(labelsListString.rstrip())
+                    
+            saveTransforms = n.GetSaveTransforms()
+            if not saveTransforms:
+                self._saveTransformsCheckBox.GetWidget().SetSelectedState(0)
                 
-            outputCast = self._outputCastCombo.GetWidget().GetValue()
-            if outputCast:
-                self._associatedMRMLNode.SetOutputCast(str(outputCast))
+            normalizeAtlas = n.GetNormalizeAtlases()
+            if normalizeAtlas:
+                self._normalizeAtlasCheckBox.GetWidget().SetSelectedState(1)
                 
-            if self._deleteAlignedImagesCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetDeleteAlignedImages(1)
-            else:
-                self._associatedMRMLNode.SetDeleteAlignedImages(0)
+            normalizeToInteger = int(n.GetNormalizeTo())
+            if normalizeToInteger > 0:
+                self._normalizeValueEntry.GetWidget().SetValue(normalizeToInteger)
                 
-            if self._deleteAlignedSegmentationsCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetDeleteAlignedSegmentations(1)
-            else:
-                self._associatedMRMLNode.SetDeleteAlignedSegmentations(0)
+            # trigger normalize handler
+            self.ToggleNormalize()
+            
+            outputCastString = str(n.GetOutputCast())
+            if outputCastString:
+                self._outputCastCombo.GetWidget().SetValue(outputCastString)
                 
-            if self._debugCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetDebugMode(1)
-            else:
-                self._associatedMRMLNode.SetDebugMode(0)
+            deleteAlignedImages = n.GetDeleteAlignedImages()
+            if not deleteAlignedImages:
+                self._deleteAlignedImagesCheckBox.GetWidget().SetSelectedState(0)
                 
-            if self._dryrunCheckBox.GetWidget().GetSelectedState():
-                self._associatedMRMLNode.SetDryrunMode(1)
-            else:
-                self._associatedMRMLNode.SetDryrunMode(0)
-
+            deleteAlignedSegmentations = n.GetDeleteAlignedSegmentations()
+            if not deleteAlignedSegmentations:
+                self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(0)
+            
+            debug = n.GetDebugMode()
+            if debug:
+                self._debugCheckBox.GetWidget().SetSelectedState(1)
+                
+            dryrun = n.GetDryrunMode()
+            if dryrun:
+                self._dryrunCheckBox.GetWidget().SetSelectedState(1)
+                
+            
             # stop blocking of update events
             self._updating = 0
-            '''
 
 
 
@@ -938,6 +967,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 
                 if isinstance(callDataAsMRMLNode, slicer.vtkMRMLAtlasCreatorNode):
                     self.GetHelper().info("A new vtkMRMLAtlasCreatorNode was added: " + str(callDataID))
+                    self.GetHelper().debug(callDataAsMRMLNode)
                     self._associatedMRMLNode = callDataAsMRMLNode
                     self._associatedMRMLNodeTag = self.AddMRMLObserverByNumber(self._associatedMRMLNode,vtkMRMLAtlasCreatorNode_LaunchComputationEvent)
                     
@@ -951,11 +981,13 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             elif callerID == "MRMLScene" and event == vtkMRMLScene_CloseEvent:
                 
                 # caught MRMLScene close event
+                self._updating = 1
                 # reset all GUI values to default
                 self.InitializeByDefault()
                 # remove the associated MRMLNode
                 self._associatedMRMLNode = None
                 self._associatedMRMLNodeTag = None
+                self._updating = 0
                 
                 return True                    
 
@@ -1114,7 +1146,7 @@ Scheduler Command: Executable to run before the commands for registering images.
         self._nonRigidRadio.SetBalloonHelpString("Use non-rigid deformation.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deformationTypeRadios.GetWidgetName())
 
-        self._deformationTypeRadios.GetWidget().GetWidget(0).SetSelectedState(1)
+        self._affineRadio.SetSelectedState(1)
 
 
         self._meanIterationsSpinBox.SetParent(self._parametersFrame.GetFrame())
@@ -1381,18 +1413,72 @@ Scheduler Command: Executable to run before the commands for registering images.
         
         Returns nothing.
         '''
+
         
-        # block all updating events
-        self._updating = 1
-        
-        # I/O Panel
+        # I/O PANEL
         self._origDirButton.GetWidget().SetInitialFileName("")
         self._origDirButton.GetWidget().SetText("Click to pick a directory")
         
-        #TODO
+        self._segDirButton.GetWidget().SetInitialFileName("")
+        self._segDirButton.GetWidget().SetText("Click to pick a directory")
         
-        # stop blocking updating events
-        self._updating = 0
+        self._outDirButton.GetWidget().SetInitialFileName("")
+        self._outDirButton.GetWidget().SetText("Click to pick a directory")       
+        
+        # use fixed by default
+        self._pairFixedRadio.SetSelectedState(1)            
+        
+        
+        # PARAMETERS
+    
+        # by default, use BRAINSFit
+        self._toolkitCombo.GetWidget().SetValue("BRAINSFit")
+        # by default use affine registration
+        self._affineRadio.SetSelectedState(1)
+        self._nonRigidRadio.SetSelectedState(0) 
+        self._meanIterationsSpinBox.GetWidget().SetValue(5)  
+        self._defaultCaseCombo.GetWidget().SetValue("")
+        
+        
+        # ADVANCED
+        
+        # Cluster config
+        self._clusterCheckBox.GetWidget().SetSelectedState(0)
+        self._schedulerEntry.GetWidget().SetValue("")
+        
+        # PCA
+        self._pcaCheckBox.GetWidget().SetSelectedState(0)
+        self._maxEigenVectorsSpinBox.GetWidget().SetValue(10)
+        self._pcaCombineCheckBox.GetWidget().SetSelectedState(0)
+        
+        # Use Existing
+        self._useExistingTransformsCheckBox.GetWidget().SetSelectedState(0)
+        self._transformsDirButton.GetWidget().SetInitialFileName("")
+        self._transformsDirButton.GetWidget().SetText("Click to pick a directory")                
+        self._transformsTemplateButton.GetWidget().SetInitialFileName("")
+        self._transformsTemplateButton.GetWidget().SetText("Click to pick a template")
+                        
+        # Misc. panel
+        self._labelsEntry.GetWidget().SetValue("")
+        self._saveTransformsCheckBox.GetWidget().SetSelectedState(1)
+        self._normalizeAtlasCheckBox.GetWidget().SetSelectedState(0)
+        # by default, normalize to 1
+        self._normalizeValueEntry.GetWidget().SetValue(1)
+        # by default, Short
+        self._outputCastCombo.GetWidget().SetValue("Short")
+        self._deleteAlignedImagesCheckBox.GetWidget().SetSelectedState(1)
+        self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(1)
+        self._debugCheckBox.GetWidget().SetSelectedState(0)
+        self._dryrunCheckBox.GetWidget().SetSelectedState(0)
+    
+        # trigger pair online handler
+        self.ToggleMeanAndDefaultCase1()            
+    
+        # trigger normalize handler
+        self.ToggleNormalize()                                
+        
+        
+
         
         
         
