@@ -4,6 +4,8 @@
 #include "vtkEMSegment.h"
 #include <vtkSetGet.h>
 
+#define ERROR_NODE_VTKID 0
+
 class vtkMRMLEMSGlobalParametersNode;
 class vtkMRMLEMSTemplateNode;
 class vtkMRMLEMSAtlasNode;
@@ -454,6 +456,7 @@ public:
   virtual vtkMRMLEMSGlobalParametersNode*   GetGlobalParametersNode();
   virtual vtkMRMLEMSTreeNode*               GetTreeRootNode();
   virtual vtkMRMLEMSTreeNode*               GetTreeNode(vtkIdType);
+  virtual bool TreeNodeExists(vtkIdType nodeID);
   virtual vtkMRMLEMSTreeParametersLeafNode* GetTreeParametersLeafNode(vtkIdType);  
 
   virtual vtkMRMLVolumeNode*                GetVolumeNode(vtkIdType);

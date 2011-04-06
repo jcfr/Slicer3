@@ -37,8 +37,6 @@
 #include "vtkMRMLEMSNode.h"
 #include "vtkMRMLEMSSegmenterNode.h"
 
-#define ERROR_NODE_VTKID 0
-
 //----------------------------------------------------------------------------
 vtkEMSegmentMRMLManager* vtkEMSegmentMRMLManager::New()
 {
@@ -2513,13 +2511,19 @@ GetColorNodeID()
   if (colorID)
     {
       if (this->MRMLScene->GetNodeByID(colorID))
-    { 
-      return colorID;
+      { 
+        return colorID;
+      }
     }
+   
+  vtkSlicerColorLogic* colLogic = vtkSlicerColorLogic::SafeDownCast(this->GetMRMLScene()->GetNthNodeByClass(0,"vtkSlicerColorLogic")); 
+   if (!colLogic)
+    {
+        vtkWarningMacro("No vtkSlicerColorLogic defined in scene");
+        return NULL;
     }
     // It is important that the color node exists otherwise we get wired errors - I learned the hard way!
-    vtkSlicerColorLogic* colorLogic = vtkSlicerColorLogic::New();
-    this->GetGlobalParametersNode()->SetColormap(colorLogic->GetDefaultLabelMapColorNodeID());    
+    this->GetGlobalParametersNode()->SetColormap(colLogic->GetDefaultLabelMapColorNodeID());    
     return this->GetGlobalParametersNode()->GetColormap();  
 }
  
@@ -2959,6 +2963,27 @@ GetTreeRootNode()
     {
     return this->Node->GetTreeNode();
     }
+}
+
+//----------------------------------------------------------------------------
+bool vtkEMSegmentMRMLManager::TreeNodeExists(vtkIdType nodeID)
+{
+  if (nodeID == -1)
+    {
+    return false;
+    }
+
+  bool contained = this->VTKNodeIDToMRMLNodeIDMap.count(nodeID);
+  if (!contained)
+    {
+      return false;
+    }
+
+  if (this->VTKNodeIDToMRMLNodeIDMap[nodeID].empty())
+    {
+      return false;
+    }
+  return true;
 }
 
 //----------------------------------------------------------------------------
@@ -3547,27 +3572,19 @@ MapMRMLNodeIDToVTKNodeID(const char* MRMLNodeID)
   return this->MRMLNodeIDToVTKNodeIDMap[MRMLNodeID];
 }
 
+
 //-----------------------------------------------------------------------------
 const char*
 vtkEMSegmentMRMLManager::
 MapVTKNodeIDToMRMLNodeID(vtkIdType nodeID)
 {
-  bool contained = this->VTKNodeIDToMRMLNodeIDMap.count(nodeID);
-  if (!contained)
+  if (this->TreeNodeExists(nodeID)) 
     {
-    vtkErrorMacro("vtk ID does not map to mrml ID: " << nodeID);
-    return NULL;
+      return this->VTKNodeIDToMRMLNodeIDMap[nodeID].c_str();  
     }
-
-  vtksys_stl::string mrmlID = this->VTKNodeIDToMRMLNodeIDMap[nodeID];  
-  if (mrmlID.empty())
-    {
-    vtkErrorMacro("vtk ID mapped to null mrml ID: " << nodeID);
-    }
-  
-  // NB: being careful not to return point to temporary
-  return this->VTKNodeIDToMRMLNodeIDMap[nodeID].c_str();
-}
+   vtkErrorMacro("vtk ID ("<< nodeID << ") does not map to mrml ID or to empry mrlm ID" );
+  return NULL;
+ }
 
 //-----------------------------------------------------------------------------
 vtkIdType
@@ -4907,42 +4924,44 @@ void vtkEMSegmentMRMLManager::RemoveLegacyNodes()
             vtkMRMLEMSTreeParametersNode* parNode = treeNode->GetTreeParametersNode();
             if (parNode) 
               {
-                        if (treeNode->GetNumberOfChildNodes()) 
-              {
-                treeNode->SetParentParametersNodeID(parNode->GetParentParametersNodeID());
+        // cout << "===> Removing  TreeParametersNode with ID: " << parNode->GetID() << endl;
+                  if (treeNode->GetNumberOfChildNodes()) 
+                  {
+                           treeNode->SetParentParametersNodeID(parNode->GetParentParametersNodeID());
                             // delete associated leaf node;
                             vtkMRMLEMSTreeParametersLeafNode* leafNode = parNode->GetLeafParametersNode();
                             if (leafNode)
-                  {
+                            {
                                  this->MRMLScene->RemoveNode(leafNode);
-                  }
-                treeNode->SetLeafParametersNodeID(NULL);
-              } else {
-                                treeNode->SetLeafParametersNodeID(parNode->GetLeafParametersNodeID());
-                                // delete associated parent node;
-                                vtkMRMLEMSTreeParametersParentNode* parentNode = parNode->GetParentParametersNode();
-                                if (parentNode)
-                     {
+                            }
+                            treeNode->SetLeafParametersNodeID(NULL);
+                     } else {
+                           treeNode->SetLeafParametersNodeID(parNode->GetLeafParametersNodeID());
+                           // delete associated parent node;
+                           vtkMRMLEMSTreeParametersParentNode* parentNode = parNode->GetParentParametersNode();
+                           if (parentNode)
+                           {
                                     this->MRMLScene->RemoveNode(parentNode);
+                           }
+                           treeNode->SetParentParametersNodeID(NULL);
+                      }
+                      treeNode->SetColorRGB(parNode->GetColorRGB());
+                      int numInput  = parNode->GetNumberOfTargetInputChannels();
+                      treeNode->SetNumberOfTargetInputChannels(numInput);                        
+                      for(int i = 0 ; i < numInput ; i++)
+                     { 
+                            treeNode->SetInputChannelWeight(i,parNode->GetInputChannelWeight(i));
                      }
-                     treeNode->SetParentParametersNodeID(NULL);
-              }
-                        treeNode->SetColorRGB(parNode->GetColorRGB());
-                        int numInput  = parNode->GetNumberOfTargetInputChannels();
-            treeNode->SetNumberOfTargetInputChannels(numInput);                        
-                        for(int i = 0 ; i < numInput ; i++)
-              { 
-                treeNode->SetInputChannelWeight(i,parNode->GetInputChannelWeight(i));
-              }
  
                         treeNode->SetSpatialPriorVolumeName(parNode->GetSpatialPriorVolumeName());
                         treeNode->SetSpatialPriorWeight(parNode->GetSpatialPriorWeight());
                         treeNode->SetClassProbability(parNode->GetClassProbability());
                         treeNode->SetExcludeFromIncompleteEStep(parNode->GetExcludeFromIncompleteEStep());
                         treeNode->SetPrintWeights(parNode->GetPrintWeights());
+                        
                         this->MRMLScene->RemoveNode(parNode);
               }
-        }
+           }
         }
      }    
      

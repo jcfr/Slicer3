@@ -214,57 +214,75 @@ int main(int vtkNotUsed(argc), char** argv)
     //////////////////////////////////////////////////////////////////////
 
     // tree node
+    vtkIdType treeLeafNodeID = m->GetTreeNodeChildNodeID(rootID, 0);
+    while  ((treeLeafNodeID != ERROR_NODE_VTKID) && (!m->GetTreeNodeIsLeaf(treeLeafNodeID) ))  {
+         treeLeafNodeID = m->GetTreeNodeChildNodeID(treeLeafNodeID, 0);
+    }
 
-    vtkIdType treeNodeID = m->GetTreeNodeChildNodeID(rootID, 0);
+    int index = 0 ;
+    vtkIdType treeParentNodeID = m->GetTreeNodeChildNodeID(rootID, index);
+    while  ((treeParentNodeID != ERROR_NODE_VTKID) && (m->GetTreeNodeIsLeaf(treeParentNodeID) ))  {
+      index++;
+         treeParentNodeID = m->GetTreeNodeChildNodeID(rootID, index);
+    }
+
+
+   
+    if ((treeLeafNodeID == ERROR_NODE_VTKID)  ||  (treeParentNodeID == ERROR_NODE_VTKID ))
+      {
+        std::cerr << "Error: No leaf or parent node found !" << std::endl;
+        throw std::runtime_error("No leaf or parent node was found");
+      }
+
 
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeIntensityLabel,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeLeafNodeID);
 
     vtkTestSetGetStringMacroIndex(pass, m,
-                                  TreeNodeName, MAGIC_STRING.c_str(), treeNodeID);
+                                  TreeNodeName, MAGIC_STRING.c_str(), treeLeafNodeID);
     double color[3] = { MAGIC_DOUBLE, MAGIC_DOUBLE2, MAGIC_DOUBLE3 };
     vtkTestSetGetPoint3DMacroIndex(pass, m,
-                                   TreeNodeColor, double, color, treeNodeID);
+                                   TreeNodeColor, double, color, treeLeafNodeID);
     
     // intensity distribution
     vtkTestSetGetMacroIndex(pass, m, 
                             TreeNodeDistributionSpecificationMethod, 
                             vtkEMSegmentMRMLManager::
                             DistributionSpecificationManual, 
-                            treeNodeID);
+                            treeLeafNodeID);
     //vtkTestSetGetMacroIndex2(pass, m, 
     //                         TreeNodeDistributionLogMeanWithCorrection, 
-    //                         MAGIC_DOUBLE, treeNodeID, 0);
+    //                         MAGIC_DOUBLE, treeLeafNodeID, 0);
     //vtkTestSetGetMacroIndex3(pass, m, 
     //                         TreeNodeDistributionLogCovarianceWithCorrection, 
-    //                         MAGIC_DOUBLE, treeNodeID, 0, 0);
+    //                         MAGIC_DOUBLE, treeLeafNodeID, 0, 0);
 
     std::cerr << "Testing sample point interface...";
     double p1[3] = {MAGIC_DOUBLE, MAGIC_DOUBLE2, MAGIC_DOUBLE3};
     double p2[3] = {MAGIC_DOUBLE2, MAGIC_DOUBLE3, MAGIC_DOUBLE};
     double p3[3] = {MAGIC_DOUBLE3, MAGIC_DOUBLE, MAGIC_DOUBLE2};
-    m->RemoveAllTreeNodeDistributionSamplePoints(treeNodeID);
-    m->AddTreeNodeDistributionSamplePoint(treeNodeID, p1);
-    m->AddTreeNodeDistributionSamplePoint(treeNodeID, p2);
-    m->AddTreeNodeDistributionSamplePoint(treeNodeID, p3);
-    m->RemoveTreeNodeDistributionSamplePoint(treeNodeID, 1);
+    m->RemoveAllTreeNodeDistributionSamplePoints(treeLeafNodeID);
+    m->AddTreeNodeDistributionSamplePoint(treeLeafNodeID, p1);
+    m->AddTreeNodeDistributionSamplePoint(treeLeafNodeID, p2);
+    m->AddTreeNodeDistributionSamplePoint(treeLeafNodeID, p3);
+    m->RemoveTreeNodeDistributionSamplePoint(treeLeafNodeID, 1);
     bool localPass = true;
-    if (m->GetTreeNodeDistributionNumberOfSamples(treeNodeID) != 2)
+    if (m->GetTreeNodeDistributionNumberOfSamples(treeLeafNodeID) != 2)
       {
       std::cerr << "Error: wrong number of sample points!" << std::endl;
       pass = false;
       localPass = false;
       }
-    m->GetTreeNodeDistributionSamplePoint(treeNodeID, 1, p2);
+    m->GetTreeNodeDistributionSamplePoint(treeLeafNodeID, 1, p2);
     if (! (p2[0]==p3[0] && p2[1]==p3[1] && p2[2]==p3[2]))
       {
       std::cerr << "Error: wrong order of sample points!" << std::endl;
       pass = false;
       localPass = false;
       }
-    m->RemoveAllTreeNodeDistributionSamplePoints(treeNodeID);
-    if (m->GetTreeNodeDistributionNumberOfSamples(treeNodeID) != 0)
+    m->RemoveAllTreeNodeDistributionSamplePoints(treeLeafNodeID);
+    if (m->GetTreeNodeDistributionNumberOfSamples(treeLeafNodeID) != 0)
       {
       std::cerr << "Error: wrong number of sample points!" << std::endl;
       pass = false;
@@ -275,78 +293,77 @@ int main(int vtkNotUsed(argc), char** argv)
     // node-specific parameters
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintWeight,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeLeafNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintQuality,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeLeafNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintFrequency,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintLabelMap,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintEMLabelMapConvergence,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintEMWeightsConvergence,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintMFALabelMapConvergence,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintMFAWeightsConvergence,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeGenerateBackgroundProbability,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeExcludeFromIncompleteEStep,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeAlpha,
-                            MAGIC_DOUBLE, treeNodeID);
+                            MAGIC_DOUBLE, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodePrintBias,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeBiasCalculationMaxIterations,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeSmoothingKernelWidth,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeSmoothingKernelSigma,
-                            MAGIC_DOUBLE, treeNodeID);
+                            MAGIC_DOUBLE, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeClassProbability,
-                            MAGIC_DOUBLE, treeNodeID);
+                            MAGIC_DOUBLE, treeLeafNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeSpatialPriorWeight,
-                            MAGIC_DOUBLE, treeNodeID);
+                            MAGIC_DOUBLE, treeLeafNodeID);
     vtkTestSetGetMacroIndex2(pass, m,
                              TreeNodeInputChannelWeight,
-                             MAGIC_DOUBLE, treeNodeID, 1);
+                             MAGIC_DOUBLE, treeLeafNodeID, 1);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeStoppingConditionEMType,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeStoppingConditionEMValue,
-                            MAGIC_DOUBLE, treeNodeID);
+                            MAGIC_DOUBLE, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeStoppingConditionEMIterations,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeStoppingConditionMFAType,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeStoppingConditionMFAValue,
-                            MAGIC_DOUBLE, treeNodeID);
+                            MAGIC_DOUBLE, treeParentNodeID);
     vtkTestSetGetMacroIndex(pass, m,
                             TreeNodeStoppingConditionMFAIterations,
-                            MAGIC_INT, treeNodeID);
+                            MAGIC_INT, treeParentNodeID);
      
-
       // registration parameters
       vtkTestSetGetMacro(pass, m,
                          RegistrationAffineType, MAGIC_INT);
@@ -357,10 +374,14 @@ int main(int vtkNotUsed(argc), char** argv)
       vtkIdType atlasRegID  = m->GetVolumeNthID(1);
       vtkTestSetGetMacro(pass, m,
                          RegistrationAtlasVolumeID, atlasRegID);
-      
+
       // save parameters
-      vtkTestSetGetStringMacro(pass, m, 
-                               ColorNodeID, MAGIC_STRING.c_str());
+      // - you need a  vtkSlicerColorLogic to test ColorNodeID - which requires the corresponding .h file , which is not part of the build 
+    // vtkSlicerColorLogic* colLogic = vtkSlicerColorLogic::New();
+        //this->MRMLScene->AddNode(colLogic);
+          //colLogic->Delete();
+          //vtkTestSetGetStringMacro(pass, m, 
+          //                  ColorNodeID, MAGIC_STRING.c_str());
       vtkTestSetGetStringMacro(pass, m, 
                                SaveWorkingDirectory, MAGIC_STRING.c_str());
       vtkTestSetGetStringMacro(pass, m,    
@@ -405,14 +426,14 @@ int main(int vtkNotUsed(argc), char** argv)
         }
 
       // add node B and C under A
-      std::cerr << "Adding B&C...";
+      std::cerr << "Adding B&C under A...";
       vtkIdType idB = m->AddTreeNode(idA);
       m->SetTreeNodeIntensityLabel(idB, int('B'));
       vtkIdType idC = m->AddTreeNode(idA);
       m->SetTreeNodeIntensityLabel(idC, int('C'));
 
       // add node D under B
-      std::cerr << "Adding D...";
+      std::cerr << "Adding D under B...";
       vtkIdType idD = m->AddTreeNode(idB);
       m->SetTreeNodeIntensityLabel(idD, int('D'));
 
@@ -428,7 +449,7 @@ int main(int vtkNotUsed(argc), char** argv)
       
       
       // move node D to node C
-      std::cerr << "Moving D to C...";
+      std::cerr << "Moving D from under B to under  C...";
       m->SetTreeNodeParentNodeID(idD, idC);
       if (m->GetTreeNodeIsLeaf(idA) ||
           !m->GetTreeNodeIsLeaf(idB) || 
@@ -452,9 +473,7 @@ int main(int vtkNotUsed(argc), char** argv)
         localPass = false;
         }
 
-      if (m->GetTreeNodeIntensityLabel(idA) != int('A') ||
-          m->GetTreeNodeIntensityLabel(idC) != int('C') ||
-          m->GetTreeNodeIntensityLabel(idD) != int('D'))
+      if ( m->GetTreeNodeIntensityLabel(idD) != int('D'))
         {
         std::cerr << "Error manipulating tree nodes" << std::endl;
         pass = false;
@@ -465,10 +484,7 @@ int main(int vtkNotUsed(argc), char** argv)
       std::cerr << "Removing A...";
       m->RemoveTreeNode(idA);
       if (numChildren != m->GetTreeNodeNumberOfChildren(rootID) ||
-          m->GetTreeNode(idA) != NULL ||
-          m->GetTreeNode(idB) != NULL ||
-          m->GetTreeNode(idC) != NULL ||
-          m->GetTreeNode(idD) != NULL)
+          m->TreeNodeExists(idA)  || m->TreeNodeExists(idB)  || m->TreeNodeExists(idC) || m->TreeNodeExists(idD) )
         {
         std::cerr << "Error removing tree node" << std::endl;
         pass = false;
@@ -476,7 +492,7 @@ int main(int vtkNotUsed(argc), char** argv)
         }
       std::cerr << (localPass ? "OK" : "FAILED") << std::endl;
 
-      /////////////////////////////////////////////////////////////////
+       /////////////////////////////////////////////////////////////////
       // manipulate atlas
       /////////////////////////////////////////////////////////////////
 
@@ -515,43 +531,43 @@ int main(int vtkNotUsed(argc), char** argv)
 
       // set some parameters that we can check later
       std::cerr << "Set some log mean parameters...";
-      m->SetTreeNodeDistributionLogMean(treeNodeID, 0, MAGIC_DOUBLE);
-      m->SetTreeNodeDistributionLogMean(treeNodeID, 1, MAGIC_DOUBLE2);
-      m->SetTreeNodeDistributionLogMean(treeNodeID, 2, MAGIC_DOUBLE3);
-      m->SetTreeNodeDistributionLogMean(treeNodeID, 3, MAGIC_DOUBLE4);
-      m->SetTreeNodeDistributionLogMean(treeNodeID, 4, MAGIC_DOUBLE5);
+      m->SetTreeNodeDistributionLogMean(treeLeafNodeID, 0, MAGIC_DOUBLE);
+      m->SetTreeNodeDistributionLogMean(treeLeafNodeID, 1, MAGIC_DOUBLE2);
+      m->SetTreeNodeDistributionLogMean(treeLeafNodeID, 2, MAGIC_DOUBLE3);
+      m->SetTreeNodeDistributionLogMean(treeLeafNodeID, 3, MAGIC_DOUBLE4);
+      m->SetTreeNodeDistributionLogMean(treeLeafNodeID, 4, MAGIC_DOUBLE5);
 
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 0, 0, 1);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 0, 1, 2);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 0, 2, 3);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 0, 3, 4);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 0, 4, 5);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 1, 0, 6);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 1, 1, 7);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 1, 2, 8);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 1, 3, 9);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 1, 4, 20);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 2, 0, 11);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 2, 1, 12);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 2, 2, 13);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 2, 3, 14);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 2, 4, 15);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 3, 0, 16);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 3, 1, 17);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 3, 2, 18);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 3, 3, 19);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 3, 4, 20);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 4, 0, 21);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 4, 1, 22);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 4, 2, 23);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 4, 3, 24);
-      m->SetTreeNodeDistributionLogCovariance(treeNodeID, 4, 4, 25);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 0, 0, 1);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 0, 1, 2);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 0, 2, 3);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 0, 3, 4);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 0, 4, 5);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 1, 0, 6);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 1, 1, 7);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 1, 2, 8);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 1, 3, 9);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 1, 4, 20);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 2, 0, 11);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 2, 1, 12);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 2, 2, 13);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 2, 3, 14);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 2, 4, 15);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 3, 0, 16);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 3, 1, 17);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 3, 2, 18);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 3, 3, 19);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 3, 4, 20);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 4, 0, 21);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 4, 1, 22);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 4, 2, 23);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 4, 3, 24);
+      m->SetTreeNodeDistributionLogCovariance(treeLeafNodeID, 4, 4, 25);
 
-      m->SetTreeNodeInputChannelWeight(treeNodeID, 0, MAGIC_DOUBLE);
-      m->SetTreeNodeInputChannelWeight(treeNodeID, 1, MAGIC_DOUBLE2);
-      m->SetTreeNodeInputChannelWeight(treeNodeID, 2, MAGIC_DOUBLE3);
-      m->SetTreeNodeInputChannelWeight(treeNodeID, 3, MAGIC_DOUBLE4);
-      m->SetTreeNodeInputChannelWeight(treeNodeID, 4, MAGIC_DOUBLE5);
+      m->SetTreeNodeInputChannelWeight(treeLeafNodeID, 0, MAGIC_DOUBLE);
+      m->SetTreeNodeInputChannelWeight(treeLeafNodeID, 1, MAGIC_DOUBLE2);
+      m->SetTreeNodeInputChannelWeight(treeLeafNodeID, 2, MAGIC_DOUBLE3);
+      m->SetTreeNodeInputChannelWeight(treeLeafNodeID, 3, MAGIC_DOUBLE4);
+      m->SetTreeNodeInputChannelWeight(treeLeafNodeID, 4, MAGIC_DOUBLE5);
 
 
       // remove a target
@@ -578,10 +594,10 @@ int main(int vtkNotUsed(argc), char** argv)
       // check that all is ok
       // we should have changed 0, 1, 2, 3, 4 to 4, 0, 3, 1
       std::cerr << "Checking that parameters moved ok...";
-      if (m->GetTreeNodeDistributionLogMeanWithCorrection(treeNodeID, 0) != MAGIC_DOUBLE5 ||
-          m->GetTreeNodeDistributionLogMeanWithCorrection(treeNodeID, 1) != MAGIC_DOUBLE ||
-          m->GetTreeNodeDistributionLogMeanWithCorrection(treeNodeID, 2) != MAGIC_DOUBLE4 ||
-          m->GetTreeNodeDistributionLogMeanWithCorrection(treeNodeID, 3) != MAGIC_DOUBLE2)
+      if (m->GetTreeNodeDistributionLogMeanWithCorrection(treeLeafNodeID, 0) != MAGIC_DOUBLE5 ||
+          m->GetTreeNodeDistributionLogMeanWithCorrection(treeLeafNodeID, 1) != MAGIC_DOUBLE ||
+          m->GetTreeNodeDistributionLogMeanWithCorrection(treeLeafNodeID, 2) != MAGIC_DOUBLE4 ||
+          m->GetTreeNodeDistributionLogMeanWithCorrection(treeLeafNodeID, 3) != MAGIC_DOUBLE2)
         {
         std::cerr << "Error moving log mean" << std::endl;
         std::cerr << "M1 " << MAGIC_DOUBLE << std::endl;
@@ -593,32 +609,32 @@ int main(int vtkNotUsed(argc), char** argv)
         std::cerr << "Expected order: M5 M1 M4 M2" << std::endl;
 
         std::cerr << "Found order: " 
-                  << m->GetTreeNodeDistributionLogMeanWithCorrection(treeNodeID, 0) << " "
-                  << m->GetTreeNodeDistributionLogMeanWithCorrection(treeNodeID, 1) << " "
-                  << m->GetTreeNodeDistributionLogMeanWithCorrection(treeNodeID, 2) << " "
-                  << m->GetTreeNodeDistributionLogMeanWithCorrection(treeNodeID, 3) 
+                  << m->GetTreeNodeDistributionLogMeanWithCorrection(treeLeafNodeID, 0) << " "
+                  << m->GetTreeNodeDistributionLogMeanWithCorrection(treeLeafNodeID, 1) << " "
+                  << m->GetTreeNodeDistributionLogMeanWithCorrection(treeLeafNodeID, 2) << " "
+                  << m->GetTreeNodeDistributionLogMeanWithCorrection(treeLeafNodeID, 3) 
                   << std::endl;
         pass = false;
         localPass = false;
         }
 
       if (
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 0, 0) != 25 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 0, 1) != 21 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 0, 2) != 24 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 0, 3) != 22 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 1, 0) != 5 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 1, 1) != 1 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 1, 2) != 4 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 1, 3) != 2 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 2, 0) != 20 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 2, 1) != 16 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 2, 2) != 19 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 2, 3) != 17 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 3, 0) != 20 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 3, 1) != 6 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 3, 2) != 9 ||
-          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, 3, 3) != 7 
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 0, 0) != 25 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 0, 1) != 21 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 0, 2) != 24 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 0, 3) != 22 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 1, 0) != 5 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 1, 1) != 1 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 1, 2) != 4 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 1, 3) != 2 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 2, 0) != 20 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 2, 1) != 16 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 2, 2) != 19 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 2, 3) != 17 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 3, 0) != 20 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 3, 1) != 6 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 3, 2) != 9 ||
+          m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, 3, 3) != 7 
           )
         {
         std::cerr << "Error moving log covariance" << std::endl;
@@ -627,7 +643,7 @@ int main(int vtkNotUsed(argc), char** argv)
           {
           for (int c = 0; c < 4; ++c)
             {
-            std::cerr << m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeNodeID, r, c)
+            std::cerr << m->GetTreeNodeDistributionLogCovarianceWithCorrection(treeLeafNodeID, r, c)
                       << " ";
             }
           std::cerr << std::endl;
@@ -636,17 +652,18 @@ int main(int vtkNotUsed(argc), char** argv)
         localPass = false;
         }
 
-      if (m->GetTreeNodeInputChannelWeight(treeNodeID, 0) != MAGIC_DOUBLE5 ||
-          m->GetTreeNodeInputChannelWeight(treeNodeID, 1) != MAGIC_DOUBLE ||
-          m->GetTreeNodeInputChannelWeight(treeNodeID, 2) != MAGIC_DOUBLE4 ||
-          m->GetTreeNodeInputChannelWeight(treeNodeID, 3) != MAGIC_DOUBLE2)
+      if (m->GetTreeNodeInputChannelWeight(treeLeafNodeID, 0) != MAGIC_DOUBLE5 ||
+          m->GetTreeNodeInputChannelWeight(treeLeafNodeID, 1) != MAGIC_DOUBLE ||
+          m->GetTreeNodeInputChannelWeight(treeLeafNodeID, 2) != MAGIC_DOUBLE4 ||
+          m->GetTreeNodeInputChannelWeight(treeLeafNodeID, 3) != MAGIC_DOUBLE2)
         {
         std::cerr << "Error moving input channel weight" << std::endl;
         pass = false;
         localPass = false;
         }
-
+      
       std::cerr << (localPass ? "OK" : "FAILED") << std::endl;
+     
     }
   catch(...)
     {

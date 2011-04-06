@@ -367,8 +367,8 @@ int DefineEMSTemplate (int useDefaultParametersNode, std::string parametersMRMLN
 {
     //
     // make sure there is at least one parameter set
-   //
-     
+    // this also modifies mrml to new mrml structure 
+    //
     int numParameterSets = emMRMLManager->GetNumberOfParameterSets();
     if (numParameterSets < 1)
        {
@@ -416,7 +416,6 @@ int DefineEMSTemplate (int useDefaultParametersNode, std::string parametersMRMLN
 
     //
     // populate the mrmlManager with the parameters
-    // this also modifies to new mrml structure 
     //  
     try
       {
