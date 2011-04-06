@@ -54,8 +54,8 @@ set(EMSEG_RUN_EXTRA_LONG_TESTS   OFF
   )
 mark_as_advanced(EMSEG_RUN_EXTRA_LONG_TESTS)
 
-set(EMSEG_RUN_REG_TESTS   ON
-  CACHE BOOL "Enable EMSegment extra, registration tests."
+set(EMSEG_RUN_REG_TESTS   OFF
+  CACHE BOOL "Enable EMSegment extra, registration tests." FORCE
   )
 mark_as_advanced(EMSEG_RUN_REG_TESTS)
 
