@@ -630,7 +630,7 @@ if(NOT DISABLE_CXX_TESTING)
 
       foreach (scalartype ${scalartypes})
 
-        # Task test - small - scalartypes - registrationpackages
+        # Task test - scalartypes - registrationpackages
         midas_add_test( EMSegCL_Task_${registrationpackage}_MRIHumanBrain_${scalartype}
           ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
           --no-error-popup
@@ -700,6 +700,41 @@ if(NOT DISABLE_CXX_TESTING)
         ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
+        )
+    endif(EMSEG_RUN_COMPARE_TESTS)
+
+
+
+    # Task MRI-Human-Brain-Exp
+    add_test(
+      EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Exp.mrml
+      --targetVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_MRIHumanBrain_T1_aligned.nrrd
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainExp_T1_aligned.nrrd
+      --taskPreProcessingSetting
+      "|C1|C0|C1"
+      --registrationPackage
+      ${registrationpackage}
+      --atlasVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_skulneck.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_air.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_csf.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_greymatter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_whitematter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_t1_stripped.nrrd
+      )
+    set_tests_properties(
+      EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
+    if(EMSEG_RUN_COMPARE_TESTS)
+      midas_add_test(
+        EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}_CompareTest
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainExp_T1_aligned.nrrd
+                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainExp_T1_aligned.nrrd.md5}
         )
     endif(EMSEG_RUN_COMPARE_TESTS)
 
