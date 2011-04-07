@@ -14,7 +14,9 @@
 #include <sstream>
 
 #include <stdio.h>
-
+#ifdef WIN32
+#include <process.h>
+#endif
 #include "CongealingCLICLP.h"
 
 
@@ -355,7 +357,11 @@ int main(int argc, char* argv[])
     }
   else
     {
+#ifdef WIN32
+    _execlp(launch.c_str(),launch.c_str(),pFileName,(char *) 0);
+#else
     execlp(launch.c_str(),launch.c_str(),pFileName,(char *) 0);
+#endif
     }
 
 
