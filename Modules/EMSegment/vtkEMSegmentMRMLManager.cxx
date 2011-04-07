@@ -4927,6 +4927,7 @@ void vtkEMSegmentMRMLManager::RemoveLegacyNodes()
         // cout << "===> Removing  TreeParametersNode with ID: " << parNode->GetID() << endl;
                   if (treeNode->GetNumberOfChildNodes()) 
                   {
+                           
                            treeNode->SetParentParametersNodeID(parNode->GetParentParametersNodeID());
                             // delete associated leaf node;
                             vtkMRMLEMSTreeParametersLeafNode* leafNode = parNode->GetLeafParametersNode();
@@ -4934,7 +4935,10 @@ void vtkEMSegmentMRMLManager::RemoveLegacyNodes()
                             {
                                  this->MRMLScene->RemoveNode(leafNode);
                             }
+                            // This is now a parent node so it does not need any leaf node parameters 
                             treeNode->SetLeafParametersNodeID(NULL);
+               // Currently GUI does not display spatial prior maps - so remove it here so it does not lurk around in the background 
+                           treeNode->SetSpatialPriorVolumeName(NULL);
                      } else {
                            treeNode->SetLeafParametersNodeID(parNode->GetLeafParametersNodeID());
                            // delete associated parent node;
