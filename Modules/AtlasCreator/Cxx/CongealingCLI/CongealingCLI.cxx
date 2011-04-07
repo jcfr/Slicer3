@@ -12,7 +12,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
-#include <unistd.h>
+
 #include <stdio.h>
 
 #include "CongealingCLICLP.h"
