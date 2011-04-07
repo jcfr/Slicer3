@@ -1,4 +1,4 @@
 scm           svn
-svnpath       http://svn.slicer.org/Slicer3/trunk/Extensions/CMTK4Slicer/CMakeLists.txt
+svnpath       http://svn.slicer.org/Slicer3/trunk/Extensions/CMTK4Slicer
 svnusername   anonymous
 svnpassword   anonymous
