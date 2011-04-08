@@ -1697,19 +1697,19 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
 
-        if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
-            set CMD "$CMD --numberOfSamples 100000  --splineGridSize 7,5,12 --projectedGradientTolerance  1e-4"
-        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
-            set CMD "$CMD --numberOfSamples 1000 --splineGridSize 7,5,12 --projectedGradientTolerance 1e-1"
+        if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
+            set CMD "$CMD --numberOfIterations 3    --numberOfSamples 100    --splineGridSize 7,5,12   --projectedGradientTolerance 1e-1"
+        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
+            set CMD "$CMD --numberOfIterations 1500 --numberOfSamples 1000   --splineGridSize 7,5,12   --projectedGradientTolerance 1e-1"
         } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
-            set CMD "$CMD --numberOfSamples 100000 --splineGridSize 28,20,24 --projectedGradientTolerance 1e-5"
+            set CMD "$CMD --numberOfIterations 1500 --numberOfSamples 100000 --splineGridSize 28,20,24 --projectedGradientTolerance 1e-5"
         } else {
             PrintError "BRAINSRegistration: Unknown affineType: $affineType"
             return ""
         }
 
 
-        set CMD "$CMD --numberOfIterations 1500 --minimumStepLength 0.005 --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0  --fixedVolumeTimeIndex 0 --movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --maximumStepLength 0.2 --failureExitCode -1 --debugNumberOfThreads -1 --debugLevel 0 --costFunctionConvergenceFactor 1e+9 --costMetric MMI"
+        set CMD "$CMD --minimumStepLength 0.005 --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0  --fixedVolumeTimeIndex 0 --movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --maximumStepLength 0.2 --failureExitCode -1 --debugNumberOfThreads -1 --debugLevel 0 --costFunctionConvergenceFactor 1e+9 --costMetric MMI"
 
         $LOGIC PrintText "TCL: Executing $CMD"
         catch { eval exec $CMD } errmsg
