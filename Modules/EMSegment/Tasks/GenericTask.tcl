@@ -1426,6 +1426,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             "short"          { set CMD "$CMD --short" }
             "unsigned short" { set CMD "$CMD --ushort" }
             "int"            { set CMD "$CMD --int" }
+            "unsigned int"   { set CMD "$CMD --uint" }
             "float"          { set CMD "$CMD --float" }
             "double"         { set CMD "$CMD --double" }
             default {
