@@ -1447,8 +1447,9 @@ itcl::body SliceSWidget::getLinkedSliceLogics { {orientationFlag 1} } {
                   if {$orientationFlag == 1} {
                       set currSliceNode [$sgui GetSliceNode]
                       set currOrientString [$currSliceNode GetOrientationString]
+                      # it's linked if the orientation flags match and are not reformat, but also make sure to return self
                       if { [string compare $orientString $currOrientString] == 0 &&
-                            $currOrientString != "Reformat" } {
+                            ($currOrientString != "Reformat" || $sgui == $sliceGUI)} {
                           lappend logics [$sgui GetLogic]
                       }
                   } else {
