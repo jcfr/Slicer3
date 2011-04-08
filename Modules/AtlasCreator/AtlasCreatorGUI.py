@@ -708,7 +708,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             
             defaultCase = self._defaultCaseCombo.GetWidget().GetValue()
             if defaultCase and segmentationsDir:
-                defaultCaseFullPath = str(self._segDirButton.GetWidget().GetFileName()) + os.sep + str(defaultCase).strip("'")
+                defaultCaseFullPath = str(self._origDirButton.GetWidget().GetFileName()) + os.sep + str(defaultCase).strip("'")
                 self._associatedMRMLNode.SetFixedTemplateDefaultCaseFilePath(defaultCaseFullPath)
             
             
