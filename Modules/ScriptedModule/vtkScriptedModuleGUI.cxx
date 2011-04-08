@@ -448,7 +448,7 @@ void vtkScriptedModuleGUI::Invoke (const char* methodAndArgs)
         }
       
       pythonCommand << "SlicerScriptedModuleInfo.Modules['" << this->GetModuleName() << "']['gui']." << strings[0] << "("<< argsString <<")\n";
-      std::cout << pythonCommand << std::endl;
+      //std::cout << pythonCommand << std::endl;
       }
 
     if (PyRun_SimpleString( pythonCommand.str().c_str() ) != 0)
