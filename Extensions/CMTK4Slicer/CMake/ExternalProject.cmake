@@ -18,6 +18,7 @@
 #    [SVN_REVISION rev]          # Revision to checkout from Subversion repo
 #    [SVN_USERNAME john ]        # Username to use for Subversion checkout and update
 #    [SVN_PASSWORD doe ]         # Password to use for Subversion checkout and update
+#    [SVN_TRUST_CERT 1 ]         # trust the Subversion server site certificate
 #    [GIT_REPOSITORY url]        # URL of GIT repo
 #    [GIT_TAG tag]               # Git branch name, commit id or tag
 #    [URL /.../src.tgz]          # Full path or URL of source
@@ -712,6 +713,7 @@ function(_ep_add_download_command name)
     get_property(svn_revision TARGET ${name} PROPERTY _EP_SVN_REVISION)
     get_property(svn_username TARGET ${name} PROPERTY _EP_SVN_USERNAME)
     get_property(svn_password TARGET ${name} PROPERTY _EP_SVN_PASSWORD)
+    get_property(svn_trust_cert TARGET ${name} PROPERTY _EP_SVN_TRUST_CERT)
 
     set(repository ${svn_repository})
     set(module)
@@ -725,7 +727,11 @@ function(_ep_add_download_command name)
     get_filename_component(src_name "${source_dir}" NAME)
     get_filename_component(work_dir "${source_dir}" PATH)
     set(comment "Performing download step (SVN checkout) for '${name}'")
-    set(cmd ${Subversion_SVN_EXECUTABLE} co ${svn_repository} ${svn_revision} --username=${svn_username} --password=${svn_password} ${src_name})
+    if (${svn_trust_cert})
+      set(cmd ${Subversion_SVN_EXECUTABLE} co --non-interactive --trust-server-cert ${svn_repository} ${svn_revision} --username=${svn_username} --password=${svn_password} ${src_name})
+    else()
+      set(cmd ${Subversion_SVN_EXECUTABLE} co ${svn_repository} ${svn_revision} --username=${svn_username} --password=${svn_password} ${src_name})
+    endif()
     list(APPEND depends ${stamp_dir}/${name}-svninfo.txt)
   elseif(git_repository)
     #find_package(Git)
@@ -859,7 +865,12 @@ function(_ep_add_update_command name)
     get_property(svn_revision TARGET ${name} PROPERTY _EP_SVN_REVISION)
     get_property(svn_username TARGET ${name} PROPERTY _EP_SVN_USERNAME)
     get_property(svn_password TARGET ${name} PROPERTY _EP_SVN_PASSWORD)
-    set(cmd ${Subversion_SVN_EXECUTABLE} up ${svn_revision} --username=${svn_username} --password=${svn_password})
+    get_property(svn_trust_cert TARGET ${name} PROPERTY _EP_SVN_TRUST_CERT)
+    if (${svn_trust_cert})
+      set(cmd ${Subversion_SVN_EXECUTABLE} up --non-interactive --trust-server-cert --username=${svn_username} --password=${svn_password})
+    else()
+      set(cmd ${Subversion_SVN_EXECUTABLE} up ${svn_extra_args} --username=${svn_username} --password=${svn_password})
+    endif()
     set(always 1)
   elseif(git_repository)
     if(NOT git_EXECUTABLE)
