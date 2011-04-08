@@ -63,7 +63,7 @@ endif (${APPLE})
 # this is not optimal but should work for now
 if (${MSVC})
    set(LOCAL_CMAKE_BUILD_OPTIONS ${LOCAL_CMAKE_BUILD_OPTIONS} -DCMAKE_CXX_FLAGS:STRING=/arch:SSE2)
-   set(LOCAL_CMAKE_BUILD_OPTIONS ${LOCAL_CMAKE_BUILD_OPTIONS} -DCMTK_USE_OPENMP:BOOL=OFF)
+   set(LOCAL_CMAKE_BUILD_OPTIONS ${LOCAL_CMAKE_BUILD_OPTIONS} -DCMTK_USE_OPENMP:BOOL=ON)
 endif (${MSVC})
 
 message("######### LOCAL_CMAKE_BUILD_OPTIONS:       ${LOCAL_CMAKE_BUILD_OPTIONS}")
@@ -77,8 +77,8 @@ include(ExternalProject)
 
 set(PROJECTNAME CMTK)
 ExternalProject_Add(${PROJECTNAME}
-  SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/tags/Slicer3"
-#  SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/trunk"
+#  SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/tags/Slicer3"
+  SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/trunk"
   SVN_USERNAME "slicerbot"
   SVN_PASSWORD "slicer"
   SVN_TRUST_CERT 1
