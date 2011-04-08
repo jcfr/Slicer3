@@ -406,7 +406,7 @@ void vtkScriptedModuleGUI::TearDownGUI ( )
 }
 
 //---------------------------------------------------------------------------
-void vtkScriptedModuleGUI::Invoke (char* methodAndArgs)
+void vtkScriptedModuleGUI::Invoke (const char* methodAndArgs)
 {
   if (this->Language == vtkScriptedModuleGUI::Tcl)
     {
@@ -459,6 +459,108 @@ void vtkScriptedModuleGUI::Invoke (char* methodAndArgs)
     (void)(methodAndArgs); // To avoid "unused variable warning"
 #endif
     } 
+}
+
+//---------------------------------------------------------------------------
+void vtkScriptedModuleGUI::Invoke (char* method, char* arg1)
+{
+
+  std::string methodAndArgs("");
+  methodAndArgs += method;
+  methodAndArgs += " ";
+  methodAndArgs += arg1;
+  this->Invoke(methodAndArgs.c_str());
+
+}
+
+//---------------------------------------------------------------------------
+void vtkScriptedModuleGUI::Invoke (char* method, char* arg1, char* arg2)
+{
+
+  std::string methodAndArgs("");
+  methodAndArgs += method;
+  methodAndArgs += " ";
+  methodAndArgs += arg1;
+  methodAndArgs += " ";
+  methodAndArgs += arg2;  
+  this->Invoke(methodAndArgs.c_str());
+
+}
+
+//---------------------------------------------------------------------------
+void vtkScriptedModuleGUI::Invoke (char* method, char* arg1, char* arg2, char* arg3)
+{
+
+  std::string methodAndArgs("");
+  methodAndArgs += method;
+  methodAndArgs += " ";
+  methodAndArgs += arg1;
+  methodAndArgs += " ";
+  methodAndArgs += arg2;  
+  methodAndArgs += " ";
+  methodAndArgs += arg3;    
+  this->Invoke(methodAndArgs.c_str());
+
+}
+
+//---------------------------------------------------------------------------
+void vtkScriptedModuleGUI::Invoke (char* method, char* arg1, char* arg2, char* arg3, char* arg4)
+{
+
+  std::string methodAndArgs("");
+  methodAndArgs += method;
+  methodAndArgs += " ";
+  methodAndArgs += arg1;
+  methodAndArgs += " ";
+  methodAndArgs += arg2;  
+  methodAndArgs += " ";
+  methodAndArgs += arg3;    
+  methodAndArgs += " ";
+  methodAndArgs += arg4;
+  this->Invoke(methodAndArgs.c_str());
+
+}
+
+//---------------------------------------------------------------------------
+void vtkScriptedModuleGUI::Invoke (char* method, char* arg1, char* arg2, char* arg3, char* arg4, char* arg5)
+{
+
+  std::string methodAndArgs("");
+  methodAndArgs += method;
+  methodAndArgs += " ";
+  methodAndArgs += arg1;
+  methodAndArgs += " ";
+  methodAndArgs += arg2;  
+  methodAndArgs += " ";
+  methodAndArgs += arg3;    
+  methodAndArgs += " ";
+  methodAndArgs += arg4;
+  methodAndArgs += " ";
+  methodAndArgs += arg5;  
+  this->Invoke(methodAndArgs.c_str());
+
+}
+
+//---------------------------------------------------------------------------
+void vtkScriptedModuleGUI::Invoke (char* method, char* arg1, char* arg2, char* arg3, char* arg4, char* arg5, char* arg6)
+{
+
+  std::string methodAndArgs("");
+  methodAndArgs += method;
+  methodAndArgs += " ";
+  methodAndArgs += arg1;
+  methodAndArgs += " ";
+  methodAndArgs += arg2;  
+  methodAndArgs += " ";
+  methodAndArgs += arg3;    
+  methodAndArgs += " ";
+  methodAndArgs += arg4;
+  methodAndArgs += " ";
+  methodAndArgs += arg5;  
+  methodAndArgs += " ";
+  methodAndArgs += arg6;    
+  this->Invoke(methodAndArgs.c_str());
+
 }
 
 //---------------------------------------------------------------------------
