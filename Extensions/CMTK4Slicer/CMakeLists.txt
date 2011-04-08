@@ -78,7 +78,7 @@ include(ExternalProject)
 set(PROJECTNAME CMTK)
 ExternalProject_Add(${PROJECTNAME}
 #  SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/tags/Slicer3"
-  SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/trunk"
+  SVN_REPOSITORY "https://www.nitrc.org/svn/cmtk/trunk/core"
   SVN_USERNAME "slicerbot"
   SVN_PASSWORD "slicer"
   SVN_TRUST_CERT 1
