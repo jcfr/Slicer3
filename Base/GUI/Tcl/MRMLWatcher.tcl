@@ -9,9 +9,61 @@ if {0} { ;# comment
   scene and maintain a global MRML array to allow 
   access to the elements
 
+  this file also contains some simple test procs that can
+  be used from the console for interactive performance
+  assessment
+
 }
 #
 #########################################################
+
+
+proc MRMLWatch {} {
+  if { ![info exists ::MRML] } {
+    MRMLWatcher #auto
+  }
+}
+
+proc TimeJumpSliceIteration {sliceNode} {
+  $sliceNode JumpSlice 0 0 0
+  update
+  $sliceNode JumpSlice 0 0 40
+  update
+}
+
+proc TimeJumpSlice { {sliceName "Red"} {iters 10} } {
+  MRMLWatch
+  set sliceNode $::MRML($sliceName)
+  set usecs [lindex [time "TimeJumpSliceIteration $sliceNode" $iters] 0]
+  set fps [expr 1. / ($usecs / 1e6)]
+  puts "$fps frames per second"
+}
+
+
+proc TimeSlideSliceIteration {offsetScale} {
+  $offsetScale ButtonPressCallback
+  $offsetScale SetValue 10
+  $offsetScale ButtonReleaseCallback
+  update
+  $offsetScale ButtonPressCallback
+  $offsetScale SetValue 50
+  $offsetScale ButtonReleaseCallback
+  update
+}
+
+proc TimeSlideSlice { {sliceName "Red"} {iters 10} } {
+  set offsetScale ""
+  foreach sc [vtkSlicerSliceControllerWidget ListInstances] {
+    if { [[$sc GetSliceNode] GetName] == $sliceName } {
+      set offsetScale [$sc GetOffsetScale]
+    }
+  }
+  set usecs [lindex [time "TimeSlideSliceIteration $offsetScale" $iters] 0]
+  set fps [expr 1. / ($usecs / 1e6)]
+  puts "$fps frames per second"
+}
+
+
 
 #
 # The partent class definition - define if needed (not when re-sourcing)
