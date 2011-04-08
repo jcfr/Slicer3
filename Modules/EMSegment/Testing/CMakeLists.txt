@@ -618,57 +618,59 @@ if(NOT DISABLE_CXX_TESTING)
   endif(EMSEG_RUN_VALGRIND_TESTS)
 
 
+  if (EMSEG_RUN_LOCAL_TESTS)
+    set (registrationpackages CMTK BRAINS)
+    set (scalartypes float char double int short uchar uint ushort)
+    set (sizes small very_small)
+  else (EMSEG_RUN_LOCAL_TESTS)
+    set (registrationpackages BRAINS)
+    set (scalartypes float uint)
+    set (sizes small)
+  endif (EMSEG_RUN_LOCAL_TESTS)
 
-  set (registrationpackages CMTK BRAINS)
-  set (scalartypes float char double int short uchar uint ushort)
 
 
   #==== Scalartype tests ============================
-  if( EMSEG_RUN_LOCAL_TESTS )
+
+  foreach (registrationpackage ${registrationpackages})
+
+    foreach (scalartype ${scalartypes})
+
+      # Task test - scalartypes - registrationpackages
+      midas_add_test( EMSegCL_Task_${registrationpackage}_MRIHumanBrain_${scalartype}
+        ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+        --no-error-popup
+        --verbose --mrmlSceneFileName
+        ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
+        --targetVolumeFileNames
+        MIDAS{MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd.md5}
+        --resultVolumeFileName
+        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd
+        --taskPreProcessingSetting
+        "|C1|C0"
+        --registrationPackage
+        ${registrationpackage}
+        --registrationAffineType
+        -1
+        --registrationDeformableType
+        -1
+        )
+      set_tests_properties(
+        EMSegCL_Task_${registrationpackage}_MRIHumanBrain_${scalartype}
+        PROPERTIES
+        FAIL_REGULAR_EXPRESSION
+        "ERROR"
+        )
+
+    endforeach (scalartype ${scalartypes})
+
+  endforeach (registrationpackage ${registrationpackages})
+
+
+
+  foreach (size ${sizes})
 
     foreach (registrationpackage ${registrationpackages})
-
-      foreach (scalartype ${scalartypes})
-
-        # Task test - scalartypes - registrationpackages
-        midas_add_test( EMSegCL_Task_${registrationpackage}_MRIHumanBrain_${scalartype}
-          ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-          --no-error-popup
-          --verbose --mrmlSceneFileName
-          ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
-          --targetVolumeFileNames
-          MIDAS{MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd.md5}
-          --resultVolumeFileName
-          ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_MRI-Human-Brain_T1-Atlas-Template-${scalartype}.nrrd
-          --taskPreProcessingSetting
-          "|C1|C0"
-          --registrationPackage
-          ${registrationpackage}
-          --registrationAffineType
-          1
-          --registrationDeformableType
-          1
-          )
-        set_tests_properties(
-          EMSegCL_Task_${registrationpackage}_MRIHumanBrain_${scalartype}
-          PROPERTIES
-          FAIL_REGULAR_EXPRESSION
-          "ERROR"
-          )
-
-      endforeach (scalartype ${scalartypes})
-
-    endforeach (registrationpackage ${registrationpackages})
-
-  endif( EMSEG_RUN_LOCAL_TESTS )
-
-
-
-
-
-  set (sizes small very_small)
-  foreach (size ${sizes})
-    set (registrationpackage CMTK)
 
     # Task MRI-Human-Brain
     add_test(
@@ -682,9 +684,13 @@ if(NOT DISABLE_CXX_TESTING)
       --resultVolumeFileName
       ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
       --taskPreProcessingSetting
-      "|C0|C0"
+      "|C1|C0"
       --registrationPackage
       ${registrationpackage}
+      --registrationAffineType
+      -1
+      --registrationDeformableType
+      -1
       --atlasVolumeFileNames
       ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_skulneck.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_air.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_csf.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_greymatter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_whitematter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_atlas_t1.nrrd
       )
@@ -752,10 +758,14 @@ if(NOT DISABLE_CXX_TESTING)
       ${EMSegment_BINARY_DIR}/RESULT_${size}_MRIHumanBrainParcellation_T1.nrrd
       --registrationPackage
       ${registrationpackage}
-    --taskPreProcessingSetting
-    "|C0|C0"
-    --atlasVolumeFileNames
-    ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_bg_atlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_subgm_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_subwm_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_csf_atlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_t1_atlas.nrrd
+      --registrationAffineType
+      -1
+      --registrationDeformableType
+      -1
+      --taskPreProcessingSetting
+      "|C1|C0"
+      --atlasVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_bg_atlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltgm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtgm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_subgm_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_ltwm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm1_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm2_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm3_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_rtwm4_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_subwm_combatlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_csf_atlas.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Parcellation/${size}_t1_atlas.nrrd
     )
     set_tests_properties(
       EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}
@@ -785,9 +795,13 @@ if(NOT DISABLE_CXX_TESTING)
       ${EMSegment_BINARY_DIR}/RESULT_${size}_MRIHumanBrainFullParcellation_T1.nrrd
       --registrationPackage
       ${registrationpackage}
-    --taskPreProcessingSetting
-    "|C0|C0"
-    --atlasVolumeFileNames
+      --registrationAffineType
+      -1
+      --registrationDeformableType
+      -1
+      --taskPreProcessingSetting
+      "|C1|C0"
+      --atlasVolumeFileNames
       ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_skullneck.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_air.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_csf.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_greymatter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_whitematter.nrrd,${EMSegment_TESTDATA_DIR}/MRI-Human-Brain-Full-Parcellation/${size}_atlas_t1.nrrd
       )
     set_tests_properties(
@@ -818,9 +832,13 @@ if(NOT DISABLE_CXX_TESTING)
       --resultVolumeFileName
       ${EMSegment_BINARY_DIR}/RESULT_${size}_NonHumanPrimate_T1.nrrd
       --taskPreProcessingSetting
-      "|C0|C0"
+      "|C1|C0"
       --registrationPackage
       ${registrationpackage}
+      --registrationAffineType
+      -1
+      --registrationDeformableType
+      -1
       --atlasVolumeFileNames
       ${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_rhip_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_rput_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_rcau_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_lhip_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_lput_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_lcau_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_gm_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_wm_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_csf_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_cb_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_bs_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_rest_prob.nrrd,${EMSegment_TESTDATA_DIR}/Non-Human-Primate/Unbiased/${size}_template.nrrd
       )
@@ -840,6 +858,9 @@ if(NOT DISABLE_CXX_TESTING)
                           MIDAS{RESULT_${registrationpackage}_${size}_NonHumanPrimate_T1.nrrd.md5}
         )
     endif(EMSEG_RUN_COMPARE_TESTS)
+
+
+    endforeach (registrationpackage ${registrationpackages})
 
   endforeach (size ${sizes})
 
