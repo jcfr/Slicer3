@@ -86,8 +86,6 @@ add_library(${lib_name}
 slicer3_set_modules_output_path(${lib_name})
 
 
-
-
 target_link_libraries(${lib_name}
   ${Slicer3_Libs_LIBRARIES}
   ${Slicer3_Base_LIBRARIES}
@@ -97,4 +95,12 @@ target_link_libraries(${lib_name}
 
 
 slicer3_install_modules(${lib_name})
+
+# --------------------------------------------------------------------------
+# Testing 
+
+if(BUILD_TESTING)
+  ADD_SUBDIRECTORY(Testing)
+endif(BUILD_TESTING)
+
 

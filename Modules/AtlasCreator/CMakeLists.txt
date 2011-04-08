@@ -21,10 +21,26 @@ subDirs(
 )
 
 # --------------------------------------------------------------------------
-# Include the Combiner/ directory
+# Include the ACITKTools directory
 subDirs(
   ACITKTools
 )
+
+# --------------------------------------------------------------------------
+# Include the TestData directory
+ADD_CUSTOM_TARGET(copydata ALL
+  ${CMAKE_COMMAND}
+  -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/TestData
+  -DDST=${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/copydata.cmake
+)
+
+install(
+  DIRECTORY TestData
+  DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/
+  FILES_MATCHING PATTERN "*"
+)
+
 
 # --------------------------------------------------------------------------
 # Copy over the Python files
