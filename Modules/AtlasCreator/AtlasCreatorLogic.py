@@ -403,6 +403,11 @@ class AtlasCreatorLogic(object):
             
             normalizedIntensityMapFilePath = outputDir + "normalizedIntensityMapOfAligned.nrrd"
             
+            # if we use fixed registration, we will now add the defaultCase as well
+            # to prevent information loss during the combination stage
+            if node.GetTemplateType() == "fixed":
+                alignedImages.append(defaultCase)            
+            
             self.ComputeMeanImage(schedulerCommand,
                                   alignedImages, 
                                   normalizedIntensityMapFilePath,
@@ -459,7 +464,12 @@ class AtlasCreatorLogic(object):
             # if we use fixed registration, we will now add the segmentation of the defaultCase as well
             # to prevent information loss during the combination stage
             if node.GetTemplateType() == "fixed":
-                resampledSegmentationsFilePathList.append(defaultCase)
+                
+                # find the segmentation to the default case by looping through the segmentationsFilePathList
+                for s in segmentationsFilePathList:
+                    if os.path.basename(s) == os.path.basename(defaultCase):
+                        resampledSegmentationsFilePathList.append(s)
+                        break
                  
         else:
             resampledSegmentationsFilePathList = segmentationsFilePathList
