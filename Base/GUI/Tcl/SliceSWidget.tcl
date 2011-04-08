@@ -67,6 +67,7 @@ if { [itcl::find class SliceSWidget] == "" } {
     method addSliceModelSWidgets {} {}
     method isCompareViewer {} {}
     method isCompareViewMode {} {}
+    method orientationsMatch {sliceNode1 sliceNode2} {}
     method getSliceSWidgetForGUI { gui } {}
     method getInWidget {} {}
     method startTranslate { x y  windowx windowy  rox roy  ras } {}
@@ -1455,20 +1456,7 @@ itcl::body SliceSWidget::getLinkedSliceLogics { {orientationFlag 1} } {
                           if { [string compare $orientString $currOrientString] == 0 } {
                               if { $currOrientString == "Reformat" } {
                                   # in reformat, check that the orientation vectors are close
-                                  set epsilon 1e-3
-                                  set sliceToRAS [$sliceNode GetSliceToRAS]
-                                  set currSliceToRAS [$currSliceNode GetSliceToRAS]
-                                  set match 1
-                                  for {set row 0} {$row < 3 && $match} {incr row} {
-                                      for {set col 0} {$col < 3 && $match} {incr col} {
-                                          set ref [$sliceToRAS GetElement $row $col]
-                                          set curr [$currSliceToRAS GetElement $row $col]
-                                          if { [expr abs($ref - $curr)] > $epsilon } {
-                                              set match 0
-                                          }
-                                      }
-                                  }
-                                  if { $match } {
+                                  if { [$this orientationsMatch $sliceNode $currSliceNode] } {
                                     lappend logics [$sgui GetLogic]
                                   }
                               } else {
@@ -1502,11 +1490,19 @@ itcl::body SliceSWidget::getLinkedSliceLogics { {orientationFlag 1} } {
                         if {$orientationFlag == 1} {
                             set currSliceNode [$sgui GetSliceNode]
                             set currOrientString [$currSliceNode GetOrientationString]
-                            if { [string compare $orientString $currOrientString] == 0 &&
-                                 $currOrientString != "Reformat" } {
-                                lappend logics [$sgui GetLogic]
+                            if { [string compare $orientString $currOrientString] == 0 } {
+                                if { $currOrientString == "Reformat" } {
+                                    # in reformat, check that the orientation vectors are close
+                                    if { [$this orientationsMatch $sliceNode $currSliceNode] } {
+                                      lappend logics [$sgui GetLogic]
+                                    }
+                                } else { 
+                                    # the orientations match, so return this logic
+                                    lappend logics [$sgui GetLogic]
+                                }
                             }
                         } else {
+                            # don't care about orientation, so return all linked logics
                             lappend logics [$sgui GetLogic]
                         }
                     }
@@ -1666,6 +1662,23 @@ itcl::body SliceSWidget::isCompareViewer { } {
   return 1
 }
 
+# do the slice orientations match for these two nodes?
+itcl::body SliceSWidget::orientationsMatch { sliceNode1 sliceNode2 } {
+    set epsilon 1e-3
+    set sliceToRAS1 [$sliceNode1 GetSliceToRAS]
+    set sliceToRAS2 [$sliceNode2 GetSliceToRAS]
+    set match 1
+    for {set row 0} {$row < 3 && $match} {incr row} {
+        for {set col 0} {$col < 3 && $match} {incr col} {
+            set ele1 [$sliceToRAS1 GetElement $row $col]
+            set ele2 [$sliceToRAS2 GetElement $row $col]
+            if { [expr abs($ele1 - $ele2)] > $epsilon } {
+                set match 0
+            }
+        }
+    }
+    return $match
+}
 
 # Locate the SliceSWidget that works with a specific gui
 itcl::body SliceSWidget::getSliceSWidgetForGUI {gui} {
