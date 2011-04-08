@@ -286,6 +286,10 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         # and jump out if yes
         if not self._updating:
 
+            #self.GetHelper().info("ProcessGUIEvents" + str(self._updating))
+            
+            self._updating = 1 
+
             # the launch button
             if caller == self._launchButton and event == vtkKWPushButton_InvokedEvent:
                 self.UpdateMRML()
@@ -390,6 +394,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 
             elif caller == self._dryrunCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
                 self.UpdateMRML()
+                
+            self._updating = 0
             
             
         
@@ -477,15 +483,12 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
             self._helper.debug("Found "+str(sorted(listOfFiles, key=itemgetter(1), reverse=True)[0][1])+" files of type "+str(sorted(listOfFiles, key=itemgetter(1), reverse=True)[0][0]))
 
-            self._updating = 1
             for nrrdFile in nrrdFiles:
                 caseFile = os.path.basename(nrrdFile)
                 if os.path.isfile(os.path.join(segmentationsDir,caseFile)):
                     # file exists in originals and segmentations directory, so we can add it to our list of cases
                     self._defaultCaseCombo.GetWidget().AddValue(caseFile)
                     self._defaultCaseCombo.GetWidget().SetValue(caseFile)
-                    
-            self._updating = 0
             
             # get the labels from last selected defaultCaseEntry value
             self.UpdateLabelList()
@@ -584,6 +587,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         # and jump out if yes
         if not self._updating:
 
+            #self.GetHelper().info("UpdateMRML: " + str(self._updating))
+
             # start blocking of update events
             self._updating = 1
             
@@ -593,6 +598,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self._associatedMRMLNode.InitializeByDefault()
                 # add it to the scene
                 slicer.MRMLScene.AddNode(self._associatedMRMLNode)
+                
+            #self.GetHelper().info(self._associatedMRMLNode)                
                 
 
             ###############################################################
@@ -757,6 +764,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             self.InitializeByDefault()
 
             n = self._associatedMRMLNode
+            #self.GetHelper().info("UpdateGUI")
+            #self.GetHelper().info(n)
 
             ###############################################################
             # input panel
@@ -942,6 +951,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             
             # stop blocking of update events
             self._updating = 0
+            #self.GetHelper().info("End of UpdateGUI")
 
 
 
@@ -962,7 +972,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                     # we do not want to react to Modify events etc.
                     if event == vtkMRMLAtlasCreatorNode_LaunchComputationEvent and callerID == self._associatedMRMLNode.GetID():
                         # quickly store the MRML configuration to the GUI
-                        self.UpdateGUI()
+                        #self.UpdateGUI()
                         
                         # the observed node was launched!
                         self.GetMyLogic().Start(self._associatedMRMLNode)
