@@ -455,6 +455,12 @@ class AtlasCreatorLogic(object):
         
         if not self.__dryRun:
             resampledSegmentationsFilePathList = self.Helper().ConvertDirectoryToList(resampledDirectory)
+            
+            # if we use fixed registration, we will now add the segmentation of the defaultCase as well
+            # to prevent information loss during the combination stage
+            if node.GetTemplateType() == "fixed":
+                resampledSegmentationsFilePathList.append(defaultCase)
+                 
         else:
             resampledSegmentationsFilePathList = segmentationsFilePathList
         
