@@ -1445,14 +1445,40 @@ itcl::body SliceSWidget::getLinkedSliceLogics { {orientationFlag 1} } {
               # is it linked?
               if {[[[$sgui GetLogic] GetSliceCompositeNode] GetLinkedControl] == 1} {
                   if {$orientationFlag == 1} {
-                      set currSliceNode [$sgui GetSliceNode]
-                      set currOrientString [$currSliceNode GetOrientationString]
-                      # it's linked if the orientation flags match and are not reformat, but also make sure to return self
-                      if { [string compare $orientString $currOrientString] == 0 &&
-                            ($currOrientString != "Reformat" || $sgui == $sliceGUI)} {
+                      if { $sgui == $sliceGUI } {
+                          # this is the slice GUI associated with $this, so return our own logic
                           lappend logics [$sgui GetLogic]
+                      } else {
+                          # check orientation of other slices to see if they match ours
+                          set currSliceNode [$sgui GetSliceNode]
+                          set currOrientString [$currSliceNode GetOrientationString]
+                          if { [string compare $orientString $currOrientString] == 0 } {
+                              if { $currOrientString == "Reformat" } {
+                                  # in reformat, check that the orientation vectors are close
+                                  set epsilon 1e-3
+                                  set sliceToRAS [$sliceNode GetSliceToRAS]
+                                  set currSliceToRAS [$currSliceNode GetSliceToRAS]
+                                  set match 1
+                                  for {set row 0} {$row < 3 && $match} {incr row} {
+                                      for {set col 0} {$col < 3 && $match} {incr col} {
+                                          set ref [$sliceToRAS GetElement $row $col]
+                                          set curr [$currSliceToRAS GetElement $row $col]
+                                          if { [expr abs($ref - $curr)] > $epsilon } {
+                                              set match 0
+                                          }
+                                      }
+                                  }
+                                  if { $match } {
+                                    lappend logics [$sgui GetLogic]
+                                  }
+                              } else {
+                                  # not Reformat, so consider matching strings to mean okay to link
+                                  lappend logics [$sgui GetLogic]
+                              }
+                          }
                       }
                   } else {
+                      # not checking for orientation, so all linked logics are included
                       lappend logics [$sgui GetLogic]
                   }
               }
