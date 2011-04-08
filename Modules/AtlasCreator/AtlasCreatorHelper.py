@@ -30,6 +30,7 @@ class AtlasCreatorHelper(object):
         
         # deactivated by default
         self.__debugMode = 0
+        self.__guidebugMode = 0
         
         # create one instance of the EMSegment logic
         self.__emlogic = slicer.vtkEMSegmentLogic()
@@ -50,6 +51,7 @@ class AtlasCreatorHelper(object):
         self.__emlogic = None
         self.__parentClass = None
         self.__debugMode = None
+        self.__guidebugMode = None
         self.__pcaDistanceSourced = None
         
 
@@ -81,6 +83,30 @@ class AtlasCreatorHelper(object):
         if self.__debugMode:
 
             print "[AtlasCreator " + strftime("%m/%d/%Y %H:%M:%S") + "] DEBUG: " + str(message)
+
+            # flush, to always show the output
+            try:
+                sys.stdout.flush()
+            except:
+                pass
+
+
+
+    '''=========================================================================================='''
+    def guiDebug(self,message):
+        ''' 
+            Print statement to stdout including a timestamp and a GUI debug label
+            
+            message
+                value to print, will be casted to String
+            
+            Returns
+                n/a
+        '''        
+        
+        if self.__guidebugMode:
+
+            print "[AtlasCreator " + strftime("%m/%d/%Y %H:%M:%S") + "] GUI DEBUG: " + str(message)
 
             # flush, to always show the output
             try:
@@ -865,12 +891,8 @@ class AtlasCreatorHelper(object):
         # get the displayNode to re-calculate Window/Level
         displayNode = volumeNode.GetDisplayNode()
         if displayNode:
-            newDisplayNode = displayNode.NewInstance()
-            newDisplayNode.Copy(displayNode)
-            slicer.MRMLScene.AddNodeNoNotify(newDisplayNode)
-            volumeNode.SetAndObserveDisplayNodeID(newDisplayNode.GetID())
-            newDisplayNode.AutoWindowLevelOff()
-            newDisplayNode.AutoWindowLevelOn()
+            displayNode.AutoWindowLevelOff()
+            displayNode.AutoWindowLevelOn()
         
         return str(volumeNode.GetID())
     
@@ -1083,6 +1105,11 @@ class AtlasCreatorHelper(object):
             content = f.read()
             
         content = content.replace('############{$COMMANDS}############',commands,1)
+        
+        notifyWithErrorProof = "RETVAL=$?" + "\n"
+        
+        
+        
         content = content.replace('#############{$NOTIFY}#############',notify,1)
         
         return content

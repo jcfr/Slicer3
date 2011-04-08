@@ -40,7 +40,7 @@ typedef itk::OrientedImage<float, 3> FloatImageType;
 namespace {
 
 // templated method for writing out any type
-template<class T> int ReCastAndWriteOut(FloatImageType *image, std::string outputFile, T)
+template<class T> int ReCastAndWriteOut(FloatImageType *image, std::string outputFile, T, std::string type)
 {
 
   typedef    T       OutputPixelType;
@@ -51,7 +51,7 @@ template<class T> int ReCastAndWriteOut(FloatImageType *image, std::string outpu
   typedef itk::ImageFileWriter<OutputImageType> WriterType;
 
   // now we will re-cast to the output type
-  std::cout << "Re-Casting Atlas.." << std::endl;
+  std::cout << "Re-Casting Atlas to " << type << std::endl;
 
   typename CastFilterType::Pointer cast = CastFilterType::New();
   cast->SetInput(image);
@@ -289,52 +289,52 @@ int main(int argc, char ** argv)
     if (normalizeTo == 1)
       {
       // we need a double here
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<double>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<double>(0),"Double");
       }
     else if (reCastString.compare(shortString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<short>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<short>(0),reCastString);
       }
     else if (reCastString.compare(unsignedShortString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<unsigned short>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<unsigned short>(0),reCastString);
       }
     else if (reCastString.compare(charString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<char>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<char>(0),reCastString);
       }
     else if (reCastString.compare(unsignedCharString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<unsigned char>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<unsigned char>(0),reCastString);
       }
     else if (reCastString.compare(doubleString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<double>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<double>(0),reCastString);
       }
     else if (reCastString.compare(floatString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<float>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<float>(0),reCastString);
       }
     else if (reCastString.compare(intString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<int>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<int>(0),reCastString);
       }
     else if (reCastString.compare(unsignedIntString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<unsigned int>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<unsigned int>(0),reCastString);
       }
     else if (reCastString.compare(longString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<long>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<long>(0),reCastString);
       }
     else if (reCastString.compare(unsignedLongString) == 0)
       {
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<unsigned long>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<unsigned long>(0),reCastString);
       }
     else
       {
       // assume short
-      ReCastAndWriteOut(imageFloat,outputFile,static_cast<short>(0));
+      ReCastAndWriteOut(imageFloat,outputFile,static_cast<short>(0),reCastString);
       }
 
 

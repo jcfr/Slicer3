@@ -213,24 +213,36 @@ class AtlasCreatorLogic(object):
         # if yes, it creates a new one with a number appended
         if outputDir and os.path.isdir(outputDir):
             # outputDir already exists
-            # we create a new unique one
-            outputDir = os.path.abspath(outputDir)
-            self.Helper().info("Warning: The output directory (" + str(outputDir) + ") already exists..")
             
-            # the directory already exists,
-            # we want to add an index to the new one
-            count = 2
-            newOutputDir = os.path.abspath(str(outputDir) + str(count))
-            
-            while (os.path.isdir(newOutputDir)):
-                count = count + 1
+            # let's check if it is empty
+            # if it is empty, we can just keep the users setting
+            if os.listdir(outputDir):
+                
+                # it is not empty, so let's take some action:
+                
+                # we create a new unique one
+                outputDir = os.path.abspath(outputDir)
+                self.Helper().info("Warning: The output directory (" + str(outputDir) + ") is not empty..")
+                
+                # the directory already exists,
+                # we want to add an index to the new one
+                count = 2
                 newOutputDir = os.path.abspath(str(outputDir) + str(count))
-            
-            self.Helper().info("Warning: Using new output directory instead: " + str(newOutputDir))
-            os.makedirs(newOutputDir)
-            
-            outputDir = newOutputDir + os.sep
-            
+                
+                while (os.path.isdir(newOutputDir)):
+                    count = count + 1
+                    newOutputDir = os.path.abspath(str(outputDir) + str(count))
+                
+                self.Helper().info("Warning: Using new output directory instead: " + str(newOutputDir))
+                os.makedirs(newOutputDir)
+                
+                outputDir = newOutputDir + os.sep
+                
+            else:
+                
+                self.Helper().info("The output directory already exists but is empty.. Let's use it.")
+                outputDir = os.path.normpath(outputDir) + os.sep
+                
         elif outputDir and not os.path.isfile(outputDir):
             # outputDir did not exist and is not a file
             # create it
@@ -242,6 +254,9 @@ class AtlasCreatorLogic(object):
             self.Helper().info("ERROR: No valid output directory configured!")
             self.Helper().info("Aborting now!")
             return False
+        
+        # update the MRMLNode and propagate the possibly changed output directory
+        node.SetOutputDirectory(outputDir)
 
         
         transformDirectory = outputDir + "transforms" + os.sep
@@ -265,7 +280,7 @@ class AtlasCreatorLogic(object):
              
         # executable configuration
         multiThreading = True # enable multiThreading by default
-        sleepValue = 5 # seconds to wait between each check on completed jobs
+        sleepValue = 1 # seconds to wait between each check on completed jobs
         schedulerCommand = "" # assume no scheduler by default
         
         if clusterMode:
@@ -465,7 +480,12 @@ class AtlasCreatorLogic(object):
             #
             #
             self.Helper().info("Entering Combine-To-Atlas Stage..")
-                        
+            
+            # let's check if normalize is enabled
+            # if no, we set a new NormalizeTo value
+            if not node.GetNormalizeAtlases():
+                node.SetNormalizeTo(-1)
+            
             self.CombineToAtlas(schedulerCommand,
                                 resampledSegmentationsFilePathList,
                                 labelsList,
