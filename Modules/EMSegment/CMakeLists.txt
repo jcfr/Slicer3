@@ -27,10 +27,10 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration
-  ${CMAKE_CURRENT_SOURCE_DIR}/Graph
   ${CMAKE_CURRENT_SOURCE_DIR}/Tasks
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
@@ -43,11 +43,11 @@ include_directories(
 file(GLOB headers 
   "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/MRML/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/*.txx"
   "${CMAKE_CURRENT_SOURCE_DIR}/Registration/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Graph/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Tasks/*.h"
   )
 
@@ -155,7 +155,7 @@ set(EMSegment_SRCS
   vtkEMSegmentMRMLManager.cxx 
   vtkEMSegmentLogic.cxx 
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentKWLogic.cxx
-  vtkEMSegmentGUI.cxx 
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentGUI.cxx 
   # wizard
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentParametersSetStep.cxx
@@ -172,10 +172,10 @@ set(EMSegment_SRCS
   )
 
  set(EMSegment_SRCS ${EMSegment_SRCS}
-   ${CMAKE_CURRENT_SOURCE_DIR}/Graph/vtkImageGraph.cxx
-   ${CMAKE_CURRENT_SOURCE_DIR}/Graph/vtkIndirectLookupTable.cxx
-   ${CMAKE_CURRENT_SOURCE_DIR}/Graph/vtkImageDrawObjects.cxx
-   ${CMAKE_CURRENT_SOURCE_DIR}/Graph/vtkImageCurveRegion.cxx
+   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageGraph.cxx
+   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkIndirectLookupTable.cxx
+   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageDrawObjects.cxx
+   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageCurveRegion.cxx
   )
 
 set_source_files_properties(
