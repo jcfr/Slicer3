@@ -1,4 +1,4 @@
-<MRML userTags="">
+<MRML >
 <Selection
   id="vtkMRMLSelectionNode1"  name="vtkMRMLSelectionNode1"  hideFromEditors="true"  selectable="true"  selected="false"  activeVolumeID="NULL"  secondaryVolumeID="NULL"  activeLabelVolumeID="NULL"  activeFiducialListID="NULL"  activeROIListID="NULL"  activeCameraID="NULL"  activeViewID="NULL"  activeLayoutID="NULL"></Selection>
  <Interaction
