@@ -586,7 +586,7 @@ if(NOT DISABLE_CXX_TESTING)
       set(test_rm_files)
     endif(${EMSEG_REMOVE_TMP_TEST_DATA})
     set(test_args
-      ${WRAPPED_EXE_PREFIX}/vtkEMSegmentReadWriteMRMLTest
+      ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentReadWriteMRMLTest
       ${test_std_file} ${test_cmp_file}
       )
     add_test( ${test_name}
