@@ -96,6 +96,10 @@ itcl::body EffectSWidget::constructor {sliceGUI} {
  
   $this createCursor
 
+  if { [info exists ::slicer3::FiducialsGUI] } {
+    $::slicer3::FiducialsGUI ModifyAllLock 1
+  }
+
   set _startPosition "0 0 0"
   set _currentPosition "0 0 0"
 
@@ -131,6 +135,11 @@ itcl::body EffectSWidget::destructor {} {
   $sliceGUI SetActiveLeftButtonTool ""
   $this animateCursor off
   $this tearDownOptions
+
+  if { [info exists ::slicer3::FiducialsGUI] } {
+    $::slicer3::FiducialsGUI ModifyAllLock 0
+  }
+
 
   foreach record $_observerRecords {
     foreach {obj tag} $record {
