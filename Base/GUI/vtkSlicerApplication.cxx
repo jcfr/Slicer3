@@ -2533,6 +2533,7 @@ int vtkSlicerApplication::DisplayExitDialog(vtkKWTopLevel *master)
     dialog->SetOtherButtonText("Exit, Discard Changes");
     dialog->SetCancelButtonText("Cancel Exit");
     dialog->Create ( );
+    dialog->GetOtherButton()->SetWidth(22);
     dialog->SetMasterWindow( master );
     dialog->SetOptions(
     vtkKWMessageDialog::QuestionIcon | 
