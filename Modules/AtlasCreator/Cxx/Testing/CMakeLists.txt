@@ -2,6 +2,7 @@ SET(KIT AtlasCreatorLib)
 SET(CMAKE_TESTDRIVER_BEFORE_TESTMAIN "DEBUG_LEAKS_ENABLE_EXIT_ERROR();" )
 CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx
   vtkMRMLAtlasCreatorNodeTest1.cxx
+  vtkMRMLAtlasCreatorNodeLaunchTest1.cxx  
   EXTRA_INCLUDE TestingMacros.h
   )
 SET (TestsToRun ${Tests})
@@ -23,6 +24,7 @@ MACRO( SIMPLE_TEST  TESTNAME )
 ENDMACRO( SIMPLE_TEST  )
 
 SIMPLE_TEST( vtkMRMLAtlasCreatorNodeTest1 )
+SIMPLE_TEST( vtkMRMLAtlasCreatorNodeLaunchTest1 )
 
 # add a tcl test 
 # ADD_TEST(MeasurementsTest1 ${Slicer3_BINARY_DIR}/Slicer3 --test-mode --script ${Slicer3_SOURCE_DIR}/Modules/Measurements/Testing/Tcl/MeasurementsTest1.tcl)
