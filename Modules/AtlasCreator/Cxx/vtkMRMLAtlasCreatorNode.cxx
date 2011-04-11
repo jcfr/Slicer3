@@ -596,7 +596,7 @@ void vtkMRMLAtlasCreatorNode::InitializeByDefault()
 
   this->SetToolkit("BRAINSFit");
 
-  this->SetTemplateType("Fixed");
+  this->SetTemplateType("fixed");
   this->DynamicTemplateIterations = 5;
   this->SetFixedTemplateDefaultCaseFilePath("");
 

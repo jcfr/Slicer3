@@ -395,6 +395,10 @@ class AtlasCreatorLogic(object):
             
             # for both registration modes:
             
+            if not alignedImages:
+                self.Helper().info("The Registration failed.. ABORTING..")
+                return False
+            
             # now use the alignedImages to return as output as well the normalized intensity maps of aligned cases
             meanScriptsDirectory = registeredDirectory + "meanTemplateScripts" + os.sep
             os.makedirs(meanScriptsDirectory)

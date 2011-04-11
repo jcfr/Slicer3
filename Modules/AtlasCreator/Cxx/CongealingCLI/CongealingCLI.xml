@@ -371,7 +371,7 @@
       <label>Congeal executable</label>
       <description>The path to the congeal executable. Congeal will only be executed, if this is set.</description>
       <longflag>--launch</longflag>
-      <default></default>
+      <default>$Slicer3_HOME/bin/Congeal</default>
     </string>
   
   </parameters>

@@ -22,7 +22,20 @@ MACRO( SIMPLE_TEST  TESTNAME )
   ADD_TEST( ${TESTNAME} ${LAUNCH_EXE} ${${KIT}_TESTS} ${TESTNAME} )
 ENDMACRO( SIMPLE_TEST  )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest1.py
+  ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest1.py
+  COPYONLY)
+
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest1.py
+  DESTINATION ${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}
+  )
+
 SIMPLE_TEST( vtkMRMLAtlasCreatorNodeTest1 )
 
 # add a tcl test 
 # ADD_TEST(MeasurementsTest1 ${Slicer3_BINARY_DIR}/Slicer3 --test-mode --script ${Slicer3_SOURCE_DIR}/Modules/Measurements/Testing/Tcl/MeasurementsTest1.tcl)
+
+# add python tests
+ADD_TEST(vtkMRMLAtlasCreatorNodeLaunchTest1 ${Slicer3_BINARY_DIR}/Slicer3 --test-mode -p ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest1.py)

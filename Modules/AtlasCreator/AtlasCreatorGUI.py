@@ -271,8 +271,8 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self.RemoveMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_NodeAddedEvent)
         self.RemoveMRMLObserverByNumber(slicer.MRMLScene,vtkMRMLScene_CloseEvent)
         
-        if self._associatedMRMLNode and self._associatedMRMLNodeTag:
-            self.RemoveMRMLObserverByNumber(self._associatedMRMLNode,vtkMRMLAtlasCreatorNode_LaunchComputationEvent)
+        #if self._associatedMRMLNode and self._associatedMRMLNodeTag:
+        #    self.RemoveMRMLObserverByNumber(self._associatedMRMLNode,vtkMRMLAtlasCreatorNode_LaunchComputationEvent)
         
 
 

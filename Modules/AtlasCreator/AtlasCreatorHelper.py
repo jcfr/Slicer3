@@ -15,7 +15,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def __init__(self,parentClass):
+    def __init__(self, parentClass):
         '''
             Initialize this class
             
@@ -69,7 +69,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def debug(self,message):
+    def debug(self, message):
         ''' 
             Print statement to stdout including a timestamp and a debug label
             
@@ -93,7 +93,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def guiDebug(self,message):
+    def guiDebug(self, message):
         ''' 
             Print statement to stdout including a timestamp and a GUI debug label
             
@@ -117,7 +117,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def info(self,message):
+    def info(self, message):
         ''' 
             Print statement to stdout including a timestamp
             
@@ -143,7 +143,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def DeleteFilesAndDirectory(self,filePathList,wipe=False):
+    def DeleteFilesAndDirectory(self, filePathList, wipe=False):
         ''' 
             Delete all files of a filePathList and also the directory
             
@@ -181,7 +181,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def GetSlicerLaunchPrefix(self,useCMTK=False,justLauncher=False):
+    def GetSlicerLaunchPrefix(self, useCMTK=False, justLauncher=False):
         '''
             Get the path to the 3D Slicer launcher ready to start a plugin. (OS independent)
             
@@ -198,8 +198,8 @@ class AtlasCreatorHelper(object):
                 pay attention to the trailing /
         '''
         # read the Slicer environment
-        slicerDir = str(slicer.Application.GetBinDir())+os.sep+".."+os.sep
-        slicerLauncher = os.path.normpath(slicerDir+"Slicer3")
+        slicerDir = str(slicer.Application.GetBinDir()) + os.sep + ".." + os.sep
+        slicerLauncher = os.path.normpath(slicerDir + "Slicer3")
         
         if not os.path.isfile(slicerLauncher):
             self.info("ERROR! Could not find Slicer3 launcher.. Aborting..")
@@ -242,7 +242,7 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''
-    def BinarizeImageByLabel(self,imageData,labelValue):
+    def BinarizeImageByLabel(self, imageData, labelValue):
         ''' 
             Binarize an image to 0 and 1, while just keeping the voxels with the labelValue
             
@@ -257,7 +257,7 @@ class AtlasCreatorHelper(object):
 
         threshold = slicer.vtkImageThreshold()
         threshold.SetInput(imageData)
-        threshold.ThresholdBetween(labelValue,labelValue)
+        threshold.ThresholdBetween(labelValue, labelValue)
         threshold.ReplaceInOn()
         threshold.ReplaceOutOn()
         threshold.SetInValue(1)
@@ -272,7 +272,7 @@ class AtlasCreatorHelper(object):
                 
                 
     '''=========================================================================================='''
-    def DivideImage(self,imageData,dividend):
+    def DivideImage(self, imageData, dividend):
         ''' 
             Divide an image
             This includes automatic Re-Cast to Float
@@ -286,12 +286,12 @@ class AtlasCreatorHelper(object):
                 vtkImageData after division
         '''            
 
-        return self.MultiplyImage(imageData, 1.0/float(dividend))
+        return self.MultiplyImage(imageData, 1.0 / float(dividend))
     
     
     
     '''=========================================================================================='''
-    def MultiplyImage(self,imageData,factor):
+    def MultiplyImage(self, imageData, factor):
         ''' 
             Multiply an image
             This includes automatic Re-Cast to Float
@@ -319,7 +319,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def AddImages(self,imageData1,imageData2):
+    def AddImages(self, imageData1, imageData2):
         ''' 
             Adds two images
             
@@ -345,7 +345,7 @@ class AtlasCreatorHelper(object):
 
         
     '''=========================================================================================='''
-    def ReCastImage(self,imageData,castString):
+    def ReCastImage(self, imageData, castString):
         ''' 
             Re-Cast an image to a different type
             
@@ -427,7 +427,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def GetLabels(self,labelMap):
+    def GetLabels(self, labelMap):
         '''
             Get the list of labels in a labelMap
             
@@ -445,8 +445,8 @@ class AtlasCreatorHelper(object):
         numBins = accum.GetComponentExtent()[1]
         nonZeroLabels = []
         for i in range(1, numBins + 1):
-            numVoxels = data.GetScalarComponentAsDouble(i,0,0,0)
-            if (numVoxels>0):
+            numVoxels = data.GetScalarComponentAsDouble(i, 0, 0, 0)
+            if (numVoxels > 0):
                 nonZeroLabels.append(i)
         
         self.debug("Found the following labels: " + str(nonZeroLabels))        
@@ -456,7 +456,7 @@ class AtlasCreatorHelper(object):
     
 
     '''=========================================================================================='''
-    def ReadLabelsFromImage(self,path):
+    def ReadLabelsFromImage(self, path):
         '''
         Read labels from an image.
         
@@ -476,7 +476,7 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''    
-    def GetBRAINSFitRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformFilePath,outputImageFilePath,onlyAffineReg,multiThreading,backgroundValue):
+    def GetBRAINSFitRegistrationCommand(self, templateFilePath, movingImageFilePath, outputTransformFilePath, outputImageFilePath, onlyAffineReg, multiThreading, backgroundValue):
         '''
             Get the command to Register an image to a template using BRAINSFit
             
@@ -500,10 +500,10 @@ class AtlasCreatorHelper(object):
         '''        
         
         registrationCommand = "BRAINSFit"
-        registrationCommand += " --fixedVolume "+os.path.normpath(templateFilePath)
-        registrationCommand += " --movingVolume "+os.path.normpath(movingImageFilePath)
-        registrationCommand += " --outputTransform "+os.path.normpath(outputTransformFilePath)
-        registrationCommand += " --outputVolume "+os.path.normpath(outputImageFilePath)
+        registrationCommand += " --fixedVolume " + os.path.normpath(templateFilePath)
+        registrationCommand += " --movingVolume " + os.path.normpath(movingImageFilePath)
+        registrationCommand += " --outputTransform " + os.path.normpath(outputTransformFilePath)
+        registrationCommand += " --outputVolume " + os.path.normpath(outputImageFilePath)
         registrationCommand += " --maxBSplineDisplacement 10.0 --outputVolumePixelType short --interpolationMode Linear"
         #registrationCommand += " --maskProcessingMode  ROIAUTO --ROIAutoDilateSize 3.0 --maskInferiorCutOffFromCenter 65.0"
         #registrationCommand += " --useRigid --useScaleVersor3D --useScaleSkewVersor3D"
@@ -532,7 +532,7 @@ class AtlasCreatorHelper(object):
 
     
     '''=========================================================================================='''    
-    def GetBRAINSFitResampleCommand(self,segmentationFilePath,templateFilePath,transformFilePath,outputSegmentationFilePath,backgroundValue):
+    def GetBRAINSFitResampleCommand(self, segmentationFilePath, templateFilePath, transformFilePath, outputSegmentationFilePath, backgroundValue):
         '''
             Get the command to Resample a segmentation using BRAINSFit
             
@@ -551,10 +551,10 @@ class AtlasCreatorHelper(object):
                 the command to Resample a segmentation
         '''
         resampleCommand = "BRAINSResample"
-        resampleCommand += " --inputVolume "+os.path.normpath(segmentationFilePath)
-        resampleCommand += " --referenceVolume "+os.path.normpath(templateFilePath)
-        resampleCommand += " --warpTransform "+os.path.normpath(transformFilePath)
-        resampleCommand += " --outputVolume "+os.path.normpath(outputSegmentationFilePath)
+        resampleCommand += " --inputVolume " + os.path.normpath(segmentationFilePath)
+        resampleCommand += " --referenceVolume " + os.path.normpath(templateFilePath)
+        resampleCommand += " --warpTransform " + os.path.normpath(transformFilePath)
+        resampleCommand += " --outputVolume " + os.path.normpath(outputSegmentationFilePath)
         resampleCommand += " --defaultValue " + str(backgroundValue)
         resampleCommand += " --pixelType short --interpolationMode NearestNeighbor"
 
@@ -563,7 +563,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def GetCMTKAffineRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformDirectory,outputImageFilePath,backgroundValue,backgroundValueTemplate):
+    def GetCMTKAffineRegistrationCommand(self, templateFilePath, movingImageFilePath, outputTransformDirectory, outputImageFilePath, backgroundValue, backgroundValueTemplate):
         '''
             Get the command to Register an image to a template using CMTK
             
@@ -599,7 +599,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def GetCMTKNonRigidRegistrationCommand(self,templateFilePath,movingImageFilePath,outputTransformDirectory,outputImageFilePath,backgroundValue,backgroundValueTemplate):
+    def GetCMTKNonRigidRegistrationCommand(self, templateFilePath, movingImageFilePath, outputTransformDirectory, outputImageFilePath, backgroundValue, backgroundValueTemplate):
         '''
             Get the command to Register an image to a template using CMTK
             
@@ -636,7 +636,7 @@ class AtlasCreatorHelper(object):
 
     
     '''=========================================================================================='''    
-    def GetCMTKResampleCommand(self,segmentationFilePath,templateFilePath,transformDirectory,outputSegmentationFilePath,backgroundValue):
+    def GetCMTKResampleCommand(self, segmentationFilePath, templateFilePath, transformDirectory, outputSegmentationFilePath, backgroundValue):
         '''
             Get the command to Resample a segmentation using CMTK
             
@@ -667,7 +667,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def GetSaveDeformationFieldCommand(self,movingImageFilePath,transformFilePath,outputDeformationFieldFilePath):
+    def GetSaveDeformationFieldCommand(self, movingImageFilePath, transformFilePath, outputDeformationFieldFilePath):
         '''
             Get the command to Save a deformation field
             
@@ -683,16 +683,16 @@ class AtlasCreatorHelper(object):
         '''        
     
         saveDefFieldCommand = "BSplineToDeformationField"
-        saveDefFieldCommand += " --refImage "+os.path.normpath(movingImageFilePath)
-        saveDefFieldCommand += " --tfm "+os.path.normpath(transformFilePath)
-        saveDefFieldCommand += " --defImage "+os.path.normpath(outputDeformationFieldFilePath)
+        saveDefFieldCommand += " --refImage " + os.path.normpath(movingImageFilePath)
+        saveDefFieldCommand += " --tfm " + os.path.normpath(transformFilePath)
+        saveDefFieldCommand += " --defImage " + os.path.normpath(outputDeformationFieldFilePath)
 
         return str(saveDefFieldCommand)
 
 
 
     '''=========================================================================================='''    
-    def LoadVolume(self,filePath):
+    def LoadVolume(self, filePath):
         '''
             Loads an image as a MRMLScalarVolumeNode and adds it to the MRML Scene
             
@@ -709,14 +709,14 @@ class AtlasCreatorHelper(object):
         filePath = os.path.normpath(filePath)
         
         # load the file using Slicer's mechanism
-        volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath,"tmpAtlasCreatorNode")
+        volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath, "tmpAtlasCreatorNode")
         
         return volumeNode
 
 
 
     '''=========================================================================================='''    
-    def SaveVolume(self,filePath,volumeNode):
+    def SaveVolume(self, filePath, volumeNode):
         '''
             Saves a MRMLScalarVolumeNode
             
@@ -735,14 +735,14 @@ class AtlasCreatorHelper(object):
 
         filePath = os.path.normpath(filePath)
         
-        success = slicer.VolumesGUI.GetLogic().SaveArchetypeVolume(filePath,volumeNode)
+        success = slicer.VolumesGUI.GetLogic().SaveArchetypeVolume(filePath, volumeNode)
         
         return success
     
     
     
     '''=========================================================================================='''   
-    def ConvertDirectoryToList(self,directory):
+    def ConvertDirectoryToList(self, directory):
         '''
             Convert a directory to a list of filePaths. While reading the directory,
             only real files are added to the list, sub-directories as well as links are ignored.
@@ -775,7 +775,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''    
-    def ConvertDirectoryToString(self,directory):
+    def ConvertDirectoryToString(self, directory):
         '''
             Convert a directory to a string of filePaths with space as delimiter. While reading the directory,
             only real files are added to the list, sub-directories as well as links are ignored.
@@ -810,7 +810,7 @@ class AtlasCreatorHelper(object):
         
     
     '''=========================================================================================='''    
-    def ConvertListToString(self,list):
+    def ConvertListToString(self, list):
         '''
             Convert a list to a string of items with space as delimiter.
             
@@ -831,7 +831,7 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''
-    def GetValidFilePaths(self,list1,list2):
+    def GetValidFilePaths(self, list1, list2):
         '''
             Returns list1 without any files which baseNames are not in list2.
             
@@ -863,7 +863,7 @@ class AtlasCreatorHelper(object):
                 
         
     '''=========================================================================================='''    
-    def DisplayImageInSlicer(self,filePath,nodeName):
+    def DisplayImageInSlicer(self, filePath, nodeName):
         '''
             Displays an image in 3D Slicer and re-calculates Window/Level on the displayNode
             
@@ -886,7 +886,7 @@ class AtlasCreatorHelper(object):
         filePath = os.path.normpath(filePath)
         
         # load the file using Slicer's mechanism
-        volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath,nodeName)
+        volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath, nodeName)
 
         # get the displayNode to re-calculate Window/Level
         displayNode = volumeNode.GetDisplayNode()
@@ -899,7 +899,7 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''
-    def GuessBackgroundValue(self,filePath):
+    def GuessBackgroundValue(self, filePath):
         '''
             Guesses the background value for a given image
             
@@ -926,7 +926,7 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''
-    def SourceTclFile(self,filePath):
+    def SourceTclFile(self, filePath):
         '''
             Sources a TclFile
             
@@ -941,7 +941,7 @@ class AtlasCreatorHelper(object):
 
 
     '''=========================================================================================='''
-    def PCAGenerateDistanceMaps(self,imageFilePath,label,outputFilePath,dryRun=0,maxDist=100,distBound=10):
+    def PCAGenerateDistanceMaps(self, imageFilePath, label, outputFilePath, dryRun=0, maxDist=100, distBound=10):
         '''
             Calls the PCADistance function
            
@@ -956,7 +956,7 @@ class AtlasCreatorHelper(object):
             Returns
                 n/a
         '''
-        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
+        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir()) + '/../Modules/AtlasCreator')
         
         if not self.__pcaDistanceSourced:
             # only source the tcl files once
@@ -981,7 +981,7 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''
-    def PCAGenerateModel(self,pcaDirectory,labelList,dryRun=0,maxNumberOfEigenVectors=10,saveFileFormat="nrrd",combineStructures=0):
+    def PCAGenerateModel(self, pcaDirectory, labelList, dryRun=0, maxNumberOfEigenVectors=10, saveFileFormat="nrrd", combineStructures=0):
         '''
             Calls the PCAGenerate function
            
@@ -993,7 +993,7 @@ class AtlasCreatorHelper(object):
             Returns
                n/a
         '''
-        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
+        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir()) + '/../Modules/AtlasCreator')
         
         if not self.__pcaDistanceSourced:
             # only source the tcl files once
@@ -1044,14 +1044,14 @@ class AtlasCreatorHelper(object):
                 The installation directory as String or None if CMTK was not found
         '''
         currentSVNRevision = slicer.Application.GetSvnRevision()
-        extensionsDirForCurrentRev = os.path.join(str(slicer.Application.GetExtensionsInstallPath()),str(currentSVNRevision))
+        extensionsDirForCurrentRev = os.path.join(str(slicer.Application.GetExtensionsInstallPath()), str(currentSVNRevision))
         self.debug("Looking for CMTK in " + str(extensionsDirForCurrentRev))
         
         if not os.path.isdir(slicer.Application.GetExtensionsInstallPath()):
             # extension directory does not exist
             return None
         
-        cmtkDir = os.path.join(extensionsDirForCurrentRev,"CMTK4Slicer")
+        cmtkDir = os.path.join(extensionsDirForCurrentRev, "CMTK4Slicer")
         if not os.path.isdir(cmtkDir):
             # CMTK directory for current version of Slicer does not exist
             # let's look for older versions in the last 100 revisions
@@ -1059,24 +1059,24 @@ class AtlasCreatorHelper(object):
             
             # now check if any of the revisions before had CMTK
             # TODO go through all revisions
-            for i in range(1,currentSVNRevision):
+            for i in range(1, currentSVNRevision):
                 
                 rev = currentSVNRevision - i 
                 
-                extensionsDirForFormerRev = os.path.join(str(slicer.Application.GetExtensionsInstallPath()),str(rev))
+                extensionsDirForFormerRev = os.path.join(str(slicer.Application.GetExtensionsInstallPath()), str(rev))
                 
                 if os.path.isdir(extensionsDirForFormerRev):
                     # found a folder for a former revision
                     
                     # now check if there is CMTK present
-                    potentialCmtkDir = os.path.join(extensionsDirForFormerRev,"CMTK4Slicer")
+                    potentialCmtkDir = os.path.join(extensionsDirForFormerRev, "CMTK4Slicer")
                     if os.path.isdir(potentialCmtkDir):
                         # we found an old CMTK, let's try it
                         cmtkDir = potentialCmtkDir
                         break 
         
         # check if the cmtkDir really has a registration tool
-        if not os.path.isfile(os.path.join(cmtkDir,"registration")):
+        if not os.path.isfile(os.path.join(cmtkDir, "registration")):
             # CMTK registration command not found
             return None
 
@@ -1086,7 +1086,7 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''
-    def CreateScript(self,commands,notify):
+    def CreateScript(self, commands, notify):
         '''
             Return a script based on template.sh where commands and notify were inserted properly.
             
@@ -1098,26 +1098,26 @@ class AtlasCreatorHelper(object):
             Returns
                 The script where the arguments were inserted properly.
         '''
-        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir())+'/../Modules/AtlasCreator')
+        pathToAtlasCreator = os.path.normpath(str(slicer.Application.GetPluginsDir()) + '/../Modules/AtlasCreator')
         
-        with open(os.path.join(pathToAtlasCreator,'template.sh'), 'r') as f:
+        with open(os.path.join(pathToAtlasCreator, 'template.sh'), 'r') as f:
             
             content = f.read()
             
-        content = content.replace('############{$COMMANDS}############',commands,1)
+        content = content.replace('############{$COMMANDS}############', commands, 1)
         
         notifyWithErrorProof = "RETVAL=$?" + "\n"
         
         
         
-        content = content.replace('#############{$NOTIFY}#############',notify,1)
+        content = content.replace('#############{$NOTIFY}#############', notify, 1)
         
         return content
         
         
 
     '''=========================================================================================='''
-    def Execute(self,command):
+    def Execute(self, command):
         '''
             Execute a given command and print runtime information.
             
@@ -1128,14 +1128,14 @@ class AtlasCreatorHelper(object):
                 n/a
         '''
         try:
-            r = call(command,shell=True)
+            r = call(command, shell=True)
             if r < 0:
-                self.debug("Command terminated by signal "+str(r))
+                self.debug("Command terminated by signal " + str(r))
             else:
-                self.debug("Command returned "+str(r))
+                self.debug("Command returned " + str(r))
         except OSError, e:
-            self.debug("Execution failed "+str(e))
+            self.debug("Execution failed " + str(e))
             
         
-
+        
 
