@@ -406,7 +406,11 @@ class AtlasCreatorLogic(object):
             # if we use fixed registration, we will now add the defaultCase as well
             # to prevent information loss during the combination stage
             if node.GetTemplateType() == "fixed":
-                alignedImages.append(defaultCase)            
+                # find the segmentation to the default case by looping through the segmentationsFilePathList
+                for s in segmentationsFilePathList:
+                    if os.path.basename(s) == os.path.basename(defaultCase):
+                        # this defaultCase has a segmentation so we do want to consider it in the atlas creation                
+                        alignedImages.append(defaultCase)
             
             self.ComputeMeanImage(schedulerCommand,
                                   alignedImages, 
