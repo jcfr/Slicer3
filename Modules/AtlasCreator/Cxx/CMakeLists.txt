@@ -29,7 +29,7 @@ endif(APPLE)
 # Include dirs
 
 subDirs(
-  Congealing
+  #Congealing
   CongealingCLI
 )
 
