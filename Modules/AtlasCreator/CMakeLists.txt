@@ -42,6 +42,18 @@ install(
 )
 
 
+# copy UPenn_logo.png
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/UPenn_logo.png
+  ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/UPenn_logo.png
+  COPYONLY)
+  
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/UPenn_logo.png
+  DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}
+  )
+
+
 # --------------------------------------------------------------------------
 # Copy over the Python files
 
@@ -69,7 +81,7 @@ if(Slicer3_USE_PYTHON)
     ${CMAKE_CURRENT_SOURCE_DIR}/template.sh
     ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/template.sh
     COPYONLY)
-
+  
   install(
     FILES ${PYTHONFILES} ${TCLFILES} ${CMAKE_CURRENT_SOURCE_DIR}/template.sh
     DESTINATION ${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}

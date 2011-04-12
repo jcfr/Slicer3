@@ -1143,6 +1143,23 @@ Scheduler Command: Executable to run before the commands for registering images.
         aboutText = "This module was developed by Daniel Haehn and Kilian Pohl, University of Pennsylvania. The research was funded by an ARRA supplement to NIH NCRR (P41 RR13218)."
         self._helpAboutFrame = self.BuildHelpAndAboutFrame(self._atlascreatorPage,helpText,aboutText)
 
+        # include the UPenn logo
+        logoFrame = self.GetLogoFrame()
+        pathToLogo = os.path.normpath(slicer.Application.GetBinDir() + '/../share/Slicer3/Modules/AtlasCreator/UPenn_logo.png')
+        logo = slicer.vtkKWIcon()
+        
+        logoReader = slicer.vtkPNGReader()
+        logoReader.SetFileName(pathToLogo)
+        logoReader.Update()
+        
+        logo.SetImage(logoReader.GetOutput())
+        
+        self._logoLabel = slicer.vtkKWLabel()
+        self._logoLabel.SetParent(logoFrame)
+        self._logoLabel.Create()
+        self._logoLabel.SetImageToIcon(logo)
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._logoLabel.GetWidgetName())
+
         self._moduleFrame.SetParent(self._atlascreatorPage)
         self._moduleFrame.Create()
         self._moduleFrame.SetLabelText("AtlasCreator")
