@@ -1782,8 +1782,8 @@ void vtkEMSegmentRunSegmentationStep::MRMLUpdateROIFromROINode()
     }
   {
     // Has to be set to -1 bc segmentationboundarymin/max starts at 1 not 0 !   
-    int pointMin[3] = {bbox0ijk[0] + 1 , bbox0ijk[1] +1 , bbox0ijk[2]+1}; 
-    int pointMax[3] = {bbox1ijk[0] + 1, bbox1ijk[1]+1, bbox1ijk[2]+1};
+    int pointMin[3] = {bbox0ijk[0] + 1.0, bbox0ijk[1] + 1.0, bbox0ijk[2] + 1.0}; 
+    int pointMax[3] = {bbox1ijk[0] + 1.0, bbox1ijk[1] + 1.0, bbox1ijk[2] + 1.0};
    
     if (this->ROICheck(pointMin, pointMax)) 
       {     
