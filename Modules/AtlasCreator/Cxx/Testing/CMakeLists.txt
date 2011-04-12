@@ -33,7 +33,7 @@ configure_file(
   COPYONLY)
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest2.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest3.py
   ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest3.py
   COPYONLY)
 
