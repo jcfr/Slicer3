@@ -5,8 +5,9 @@ import shutil
 import tempfile
 
 #
-# AtlasCreator Test 1
+# AtlasCreator Test 2
 # - fixed registration
+# - simulated error during registration -> fail-proof test
 #
 
 # setup the pathes..
@@ -18,8 +19,12 @@ outDir = tempfile.mkdtemp('ACTest') + os.sep
 # create the node
 n = slicer.vtkMRMLAtlasCreatorNode() 
 n.InitializeByDefault()
-n.SetOriginalImagesFilePathList(origPath + 'case60.nrrd ' + origPath + 'case61.nrrd ' + origPath + 'case62.nrrd')
-n.SetSegmentationsFilePathList(segPath + 'case60.nrrd ' + segPath + 'case61.nrrd ' + segPath + 'case62.nrrd')
+
+# NOTE HERE: we added case666.nrrd which does not exist. Therefore the registration will fail and could
+# crash the whole atlas generation. The purpose of this test is to check if the AtlasCreator's monitoring and error
+# handling capabilites can generate still valid atlases by ignoring these files!
+n.SetOriginalImagesFilePathList(origPath + 'case60.nrrd ' + origPath + 'case61.nrrd ' + origPath + 'case62.nrrd' + origPath + 'case666.nrrd')
+n.SetSegmentationsFilePathList(segPath + 'case60.nrrd ' + segPath + 'case61.nrrd ' + segPath + 'case62.nrrd' + origPath + 'case666.nrrd')
 
 # use CMTK, if available, this will likely fall back to BRAINSFit
 n.SetToolkit('CMTK')

@@ -885,6 +885,9 @@ class AtlasCreatorHelper(object):
         
         filePath = os.path.normpath(filePath)
         
+        if not os.path.exists(filePath):
+            return None
+        
         # load the file using Slicer's mechanism
         volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath, nodeName)
 
@@ -1086,14 +1089,14 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''
-    def CreateScript(self, commands, notify):
+    def CreateScript(self, commands, notify, notifyError="echo 1"):
         '''
             Return a script based on template.sh where commands and notify were inserted properly.
             
-            commands
-                A string containing the execution commands.
-            notify
-                A string containing commands to execute before the script exits.
+            commands - A string containing the execution commands.
+            notify - A string containing commands to execute when the last command executed successfully
+            notifyError - A string containing commands to execute when the last command failed
+            
                 
             Returns
                 The script where the arguments were inserted properly.
@@ -1107,10 +1110,14 @@ class AtlasCreatorHelper(object):
         content = content.replace('############{$COMMANDS}############', commands, 1)
         
         notifyWithErrorProof = "RETVAL=$?" + "\n"
+        notifyWithErrorProof += "if [ $RETVAL -eq 0 ]" + "\n"
+        notifyWithErrorProof += "  then" + "\n"
+        notifyWithErrorProof += "    " + notify + "\n"
+        notifyWithErrorProof += "  else" + "\n"
+        notifyWithErrorProof += "    " + notifyError + "\n"
+        notifyWithErrorProof += "fi" + "\n"
         
-        
-        
-        content = content.replace('#############{$NOTIFY}#############', notify, 1)
+        content = content.replace('#############{$NOTIFY}#############', notifyWithErrorProof, 1)
         
         return content
         

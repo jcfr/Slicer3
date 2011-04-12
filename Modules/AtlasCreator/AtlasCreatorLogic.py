@@ -32,6 +32,9 @@ class AtlasCreatorLogic(object):
         self._parentClass = parentClass
         
         self.__dryRun = 0
+        
+        # this indicates if a registration or resampling job really failed
+        self.__failure = ""
 
 
 
@@ -45,6 +48,7 @@ class AtlasCreatorLogic(object):
         '''
         self.__parentClass = None
         self.__dryRun = None
+        self.__failure = None
 
 
 
@@ -89,6 +93,9 @@ class AtlasCreatorLogic(object):
             Returns
                 TRUE or FALSE
         '''
+        
+        # reset the failure container
+        self.__failure = ""
         
         # check if we have a valid vtkMRMLAtlasCreatorNode
         if not isinstance(node, slicer.vtkMRMLAtlasCreatorNode):
@@ -455,7 +462,13 @@ class AtlasCreatorLogic(object):
         #
         #
         self.Helper().info("Entering Resampling Stage..")          
-                
+        
+        # if there was a failure during registration, we want to update the segmentations to resample
+        if self.__failure:
+            # only use segmentations which were actually registered
+            segmentationsFilePathList = self.Helper().GetValidFilePaths(segmentationsFilePathList,
+                                                                        alignedImages)            
+        
         self.Resample(schedulerCommand,
                       segmentationsFilePathList,
                       defaultCase,
@@ -523,7 +536,8 @@ class AtlasCreatorLogic(object):
         
         # cleanup!!
         # delete the scripts and notify directories
-        if not self.__dryRun:
+        # TODO enter a not
+        if self.__dryRun:
             shutil.rmtree(scriptsRegistrationDirectory, True, None)
             shutil.rmtree(notifyRegistrationDirectory, True, None)
             shutil.rmtree(scriptsResamplingDirectory, True, None)
@@ -542,6 +556,9 @@ class AtlasCreatorLogic(object):
         
         self.Helper().info("--------------------------------------------------------------------------------")        
         self.Helper().info("                             All Done, folks!                                   ")
+        if self.__failure:
+            self.Helper().info("WARNING: There were errors!! (Grep this log for FAILURE to get more information!)")
+            self.Helper().info(self.__failure)
         self.Helper().info("--------------------------------------------------------------------------------")
         
         return True
@@ -610,9 +627,10 @@ class AtlasCreatorLogic(object):
 
         # create notification ID
         notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
+        notifyError = "echo \"err\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".f"
         
         # now generate a script containing the commands and the notify line
-        script = self.Helper().CreateScript(command, notify)
+        script = self.Helper().CreateScript(command, notify, notifyError)
         
         scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
         
@@ -640,6 +658,8 @@ class AtlasCreatorLogic(object):
         
         allOutputsExist = False
         
+        failures = {}
+        
         while not allOutputsExist:
             # not all outputs exist yet
             # get number of existing files
@@ -654,8 +674,49 @@ class AtlasCreatorLogic(object):
             # but now we really check if it is so            
                 
             file = outputNotifyDirectory + str(uniqueID) + ".ac"
+            errorFile = outputNotifyDirectory + str(uniqueID) + ".f"
             
-            if not os.path.isfile(file):
+            if os.path.isfile(errorFile):
+                # uh-oh this job failed
+                if uniqueID in failures:
+                    # failed before, increase the failcount
+                    failures[uniqueID] = failures[uniqueID] + 1
+                else:
+                    # first failure
+                    failures[uniqueID] = 1
+                
+                # check if the job failed already 4 times
+                if failures[uniqueID] > 4:
+                    # that's it.. we will cancel this job and notify the user
+                    self.Helper().info("-------------------------------------------------------")
+                    self.Helper().info("-------------------------------------------------------")
+                    self.Helper().info("FAILURE: ComputeMeanImage Job with id " + str(uniqueID) + " failed 4 times!")
+                    self.Helper().info("-------------------------------------------------------")
+                    self.Helper().info("-------------------------------------------------------")
+                    # now delete the failure flag
+                    os.remove(errorFile)
+                    
+                    # save which file failed
+                    self.__failure += "ComputeMeanImage failed!\n"
+                    
+                    # .. and touch the file
+                    open(file, 'w').close()
+                    
+                else:
+                    # let's try this job again
+                    
+                    self.Helper().info("ComputeMeanImage Job with id " + str(uniqueID) + " failed in attempt " + str(failures[uniqueID]) + ". Relaunching..")
+                    # now delete the failure flag
+                    os.remove(errorFile)
+                    
+                    # .. and relaunch the job
+                    scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
+                    self.Helper().Execute(schedulerCommand + " " + scriptFilePath)
+                        
+                    allOutputsExist = False
+                    
+        
+            elif not os.path.isfile(file):
                 self.Helper().debug("ComputeMeanImage Job not completed!")
                 # if only one file does not exist,
                 # we know we have to wait longer
@@ -739,6 +800,7 @@ class AtlasCreatorLogic(object):
         launchCommandPrefix = self.Helper().GetSlicerLaunchPrefix(useCMTK)
         
         uniqueID = 0
+        mapFilesToIDs = {}
         
         # loop through filePathsList and start registration command
         for movingImageFilePath in filePathsList:
@@ -768,6 +830,9 @@ class AtlasCreatorLogic(object):
             # generate file path to save aligned output image
             # by getting the filename of the case and appending it to the outputTransformsDirectory
             outputAlignedImageFilePath = outputAlignedDirectory + str(movingImageName) + ".nrrd"
+            
+            # save the uniqueID and the filePath in our map
+            mapFilesToIDs[uniqueID] = outputAlignedImageFilePath
             
             # we will create a string containing the command(s) which then get written to a script
             command = ""
@@ -809,9 +874,10 @@ class AtlasCreatorLogic(object):
             
             # create notification ID
             notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
+            notifyError = "echo \"err\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".f"
             
             # now generate a script containing the commands and the notify line
-            script = self.Helper().CreateScript(command, notify)
+            script = self.Helper().CreateScript(command, notify, notifyError)
             
             scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
             
@@ -841,6 +907,9 @@ class AtlasCreatorLogic(object):
         
         allOutputsExist = False
         
+        # the dictionary for failures
+        failures = {}
+        
         while not allOutputsExist:
             # not all outputs exist yet
             # get number of existing files
@@ -858,15 +927,55 @@ class AtlasCreatorLogic(object):
             for index in range(1, uniqueID + 1):
                 
                 file = outputNotifyDirectory + str(index) + ".ac"
+                errorFile = outputNotifyDirectory + str(index) + ".f"
                 
-                # TODO check here if job crashed and relaunch
-                
-                if not os.path.isfile(file):
+                if os.path.isfile(errorFile):
+                    # uh-oh this job failed
+                    if index in failures:
+                        # failed before, increase the failcount
+                        failures[index] = failures[index] + 1
+                    else:
+                        # first failure
+                        failures[index] = 1
+                    
+                    # check if the job failed already 4 times
+                    if failures[index] > 4:
+                        # that's it.. we will cancel this job and notify the user
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("FAILURE: Registration Job with id " + str(index) + " failed 4 times! Let's continue without it..")
+                        self.Helper().info("FAILURE: File " + str(mapFilesToIDs[index]) + " will NOT be considered during the next steps..")
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("-------------------------------------------------------")
+                        # now delete the failure flag
+                        os.remove(errorFile)
+                        # remove the output file of this job from our alignedImages list
+                        outputAlignedImages.remove(mapFilesToIDs[index])
+                        
+                        # save which file failed
+                        self.__failure += "Registration of " + str(mapFilesToIDs[index]) + " failed!\n"
+                        
+                        # .. and touch the file
+                        open(file, 'w').close()
+                        
+                    else:
+                        # let's try this job again
+                        
+                        self.Helper().info("Registration Job with id " + str(index) + " failed in attempt " + str(failures[index]) + ". Relaunching..")
+                        # now delete the failure flag
+                        os.remove(errorFile)
+                        
+                        # .. and relaunch the job
+                        scriptFilePath = outputScriptsDirectory + "script" + str(index) + ".sh"
+                        self.Helper().Execute(schedulerCommand + " " + scriptFilePath)
+                            
+                        allOutputsExist = False
+                        
+                elif not os.path.isfile(file):
                     self.Helper().debug("Registration Job with id " + str(index) + " not completed!")
                     # if only one file does not exist,
                     # we know we have to wait longer
                     allOutputsExist = False
-                    break
         
         self.Helper().debug("All Registration outputs exist!")
                 
@@ -933,6 +1042,8 @@ class AtlasCreatorLogic(object):
         launchCommandPrefix = self.Helper().GetSlicerLaunchPrefix(useCMTK)
 
         uniqueID = 0
+        
+        mapFilesToIDs = {}        
 
         # loop through filePathsList and start resample command
         for segmentationFilePath in filePathsList:
@@ -956,6 +1067,9 @@ class AtlasCreatorLogic(object):
             # by getting the filename of the case and appending it to the outputSegmentationDirectory
             outputSegmentationFilePath = outputSegmentationDirectory + str(segmentationName) + ".nrrd"
 
+            # save the uniqueID and the filePath in our map
+            mapFilesToIDs[uniqueID] = outputSegmentationFilePath
+
             # we will create a string containing the command(s) which then get written to a script
             command = ""
 
@@ -976,9 +1090,10 @@ class AtlasCreatorLogic(object):
             
             # create notification ID
             notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
+            notifyError = "echo \"err\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".f"
             
             # now generate a script containing the commands and the notify line
-            script = self.Helper().CreateScript(command, notify)
+            script = self.Helper().CreateScript(command, notify, notifyError)
             
             scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
             
@@ -1006,6 +1121,9 @@ class AtlasCreatorLogic(object):
         
         allOutputsExist = False
         
+        # the dictionary for failures
+        failures = {}        
+        
         while not allOutputsExist:
             # not all outputs exist yet
             # get number of existing files
@@ -1023,13 +1141,55 @@ class AtlasCreatorLogic(object):
             for index in range(1, uniqueID + 1):
                 
                 file = outputNotifyDirectory + str(index) + ".ac"
+                errorFile = outputNotifyDirectory + str(index) + ".f"
                 
-                if not os.path.isfile(file):
+                if os.path.isfile(errorFile):
+                    # uh-oh this job failed
+                    if index in failures:
+                        # failed before, increase the failcount
+                        failures[index] = failures[index] + 1
+                    else:
+                        # first failure
+                        failures[index] = 1
+                    
+                    # check if the job failed already 4 times
+                    if failures[index] > 4:
+                        # that's it.. we will cancel this job and notify the user
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("FAILURE: Resampling Job with id " + str(index) + " failed 4 times! Let's continue without it..")
+                        self.Helper().info("FAILURE: File " + str(mapFilesToIDs[index]) + " will NOT be considered during the next steps..")
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("-------------------------------------------------------")
+                        # now delete the failure flag
+                        os.remove(errorFile)
+                        
+                        # save which file failed
+                        self.__failure += "Resampling of " + str(mapFilesToIDs[index]) + " failed!\n"
+                                                
+                        # .. and touch the file
+                        open(file, 'w').close()
+                        
+                    else:
+                        # let's try this job again
+                        
+                        self.Helper().info("Resampling Job with id " + str(index) + " failed in attempt " + str(failures[index]) + ". Relaunching..")
+                        # now delete the failure flag
+                        os.remove(errorFile)
+                        
+                        # .. and relaunch the job
+                        scriptFilePath = outputScriptsDirectory + "script" + str(index) + ".sh"
+                        self.Helper().Execute(schedulerCommand + " " + scriptFilePath)
+                            
+                        allOutputsExist = False
+                        
+                
+                elif not os.path.isfile(file):
                     self.Helper().debug("Resampling Job with id " + str(index) + " not completed!")
                     # if only one file does not exist,
                     # we know we have to wait longer
                     allOutputsExist = False
-                    break
+
         
         self.Helper().debug("All Resampling outputs exist!")
 
@@ -1105,12 +1265,17 @@ class AtlasCreatorLogic(object):
         
         uniqueID = 0
         
+        mapFilesToIDs = {}
+        
         # loop through all labels
         for label in labelsList:
             
             # increase the uniqueID
             uniqueID = uniqueID + 1            
             command = ""
+            
+            # save the uniqueID and the filePath in our map
+            mapFilesToIDs[uniqueID] = "atlas" + str(label)            
             
             # add some args to the Slicer launcher call
             command += str(launchCommandPrefix) + " --launch " + str(slicer.Application.GetBinDir()) +os.sep+ "ACCombiner";
@@ -1132,9 +1297,10 @@ class AtlasCreatorLogic(object):
     
             # create notification ID
             notify = "echo \"done\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".ac"
+            notifyError = "echo \"err\" > " + str(outputNotifyDirectory) + str(uniqueID) + ".f"
             
             # now generate a script containing the commands and the notify line
-            script = self.Helper().CreateScript(command, notify)
+            script = self.Helper().CreateScript(command, notify, notifyError)
             
             scriptFilePath = outputScriptsDirectory + "script" + str(uniqueID) + ".sh"
             
@@ -1162,6 +1328,8 @@ class AtlasCreatorLogic(object):
         
         allOutputsExist = False
         
+        failures = {}        
+        
         while not allOutputsExist:
             # not all outputs exist yet
             # get number of existing files
@@ -1179,8 +1347,50 @@ class AtlasCreatorLogic(object):
             for index in range(1, uniqueID + 1):
                 
                 file = outputNotifyDirectory + str(index) + ".ac"
+                errorFile = outputNotifyDirectory + str(index) + ".f"
                 
-                if not os.path.isfile(file):
+                if os.path.isfile(errorFile):
+                    # uh-oh this job failed
+                    if index in failures:
+                        # failed before, increase the failcount
+                        failures[index] = failures[index] + 1
+                    else:
+                        # first failure
+                        failures[index] = 1
+                    
+                    # check if the job failed already 4 times
+                    if failures[index] > 4:
+                        # that's it.. we will cancel this job and notify the user
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("FAILURE: CombineToAtlas Job with id " + str(index) + " failed 4 times! Let's continue without it..")
+                        self.Helper().info("-------------------------------------------------------")
+                        self.Helper().info("-------------------------------------------------------")
+                        # now delete the failure flag
+                        os.remove(errorFile)
+                        
+                        # save which file failed
+                        self.__failure += "CombineToAtlas of " + str(mapFilesToIDs[index]) + " failed!\n"
+                                                
+                        # .. and touch the file
+                        open(file, 'w').close()
+                        
+                    else:
+                        # let's try this job again
+                        
+                        self.Helper().info("CombineToAtlas Job with id " + str(index) + " failed in attempt " + str(failures[index]) + ". Relaunching..")
+                        # now delete the failure flag
+                        os.remove(errorFile)
+                        
+                        # .. and relaunch the job
+                        scriptFilePath = outputScriptsDirectory + "script" + str(index) + ".sh"
+                        self.Helper().Execute(schedulerCommand + " " + scriptFilePath)
+                            
+                        allOutputsExist = False
+                        
+                
+                               
+                elif not os.path.isfile(file):
                     self.Helper().debug("CombineToAtlas Job with id " + str(index) + " not completed!")
                     # if only one file does not exist,
                     # we know we have to wait longer
@@ -1193,6 +1403,7 @@ class AtlasCreatorLogic(object):
 
 
 
+    '''=========================================================================================='''
     def PerformPCAAnalysis(self,labelsList,filePathsList,outputDirectory,maxEigenVectors,combine):
         '''
             Performs PCA Analysis on top of the Atlas Generation.

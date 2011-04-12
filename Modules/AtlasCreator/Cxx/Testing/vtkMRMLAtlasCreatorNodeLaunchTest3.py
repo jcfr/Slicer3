@@ -5,9 +5,11 @@ import shutil
 import tempfile
 
 #
-# AtlasCreator Test 1
-# - fixed registration
+# AtlasCreator Test 3
+# - dynamic registration, 2 iterations
+# - automatic label detection
 #
+
 
 # setup the pathes..
 pathToData = os.path.normpath(slicer.Application.GetBinDir() + '/../share/Slicer3/Modules/AtlasCreator/TestData/')
@@ -24,11 +26,15 @@ n.SetSegmentationsFilePathList(segPath + 'case60.nrrd ' + segPath + 'case61.nrrd
 # use CMTK, if available, this will likely fall back to BRAINSFit
 n.SetToolkit('CMTK')
 
+# we use dynamic here
+n.SetTemplateType("dynamic")
+n.SetDynamicTemplateIterations(2)
 n.SetOutputDirectory(outDir)
-n.SetFixedTemplateDefaultCaseFilePath(origPath + 'case62.nrrd')
 n.SetDebugMode(1)
 slicer.MRMLScene.AddNode(n)
-n.SetLabelsList('3 4 5')
+
+# auto-detect the labels here
+n.SetLabelsList('')
 
 # and fire it up!!
 n.Launch();
