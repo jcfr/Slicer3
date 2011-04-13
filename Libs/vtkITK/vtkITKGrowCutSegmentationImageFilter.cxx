@@ -72,10 +72,9 @@ void vtkITKImageGrowCutHandleProgressEvent(itk::Object *caller,
 template<class IT1, class OT>
 void vtkITKImageGrowCutExecute3D(vtkImageData *inData, 
   IT1 *inPtr1, OT *inPtr2, OT *inPtr3,
-  OT *output, int outExt[6], double &ObjectSize,
+  OT *output, double &ObjectSize,
   double &ContrastNoiseRatio, 
   double &PriorSegmentStrength,     
-  vtkPoints *GestureColors,
   itk::CStyleCommand::Pointer progressCommand)
 {
 
@@ -97,14 +96,11 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   
   typename OutImageType::Pointer prevSegmentedImage = OutImageType::New();
 
-  typename OutImageType::Pointer outputImageROI = OutImageType::New();
-
   typename OutImageType::Pointer outputImage = OutImageType::New();
 
   typedef itk::Image<float, 3> WeightImageType;
   typename WeightImageType::Pointer weightImage = WeightImageType::New();
 
- 
   int dims[3];
   int extent[6];
   double spacing[3], origin[3];
@@ -159,23 +155,6 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   if(PriorSegmentStrength > 1.0)
     PriorSegmentStrength /= 100.0;
 
-  //vtkIdType ngestures = GestureColors->GetNumberOfPoints();
-  //typename OutImageType::PixelType backgroundColor = 0;
-
-  // debugger<<" number of gestures "<<ngestures<<std::endl;
-  //  std::cout<<" number of gestures "<<ngestures<<std::endl;
-
-  //for (vtkIdType i = 0; i < ngestures; i++)
- // {
-  //  double *p = GestureColors->GetPoint(i);
-    //debugger<<" Gesture Color "<<i<<" : "<<p[0]<<std::endl;
-    //    std::cout<<" Gesture Color "<<i<<" : "<<p[0]<<std::endl;
-   // if(p[0] > backgroundColor)
-   //   backgroundColor = (typename OutImageType::PixelType)p[0];
- // }
-
-  //debugger<<" Background Label Color "<<backgroundColor<<std::endl;
-  //  std::cout<<" Background Label Color "<<backgroundColor<<std::endl;
 
   typename OutImageType::IndexType roiStart;
   typename OutImageType::IndexType roiEnd;
@@ -199,23 +178,23 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
       else{
         weight.Set( ContrastNoiseRatio );
 
-  typename OutImageType::IndexType idx = label.GetIndex();
-  for (unsigned i = 0; i < ndims; i++)
-    {
-      if(!foundLabel)
-        {
-    roiStart[i] = idx[i];
-    roiEnd[i] = idx[i];
+        typename OutImageType::IndexType idx = label.GetIndex();
+        for (unsigned i = 0; i < ndims; i++)
+        { 
+           if(!foundLabel)
+           {
+             roiStart[i] = idx[i];
+             roiEnd[i] = idx[i];
+           }
+          else
+           {
+             if(idx[i] <= roiStart[i])
+               roiStart[i] = idx[i];
+               if(idx[i] >= roiEnd[i])
+                 roiEnd[i] = idx[i];
+           }
         }
-      else
-        {
-    if(idx[i] <= roiStart[i])
-      roiStart[i] = idx[i];
-    if(idx[i] >= roiEnd[i])
-      roiEnd[i] = idx[i];
-        }
-    }
-  foundLabel = true;
+        foundLabel = true;
       }
     }
 
@@ -225,10 +204,10 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
     {
       typename OutImageType::PixelType color = plabel.Get();
       if(color != 0 && weight.Get() == 0.0)
-  {
-    weight.Set( PriorSegmentStrength );
-    label.Set ( color );
-  }
+      {
+         weight.Set( PriorSegmentStrength );
+         label.Set ( color );
+      }
     }
   
   std::cout<<" Object radius "<<ObjectSize<<std::endl;
@@ -236,9 +215,18 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
 
   for (unsigned i = 0; i < ndims; i++)
     {
-      roiStart[i] = (roiStart[i] - radius >= 0)? (roiStart[i] - radius) : 0;
+      int diff = static_cast< int > (roiStart[i] - radius);
+      //roiStart[i] = 0;
+      if (diff >= index[i])
+      {
+        roiStart[i] -= radius;
+      }
+      else 
+      {
+        roiStart[i] = index[i];
+      }
       roiEnd[i] = (static_cast<unsigned int>(roiEnd[i] + radius) < size[i]) ? 
-  (roiEnd[i] + radius) : size[i]-1;
+                  (roiEnd[i] + radius) : size[i]-1;
 
       std::cout<<" roi ["<<roiStart[i]<<" "<<roiEnd[i]<<"] ";
     }
@@ -260,17 +248,14 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   typename WeightImageType::IndexType wstart;
   typename WeightImageType::SizeType wsize;
   
-
-
   
   for (unsigned n = 0; n < ndims; n++)
     {
       istart[n] = roiStart[n];
-      isize[n] = roiEnd[n]-roiStart[n]+1;
+      isize[n] = roiEnd[n]-roiStart[n] + 1;
       
       std::cout<<" istart "<<istart[n]<<" isize "<<isize[n]<<" ";
       
-
       ostart[n] = istart[n];
       osize[n] = isize[n];
       
@@ -333,6 +318,9 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   std::cout<<" set filter parameters and inputs ... "<<std::endl;
   
   filter->Update();
+
+  typename OutImageType::Pointer outputImageROI = OutImageType::New();
+
   outputImageROI = filter->GetOutput();
   std::cout<<" done running filter... "<<std::endl;
   
@@ -349,36 +337,8 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
     {
       out.Set(filterOut.Get());
    }
-
-  //outputImage = filter->GetOutput();
-  
-  /*writer->SetInput(filter->GetOutput());
-  writer->Update();*/
-  //debugger<<"Done with filter output "<<std::endl;
-  //debugger<<"Done writing output of the filter "<<std::endl;
-  
-  //int segmentedVol = 0;
-  //itk::ImageRegionIterator< OutImageType > out(outputImage, outputImage->GetBufferedRegion() );
-  //for (out.GoToBegin(); !out.IsAtEnd(); ++out)
-  // {
-  //   if(out.Get() == backgroundColor)
-  //  {
-  //    continue;
-  //    // out.Set(0);
-  //  }
-  //   else if(out.Get() != 0)
-  //  {
-  //    ++segmentedVol; // this is valid only for a binary segmentation
-  //  }
-  // }
-
-  //std::cout<<"Segmented Volume : "<<segmentedVol<<" pixels"<<std::endl;
- // Copy to the output
- /*memcpy(output, filter->GetOutput()->GetBufferPointer(),
-         filter->GetOutput()->GetBufferedRegion().GetNumberOfPixels()*sizeof(OT) );
- */
-
- memcpy(output, outputImage->GetBufferPointer(),
+ 
+  memcpy(output, outputImage->GetBufferPointer(),
          outputImage->GetBufferedRegion().GetNumberOfPixels()*sizeof(OT) );
  
 
@@ -393,7 +353,6 @@ vtkITKGrowCutSegmentationImageFilter::vtkITKGrowCutSegmentationImageFilter()
 {
   //MaxIterations = 5;
   ObjectSize = 20;
-  GestureColors = NULL;
   ContrastNoiseRatio = 1.0;
   //  CnrThreshold = 0.0;
   PriorSegmentConfidence = 0.003;
@@ -477,10 +436,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
   
     vtkITKImageGrowCutExecute3D(input1, 
               (IT1*)(inPtr1), (short*)(inPtr2), (short*) (inPtr3),
-              (short*)(outPtr), outExt,
+              (short*)(outPtr), 
               self->ObjectSize, self->ContrastNoiseRatio, 
               self->PriorSegmentConfidence, 
-              self->GestureColors, 
               progressCommand);     
     }
       else 
@@ -493,10 +451,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
       
     vtkITKImageGrowCutExecute3D(input1, 
               (IT1*)(inPtr1), (unsigned short*)(inPtr2), (unsigned short*) (inPtr3),
-              (unsigned short*)(outPtr), outExt,
+              (unsigned short*)(outPtr), 
               self->ObjectSize, self->ContrastNoiseRatio, 
               self->PriorSegmentConfidence, 
-              self->GestureColors, 
               progressCommand);     
     
     }
@@ -504,10 +461,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
 
       vtkITKImageGrowCutExecute3D(input1, 
           (IT1*)(inPtr1), (short*)(inPtr2), (short*) (inPtr3),
-          (short*)(outPtr), outExt,
+          (short*)(outPtr), 
           self->ObjectSize, self->ContrastNoiseRatio, 
           self->PriorSegmentConfidence, 
-          self->GestureColors, 
           progressCommand);     
 
     }
@@ -516,20 +472,18 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
 
       vtkITKImageGrowCutExecute3D(input1, 
           (IT1*)(inPtr1), (unsigned char*)(inPtr2), (unsigned char*) (inPtr3),
-          (unsigned char*)(outPtr), outExt,
+          (unsigned char*)(outPtr), 
           self->ObjectSize, self->ContrastNoiseRatio, 
           self->PriorSegmentConfidence, 
-          self->GestureColors, 
           progressCommand);     
     }
     else if(input2->GetScalarType() == VTK_CHAR) {
      
        vtkITKImageGrowCutExecute3D(input1, 
           (IT1*)(inPtr1), (char*)(inPtr2), (char*) (inPtr3),
-          (char*)(outPtr), outExt,
+          (char*)(outPtr), 
           self->ObjectSize, self->ContrastNoiseRatio, 
           self->PriorSegmentConfidence, 
-          self->GestureColors, 
           progressCommand);     
 
     }
@@ -537,10 +491,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
 
       vtkITKImageGrowCutExecute3D(input1, 
           (IT1*)(inPtr1), (unsigned long*)(inPtr2), (unsigned long*) (inPtr3),
-          (unsigned long*)(outPtr), outExt,
+          (unsigned long*)(outPtr), 
           self->ObjectSize, self->ContrastNoiseRatio, 
           self->PriorSegmentConfidence, 
-          self->GestureColors, 
           progressCommand);     
 
     }
@@ -548,10 +501,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
       
       vtkITKImageGrowCutExecute3D(input1, 
           (IT1*)(inPtr1), (long*)(inPtr2), (long*) (inPtr3),
-          (long*)(outPtr), outExt,
+          (long*)(outPtr), 
           self->ObjectSize, self->ContrastNoiseRatio, 
           self->PriorSegmentConfidence, 
-          self->GestureColors, 
           progressCommand);     
     }
   }
@@ -577,10 +529,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
 
   vtkITKImageGrowCutExecute3D(input1, 
             (IT1*)(inPtr1), (short*)(inPtr2), (short*) (inPtr3),
-            (short*)(outPtr), outExt,
+            (short*)(outPtr), 
             self->ObjectSize, self->ContrastNoiseRatio, 
             self->PriorSegmentConfidence, 
-            self->GestureColors, 
             progressCommand);     
   
       }
@@ -591,10 +542,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
     
   vtkITKImageGrowCutExecute3D(input1, 
             (IT1*)(inPtr1), (unsigned short*)(inPtr2), (unsigned short*) (inPtr3),
-            (unsigned short*)(outPtr), outExt,
+            (unsigned short*)(outPtr), 
             self->ObjectSize, self->ContrastNoiseRatio, 
             self->PriorSegmentConfidence, 
-            self->GestureColors, 
             progressCommand);     
 
   }
@@ -602,10 +552,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
     
   vtkITKImageGrowCutExecute3D(input1, 
             (IT1*)(inPtr1), (short*)(inPtr2), (short*) (inPtr3),
-            (short*)(outPtr), outExt,
+            (short*)(outPtr), 
             self->ObjectSize, self->ContrastNoiseRatio, 
             self->PriorSegmentConfidence, 
-            self->GestureColors, 
             progressCommand);     
 
   }
@@ -613,10 +562,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
     
   vtkITKImageGrowCutExecute3D(input1, 
             (IT1*)(inPtr1), (unsigned char*)(inPtr2), (unsigned char*) (inPtr3),
-            (unsigned char*)(outPtr), outExt,
+            (unsigned char*)(outPtr), 
             self->ObjectSize, self->ContrastNoiseRatio, 
             self->PriorSegmentConfidence, 
-            self->GestureColors, 
             progressCommand);     
 
   }
@@ -624,20 +572,18 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
     
   vtkITKImageGrowCutExecute3D(input1, 
             (IT1*)(inPtr1), (char*)(inPtr2), (char*) (inPtr3),
-            (char*)(outPtr), outExt,
+            (char*)(outPtr), 
             self->ObjectSize, self->ContrastNoiseRatio, 
             self->PriorSegmentConfidence, 
-            self->GestureColors, 
             progressCommand);     
   }
   else if(input2->GetScalarType() == VTK_UNSIGNED_LONG) {
     
   vtkITKImageGrowCutExecute3D(input1, 
             (IT1*)(inPtr1), (unsigned long*)(inPtr2), (unsigned long*) (inPtr3),
-            (unsigned long*)(outPtr), outExt,
+            (unsigned long*)(outPtr), 
             self->ObjectSize, self->ContrastNoiseRatio, 
             self->PriorSegmentConfidence, 
-            self->GestureColors, 
             progressCommand);     
 
   }
@@ -645,10 +591,9 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
     
   vtkITKImageGrowCutExecute3D(input1, 
             (IT1*)(inPtr1), (long*)(inPtr2), (long*) (inPtr3),
-            (long*)(outPtr), outExt,
+            (long*)(outPtr), 
             self->ObjectSize, self->ContrastNoiseRatio, 
             self->PriorSegmentConfidence, 
-            self->GestureColors, 
             progressCommand);     
   }
 
@@ -671,7 +616,8 @@ void vtkITKGrowCutSegmentationImageFilter::ExecuteData(
   vtkImageData *input3 = GetInput(2);
 
   vtkImageData * out = vtkImageData::SafeDownCast(outData);
-
+  out->SetScalarType( input2->GetScalarType());
+  input3->SetScalarType( input2->GetScalarType());
 
   switch(input1->GetScalarType() ) {
     vtkTemplateMacro( ExecuteGrowCut(this, input1, input2, 
