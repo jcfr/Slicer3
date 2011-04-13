@@ -60,7 +60,7 @@ if (EM_Slicer3_FOUND)
   "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/*.h"
   )
-  set (headers $headers $em_slicer3_headers)
+  set (headers ${headers} ${em_slicer3_headers})
 endif(EM_Slicer3_FOUND)
 
 file(GLOB TCLFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Tcl/*.tcl" )
