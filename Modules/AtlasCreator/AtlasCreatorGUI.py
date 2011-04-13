@@ -388,8 +388,25 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             
         elif caller == self._dryrunCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
             self.UpdateMRML()
+        
+        
+        
+    '''=========================================================================================='''                
+    def CheckForCongeal(self):
+        '''
+        Checks if Congeal Registration Tool is available in Slicer.
+        
+        Returns 1 if Congeal is installed or 0 otherwise.
+        '''
+        if os.path.isfile(str(slicer.Application.GetBinDir())+os.sep+"Congeal") or os.path.isfile(str(slicer.Application.GetBinDir())+os.sep+"Congeal.exe"):
             
+            return 1
             
+        else:
+            
+            return 0
+    
+    
         
     '''=========================================================================================='''                
     def ToggleNormalize(self):
@@ -898,7 +915,19 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 
             elif templateTypeString == "group":
                 # group online
-                self._groupOnlineRadio.SetSelectedState(1)
+                # but only activate it in the GUI if Congeal is installed
+                if self.CheckForCongeal():
+                    self._groupOnlineRadio.SetEnabled(1)
+                    self._groupOnlineRadio.SetSelectedState(1)
+                else:
+                    self._groupOnlineRadio.SetEnabled(0)
+                    # fall back to fixed registration
+                    self._pairFixedRadio.SetSelectedState(1)
+                    
+                    self._updating = 0
+                    # call the fixed pair handler
+                    self.ToggleMeanAndDefaultCase1()
+                    self._updating = 1                    
 
                 
             ###############################################################
@@ -1207,8 +1236,9 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
         
         self._groupOnlineRadio = self._registrationTypeRadios.GetWidget().AddWidget(2)
         self._groupOnlineRadio.SetText("Group Online")
-        self._groupOnlineRadio.SetEnabled(0) # TODO disabled for now :)
         self._groupOnlineRadio.SetBalloonHelpString("Use un-biased registration: each case against each case. UNDER CONSTRUCTION!")
+        # enable the groupOnline radio only if congeal was installed
+        self._groupOnlineRadio.SetEnabled(self.CheckForCongeal())
         
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._registrationTypeRadios.GetWidgetName())
 
