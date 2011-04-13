@@ -749,8 +749,11 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
      
       unsigned relUnlabeled = (unlabeled*100)/totalROIVolume;
       unsigned relSaturated = ((currSaturatedPix+currLocallySaturatedPix)*100)/totalROIVolume;    
-      converged = (relUnlabeled < threshUnchanged && 
-       (relSaturated > threshSaturation || prevModifiedPix == currModified));
+
+      unsigned permodified = (currModified > prevModifiedPix) ? ((currModified-prevModifiedPix)*100)/(vcl_max(static_cast<unsigned int>(1), vcl_max(currModified, prevModifiedPix))) : ((prevModifiedPix - currModified)*100)/(vcl_max(static_cast<unsigned int>(1), vcl_max(currModified, prevModifiedPix)));
+
+      converged = (prevModifiedPix == currModified) || 
+  (relUnlabeled < threshUnchanged && relSaturated > threshSaturation);
       
       if((iter % 10 == 0) || converged)
   {
@@ -764,7 +767,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
     std::cout<<"Curr Saturated "<<relSaturated<<" %"<<std::endl;
     std::cout<<" Prev Modified "<<prevModifiedPix<<" Curr Modified "<<currModified<<std::endl;
     std::cout<<"Unlabeled pixels "<<unlabeled<<" %"<<
-      relUnlabeled<<std::endl;
+      relUnlabeled<<" Per modified "<<permodified<<std::endl;
     if(converged)
       std::cout<<" converged...."<<std::endl;
   }
