@@ -10,8 +10,8 @@ int main(int argc, char** argv)
 
   // =======================================================================
   //
-  //  Read and check Input 
-  // 
+  //  Read and check Input
+  //
   // =======================================================================
 
    // parse arguments using the CLP system; this creates variables.
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
   // =======================================================================
   //
   //  Initialize Enviornment
-  // 
+  //
   // =======================================================================
 
   // ================== Tcl  ==================
@@ -167,7 +167,7 @@ int main(int argc, char** argv)
     // shortcut to the manager.
     vtkEMSegmentMRMLManager* emMRMLManager = EMSLogic->GetMRMLManager();
     std::string emMRMLManagerTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,emMRMLManager));
-    emMRMLManager->SetMRMLScene( mrmlScene ); 
+    emMRMLManager->SetMRMLScene( mrmlScene );
 
     vtkEMSegmentKWLogic* EMSKWLogic = vtkEMSegmentKWLogic::New();
     EMSKWLogic->SetSlicerApp(app);
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
     //
    try
     {
-         
+
       // =======================================================================
       //
       //  Loading Data
@@ -205,12 +205,12 @@ int main(int argc, char** argv)
      {
             throw std::runtime_error("ERROR: failed to set EMSegment parameters.");
      }
-       else {  
+       else {
            // don't use manual sampling because the target images might change this is a hack; do better !!!
            emMRMLManager->ChangeTreeNodeDistributionsFromManualSamplingToManual();
-           
+
            // change the default tcl preprocessing parameter
-           if (taskPreProcessingSetting.size())      
+           if (taskPreProcessingSetting.size())
        {
                 emMRMLManager->GetGlobalParametersNode()->SetTaskPreProcessingSetting(taskPreProcessingSetting.c_str());
        }
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
     // ================== Final Result ================
      if (DefineFinalOutput(useDefaultOutput, resultVolumeFileName, emMRMLManager, mrmlScene, verbose))
      {
-       throw std::runtime_error("ERROR: failed to define volume node for final output.");  
+       throw std::runtime_error("ERROR: failed to define volume node for final output.");
       }
 
     // =======================================================================
@@ -248,28 +248,41 @@ int main(int argc, char** argv)
     progressReporter.ReportProgress("Updating Parameters...", currentStep++ / totalSteps, 0.0f);
 
     // ================== Registration  ==================
-    // Dominique : What happens if they are not defined via a flag - you are overwriting the default from the mrml file which I do not like 
-    if (registrationPackage=="CMTK")
+
+    if (registrationPackage == "CMTK")
       {
         emMRMLManager->SetRegistrationPackageType(0); //CMTK
       }
-    else
+    else if (registrationPackage == "BRAINS")
       {
         emMRMLManager->SetRegistrationPackageType(1); // BRAINS
       }
-     if (verbose)
+    else
+      {
+        throw std::runtime_error("ERROR: registration package not known.");
+      }
+
+    if (verbose)
       std::cout << "Registration Package is " << registrationPackage << std::endl;
 
     if (disableRegistration)
       {
         // Set both affine and deformable to off - and so preprocessing will jump over
         emMRMLManager->GetGlobalParametersNode()->SetRegistrationAffineType(0);
-       emMRMLManager->GetGlobalParametersNode()->SetRegistrationDeformableType(0);
-      } else {
-           // Dominique: does this not always write over the default from the mrml scene - correct ! 
-           emMRMLManager->SetRegistrationAffineType(atoi(registrationAffineType.c_str()));
-           emMRMLManager->SetRegistrationDeformableType(atoi(registrationDeformableType.c_str()));
+        emMRMLManager->GetGlobalParametersNode()->SetRegistrationDeformableType(0);
+      }
+    else {
+      if ( !registrationAffineType.empty() ) {
+        int affineType = atoi(registrationAffineType.c_str());
+        emMRMLManager->SetRegistrationAffineType(affineType);
+      }
+
+      if ( !registrationDeformableType.empty() ) {
+        int deformableType = atoi(registrationDeformableType.c_str());
+        emMRMLManager->SetRegistrationDeformableType(deformableType);
+      }
     }
+
 
     // ================== Multithreading  ==================
     emMRMLManager->SetEnableMultithreading(!disableMultithreading);
@@ -300,7 +313,7 @@ int main(int argc, char** argv)
       {
       emMRMLManager->SetSaveIntermediateResults(false);
       }
- 
+
     // ================== Segmentation Boundary  ==================
     int segmentationBoundaryMin[3];
     int segmentationBoundaryMax[3];
@@ -335,7 +348,7 @@ int main(int argc, char** argv)
     progressReporter.ReportProgress("Running Segmentation...",
                                      currentStep++ / totalSteps);
 
-    try 
+    try
       {
         // ================== Preprocessing ==================
     if (RunPreprocessing( EMSKWLogic,  EMSLogicTcl, EMSKWLogicTcl,  emMRMLManagerTcl, app, emMRMLManager, verbose) ) {
@@ -348,7 +361,7 @@ int main(int argc, char** argv)
           {
             std::cerr << "ERROR: StartSegmentationWithoutPreprocessing failed." << std::endl;
             throw std::runtime_error("");
-          }    
+          }
           if (verbose) std::cout << "Segmentation complete." << std::endl;
        }
      catch (...)
@@ -358,8 +371,8 @@ int main(int argc, char** argv)
 
     //
     // End of global try block
-    //    
-    } 
+    //
+    }
   catch (std::runtime_error& e)
     {
       std::cerr << "EMSegmentCommandline.cxx: Segmentation failed: " << e.what() << std::endl;
@@ -383,7 +396,7 @@ int main(int argc, char** argv)
   // ================== Write Out Results  ==================
   if (segmentationSucceeded && !dontWriteResults)
     {
-       segmentationSucceeded = WriteResultsToFile(disableCompression,  emMRMLManager, verbose); 
+       segmentationSucceeded = WriteResultsToFile(disableCompression,  emMRMLManager, verbose);
     }
   else
     {
