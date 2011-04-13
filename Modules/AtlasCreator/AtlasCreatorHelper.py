@@ -1142,6 +1142,9 @@ class AtlasCreatorHelper(object):
                 self.debug("Command returned " + str(r))
         except OSError, e:
             self.debug("Execution failed " + str(e))
+            # this should not happen, we will try to execute the command like this now
+            self.debug("Trying with brute-force.....")
+            os.system(command)
             
         
         
