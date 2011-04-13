@@ -15,6 +15,8 @@ if(NOT Slicer3_SOURCE_DIR)
   slicer3_set_default_install_prefix_for_external_projects()
 endif(NOT Slicer3_SOURCE_DIR)
 
+set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
+
 # --------------------------------------------------------------------------
 # Include dirs
 
@@ -26,8 +28,6 @@ configure_file(
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets
-  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration
@@ -40,16 +40,28 @@ include_directories(
   ${Volumes_BINARY_DIR}
   )
 
+
 file(GLOB headers 
   "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/MRML/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/*.txx"
   "${CMAKE_CURRENT_SOURCE_DIR}/Registration/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Tasks/*.h"
   )
+
+if (EM_Slicer3_FOUND)
+  include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph
+  )
+
+  file(GLOB em_slicer3_headers
+  "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/*.h"
+  )
+  set (headers $headers $em_slicer3_headers)
+endif(EM_Slicer3_FOUND)
 
 file(GLOB TCLFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Tcl/*.tcl" )
 
@@ -154,6 +166,11 @@ set(EMSegment_SRCS
   # module
   vtkEMSegmentMRMLManager.cxx 
   vtkEMSegmentLogic.cxx 
+  )
+
+
+if(EM_Slicer3_FOUND)
+  set(EMSegment_SRCS ${EMSegment_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentKWLogic.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentGUI.cxx 
   # wizard
@@ -169,14 +186,13 @@ set(EMSegment_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentInputChannelsStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentPreProcessingStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/vtkEMSegmentKWDynamicFrame.cxx
-  )
 
- set(EMSegment_SRCS ${EMSegment_SRCS}
-   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageGraph.cxx
-   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkIndirectLookupTable.cxx
-   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageDrawObjects.cxx
-   ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageCurveRegion.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageGraph.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkIndirectLookupTable.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageDrawObjects.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/KWWidgets/Graph/vtkImageCurveRegion.cxx
   )
+endif(EM_Slicer3_FOUND)
 
 set_source_files_properties(
   # Algorithm sources (temporary exclusion)
@@ -217,10 +233,14 @@ add_library(${lib_name}
   )
 slicer3_set_modules_output_path(${lib_name})
 
+if(EM_Slicer3_FOUND)
+  set (EM_SLICER3_GUI_LIBRARIES ${KWWidgets_LIBRARIES})
+endif(EM_Slicer3_FOUND)
+
 target_link_libraries(${lib_name}
   ${Slicer3_Libs_LIBRARIES}
   ${Slicer3_Base_LIBRARIES}
-  ${KWWidgets_LIBRARIES} 
+  ${EM_SLICER3_GUI_LIBRARIES} 
   ${ITK_LIBRARIES}
   vtkSlicerVolumesModuleLogic
   Volumes
