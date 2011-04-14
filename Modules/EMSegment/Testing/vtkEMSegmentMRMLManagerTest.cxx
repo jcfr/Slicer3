@@ -258,6 +258,7 @@ int main(int vtkNotUsed(argc), char** argv)
     //                         TreeNodeDistributionLogCovarianceWithCorrection, 
     //                         MAGIC_DOUBLE, treeLeafNodeID, 0, 0);
 
+
     std::cerr << "Testing sample point interface...";
     double p1[3] = {MAGIC_DOUBLE, MAGIC_DOUBLE2, MAGIC_DOUBLE3};
     double p2[3] = {MAGIC_DOUBLE2, MAGIC_DOUBLE3, MAGIC_DOUBLE};
@@ -382,6 +383,7 @@ int main(int vtkNotUsed(argc), char** argv)
           //colLogic->Delete();
           //vtkTestSetGetStringMacro(pass, m, 
           //                  ColorNodeID, MAGIC_STRING.c_str());
+
       vtkTestSetGetStringMacro(pass, m, 
                                SaveWorkingDirectory, MAGIC_STRING.c_str());
       vtkTestSetGetStringMacro(pass, m,    
@@ -446,7 +448,6 @@ int main(int vtkNotUsed(argc), char** argv)
         pass = false;
         localPass = false;
         }
-      
       
       // move node D to node C
       std::cerr << "Moving D from under B to under  C...";
@@ -663,18 +664,19 @@ int main(int vtkNotUsed(argc), char** argv)
         }
       
       std::cerr << (localPass ? "OK" : "FAILED") << std::endl;
-     
     }
   catch(...)
     {
     returnValue = EXIT_FAILURE;
     }
-  
+
   // clean up
-  mrmlScene->Clear(true);
-  mrmlScene->Delete();
   emLogic->SetAndObserveMRMLScene(NULL);
   emLogic->Delete();
+
+ 
+  mrmlScene->Clear(true);
+  mrmlScene->Delete();
   
   return (pass ? returnValue : EXIT_FAILURE);
 }

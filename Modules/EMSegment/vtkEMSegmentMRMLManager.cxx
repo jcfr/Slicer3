@@ -346,22 +346,25 @@ SetTreeNodeParentNodeID(vtkIdType childNodeID, vtkIdType newParentNodeID)
   // point parent to this child node
   parentNode->AddChildNode(childNode->GetID());
   
-  // Create Parent Parameter node and delete leaf parameter node  if needed
+  // Create Parent Parameter node if needed
   vtkMRMLEMSTreeParametersParentNode *parParentNode = parentNode->GetParentParametersNode();
   if ( !parParentNode)
     {
            parParentNode  =vtkMRMLEMSTreeParametersParentNode::New();
            parParentNode->SetHideFromEditors(this->HideNodesFromEditors);
-            this->MRMLScene->AddNode(parParentNode);
-            parentNode->SetParentParametersNodeID(parParentNode->GetID()); 
-    }
+           this->MRMLScene->AddNode(parParentNode);
+           parentNode->SetParentParametersNodeID(parParentNode->GetID()); 
+           parParentNode->Delete(); 
+    } 
 
+    //   Delete leaf parameter node  if needed
     vtkMRMLEMSTreeParametersLeafNode* parLeafNode = parentNode->GetLeafParametersNode();
+    parentNode->SetLeafParametersNodeID(NULL);
+ 
     if ( parLeafNode )
        {
             this->MRMLScene->RemoveNode(parLeafNode);
        }
-     parentNode->SetLeafParametersNodeID(NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -4991,23 +4994,25 @@ void vtkEMSegmentMRMLManager::TurnFromParentToLeafNode(vtkMRMLEMSTreeNode* treeN
 
      // Delete ParameterParentNode and create ParameterLeafNode ->
      vtkMRMLEMSTreeParametersParentNode* parParentNode = treeNode->GetParentParametersNode();
+     treeNode->SetParentParametersNodeID(NULL);
      if ( parParentNode )
         {
             this->MRMLScene->RemoveNode(parParentNode);
         }
-      treeNode->SetParentParametersNodeID(NULL);
+
 
       vtkMRMLEMSTreeParametersLeafNode* parLeafNode = treeNode->GetLeafParametersNode();
       // Nothing to do more bc leaf node already exists
       if ( parLeafNode )
-    {
+      {
       return;
-    }
+       }
      
         parLeafNode  =vtkMRMLEMSTreeParametersLeafNode::New();
         parLeafNode->SetHideFromEditors(this->HideNodesFromEditors);
         this->MRMLScene->AddNode(parLeafNode);
         treeNode->SetLeafParametersNodeID(parLeafNode->GetID()); 
+    parLeafNode ->Delete();
 }
 
 void vtkEMSegmentMRMLManager::ImportMRMLFile(const char *mrmlFile,  vtksys_stl::string errMSG)
