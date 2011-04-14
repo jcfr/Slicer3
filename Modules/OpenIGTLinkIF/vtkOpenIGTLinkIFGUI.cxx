@@ -1497,7 +1497,6 @@ void vtkOpenIGTLinkIFGUI::ProcessTimerEvents()
 //---------------------------------------------------------------------------
 void vtkOpenIGTLinkIFGUI::Enter()
 {
-  std::cerr << "void vtkOpenIGTLinkIFGUI::Enter() begin" << std::endl;
   // Fill in
   vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
   
@@ -1515,8 +1514,6 @@ void vtkOpenIGTLinkIFGUI::Enter()
   this->GetLogic()->Initialize();
   this->UpdateConnectorList(UPDATE_ALL);
 
-
-  std::cerr << "void vtkOpenIGTLinkIFGUI::Enter() end" << std::endl;
 }
 
 
@@ -1576,7 +1573,7 @@ void vtkOpenIGTLinkIFGUI::BuildGUIForHelpFrame ()
     " Information about OpenIGTLink is also available at <a>http://www.na-mic.org/Wiki/index.php/OpenIGTLink</a>";
 
   std::stringstream aboutss;
-  aboutss << "Module Revision: " << OpenIGTLinkIF_REVISION << std::endl;
+  //aboutss << "Module Revision: " << OpenIGTLinkIF_REVISION << std::endl;
   aboutss << "OpenIGTLink Library: " << OpenIGTLinkIF_LIBRARY_VERSION << std::endl;
   aboutss << "The module is developed by Junichi Tokuda, Brigham and Women's Hospital.";
   aboutss << "This project is supported by NCIGT, NA-MIC and R01CA111288 from NIH.";
