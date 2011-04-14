@@ -1,8 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
 project (CMTK4Slicer)
-include(ExternalProject)
-
-#http://cmake.org/gitweb?p=cmake.git;a=blob;f=Modules/ExternalProject.cmake
 
 message("APPLE :                         ${APPLE}")
 message("BORLAND :                       ${BORLAND}")
@@ -24,7 +21,6 @@ message("UNIX :                          ${UNIX}")
 message("WIN32 :                         ${WIN32}")
 message("MSVC :                          ${MSVC}")
 
-
 # --------------------------------------------------------------------------
 # Find Slicer3
 
@@ -34,18 +30,16 @@ if(NOT Slicer3_SOURCE_DIR)
   slicer3_set_default_install_prefix_for_external_projects()
 endif(NOT Slicer3_SOURCE_DIR)
 
-set( MYPROJECT_SOURCE_DIR  CMTK )
-set( MYPROJECT_BINARY_DIR  CMTK-build )
-set( MYPROJECT_INSTALL_DIR CMTK-install )
-
-message("######### MYPROJECT_BINARY_DIR:                 ${MYPROJECT_BINARY_DIR}")
-message("######### MYPROJECT_SOURCE_DIR:                 ${MYPROJECT_SOURCE_DIR}")
-message("######### MYPROJECT_INSTALL_DIR:                ${MYPROJECT_INSTALL_DIR}")
+#http://cmake.org/gitweb?p=cmake.git;a=blob;f=Modules/ExternalProject.cmake
+SET(CMAKE_MODULE_PATH
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMake
+  ${CMAKE_MODULE_PATH}
+  )
+include(ExternalProject)
 
 message("######### Slicer3_INSTALL_PLUGINS_BIN_DIR:      ${Slicer3_INSTALL_PLUGINS_BIN_DIR}")
 message("######### CMAKE_CURRENT_BINARY_DIR:             ${CMAKE_CURRENT_BINARY_DIR}")
 message("######### CMAKE_CURRENT_SOURCE_DIR:             ${CMAKE_CURRENT_SOURCE_DIR}")
-
 message("######### LOCAL_CMAKE_BUILD_OPTIONS:            ${LOCAL_CMAKE_BUILD_OPTIONS}")
 
 if (${UNIX})
@@ -66,14 +60,10 @@ if (${MSVC})
    set(LOCAL_CMAKE_BUILD_OPTIONS ${LOCAL_CMAKE_BUILD_OPTIONS} -DCMTK_USE_OPENMP:BOOL=ON)
 endif (${MSVC})
 
-message("######### LOCAL_CMAKE_BUILD_OPTIONS:       ${LOCAL_CMAKE_BUILD_OPTIONS}")
+message("######### LOCAL_CMAKE_BUILD_OPTIONS:            ${LOCAL_CMAKE_BUILD_OPTIONS}")
 
-SET(CMAKE_MODULE_PATH
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMake
-  ${CMAKE_MODULE_PATH}
-  )
-include(ExternalProject)
 
+#############################################################################################
 
 set(PROJECTNAME CMTK)
 ExternalProject_Add(${PROJECTNAME}
@@ -83,12 +73,9 @@ ExternalProject_Add(${PROJECTNAME}
   SVN_PASSWORD "slicer"
   CMAKE_ARGS
     ${LOCAL_CMAKE_BUILD_OPTIONS}
-    -DCMAKE_INSTALL_PREFIX:PATH=${MYPROJECT_INSTALL_DIR}
+    -DCMAKE_INSTALL_PREFIX:PATH=${PROJECTNAME}-install
     -DCMAKE_BUILD_TYPE:STRING=Release
 )
-
-#file(GLOB CMTKFILES RELATIVE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECTNAME}-prefix/src/${PROJECTNAME}-build/${PROJECTNAME}-install/bin/" "*")
-
 
 install(
   DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECTNAME}-prefix/src/${PROJECTNAME}-build/${PROJECTNAME}-install/bin/
@@ -107,3 +94,4 @@ install(
               GROUP_EXECUTE GROUP_READ
               WORLD_EXECUTE WORLD_READ
 )
+
