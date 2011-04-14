@@ -17,11 +17,11 @@ endif(NOT Slicer3_SOURCE_DIR)
 # --------------------------------------------------------------------------
 # Find Slicer3
 
-find_package(Subversion)
-if (Subversion_FOUND)
-  Subversion_WC_INFO(${CMAKE_HOME_DIRECTORY} ProstateNav)
-  set(ProstateNav_REVISION "${ProstateNav_WC_REVISION}")
-endif (Subversion_FOUND)
+#find_package(Subversion)
+#if (Subversion_FOUND)
+#  Subversion_WC_INFO(${CMAKE_HOME_DIRECTORY} ProstateNav)
+#  set(ProstateNav_REVISION "${ProstateNav_WC_REVISION}")
+#endif (Subversion_FOUND)
 
 # --------------------------------------------------------------------------
 # Include dirs

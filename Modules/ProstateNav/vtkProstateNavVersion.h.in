@@ -16,5 +16,6 @@
 // These values are not defined in vtkProstateNavConfigure.h.in because vtkProstateNavConfigure.h.in is included
 // in every file, and so change in the working copy revision would cause recompilation of all source files.
 
-#define ProstateNav_REVISION @ProstateNav_WC_REVISION@
+//#define ProstateNav_REVISION @ProstateNav_WC_REVISION@
+#define ProstateNav_REVISION -1
 #define PROSTATE_NAV_MODULE_VERSION "2.0.2"

@@ -906,7 +906,15 @@ void vtkProstateNavGUI::BuildGUIForHelpFrame ()
   // Define your help text here.
   std::stringstream helpss;
   helpss << "Module Version: " << vtkMRMLProstateNavManagerNode::GetProstateNavModuleVersion() << std::endl;
-  helpss << "Source Revision: " << vtkMRMLProstateNavManagerNode::GetProstateNavWorkingCopyRevision() << std::endl;
+  helpss << "Source Revision: ";
+  if (vtkMRMLProstateNavManagerNode::GetProstateNavWorkingCopyRevision() >= 0)
+    {
+    helpss << vtkMRMLProstateNavManagerNode::GetProstateNavWorkingCopyRevision() << std::endl;
+    }
+  else
+    {
+    helpss << "Unknown" << std::endl;
+    }
   helpss << "The **ProstateNav Module** helps you to plan and navigate MRI-guided prostate biopsy ";
   helpss << "and brachytherapy using transrectal and transperineal needle placement devices. \n";
   helpss << "See <a>http://www.slicer.org/slicerWiki/index.php/Modules:ProstateNav-Documentation-3.6</a> for details.";
