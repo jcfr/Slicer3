@@ -24,6 +24,7 @@ message("UNIX :                          ${UNIX}")
 message("WIN32 :                         ${WIN32}")
 message("MSVC :                          ${MSVC}")
 
+
 # --------------------------------------------------------------------------
 # Find Slicer3
 
@@ -40,10 +41,18 @@ set( MYPROJECT_INSTALL_DIR Congealing4Slicer-install )
 message("######### MYPROJECT_BINARY_DIR:                 ${MYPROJECT_BINARY_DIR}")
 message("######### MYPROJECT_SOURCE_DIR:                 ${MYPROJECT_SOURCE_DIR}")
 message("######### MYPROJECT_INSTALL_DIR:                ${MYPROJECT_INSTALL_DIR}")
+
 message("######### Slicer3_INSTALL_PLUGINS_BIN_DIR:      ${Slicer3_INSTALL_PLUGINS_BIN_DIR}")
 message("######### CMAKE_CURRENT_BINARY_DIR:             ${CMAKE_CURRENT_BINARY_DIR}")
 message("######### CMAKE_CURRENT_SOURCE_DIR:             ${CMAKE_CURRENT_SOURCE_DIR}")
+
 message("######### LOCAL_CMAKE_BUILD_OPTIONS:            ${LOCAL_CMAKE_BUILD_OPTIONS}")
+
+
+
+
+
+
 
 if (NOT WIN32)
 
@@ -69,14 +78,14 @@ install(
               WORLD_EXECUTE WORLD_READ
 )
 
-#install(
-#  DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECTNAME}-prefix/src/${PROJECTNAME}-build/${PROJECTNAME}-install/lib/
-#  DESTINATION ${Slicer3_INSTALL_PLUGINS_BIN_DIR}
-#  FILES_MATCHING PATTERN "*"
-#  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
-#              GROUP_EXECUTE GROUP_READ
-#              WORLD_EXECUTE WORLD_READ
-#)
+install(
+  DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECTNAME}-prefix/src/${PROJECTNAME}-build/${PROJECTNAME}-install/lib/
+  DESTINATION ${Slicer3_INSTALL_PLUGINS_BIN_DIR}
+  FILES_MATCHING PATTERN "*"
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+              GROUP_EXECUTE GROUP_READ
+              WORLD_EXECUTE WORLD_READ
+)
 
 endif(NOT WIN32)
 

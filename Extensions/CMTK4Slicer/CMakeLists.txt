@@ -34,19 +34,19 @@ if(NOT Slicer3_SOURCE_DIR)
   slicer3_set_default_install_prefix_for_external_projects()
 endif(NOT Slicer3_SOURCE_DIR)
 
-set(CMTK_SOURCE_DIR CMTK)
-set(CMTK_BINARY_DIR CMTK-build)
-set(CMTK_INSTALL_DIR CMTK-install)
+set( MYPROJECT_SOURCE_DIR  CMTK )
+set( MYPROJECT_BINARY_DIR  CMTK-build )
+set( MYPROJECT_INSTALL_DIR CMTK-install )
 
-message("######### CMTK_BINARY_DIR:                 ${CMTK_BINARY_DIR}")
-message("######### CMTK_SOURCE_DIR:                 ${CMTK_SOURCE_DIR}")
-message("######### CMTK_INSTALL_DIR:                ${CMTK_INSTALL_DIR}")
+message("######### MYPROJECT_BINARY_DIR:                 ${MYPROJECT_BINARY_DIR}")
+message("######### MYPROJECT_SOURCE_DIR:                 ${MYPROJECT_SOURCE_DIR}")
+message("######### MYPROJECT_INSTALL_DIR:                ${MYPROJECT_INSTALL_DIR}")
 
-message("######### Slicer3_INSTALL_PLUGINS_BIN_DIR: ${Slicer3_INSTALL_PLUGINS_BIN_DIR}")
-message("######### CMAKE_CURRENT_BINARY_DIR:        ${CMAKE_CURRENT_BINARY_DIR}")
-message("######### CMAKE_CURRENT_SOURCE_DIR:        ${CMAKE_CURRENT_SOURCE_DIR}")
+message("######### Slicer3_INSTALL_PLUGINS_BIN_DIR:      ${Slicer3_INSTALL_PLUGINS_BIN_DIR}")
+message("######### CMAKE_CURRENT_BINARY_DIR:             ${CMAKE_CURRENT_BINARY_DIR}")
+message("######### CMAKE_CURRENT_SOURCE_DIR:             ${CMAKE_CURRENT_SOURCE_DIR}")
 
-message("######### LOCAL_CMAKE_BUILD_OPTIONS:       ${LOCAL_CMAKE_BUILD_OPTIONS}")
+message("######### LOCAL_CMAKE_BUILD_OPTIONS:            ${LOCAL_CMAKE_BUILD_OPTIONS}")
 
 if (${UNIX})
   if ( "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64 )
@@ -83,7 +83,7 @@ ExternalProject_Add(${PROJECTNAME}
   SVN_PASSWORD "slicer"
   CMAKE_ARGS
     ${LOCAL_CMAKE_BUILD_OPTIONS}
-    -DCMAKE_INSTALL_PREFIX:PATH=${CMTK_INSTALL_DIR}
+    -DCMAKE_INSTALL_PREFIX:PATH=${MYPROJECT_INSTALL_DIR}
     -DCMAKE_BUILD_TYPE:STRING=Release
 )
 
@@ -91,8 +91,6 @@ ExternalProject_Add(${PROJECTNAME}
 
 
 install(
-#  FILES ${CMTKFILES}
-#  FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECTNAME}-prefix/src/${PROJECTNAME}-build/${PROJECTNAME}-install/bin/registration
   DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${PROJECTNAME}-prefix/src/${PROJECTNAME}-build/${PROJECTNAME}-install/bin/
   DESTINATION ${Slicer3_INSTALL_PLUGINS_BIN_DIR}
   FILES_MATCHING PATTERN "*"
