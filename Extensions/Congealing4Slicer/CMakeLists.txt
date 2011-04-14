@@ -56,7 +56,7 @@ message("######### LOCAL_CMAKE_BUILD_OPTIONS:            ${LOCAL_CMAKE_BUILD_OPT
 
 if (NOT WIN32)
 
-  set( PROJECTNAME Congealing )
+  set( PROJECTNAME CongealingExternal )
 
   ExternalProject_Add(${PROJECTNAME}
 #    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
