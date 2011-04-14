@@ -62,6 +62,7 @@ vtkMRMLAtlasCreatorNode::vtkMRMLAtlasCreatorNode()
   this->TemplateType = 0;
   this->DynamicTemplateIterations = 0;
   this->FixedTemplateDefaultCaseFilePath = 0;
+  this->IgnoreTemplateSegmentation = 0;
 
   this->LabelsList = 0;
 
@@ -215,6 +216,8 @@ void vtkMRMLAtlasCreatorNode::WriteXML(ostream& of, int nIndent)
     of << " FixedTemplateDefaultCaseFilePath =\"" << this->FixedTemplateDefaultCaseFilePath << "\"";
     }
 
+  of << " IgnoreTemplateSegmentation =\"" << this->IgnoreTemplateSegmentation << "\"";
+
 
   if (this->LabelsList != 0)
     {
@@ -324,6 +327,17 @@ void vtkMRMLAtlasCreatorNode::ReadXMLAttributes(const char** atts)
     if ( !strcmp(attName, "FixedTemplateDefaultCaseFilePath") )
       {
       this->SetFixedTemplateDefaultCaseFilePath( attValue );
+      }
+
+    if ( !strcmp(attName, "IgnoreTemplateSegmentation") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetIgnoreTemplateSegmentation(val);
       }
 
 
@@ -516,6 +530,7 @@ void vtkMRMLAtlasCreatorNode::Copy(vtkMRMLNode *anode)
   this->SetTemplateType(node->GetTemplateType());
   this->SetDynamicTemplateIterations( node->GetDynamicTemplateIterations() );
   this->SetFixedTemplateDefaultCaseFilePath( node->GetFixedTemplateDefaultCaseFilePath() );
+  this->SetIgnoreTemplateSegmentation( node->GetIgnoreTemplateSegmentation() );
 
   this->SetLabelsList( node->GetLabelsList() );
 
@@ -559,6 +574,7 @@ void vtkMRMLAtlasCreatorNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "TemplateType: " << (this->GetTemplateType() ? this->GetTemplateType() : "(none)") << "\n";
   os << indent << "DynamicTemplateIterations: " << this->GetDynamicTemplateIterations() << "\n";
   os << indent << "FixedTemplateDefaultCaseFilePath: " << (this->GetFixedTemplateDefaultCaseFilePath() ? this->GetFixedTemplateDefaultCaseFilePath() : "(none)") << "\n";
+  os << indent << "IgnoreTemplateSegmentation: " << this->GetIgnoreTemplateSegmentation() << "\n";
 
   os << indent << "LabelsList: " << (this->GetLabelsList() ? this->GetLabelsList() : "(none)") << "\n";
 
@@ -601,6 +617,7 @@ void vtkMRMLAtlasCreatorNode::InitializeByDefault()
   this->SetTemplateType("fixed");
   this->DynamicTemplateIterations = 5;
   this->SetFixedTemplateDefaultCaseFilePath("");
+  this->IgnoreTemplateSegmentation = 0;
 
   this->SetLabelsList("");
 

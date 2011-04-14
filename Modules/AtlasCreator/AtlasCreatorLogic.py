@@ -489,11 +489,12 @@ class AtlasCreatorLogic(object):
             
             # if we use fixed registration, we will now add the segmentation of the defaultCase as well
             # to prevent information loss during the combination stage
-            if node.GetTemplateType() == "fixed":
+            if node.GetTemplateType() == "fixed" and not node.GetIgnoreTemplateSegmentation():
                 
                 # find the segmentation to the default case by looping through the segmentationsFilePathList
                 for s in segmentationsFilePathList:
                     if os.path.basename(s) == os.path.basename(defaultCase):
+                        self.Helper().info("Adding the template's segmentation to the atlases..")
                         resampledSegmentationsFilePathList.append(s)
                         break
                  

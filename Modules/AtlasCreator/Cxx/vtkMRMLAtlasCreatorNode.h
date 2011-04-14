@@ -104,6 +104,9 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkGetStringMacro (FixedTemplateDefaultCaseFilePath);
   vtkSetStringMacro (FixedTemplateDefaultCaseFilePath);
 
+  // Description: 1: Ignore the template segmentation in fixed mode 0: Don't ignore
+  vtkGetMacro(IgnoreTemplateSegmentation,int);
+  vtkSetMacro(IgnoreTemplateSegmentation,int);
 
   // Description: The Labels divided by space
   vtkGetStringMacro (LabelsList);
@@ -209,6 +212,7 @@ protected:
   char *TemplateType;
   int DynamicTemplateIterations;
   char *FixedTemplateDefaultCaseFilePath;
+  int IgnoreTemplateSegmentation;
   
   char *LabelsList;
 

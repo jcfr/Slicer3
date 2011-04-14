@@ -135,6 +135,9 @@ def usage():
     info("")    
     info("        --template FILEPATH")
     info("                Filepath to an image used as a template for fixed registration.")
+    info("")    
+    info("        --ignoreTemplateSegmentation")
+    info("                If activated, the template's segmentation will not be added to the atlases.")
     info("")
     info("-n, --non-rigid")
     info("        Use Non-Rigid registration additionally.")
@@ -220,9 +223,9 @@ def examples():
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --normalize')
     info("")
     info("-----------------------------------------------------------------------------------------------")
-    info("2. Run fixed registration with the testdata and use CMTK instead of BRAINSFit:")
+    info("2. Run fixed registration with the testdata and use CMTK instead of BRAINSFit and label auto-detection:")
     info("")
-    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w -l "3 4 5 6 7 8 9" --cmtk')
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w --cmtk')
     info("")    
     info("-----------------------------------------------------------------------------------------------")
     info("3. Run dynamic registration with the testdata and normalize the atlases to 0..100:")
@@ -230,9 +233,9 @@ def examples():
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize --normalizeTo 100')
     info("")
     info("-----------------------------------------------------------------------------------------------")
-    info("4. Run dynamic registration with the testdata on a cluster (scheduler command \"qsub\"):")
+    info("4. Run dynamic registration with the testdata on a cluster (scheduler command \"qsub -l centos5\"):")
     info("")
-    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize --cluster --schedulerCommand \"qsub -b y\"')
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize --cluster --schedulerCommand \"qsub -l centos5\"')
     info("")
     info("-----------------------------------------------------------------------------------------------")
     info("5. Use existing registrations and just re-sample")
@@ -249,7 +252,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.39")
+    info("Version v0.4alpha")
     info("")
     
     if len(argv) == 0:
@@ -271,6 +274,7 @@ def main(argv):
                                                         "meanIterations=",
                                                         "fixed",
                                                         "template=",
+                                                        "ignoreTemplateSegmentation",
                                                         "non-rigid",
                                                         "writeTransforms",
                                                         "keepAligned",
@@ -311,6 +315,7 @@ def main(argv):
     
     fixed = False
     template = None
+    ignoreTemplateSegmentation = False
     
     nonRigid = False
     
@@ -363,6 +368,8 @@ def main(argv):
             fixed = True
         elif opt in ("--template"):
             template = arg
+        elif opt in ("--ignoreTemplateSegmentation"):
+            ignoreTemplateSegmentation = True
         elif opt in ("-n", "--non-rigid"):
             nonRigid = True
         elif opt in ("-w", "--writeTransforms"):
@@ -640,6 +647,10 @@ def main(argv):
     if fixed:
         evalpythonCommand += "n.SetTemplateType('fixed');"
         evalpythonCommand += "n.SetFixedTemplateDefaultCaseFilePath('" + template + "');"
+        if ignoreTemplateSegmentation:
+            evalpythonCommand += "n.SetIgnoreTemplateSegmentation(1);"
+        else:
+            evalpythonCommand += "n.SetIgnoreTemplateSegmentation(0);"
     else:
         evalpythonCommand += "n.SetTemplateType('dynamic');"
         evalpythonCommand += "n.SetDynamicTemplateIterations(" + str(meanIterations) + ");"
