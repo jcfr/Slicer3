@@ -1572,8 +1572,13 @@ void vtkOpenIGTLinkIFGUI::BuildGUIForHelpFrame ()
     " See <a>http://www.slicer.org/slicerWiki/index.php/Modules:OpenIGTLinkIF-Documentation-3.6</a> for details about the module."
     " Information about OpenIGTLink is also available at <a>http://www.na-mic.org/Wiki/index.php/OpenIGTLink</a>";
 
+  vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+
   std::stringstream aboutss;
-  //aboutss << "Module Revision: " << OpenIGTLinkIF_REVISION << std::endl;
+  if (app)
+    {
+    aboutss << "3D Slicer Revision: " << app->GetSvnRevision() << std::endl;
+    }
   aboutss << "OpenIGTLink Library: " << OpenIGTLinkIF_LIBRARY_VERSION << std::endl;
   aboutss << "The module is developed by Junichi Tokuda, Brigham and Women's Hospital.";
   aboutss << "This project is supported by NCIGT, NA-MIC and R01CA111288 from NIH.";
