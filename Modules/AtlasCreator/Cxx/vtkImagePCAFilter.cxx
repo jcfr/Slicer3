@@ -107,6 +107,9 @@ int vtkImagePCAFilter::CheckInput(vtkImageData **InData)
 
 int vtkImagePCAFilter::CheckInput(vtkImageData *InData)
 {
+
+  vtkDebugMacro(<<"vtkImagePCAFilter::CheckInput: " << InData << " ..."  );
+
   int Ext[6];
   vtkIdType Inc[3];
 
@@ -136,6 +139,7 @@ int vtkImagePCAFilter::CheckInput(vtkImageData *InData)
     vtkErrorMacro(<< "Number Of Scalar Components for all Input has to be 1");
     return 1;
     }
+  vtkDebugMacro(<<".... OK " );
   return 0;
 }
 
