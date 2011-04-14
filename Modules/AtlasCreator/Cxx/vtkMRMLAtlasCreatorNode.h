@@ -194,6 +194,9 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkGetMacro(DryrunMode,int);
   vtkSetMacro(DryrunMode,int);
 
+  // Description: 1: Use Test Mode 0: Don't use Test Mode
+  vtkGetMacro(TestMode,int);
+  vtkSetMacro(TestMode,int);
 
 protected:
 
@@ -232,6 +235,9 @@ protected:
 
   int DebugMode;
   int DryrunMode;
+
+  // the testmode is only for internal use and will not be saved to MRML
+  int TestMode;
 
 
 private:

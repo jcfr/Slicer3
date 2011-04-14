@@ -89,6 +89,8 @@ vtkMRMLAtlasCreatorNode::vtkMRMLAtlasCreatorNode()
   this->DebugMode = 0;
   this->DryrunMode = 0;
 
+  this->TestMode = 0;
+
 }
 
 //----------------------------------------------------------------------------
@@ -625,6 +627,8 @@ void vtkMRMLAtlasCreatorNode::InitializeByDefault()
 
   this->DebugMode = 0;
   this->DryrunMode = 0;
+
+  this->TestMode = 0;
 }
 
 //----------------------------------------------------------------------------

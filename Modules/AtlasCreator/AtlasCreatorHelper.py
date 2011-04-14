@@ -37,6 +37,8 @@ class AtlasCreatorHelper(object):
 
         self.__pcaDistanceSourced = 0
         
+        self.__testMode = 0
+        
 
 
     '''=========================================================================================='''
@@ -53,6 +55,18 @@ class AtlasCreatorHelper(object):
         self.__debugMode = None
         self.__guidebugMode = None
         self.__pcaDistanceSourced = None
+        self.__testMode = None
+        
+        
+        
+    '''=========================================================================================='''
+    def EnableTestMode(self):
+        '''
+        Enables the test Mode which means a fast but not accurate registration
+        
+        Returns n/a
+        '''
+        self.__testMode = 1        
         
 
 
@@ -520,11 +534,16 @@ class AtlasCreatorHelper(object):
 
         registrationCommand += " --backgroundFillValue " + str(backgroundValue)
         
-        registrationCommand += " --numberOfSamples 100000 --numberOfIterations 1500"
-        registrationCommand += " --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --splineGridSize 28,20,24 --fixedVolumeTimeIndex 0"
+        # in test mode, use limited DOF
+        if self.__testMode:
+            registrationCommand += " --numberOfSamples 100 --numberOfIterations 3 --projectedGradientTolerance 1e-1  --splineGridSize 7,5,12"
+        else:
+            registrationCommand += " --numberOfSamples 100000 --numberOfIterations 1500 --projectedGradientTolerance 1e-5  --splineGridSize 28,20,24"
+            
+        registrationCommand += " --translationScale 1000.0 --reproportionScale 1.0 --skewScale 1.0 --fixedVolumeTimeIndex 0"
         registrationCommand += " --movingVolumeTimeIndex 0 --medianFilterSize 0,0,0 --numberOfHistogramBins 50 --numberOfMatchPoints 10 --useCachingOfBSplineWeightsMode ON"
         registrationCommand += " --useExplicitPDFDerivativesMode AUTO --relaxationFactor 0.5 --failureExitCode -1"
-        registrationCommand += " --debugLevel 0 --costFunctionConvergenceFactor 1e+9 --projectedGradientTolerance 1e-5"
+        registrationCommand += " --debugLevel 0 --costFunctionConvergenceFactor 1e+9"
 
 
         return str(registrationCommand)

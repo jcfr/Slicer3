@@ -30,6 +30,9 @@ n.SetDebugMode(1)
 slicer.MRMLScene.AddNode(n)
 n.SetLabelsList('3 4 5')
 
+# set test mode
+n.SetTestMode(1)
+
 # and fire it up!!
 n.Launch();
 

@@ -36,6 +36,9 @@ slicer.MRMLScene.AddNode(n)
 # auto-detect the labels here
 n.SetLabelsList('')
 
+# set test mode
+n.SetTestMode(1)
+
 # and fire it up!!
 n.Launch();
 

@@ -113,6 +113,11 @@ class AtlasCreatorLogic(object):
             self.EnableDryrunMode()
             self.Helper().info("Dry-Run is activated: Output executable commands instead of running the registration or resampling.")
         
+        if node.GetTestMode():
+            # activate test mode
+            self.Helper().EnableTestMode()
+            self.Helper().info("WARNING: TEST MODE ACTIVATED! Registration will not be very accurate...")
+        
         clusterMode = 0
         skipRegistrationMode = 0
 
