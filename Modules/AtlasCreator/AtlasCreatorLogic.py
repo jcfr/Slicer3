@@ -542,8 +542,7 @@ class AtlasCreatorLogic(object):
         
         # cleanup!!
         # delete the scripts and notify directories
-        # TODO enter a not
-        if self.__dryRun:
+        if not self.__dryRun:
             shutil.rmtree(scriptsRegistrationDirectory, True, None)
             shutil.rmtree(notifyRegistrationDirectory, True, None)
             shutil.rmtree(scriptsResamplingDirectory, True, None)

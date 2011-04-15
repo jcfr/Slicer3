@@ -252,7 +252,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.4alpha")
+    info("Version v0.4")
     info("")
     
     if len(argv) == 0:
@@ -290,6 +290,7 @@ def main(argv):
                                                         "slicer=",
                                                         "debug",
                                                         "dryrun",
+                                                        "testMode",
                                                         "examples"])
         
     except getopt.GetoptError, err:
@@ -341,6 +342,8 @@ def main(argv):
     debug = False
     
     dryrun = False
+    
+    testMode = True
     
     for opt, arg in opts:                
         if opt in ("-h", "--help"):
@@ -403,7 +406,10 @@ def main(argv):
             debug = True
         elif opt in ("--dryrun"):
             debug = True
-            dryrun = True      
+            dryrun = True
+        elif opt in ("--testMode"):
+            testMode = True
+            debug = True 
         elif opt in ("--examples"):
             examples()
             sys.exit()
@@ -612,11 +618,14 @@ def main(argv):
     # we create a new vtkMRMLAtlasCreatorNode and configure it..
     evalpythonCommand += "n=slicer.vtkMRMLAtlasCreatorNode();"
 
-    if debug or dryrun:
+    if debug or dryrun or testMode:
         evalpythonCommand += "n.SetDebugMode(1);"
 
     if dryrun:
         evalpythonCommand += "n.SetDryrunMode(1);"
+        
+    if testMode:
+        evalpythonCommand += "n.SetTestMode(1);"
 
     # set special settings if clusterMode or skipRegistrationMode is requested
     if cluster:
