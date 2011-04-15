@@ -7,9 +7,9 @@
   CongealingCLI 
   </title>
   <description>
-  Generates a configuration file for the Congealing Registration tool.
+  Generates a configuration file for the Congealing Registration tool. If a path to the Congeal executable was configured, it tries to launch Congeal with the generated configuration.
   </description>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <documentation-url>http://www.slicer.org/slicerWiki/index.php/Modules:AtlasCreator</documentation-url>
   <license>Slicer license</license>
   <contributor>Daniel Haehn and Kilian Pohl, University of Pennsylvania</contributor>
@@ -363,15 +363,23 @@
   </parameters>
   
   <parameters>
-  <label>Execution options</label>
-  <description>Options to configure the executable</description>  
+  <label>Write and Execution options</label>
+  <description>Options to configure the execution</description>  
+
+    <string>
+      <name>outputPath</name>
+      <label>Output path for configuration</label>
+      <description>The output path for the congeal configuration file. The file will only be written, if this is set.</description>
+      <longflag>--outputPath</longflag>
+      <default>/tmp/congeal.config</default>
+    </string>
   
     <string>
       <name>launch</name>
       <label>Congeal executable</label>
       <description>The path to the congeal executable. Congeal will only be executed, if this is set.</description>
       <longflag>--launch</longflag>
-      <default>$Slicer3_HOME/bin/Congeal</default>
+      <default></default>
     </string>
   
   </parameters>

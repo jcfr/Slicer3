@@ -329,19 +329,15 @@ int main(int argc, char* argv[])
   //
   // std::cout << output << std::endl;
 
-  // step 2: write config string to temporary file
+  // step 2: write config string to output Path
 
-  char* pFileName = NULL;
-
-  pFileName = tmpnam(NULL);
-
-  if (!pFileName)
+  if (!strcmp(outputPath.c_str(),""))
     {
-    std::cerr << "Couldn't create temp file name.\n";
+    std::cerr << "Couldn't create output file.\n";
     return EXIT_FAILURE;
     }
 
-  std::ofstream of(pFileName);
+  std::ofstream of(outputPath.c_str());
 
   if (of)
     {
@@ -353,14 +349,14 @@ int main(int argc, char* argv[])
 
   if (!strcmp(launch.c_str(),""))
     {
-    std::cout << "Configuration file written to " << pFileName << std::endl;
+    std::cout << "Configuration file written to " << outputPath.c_str() << std::endl;
     }
   else
     {
 #ifdef WIN32
-    _execlp(launch.c_str(),launch.c_str(),pFileName,(char *) 0);
+    _execlp(launch.c_str(),launch.c_str(),outputPath.c_str(),(char *) 0);
 #else
-    execlp(launch.c_str(),launch.c_str(),pFileName,(char *) 0);
+    execlp(launch.c_str(),launch.c_str(),outputPath.c_str(),(char *) 0);
 #endif
     }
 
