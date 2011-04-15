@@ -47,7 +47,7 @@ message("######### LOCAL_CMAKE_BUILD_OPTIONS:            ${LOCAL_CMAKE_BUILD_OPT
 
 set(PROJECTNAME CongealingExternal)
 ExternalProject_Add(${PROJECTNAME}
-  SVN_REPOSITORY "http://svn.github.com/domibel/Congealing"
+  SVN_REPOSITORY "http://svn.github.com/debonet/Congealing"
   CMAKE_ARGS
     ${LOCAL_CMAKE_BUILD_OPTIONS}
     -DCMAKE_INSTALL_PREFIX:PATH=${PROJECTNAME}-install
