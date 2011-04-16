@@ -30,6 +30,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration
   ${CMAKE_CURRENT_SOURCE_DIR}/Tasks
   ${Slicer3_Libs_INCLUDE_DIRS}
@@ -46,6 +47,7 @@ file(GLOB headers
   "${CMAKE_CURRENT_SOURCE_DIR}/MRML/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/*.txx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Registration/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Tasks/*.h"
   )
@@ -145,11 +147,14 @@ set(EMSegment_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMLocalGenericClass.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMLocalSegmenter.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMLocalSuperClass.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkSimonParameterReaderWriter.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkTimeDef.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageMeanIntensityNormalization.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageLabelPropagation.cxx 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageIslandFilter.cxx 
+
+  # ImageFilters
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkSimonParameterReaderWriter.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkImageMeanIntensityNormalization.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkImageLabelPropagation.cxx 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkImageIslandFilter.cxx 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkImageSumOverVoxels.cxx
 
   # Registration
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkRigidRegistrator.cxx
@@ -201,9 +206,9 @@ set_source_files_properties(
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/EMLocalShapeCostFunction.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkDataDef.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkFileOps.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkSimonParameterReaderWriter.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkTimeDef.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageMeanIntensityNormalization.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkImageMeanIntensityNormalization.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkSimonParameterReaderWriter.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkBSplineRegistrator.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkRigidRegistrator.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkITKTransformAdapter.cxx
