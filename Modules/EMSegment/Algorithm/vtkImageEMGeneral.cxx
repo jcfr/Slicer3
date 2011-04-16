@@ -16,6 +16,8 @@
 #include "vtkImageData.h"
 #include "vtkImageWriter.h"
 #include "vtkImageClip.h"
+#include "vtkImageCast.h"
+#include "vtkImageSumOverVoxels.h"
 
 #include <stdio.h>
 #include <sstream>
@@ -873,6 +875,112 @@ float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageDa
   return result;
 }  
 
+// normalize them between 0 and 1 
+double vtkImageEMGeneral::CalcSoftSimularityMeasureNormalize (vtkImageData *Image1, vtkImageData *Image2) {
+  double min = Image1->GetScalarRange()[0];
+  if (min > Image2->GetScalarRange()[0]) {
+    min = Image2->GetScalarRange()[0];
+   }
 
-// Allocates data and spits pointer back out 
+  double max = Image1->GetScalarRange()[1];
+  if (max < Image2->GetScalarRange()[1]) {
+    max = Image2->GetScalarRange()[1];
+   }
+   
+  double norm = max - min;
+  if (norm) { 
+    norm = 1; 
+  } else {
+    norm = 1.0/norm;
+  }
+  
+  vtkImageCast* cast1 = vtkImageCast::New();
+  cast1->SetInput(Image1);  
+  cast1->SetOutputScalarTypeToFloat(); 
+  cast1->Update();
 
+   vtkImageMathematics *shift1 = vtkImageMathematics::New();
+   shift1->SetOperationToAddConstant(); 
+   shift1->SetInput(0,cast1->GetOutput());
+   shift1->SetConstantC(- min ); 
+   shift1->Update();
+
+   vtkImageMathematics *norm1 = vtkImageMathematics::New();
+   norm1->SetOperationToMultiplyByK(); 
+   norm1->SetInput(0,shift1->GetOutput());
+   norm1->SetConstantK(norm);
+   norm1->Update();
+
+  vtkImageCast* cast2 = vtkImageCast::New();
+  cast2->SetInput(Image2);  
+  cast2->SetOutputScalarTypeToFloat(); 
+  cast2->Update();
+
+   vtkImageMathematics *shift2 = vtkImageMathematics::New();
+   shift2->SetOperationToAddConstant(); 
+   shift2->SetInput(0,cast2->GetOutput());
+   shift2->SetConstantC(- min ); 
+   shift2->Update();
+
+   vtkImageMathematics *norm2 = vtkImageMathematics::New();
+   norm2->SetOperationToMultiplyByK(); 
+   norm2->SetInput(0,shift2->GetOutput());
+   norm2->SetConstantK(norm);
+   norm2->Update();
+
+   double value = this->CalcSoftSimularityMeasure (norm1->GetOutput(), norm2->GetOutput());
+   norm1->Delete();
+   shift1->Delete();
+   cast1->Delete();
+   norm2->Delete();
+   shift2->Delete();
+   cast2->Delete();
+
+   return value;
+ }
+
+// images are not thresholded - have to be of the same chast and between 0 and 1
+double vtkImageEMGeneral::CalcSoftSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2)  {
+   if ((Image1->GetScalarRange()[0] < 0) || (Image1->GetScalarRange()[1] > 1) )  {
+     vtkErrorMacro("Scalars of first image are out of range [0,1]")
+     return -1; 
+   } 
+
+   if ((Image2->GetScalarRange()[0] < 0) || (Image2->GetScalarRange()[1] > 1) )  {
+     vtkErrorMacro("Scalars of second image are out of range [0,1]")
+     return -1; 
+   } 
+
+   if (Image1->GetScalarType()  != Image1->GetScalarType() ) {
+     vtkErrorMacro("Scalars types of input are not coherrent")
+     return -1; 
+   } 
+
+   vtkImageMathematics *UNION = vtkImageMathematics::New();
+   UNION->SetOperationToMultiply();
+   UNION->SetInput(0,Image1);
+   UNION->SetInput(1,Image2);
+   UNION->Update();
+
+   vtkImageSumOverVoxels* VOXELSUM  = vtkImageSumOverVoxels::New();
+   VOXELSUM ->SetInput(UNION->GetOutput());
+   VOXELSUM ->Update();
+   double nominator = 2*VOXELSUM->GetVoxelSum();
+
+   VOXELSUM ->SetInput(Image1);
+   VOXELSUM ->Update();
+   double denominator = VOXELSUM->GetVoxelSum();
+
+   VOXELSUM ->SetInput(Image2);
+   VOXELSUM ->Update();
+   denominator += VOXELSUM->GetVoxelSum();
+
+   UNION->Delete();
+   VOXELSUM->Delete();
+
+   if (denominator == 0) { 
+       return 1;
+   }
+   
+   return    nominator/denominator;
+}  

@@ -246,6 +246,13 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilte
 //ETX
   static float CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes);
 
+  //  Softt Dice Measure - Normalize between 0 -1  
+  double CalcSoftSimularityMeasureNormalize (vtkImageData *Image1, vtkImageData *Image2) ;
+  //  Softt Dice Measure 
+  double CalcSoftSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2) ;
+
+
+
   // Description:
   // Opens text file with the a file name according to Kilian's EM nameing convention 
   static FILE* OpenTextFile(const char* FileDir, const char FileName[], int Label, int LabelFlag, 
