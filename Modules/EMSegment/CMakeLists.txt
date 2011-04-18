@@ -10,6 +10,7 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # Find Slicer3 or Slicer4
 
 if(NOT EM_Slicer4_FOUND)
+
   # we are not in the Slicer4 Source Dir, let's check if we are in Slicer3 Source Dir
   if(NOT Slicer3_SOURCE_DIR)
     # we are not even in the Slicer3 Source Dir, we have to find Slicer3
@@ -17,9 +18,10 @@ if(NOT EM_Slicer4_FOUND)
     include(${Slicer3_USE_FILE})
     slicer3_set_default_install_prefix_for_external_projects()
   endif(NOT Slicer3_SOURCE_DIR)
+  
+  set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
+  
 endif(NOT EM_Slicer4_FOUND)
-
-set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
 
 # --------------------------------------------------------------------------
 # Include dirs
@@ -219,70 +221,87 @@ set_source_files_properties(
   WRAP_EXCLUDE
   )
 
-# --------------------------------------------------------------------------
-# Wrapping
 
+#
+# Slicer3
+#
 IF(EM_Slicer3_FOUND)
+
+  # --------------------------------------------------------------------------
+  # Wrapping
+
   include("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
   vtk_wrap_tcl3(EMSegment 
     EMSegment_TCL_SRCS 
     "${EMSegment_SRCS}" "")
+
+
+  #---------------------------------------------------------------------------
+  # Add Loadable Module support
+
+  generatelm(EMSegment_SRCS EMSegment.txt)
+
+  # --------------------------------------------------------------------------
+  # Build and install the library
+
+  set(lib_name EMSegment)
+  add_library(${lib_name} 
+    ${EMSegment_SRCS} 
+    ${EMSegment_TCL_SRCS}
+    )
+  slicer3_set_modules_output_path(${lib_name})
+
+  set (EM_SLICER3_GUI_LIBRARIES ${KWWidgets_LIBRARIES})
+
+  target_link_libraries(${lib_name}
+      ${Slicer3_Libs_LIBRARIES}
+      ${Slicer3_Base_LIBRARIES}
+      ${EM_SLICER3_GUI_LIBRARIES} 
+      ${ITK_LIBRARIES}
+      vtkSlicerVolumesModuleLogic
+      Volumes
+      )
+
+  # Apply user-defined properties to the library target.
+  IF(Slicer3_LIBRARY_PROPERTIES)
+      SET_TARGET_PROPERTIES(${lib_name} PROPERTIES
+      ${Slicer3_LIBRARY_PROPERTIES}
+      )
+  ENDIF(Slicer3_LIBRARY_PROPERTIES)
+
+  slicer3_install_modules(${lib_name})
+
+  # --------------------------------------------------------------------------
+  # Testing
+
+  if(BUILD_TESTING)
+      ADD_SUBDIRECTORY(Testing)
+  endif(BUILD_TESTING)
+
+  # --------------------------------------------------------------------------
+  # Command line application
+
+  ADD_SUBDIRECTORY(CommandLineApplication)
+
+  # --------------------------------------------------------------------------
+  # Install the testing data
+
+  install(DIRECTORY
+      Testing/TestData
+      DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/Testing COMPONENT Development
+      PATTERN ".svn" EXCLUDE
+      )
+
 ENDIF(EM_Slicer3_FOUND)
 
-#---------------------------------------------------------------------------
-# Add Loadable Module support
 
-generatelm(EMSegment_SRCS EMSegment.txt)
+#
+# Slicer4
+#
+IF(EM_Slicer4_FOUND)
 
-# --------------------------------------------------------------------------
-# Build and install the library
+  # Add subdirectory Qt/
+  ADD_SUBDIRECTORY(Qt)
 
-set(lib_name EMSegment)
-add_library(${lib_name} 
-  ${EMSegment_SRCS} 
-  ${EMSegment_TCL_SRCS}
-  )
-slicer3_set_modules_output_path(${lib_name})
+ENDIF(EM_Slicer4_FOUND)
 
-if(EM_Slicer3_FOUND)
-  set (EM_SLICER3_GUI_LIBRARIES ${KWWidgets_LIBRARIES})
-endif(EM_Slicer3_FOUND)
-
-target_link_libraries(${lib_name}
-  ${Slicer3_Libs_LIBRARIES}
-  ${Slicer3_Base_LIBRARIES}
-  ${EM_SLICER3_GUI_LIBRARIES} 
-  ${ITK_LIBRARIES}
-  vtkSlicerVolumesModuleLogic
-  Volumes
-  )
-
-# Apply user-defined properties to the library target.
-IF(Slicer3_LIBRARY_PROPERTIES)
-  SET_TARGET_PROPERTIES(${lib_name} PROPERTIES
-    ${Slicer3_LIBRARY_PROPERTIES}
-  )
-ENDIF(Slicer3_LIBRARY_PROPERTIES)
-
-slicer3_install_modules(${lib_name})
-
-# --------------------------------------------------------------------------
-# Testing
-
-if(BUILD_TESTING)
- ADD_SUBDIRECTORY(Testing)
-endif(BUILD_TESTING)
-
-# --------------------------------------------------------------------------
-# Command line application
-
-ADD_SUBDIRECTORY(CommandLineApplication)
-
-# --------------------------------------------------------------------------
-# Install the testing data
-
-install(DIRECTORY
-  Testing/TestData
-  DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/Testing COMPONENT Development
-  PATTERN ".svn" EXCLUDE
-  )
