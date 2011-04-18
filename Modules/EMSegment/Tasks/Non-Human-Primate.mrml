@@ -1,4 +1,4 @@
-<MRML >
+<?xml version="1.0"?><MRML >
 <EMSTemplate
   id="vtkMRMLEMSTemplateNode1"  name="Non Human Primate"  hideFromEditors="false"  selectable="true"  selected="false"  TreeNodeID="vtkMRMLEMSTreeNode1"  GlobalParametersNodeID="vtkMRMLEMSGlobalParametersNode1"  SpatialAtlasNodeID="vtkMRMLEMSAtlasNode1"  SubParcellationNodeID="vtkMRMLEMSVolumeCollectionNode2"  EMSWorkingDataNodeID="" ></EMSTemplate>
  <EMSTree
@@ -72,7 +72,7 @@
  <EMSTree
   id="vtkMRMLEMSTreeNode20"  name="BG"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode2"  TreeParametersNodeID="NULL"  ChildNodeIDs=""   ParentParametersNodeID="NULL"  LeafParametersNodeID="vtkMRMLEMSTreeParametersLeafNode20"  ColorRGB="1 0 0"  InputChannelWeights="1 "  SpatialPriorVolumeName="vtkMRMLEMSTreeNode20"  SpatialPriorWeight="1"  ClassProbability="0.95"  ExcludeFromIncompleteEStep="0"  PrintWeights="0"  ></EMSTree>
  <EMSTreeParametersLeaf
-  id="vtkMRMLEMSTreeParametersLeafNode20"  name="vtkMRMLEMSTreeParametersLeafNode20"  hideFromEditors="false"  selectable="true"  selected="false" PrintQuality="0"  IntensityLabel="27"  LogMean="0 "  LogMeanCorrection="0 "  LogCovariance="0 "  LogCovarianceCorrection="0 "  DistributionSpecificationMethod="0"  DistributionSamplePointsRAS=""  SubParcellationVolumeName=""  ></EMSTreeParametersLeaf>
+  id="vtkMRMLEMSTreeParametersLeafNode20"  name="vtkMRMLEMSTreeParametersLeafNode20"  hideFromEditors="false"  selectable="true"  selected="false" PrintQuality="0"  IntensityLabel="27"  LogMean="0 "  LogMeanCorrection="0 "  LogCovariance="0 "  LogCovarianceCorrection="0.01 "  DistributionSpecificationMethod="0"  DistributionSamplePointsRAS=""  SubParcellationVolumeName=""  ></EMSTreeParametersLeaf>
  <EMSTreeParametersParent
   id="vtkMRMLEMSTreeParametersParentNode2"  name="vtkMRMLEMSTreeParametersParentNode2"  hideFromEditors="false"  selectable="true"  selected="false" Alpha="0.99"  PrintBias="0"  BiasCalculationMaxIterations="-1"  SmoothingKernelWidth="11"  SmoothingKernelSigma="5"  StopEMType="0"  StopEMMaxIterations="4"  StopEMValue="0"  StopMFAType="0"  StopMFAMaxIterations="2"  StopMFAValue="0"  PrintFrequency="0"  PrintLabelMap="0"  PrintEMLabelMapConvergence="0"  PrintEMWeightsConvergence="0"  PrintMFALabelMapConvergence="0"  PrintMFAWeightsConvergence="0"  GenerateBackgroundProbability="0"  ></EMSTreeParametersParent>
  <EMSTreeParametersParent
