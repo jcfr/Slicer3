@@ -58,12 +58,6 @@
  <EMSTreeParametersLeaf
   id="vtkMRMLEMSTreeParametersLeafNode10"  name="vtkMRMLEMSTreeParametersLeafNode10"  hideFromEditors="false"  selectable="true"  selected="false" PrintQuality="0"  IntensityLabel="9"  LogMean="0.2 "  LogMeanCorrection="0 "  LogCovariance="0 "  LogCovarianceCorrection="0 "  DistributionSpecificationMethod="0"  DistributionSamplePointsRAS=""  SubParcellationVolumeName=""  ></EMSTreeParametersLeaf>
  <EMSTree
-  id="vtkMRMLEMSTreeNode12"  name="BG"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode1"  TreeParametersNodeID="NULL"  ChildNodeIDs=""   ParentParametersNodeID="vtkMRMLEMSTreeParametersParentNode12"  LeafParametersNodeID="vtkMRMLEMSTreeParametersLeafNode1"  ColorRGB="1 0 0"  InputChannelWeights="1 "  SpatialPriorVolumeName="vtkMRMLEMSTreeNode12"  SpatialPriorWeight="1"  ClassProbability="0"  ExcludeFromIncompleteEStep="0"  PrintWeights="0"  ></EMSTree>
- <EMSTreeParametersParent
-  id="vtkMRMLEMSTreeParametersParentNode12"  name="vtkMRMLEMSTreeParametersParentNode12"  hideFromEditors="false"  selectable="true"  selected="false" Alpha="0.99"  PrintBias="0"  BiasCalculationMaxIterations="-1"  SmoothingKernelWidth="11"  SmoothingKernelSigma="5"  StopEMType="0"  StopEMMaxIterations="4"  StopEMValue="0"  StopMFAType="0"  StopMFAMaxIterations="2"  StopMFAValue="0"  PrintFrequency="0"  PrintLabelMap="0"  PrintEMLabelMapConvergence="0"  PrintEMWeightsConvergence="0"  PrintMFALabelMapConvergence="0"  PrintMFAWeightsConvergence="0"  GenerateBackgroundProbability="0"  ></EMSTreeParametersParent>
- <EMSTreeParametersLeaf
-  id="vtkMRMLEMSTreeParametersLeafNode1"  name="vtkMRMLEMSTreeParametersLeafNode1"  hideFromEditors="false"  selectable="true"  selected="false" PrintQuality="0"  IntensityLabel="0"  LogMean="0"  LogMeanCorrection="0"  LogCovariance="0"  LogCovarianceCorrection="0"  DistributionSpecificationMethod="0"  DistributionSamplePointsRAS=""  SubParcellationVolumeName=""  ></EMSTreeParametersLeaf>
- <EMSTree
   id="vtkMRMLEMSTreeNode11"  name="10"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode1"  TreeParametersNodeID="NULL"  ChildNodeIDs=""   ParentParametersNodeID="vtkMRMLEMSTreeParametersParentNode11"  LeafParametersNodeID="vtkMRMLEMSTreeParametersLeafNode11"  ColorRGB="1 0 0"  InputChannelWeights="1 "  SpatialPriorVolumeName="vtkMRMLEMSTreeNode11"  SpatialPriorWeight="1"  ClassProbability="0.1"  ExcludeFromIncompleteEStep="0"  PrintWeights="0"  ></EMSTree>
  <EMSTreeParametersParent
   id="vtkMRMLEMSTreeParametersParentNode11"  name="vtkMRMLEMSTreeParametersParentNode11"  hideFromEditors="false"  selectable="true"  selected="false" Alpha="0.99"  PrintBias="0"  BiasCalculationMaxIterations="-1"  SmoothingKernelWidth="11"  SmoothingKernelSigma="5"  StopEMType="0"  StopEMMaxIterations="4"  StopEMValue="0"  StopMFAType="0"  StopMFAMaxIterations="2"  StopMFAValue="0"  PrintFrequency="0"  PrintLabelMap="0"  PrintEMLabelMapConvergence="0"  PrintEMWeightsConvergence="0"  PrintMFALabelMapConvergence="0"  PrintMFAWeightsConvergence="0"  GenerateBackgroundProbability="0"  ></EMSTreeParametersParent>
@@ -75,6 +69,7 @@
   id="vtkMRMLEMSGlobalParametersNode1"  name="vtkMRMLEMSGlobalParametersNode1"  hideFromEditors="false"  selectable="true"  selected="false"  NumberOfTargetInputChannels="1"   InputChannelNames="T1 "   WorkingDirectory="NULL"   SegmentationBoundaryMin="1 1 1"   SegmentationBoundaryMax="-1 -1 -1"   RegistrationAffineType="0"   RegistrationDeformableType="0"   RegistrationInterpolationType="0"   RegistrationPackageType="0"   RegistrationAtlasVolumeKey="atlas_registration_image0 "   RegistrationTargetVolumeKey=""   EnableTargetToTargetRegistration="0"   SaveIntermediateResults="0"   SaveSurfaceModels="0"   MultithreadingEnabled="1"   UpdateIntermediateData="1"   EnableSubParcellation="0"   MinimumIslandSize="1"   Colormap="vtkMRMLColorTableNodeFileGenericAnatomyColors.txt"  TemplateFileName=""  TemplateSaveAfterSegmentation="0"  TaskTclFileName="MRI-Human-Brain.tcl"  TaskPreProcessingSetting=""  ></EMSGlobalParameters>
  <EMSAtlas
   id="vtkMRMLEMSAtlasNode1"  name="vtkMRMLEMSAtlasNode1"  hideFromEditors="false"  selectable="true"  selected="false"  NodeIDs="
+Key vtkMRMLEMSTreeNode13 NodeID vtkMRMLScalarVolumeNode11
 Key vtkMRMLEMSTreeNode2 NodeID vtkMRMLScalarVolumeNode2
 Key vtkMRMLEMSTreeNode3 NodeID vtkMRMLScalarVolumeNode3
 Key vtkMRMLEMSTreeNode5 NodeID vtkMRMLScalarVolumeNode4
@@ -83,9 +78,8 @@ Key vtkMRMLEMSTreeNode7 NodeID vtkMRMLScalarVolumeNode6
 Key vtkMRMLEMSTreeNode9 NodeID vtkMRMLScalarVolumeNode7
 Key vtkMRMLEMSTreeNode10 NodeID vtkMRMLScalarVolumeNode8
 Key vtkMRMLEMSTreeNode11 NodeID vtkMRMLScalarVolumeNode9
-Key atlas_registration_image0 NodeID vtkMRMLScalarVolumeNode1
-Key vtkMRMLEMSTreeNode12 NodeID vtkMRMLScalarVolumeNode11
-Key vtkMRMLEMSTreeNode13 NodeID vtkMRMLScalarVolumeNode11"   NumberOfTrainingSamples="-1"  ></EMSAtlas>
+Key atlas_registration_image0 NodeID vtkMRMLScalarVolumeNode1"
+  NumberOfTrainingSamples="-1"  ></EMSAtlas>
  <Volume
   id="vtkMRMLScalarVolumeNode2"  name="atlas1"  hideFromEditors="false"  selectable="true"  selected="false"  storageNodeRef="vtkMRMLVolumeArchetypeStorageNode2"  userTags=""  displayNodeRef="vtkMRMLScalarVolumeDisplayNode2"  ijkToRASDirections="0.0293134   0.0225784   0.999315 -0.987122   0.157943   0.0253872 -0.157262 -0.98719 0.0269175 "  spacing="1 1 0.999998"  origin="-55.6398 107.795 170.659"  labelMap="0" ></Volume>
  <VolumeArchetypeStorage
@@ -153,9 +147,9 @@ Key vtkMRMLEMSTreeNode13 NodeID vtkMRMLScalarVolumeNode11"   NumberOfTrainingSam
  <EMSVolumeCollection
   id="vtkMRMLEMSVolumeCollectionNode2"  name="vtkMRMLEMSVolumeCollectionNode2"  hideFromEditors="false"  selectable="true"  selected="false"  NodeIDs=""  ></EMSVolumeCollection>
  <EMSTreeParametersLeaf
-  id="vtkMRMLEMSTreeParametersLeafNode12"  name="vtkMRMLEMSTreeParametersLeafNode12"  hideFromEditors="false"  selectable="true"  selected="false" PrintQuality="0"  IntensityLabel="0"  LogMean="0"  LogMeanCorrection="0"  LogCovariance="0"  LogCovarianceCorrection="0"  DistributionSpecificationMethod="0"  DistributionSamplePointsRAS=""  SubParcellationVolumeName=""  ></EMSTreeParametersLeaf>
+  id="vtkMRMLEMSTreeParametersLeafNode13"  name="vtkMRMLEMSTreeParametersLeafNode13"  hideFromEditors="false"  selectable="true"  selected="false" PrintQuality="0"  IntensityLabel="0"  LogMean="0"  LogMeanCorrection="0"  LogCovariance="0"  LogCovarianceCorrection="0"  DistributionSpecificationMethod="0"  DistributionSamplePointsRAS=""  SubParcellationVolumeName=""  ></EMSTreeParametersLeaf>
  <EMSTreeParametersParent
   id="vtkMRMLEMSTreeParametersParentNode13"  name="vtkMRMLEMSTreeParametersParentNode13"  hideFromEditors="false"  selectable="true"  selected="false" Alpha="0.99"  PrintBias="0"  BiasCalculationMaxIterations="-1"  SmoothingKernelWidth="11"  SmoothingKernelSigma="5"  StopEMType="0"  StopEMMaxIterations="4"  StopEMValue="0"  StopMFAType="0"  StopMFAMaxIterations="2"  StopMFAValue="0"  PrintFrequency="0"  PrintLabelMap="0"  PrintEMLabelMapConvergence="0"  PrintEMWeightsConvergence="0"  PrintMFALabelMapConvergence="0"  PrintMFAWeightsConvergence="0"  GenerateBackgroundProbability="0"  ></EMSTreeParametersParent>
  <EMSTree
-  id="vtkMRMLEMSTreeNode13"  name="BG"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode1"  TreeParametersNodeID="NULL"  ChildNodeIDs=""   ParentParametersNodeID="vtkMRMLEMSTreeParametersParentNode13"  LeafParametersNodeID="vtkMRMLEMSTreeParametersLeafNode12"  ColorRGB="1 0 0"  InputChannelWeights="1 "  SpatialPriorVolumeName="vtkMRMLEMSTreeNode13"  SpatialPriorWeight="1"  ClassProbability="0.2"  ExcludeFromIncompleteEStep="0"  PrintWeights="0"  ></EMSTree>
+  id="vtkMRMLEMSTreeNode13"  name="BG"  hideFromEditors="false"  selectable="true"  selected="false"  ParentNodeID="vtkMRMLEMSTreeNode1"  TreeParametersNodeID="NULL"  ChildNodeIDs=""   ParentParametersNodeID="vtkMRMLEMSTreeParametersParentNode13"  LeafParametersNodeID="vtkMRMLEMSTreeParametersLeafNode13"  ColorRGB="1 0 0"  InputChannelWeights="1 "  SpatialPriorVolumeName="vtkMRMLEMSTreeNode13"  SpatialPriorWeight="1"  ClassProbability="0.2"  ExcludeFromIncompleteEStep="0"  PrintWeights="0"  ></EMSTree>
 </MRML>
