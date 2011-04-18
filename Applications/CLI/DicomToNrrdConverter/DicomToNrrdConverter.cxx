@@ -186,6 +186,20 @@ namespace {
   static unsigned int ExtractSiemensDiffusionInformation( const std::string tagString, const std::string nameString, std::vector<double>& valueArray )
     {
     ::size_t atPosition = tagString.find( nameString );
+      while( true )  // skip nameString inside a quotation 
+        {
+          std::string nextChar = tagString.substr( atPosition+nameString.size(), 1 );
+          std::cout << nextChar << std::endl;
+          if (nextChar.c_str()[0] == 0 )
+            {
+              break;
+            }
+          else
+            {
+              atPosition = tagString.find( nameString, atPosition+2 );
+            }
+        }
+
     if ( atPosition == std::string::npos)
       {
       return 0;
@@ -1264,17 +1278,14 @@ int main(int argc, char* argv[])
             }
           DiffusionVectors.push_back(vect3d);
           }
-        else
-          {
-          valueArray.resize(0);
-          ExtractSiemensDiffusionInformation(tag, "B_value", valueArray);
-          bValues.push_back( valueArray[0] );
-          }
+        valueArray.resize(0);
+        ExtractSiemensDiffusionInformation(tag, "B_value", valueArray);
+        bValues.push_back( valueArray[0] );
         }
 
-      if (bValues[k/nStride] > max_bValue)
+      if (bValues[k] > max_bValue)
         {
-        max_bValue = bValues[k/nStride];
+        max_bValue = bValues[k];
         }
       }
 
@@ -1968,9 +1979,9 @@ int main(int argc, char* argv[])
           if(useBMatrixGradientDirections)
             {
             header << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << k << ":="
-              << DiffusionVectors[k][0] * scaleFactor << "   "
-              << DiffusionVectors[k][1] * scaleFactor << "   "
-              << DiffusionVectors[k][2] * scaleFactor << std::endl;
+              << DiffusionVectors[k][0] << "   "
+              << DiffusionVectors[k][1] << "   "
+              << DiffusionVectors[k][2] << std::endl;
             }
           else
             {
