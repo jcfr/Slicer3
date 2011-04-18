@@ -1,7 +1,3 @@
-
-INCLUDE(${Slicer_CMAKE_DIR}/SlicerMacroBuildQtModule.cmake)
-INCLUDE(${Slicer_CMAKE_DIR}/SlicerMacroBuildModuleLogic.cmake)
-
 # --------------------------------------------------------------------------
 # Add subdirectories
 
