@@ -20,7 +20,15 @@ if(NOT EM_Slicer4_FOUND)
   endif(NOT Slicer3_SOURCE_DIR)
   
   set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
-  
+
+else(NOT EM_Slicer4_FOUND)
+
+  IF(NOT Slicer_SOURCE_DIR)
+    FIND_PACKAGE(Slicer REQUIRED)
+    INCLUDE(${Slicer_USE_FILE})
+    slicer3_set_default_install_prefix_for_external_projects()
+  ENDIF(NOT Slicer_SOURCE_DIR)
+
 endif(NOT EM_Slicer4_FOUND)
 
 # --------------------------------------------------------------------------
