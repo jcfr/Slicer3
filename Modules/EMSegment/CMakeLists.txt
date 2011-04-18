@@ -7,15 +7,20 @@ ENDIF(COMMAND CMAKE_POLICY)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # --------------------------------------------------------------------------
-# Find Slicer3
+# Find Slicer3 or Slicer4
 
-if(NOT Slicer3_SOURCE_DIR)
-  find_package(Slicer3 REQUIRED)
-  include(${Slicer3_USE_FILE})
-  slicer3_set_default_install_prefix_for_external_projects()
-endif(NOT Slicer3_SOURCE_DIR)
+if(NOT Slicer_SOURCE_DIR)
+  # we are not in the Slicer4 Source Dir, let's check if we are in Slicer3 Source Dir
+  if(NOT Slicer3_SOURCE_DIR)
+    # we are not even in the Slicer3 Source Dir, we have to find Slicer3
+    find_package(Slicer3 REQUIRED)
+    include(${Slicer3_USE_FILE})
+    slicer3_set_default_install_prefix_for_external_projects()
+  endif(NOT Slicer3_SOURCE_DIR)
+endif(NOT Slicer_SOURCE_DIR)
 
 set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
+set (EM_Slicer4_FOUND ${Slicer_SOURCE_DIR})
 
 # --------------------------------------------------------------------------
 # Include dirs
