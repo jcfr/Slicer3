@@ -1,3 +1,5 @@
+SET(Slicer_CMAKE_DIR "${Slicer_SOURCE_DIR}/CMake" CACHE INTERNAL "")
+
 # --------------------------------------------------------------------------
 # Add subdirectories
 
