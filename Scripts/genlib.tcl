@@ -538,7 +538,6 @@ if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
     } else {
       cd $Slicer3_LIB/tcl
       runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/$::TCL_VERSION/blt blt
-      runcmd  $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt blt
 
       if { $isDarwin } {
 
