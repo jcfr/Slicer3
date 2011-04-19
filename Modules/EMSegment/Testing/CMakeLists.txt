@@ -5,6 +5,9 @@ include_directories(
   ${EMSegment_SOURCE_DIR}/MRML
   ${EMSegment_SOURCE_DIR}/Algorithm
   ${VTK_INCLUDE_DIR}
+  ${Slicer3_Libs_INCLUDE_DIRS}
+  ${Slicer3_Base_INCLUDE_DIRS}
+  ${EMSegment_BINARY_DIR}
   )
 
 set(EMSegment_TEST_DIR ${EMSegment_BINARY_DIR})
@@ -28,6 +31,12 @@ set(MIDAS_KEY_DIR "${EMSegment_SOURCE_DIR}/Testing/TestData/MIDAS_Keys")
 # require a testing dataset that is not distributed by default with
 # Slicer3.  NB: The extra tests may take a long time and a large
 # amount of memory!!!
+
+
+set(EMSEG_RUN_OLD_TESTS   OFF
+  CACHE BOOL "Enable old EMSegment tests." FORCE
+  )
+mark_as_advanced(EMSEG_RUN_OLD_TEST)
 
 set(EMSEG_RUN_COMPARE_TESTS   OFF
   CACHE BOOL "Enable EMSegment tests to compare segmentation results." FORCE
