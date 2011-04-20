@@ -25,14 +25,13 @@ namespace eval EMSegmenterPreProcessingTcl {
     # Variables Specific to this Preprocessing
     #
     variable TextLabelSize 1
-    variable CheckButtonSize 3
+    variable CheckButtonSize 2
     variable VolumeMenuButtonSize 0
     variable TextEntrySize 0
 
     # Check Button
     variable atlasAlignedFlagID 0
     variable rightHandFlagID 1
-    variable inhomogeneityCorrectionFlagID 2
 
     # Text Entry
     # not defined for this task
@@ -49,20 +48,18 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable preGUI
         variable atlasAlignedFlagID
         variable rightHandFlagID
-        variable inhomogeneityCorrectionFlagID
         variable LOGIC
 
         # Always has to be done initially so that variables are correctly defined
         if { [InitVariables] } {
-            PrintError "ERROR: MRI-HumanBrain: ShowUserInterface: Not all variables are correctly defined!"
+            PrintError "ERROR: CT Hand Bone: ShowUserInterface: Not all variables are correctly defined!"
             return 1
         }
-        $LOGIC PrintText "TCLMRI: Preprocessing MRI Human Brain - ShowUserInterface"
+        $LOGIC PrintText "TCLMRI: Preprocessing CT Hand Bone - ShowUserInterface"
 
         $preGUI DefineTextLabel "This task only applies to right handed scans scans! \n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton "- register the atlas to the input scan ?" 0 $atlasAlignedFlagID
         $preGUI DefineCheckButton "- right hand scan?" 0 $rightHandFlagID
-        $preGUI DefineCheckButton "- perform image inhomogeneity correction on input scan ?" 0 $inhomogeneityCorrectionFlagID
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $preGUI SetButtonsFromMRML
@@ -82,7 +79,6 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         variable atlasAlignedFlagID
         variable rightHandFlagID
-        variable inhomogeneityCorrectionFlagID
 
         $LOGIC PrintText "TCLMRI: =========================================="
         $LOGIC PrintText "TCLMRI: == Preprocress Data"
@@ -95,7 +91,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
         set rightHandFlag [ GetCheckButtonValueFromMRML $rightHandFlagID ]
-        set inhomogeneityCorrectionFlag [ GetCheckButtonValueFromMRML $inhomogeneityCorrectionFlagID ]
+
+        $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $rightHandFlag"
 
         set inputTargetNode [$mrmlManager GetTargetInputNode]
         set alignedTargetNode [$workingDN GetAlignedTargetNode]
@@ -125,6 +122,14 @@ namespace eval EMSegmenterPreProcessingTcl {
             $mrmlManager SynchronizeAtlasNode $inputAtlasNode $alignedAtlasNode "Aligned"
         }
 
+
+        # -------------------------------------
+        # Step 5: Atlas Alignment 
+        # Defines $workingDN GetAlignedAtlasNode
+#        if { [RegisterAtlas $atlasAlignedFlag] } {
+#            PrintError "Run: Atlas alignment failed !"
+#            return 1
+#        }
 
         if { $atlasAlignedFlag } {
             # (flip), fiducial_threshold, blur, binarize, choose largest component of: atlas and target
@@ -163,13 +168,15 @@ namespace eval EMSegmenterPreProcessingTcl {
             set blurredInputTargetVolumeFileName [CreateTemporaryFileNameForNode $inputTargetVolumeNode]
             CTHandBonePipeline $inputTargetVolumeFileName $blurredInputTargetVolumeFileName $flip_is_necessary_for_target
 
+            $LOGIC PrintText "pre-process atlas template..."
+
             set blurredInputAtlasVolumeFileName [CreateTemporaryFileNameForNode $inputAtlasVolumeNode]
             CTHandBonePipeline $inputAtlasVolumeFileName $blurredInputAtlasVolumeFileName $flip_is_necessary_for_atlas
 
 
-            ### Call Brainsfit ###
+            ### Call BRAINSFit ###
 
-            #        set transformfile RegisterAtlasToSubject { $outputAtlasFileName $outputFileName }
+            #  set transformfile RegisterAtlasToSubject { $outputAtlasFileName $outputFileName }
 
             set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
             set CMD "${PLUGINS_DIR}/BRAINSFit"
@@ -216,7 +223,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set CMD "$CMD -o $oArgument -O $deformationfield"
             #set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
             # fast - for debugging
-            set CMD "$CMD -i 2,2,2,2,1 -n 5 -e --numberOfMatchPoints 16"
+            set CMD "$CMD -i 5,5,2,2,1 -n 5 -e --numberOfMatchPoints 16"
 
             $LOGIC PrintText "TCL: Executing $CMD"
             catch { eval exec $CMD } errmsg
@@ -270,61 +277,12 @@ namespace eval EMSegmenterPreProcessingTcl {
 
                 ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
                 file delete -force $outputAtlasVolumeFileName
-                
             }
             #end for loop
         }
-        # end  atlas alignment
-        
+        # end atlas alignment
 
         # Status: At this point our atlas is aligned to the input data
-
-
-        #       ComputeIntensityDistributions
-
-
-        #        for { set i 0 } { $i < [$alignedTargetNode GetNumberOfVolumes] } {incr i} {
-        #             $LOGIC PrintText "read $i th alignedTargetNode"
-        #            set intputVolumeNode($i) [$inputTargetNode GetNthVolumeNode $i]
-        #            if { $intputVolumeNode($i) == "" } {
-        #                PrintError "RegisterInputImages: the ${i}th input node is not defined!"
-        #                return 1
-        #            }
-        #        }
-
-
-        # ----------------------------------------------------------------------------
-        # We have to create this function so that we can run it in command line mode
-        #
-
-        $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
-
-
-        # -------------------------------------
-        # Step 4: Perform Intensity Correction
-                if { $inhomogeneityCorrectionFlag == 1 } {
-                    set dummy 0
-                    set targetIntensityCorrectedCollectionNode [PerformIntensityCorrection $dummy]
-                    if { $targetIntensityCorrectedCollectionNode == "" } {
-                        PrintError "Run: Intensity Correction failed !"
-                        return 1
-                    }
-                    if { [UpdateVolumeCollectionNode "$alignedTargetNode" "$targetIntensityCorrectedCollectionNode"] } {
-                        return 1
-                    }
-                } else {
-                    $LOGIC PrintText "TCLMRI: Skipping intensity correction"
-                }
-
-        # write results over to alignedTargetNode
-
-        # -------------------------------------
-        # Step 5: Atlas Alignment - you will also have to include the masks
-        # Defines $workingDN GetAlignedAtlasNode
-#        if { [RegisterAtlas $atlasAlignedFlag] } {
-#            PrintError "Run: Atlas alignment failed !"
-#            return 1
-#        }
 
 
         # -------------------------------------
@@ -338,13 +296,14 @@ namespace eval EMSegmenterPreProcessingTcl {
         # Step 7: Check validity of Distributions
         set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
         if { $failedIDList != "" } {
-            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n "
+            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n"
             foreach ID $failedIDList {
                 set MSG "${MSG}[$mrmlManager GetTreeNodeName $ID]\n"
             }
             set MSG "${MSG}This can cause failure of the automatic segmentation. To address the issue, please visit the web site listed under Help"
             $preGUI PopUpWarningWindow "$MSG"
         }
+
         return 0
     }
 
@@ -386,11 +345,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         $LOGIC PrintText "threshold..."
-        #TODO
-        # set fiducialfile "/tmp/Subject2.fcsv"
-        #TODO
-        # set logfile "/tmp/logfile.txt"
-        #set ret [$CTHandBoneHelper fiducial_threshold $TargetFlipFileName $TargetFlipThresholdFileName $fiducialfile $logfile]
         set ret [$CTHandBoneHelper fiducial_threshold $TargetFlipFileName $TargetFlipThresholdFileName]
 
         $LOGIC PrintText "blur..."
@@ -402,12 +356,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "largest..."
         set ret [$CTHandBoneHelper largest_component $TargetFlipThresholdBlurBinaryFileName $outputFileName]
 
-        $LOGIC PrintText "atlas template..."
-
         $CTHandBoneHelper Delete
 
     }
+# end CTHandBonePipeline
 }
+# end namespace eval EMSegmenterPreProcessingTcl
 
 
 namespace eval EMSegmenterSimpleTcl {
@@ -430,7 +384,6 @@ namespace eval EMSegmenterSimpleTcl {
 
         $inputChannelGUI DefineTextLabel "Is the subject right handed?" 0
         $inputChannelGUI DefineCheckButton "- Are you providing a right hand scan?" 0 $EMSegmenterPreProcessingTcl::rightHandFlagID
-
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $inputChannelGUI SetButtonsFromMRML
