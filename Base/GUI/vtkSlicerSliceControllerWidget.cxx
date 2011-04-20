@@ -3192,7 +3192,8 @@ int vtkSlicerSliceControllerWidget::UpdateLinkedView ( double newValue )
         continue;
       
       if ( sgui->GetLogic() &&  sgui->GetSliceNode() &&
-           !strcmp(this->SliceNode->GetOrientationString(), sgui->GetSliceNode()->GetOrientationString()))
+           !strcmp(this->SliceNode->GetOrientationString(), sgui->GetSliceNode()->GetOrientationString()) &&
+           this->OrientationsMatch (this->SliceNode, sgui->GetSliceNode()) )
         {
         double oldValue = sgui->GetLogic()->GetSliceOffset();
         if (fabs(oldValue - newValue) > 1.0e-6)
@@ -3210,6 +3211,26 @@ int vtkSlicerSliceControllerWidget::UpdateLinkedView ( double newValue )
       }
     }
   return (modified);
+}
+
+//---------------------------------------------------------------------------
+bool vtkSlicerSliceControllerWidget::OrientationsMatch (vtkMRMLSliceNode *sliceNode1, vtkMRMLSliceNode *sliceNode2)
+{
+  bool match = true;
+  double epsilon = 1e-3;
+  vtkMatrix4x4 *sliceToRAS1 = sliceNode1->GetSliceToRAS();
+  vtkMatrix4x4 *sliceToRAS2 = sliceNode2->GetSliceToRAS();
+  for (int row = 0; row < 3 && match; row++)
+    {
+    for (int col = 0; col < 3 && match; col++)
+      {
+      if ( fabs( sliceToRAS1->GetElement(row, col) - sliceToRAS2->GetElement(row, col) ) > epsilon )
+        {
+        match = false;
+        }
+      }
+    }
+  return match;
 }
 
 //---------------------------------------------------------------------------

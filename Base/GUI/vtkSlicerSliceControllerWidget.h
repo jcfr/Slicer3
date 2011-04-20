@@ -176,6 +176,10 @@ public:
   /// modify RGY slice logics to synch
   virtual int UpdateLinkedView(double value);
 
+  /// 
+  /// return true if the orientations are within epsilon of each other
+  virtual bool OrientationsMatch (vtkMRMLSliceNode *sliceNode1, vtkMRMLSliceNode *sliceNode2);
+
   //BTX
   enum 
   {
