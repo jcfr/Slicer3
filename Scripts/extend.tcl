@@ -535,7 +535,7 @@ proc buildExtension {s3ext} {
       set ::ext(srcDir) $::Slicer3_EXT/$::ext(name)/$::ext(cvsmodule)
     }
     "svn" {
-      set svncmd "yes t | $::SVN co"
+      set svncmd "$::SVN co --non-interactive --trust-server-cert --no-auth-cache "
       if { [info exists ::ext(svnusername)] } {
         set svncmd "$svncmd --username $::ext(svnusername)"
       }
