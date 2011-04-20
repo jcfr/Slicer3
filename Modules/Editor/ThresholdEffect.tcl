@@ -179,6 +179,10 @@ itcl::body ThresholdEffect::buildOptions { } {
 
   if { [$this getInputBackground] != "" } {
     set range [[$this getInputBackground] GetScalarRange]
+    foreach {lo hi} $range {}
+    set lo [expr $lo - 1]
+    set hi [expr $hi + 1]
+    set range "$lo $hi"
     eval $o(range) SetWholeRange $range
     if { [EditorGetPaintThresholdState] } {
       foreach {lo hi} [EditorGetPaintThreshold] {}
