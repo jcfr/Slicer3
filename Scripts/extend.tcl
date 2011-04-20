@@ -643,7 +643,20 @@ proc buildExtension {s3ext} {
   if { $::isWindows } {
     runcmd "$::MAKE" $::ext(cmakeproject).sln /out $log /build $::VTK_BUILD_TYPE /project ALL_BUILD
   } else {
-    eval runcmd $::MAKE 2>&1 | tee $log
+    # TODO: due to some incompletely understood bug in mac os 10.5 the first run
+    # of make may fail but a second one will succeed (this happens, for example,
+    # with the plastimatch extension).  So, we will run make twice on the theory
+    # that this cannot hurt, but may also help.
+    catch "eval runcmd $::MAKE 2>&1 | tee $log" res
+    puts $res
+
+    puts "#############################################"
+    after 3000
+    puts "#############################################"
+    eval runcmd echo "##########################" | tee -a $log
+    eval runcmd echo "Rerunning make" | tee -a $log
+    eval runcmd echo "##########################" | tee -a $log
+    eval runcmd $::MAKE 2>&1 | tee -a $log
   }
 
   # run the tests
