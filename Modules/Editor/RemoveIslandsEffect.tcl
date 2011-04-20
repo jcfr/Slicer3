@@ -163,7 +163,7 @@ itcl::body RemoveIslandsEffect::buildOptions {} {
   # 4 or 8 neighbors
   #
 
-  set o(fullyConnected) [vtkKWCheckButton New]
+  set o(fullyConnected) [vtkNew vtkKWCheckButton]
   $o(fullyConnected) SetParent [$this getOptionsFrame]
   $o(fullyConnected) Create
   $o(fullyConnected) SetText "Fully Connected"

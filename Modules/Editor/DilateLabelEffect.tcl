@@ -101,7 +101,7 @@ itcl::body DilateLabelEffect::buildOptions {} {
   # iterations and label value
   #
 
-  set o(fill) [vtkKWEntryWithLabel New]
+  set o(fill) [vtkNew vtkKWEntryWithLabel]
   $o(fill) SetParent [$this getOptionsFrame]
   $o(fill) Create
   [$o(fill) GetWidget] SetRestrictValueToInteger
@@ -110,7 +110,7 @@ itcl::body DilateLabelEffect::buildOptions {} {
   $o(fill) SetBalloonHelpString "Dilated pixels will replace this value."
   pack [$o(fill) GetWidgetName] -side top -anchor e -fill x -padx 2 -pady 2 -expand true
 
-  set o(iterations) [vtkKWEntryWithLabel New]
+  set o(iterations) [vtkNew vtkKWEntryWithLabel]
   $o(iterations) SetParent [$this getOptionsFrame]
   $o(iterations) Create
   [$o(iterations) GetWidget] SetRestrictValueToInteger
@@ -125,7 +125,7 @@ itcl::body DilateLabelEffect::buildOptions {} {
   # 4 or 8 neighbors
   #
 
-  set o(eightNeighbors) [vtkKWRadioButton New]
+  set o(eightNeighbors) [vtkNew vtkKWRadioButton]
   $o(eightNeighbors) SetParent [$this getOptionsFrame]
   $o(eightNeighbors) Create
   $o(eightNeighbors) SetValueAsInt 8
@@ -134,7 +134,7 @@ itcl::body DilateLabelEffect::buildOptions {} {
   pack [$o(eightNeighbors) GetWidgetName] \
     -side top -anchor e -fill x -padx 2 -pady 2 -expand true
 
-  set o(fourNeighbors) [vtkKWRadioButton New]
+  set o(fourNeighbors) [vtkNew vtkKWRadioButton]
   $o(fourNeighbors) SetParent [$this getOptionsFrame]
   $o(fourNeighbors) Create
   $o(fourNeighbors) SetValueAsInt 4
@@ -150,7 +150,7 @@ itcl::body DilateLabelEffect::buildOptions {} {
   # erode or erode then dilate
   #
 
-  set o(erode) [vtkKWRadioButton New]
+  set o(erode) [vtkNew vtkKWRadioButton]
   $o(erode) SetParent [$this getOptionsFrame]
   $o(erode) Create
   $o(erode) SetValue "Dilate"
@@ -159,7 +159,7 @@ itcl::body DilateLabelEffect::buildOptions {} {
   # TODO: support erode and dilate
   #pack [$o(erode) GetWidgetName] -side top -anchor e -fill x -padx 2 -pady 2 -expand true
 
-  set o(erodeDilate) [vtkKWRadioButton New]
+  set o(erodeDilate) [vtkNew vtkKWRadioButton]
   $o(erodeDilate) SetParent [$this getOptionsFrame]
   $o(erodeDilate) Create
   $o(erodeDilate) SetValue "Dilate&Erode"

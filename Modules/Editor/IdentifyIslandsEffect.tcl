@@ -107,7 +107,7 @@ itcl::body IdentifyIslandsEffect::buildOptions {} {
   # iterations and label value
   #
 
-  set o(minSize) [vtkKWEntryWithLabel New]
+  set o(minSize) [vtkNew vtkKWEntryWithLabel]
   $o(minSize) SetParent [$this getOptionsFrame]
   $o(minSize) Create
   [$o(minSize) GetWidget] SetRestrictValueToInteger
@@ -120,7 +120,7 @@ itcl::body IdentifyIslandsEffect::buildOptions {} {
   # 4 or 8 neighbors
   #
 
-  set o(fullyConnected) [vtkKWCheckButton New]
+  set o(fullyConnected) [vtkNew vtkKWCheckButton]
   $o(fullyConnected) SetParent [$this getOptionsFrame]
   $o(fullyConnected) Create
   $o(fullyConnected) SetText "Fully Connected"
