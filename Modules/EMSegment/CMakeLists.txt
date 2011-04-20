@@ -31,8 +31,6 @@ else(NOT EM_Slicer4_FOUND)
 
 endif(NOT EM_Slicer4_FOUND)
 
-
-
 set(EMSegment_BASE_SRCS 
   # MRML
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML/vtkMRMLEMSNode.cxx
@@ -89,6 +87,21 @@ set(EMSegment_BASE_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentLogic.cxx 
 )
 
+include_directories(
+  ${EMSegment_SOURCE_DIR}
+  ${EMSegment_BINARY_DIR}
+  ${EMSegment_SOURCE_DIR}/MRML
+  ${EMSegment_SOURCE_DIR}/Algorithm
+  ${EMSegment_SOURCE_DIR}/ImageFilters
+  ${EMSegment_SOURCE_DIR}/Registration
+  ${EMSegment_SOURCE_DIR}/Tasks
+  ${Slicer3_Libs_INCLUDE_DIRS}
+  ${Slicer3_Base_INCLUDE_DIRS}
+  ${vtkSlicerVolumesModuleLogic_SOURCE_DIR}
+  ${vtkSlicerVolumesModuleLogic_BINARY_DIR}
+  ${Volumes_SOURCE_DIR}
+  ${Volumes_BINARY_DIR}
+  )
 
 if(EM_Slicer3_FOUND)
 

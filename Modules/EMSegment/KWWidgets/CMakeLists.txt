@@ -2,27 +2,9 @@
 # --------------------------------------------------------------------------
 # Include dirs
 
-
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${EMSegment_SOURCE_DIR}
-  ${EMSegment_BINARY_DIR}
-  ${EMSegment_SOURCE_DIR}/MRML
-  ${EMSegment_SOURCE_DIR}/Algorithm
-  ${EMSegment_SOURCE_DIR}/ImageFilters
-  ${EMSegment_SOURCE_DIR}/Registration
-  ${EMSegment_SOURCE_DIR}/Tasks
-  ${Slicer3_Libs_INCLUDE_DIRS}
-  ${Slicer3_Base_INCLUDE_DIRS}
-  ${vtkSlicerVolumesModuleLogic_SOURCE_DIR}
-  ${vtkSlicerVolumesModuleLogic_BINARY_DIR}
-  ${Volumes_SOURCE_DIR}
-  ${Volumes_BINARY_DIR}
-  )
-
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}  
   ${CMAKE_CURRENT_SOURCE_DIR}/Graph
   )
 
