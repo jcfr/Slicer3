@@ -1211,7 +1211,7 @@ void vtkMRMLSliceNode::RotateToVolumePlane(vtkMRMLVolumeNode *volumeNode)
   else
     {
     // if current is anything other than Reformat, then save
-    // that value as the inent string
+    // that value as the intent string
     this->SetOrientationIntentString(this->GetOrientationString());
     }
 
