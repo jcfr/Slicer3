@@ -52,15 +52,15 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Always has to be done initially so that variables are correctly defined
         if { [InitVariables] } {
-            PrintError "ERROR: MRI-HumanBrain: ShowUserInterface: Not all variables are correctly defined!"
+            PrintError "ERROR: CT Hand Bone: ShowUserInterface: Not all variables are correctly defined!"
             return 1
         }
-        $LOGIC PrintText "TCLCT: Preprocessing MRI Human Brain - ShowUserInterface"
+        $LOGIC PrintText "TCLCT: Preprocessing CT Hand Bone - ShowUserInterface"
 
         $preGUI DefineTextLabel "This task only applies to right handed scans scans! \n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton "- register the atlas to the input scan ?" 0 $atlasAlignedFlagID
         $preGUI DefineCheckButton "- right hand scan?" 0 $rightHandFlagID
- 
+
         # Define this at the end of the function so that values are set by corresponding MRML node
         $preGUI SetButtonsFromMRML
     }
@@ -106,8 +106,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # -------------------------------------
         # Step 4: Now create background - do not do it before bc otherwise it compute intensity distribution 
-        CTHandGenerateBackground 
-        
+        CTHandGenerateBackground
+
         # -------------------------------------
         # Step 5: Check validity of Distributions
         set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
@@ -123,15 +123,16 @@ namespace eval EMSegmenterPreProcessingTcl {
     }
 
     # ----------------------------------------------------------------------------
-    proc CTHandRegistration { alignFlag  rightHandFlag  } {
+    proc CTHandRegistration { alignFlag rightHandFlag } {
             variable mrmlManager
             variable workingDN
             variable LOGIC
 
+          $LOGIC PrintText "TCLCT: ==> Preprocessing Setting: $atlasAlignedFlag $rightHandFlag"
 
-          $LOGIC PrintText "TCL: =========================================="
-          $LOGIC PrintText "TCL: == Register CT Atlas"
-          $LOGIC PrintText "TCL: =========================================="
+          $LOGIC PrintText "TCLCT: =========================================="
+          $LOGIC PrintText "TCLCT: == Register CT Atlas"
+          $LOGIC PrintText "TCLCT: =========================================="
 
         set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
         set bSplineFlag [expr ([$mrmlManager GetRegistrationDeformableType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
@@ -140,16 +141,32 @@ namespace eval EMSegmenterPreProcessingTcl {
             return [SkipAtlasRegistration]
         }
 
+            # (flip), fiducial_threshold, blur, binarize, choose largest component of: atlas and target
+            # RegisterHandAtlas
+
+
         # ----------------------------------------------------------------
         # Setup
         # ----------------------------------------------------------------
+
         set inputAtlasNode [$mrmlManager GetAtlasInputNode]
         set alignedAtlasNode [$mrmlManager GetAtlasAlignedNode]
+
+##debug
+        if { $inputAtlasNode != "" } {
+            $LOGIC PrintText "Detected [$inputAtlasNode GetNumberOfVolumes] inputAtlasNodeVolumes"
+        }
+        if { $alignedAtlasNode != "" } {
+            $LOGIC PrintText "Detected [$alignedAtlasNode GetNumberOfVolumes] alignedAtlasNodeVolumes"
+        }
+##debug
+
         if { $alignedAtlasNode == "" } {
             $LOGIC PrintText "TCL: Aligned Atlas was empty"
             #  $LOGIC PrintText "TCL: set outputAtlasNode \[ $mrmlManager CloneAtlasNode $inputAtlasNode \"AlignedAtlas\"\] "
             set alignedAtlasNode [ $mrmlManager CloneAtlasNode $inputAtlasNode "Aligned"]
             $workingDN SetReferenceAlignedAtlasNodeID [$outputAtlasNode GetID]
+###???      $workingDN SetReferenceAlignedAtlasNodeID [$alignedAtlasNode GetID]
         } else {
             $LOGIC PrintText "TCL: Atlas was just synchronized"
             $mrmlManager SynchronizeAtlasNode $inputAtlasNode $alignedAtlasNode "Aligned"
@@ -165,7 +182,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 $LOGIC PrintText "Detected [$alignedTargetNode GetNumberOfVolumes] alignedTargetNodeVolumes"
              }
 
-             set inputTargetVolumeNode [$inputTargetNode GetNthVolumeNode 0]
+            set inputTargetVolumeNode [$inputTargetNode GetNthVolumeNode 0]
             set inputTargetVolumeFileName [WriteDataToTemporaryDir $inputTargetVolumeNode Volume]
 
             if { $rightHandFlag } {
@@ -193,15 +210,17 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
             set blurredInputTargetVolumeFileName [CreateTemporaryFileNameForNode $inputTargetVolumeNode]
-            CTHandExtractBlurrySegemtnation $inputTargetVolumeFileName $blurredInputTargetVolumeFileName $flip_is_necessary_for_target
+            CTHandExtractBlurrySegmentation $inputTargetVolumeFileName $blurredInputTargetVolumeFileName $flip_is_necessary_for_target
+
+            $LOGIC PrintText "pre-process atlas template..."
 
             set blurredInputAtlasVolumeFileName [CreateTemporaryFileNameForNode $inputAtlasVolumeNode]
-            CTHandExtractBlurrySegemtnation $inputAtlasVolumeFileName $blurredInputAtlasVolumeFileName $flip_is_necessary_for_atlas
+            CTHandExtractBlurrySegmentation $inputAtlasVolumeFileName $blurredInputAtlasVolumeFileName $flip_is_necessary_for_atlas
 
 
-            ### Call Brainsfit ###
+            ### Call BRAINSFit ###
 
-            #        set transformfile RegisterAtlasToSubject { $outputAtlasFileName $outputFileName }
+            #  set transformfile RegisterAtlasToSubject { $outputAtlasFileName $outputFileName }
 
             set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
             set CMD "${PLUGINS_DIR}/BRAINSFit"
@@ -258,6 +277,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             #TODO: check here for return code
 
             ### Call Resample ###
+
             set fixedTargetChannel 0
             set fixedTargetVolumeNode [$alignedTargetNode GetNthVolumeNode $fixedTargetChannel]
             set fixedTargetVolumeFileName [WriteImageDataToTemporaryDir $fixedTargetVolumeNode]
@@ -300,13 +320,17 @@ namespace eval EMSegmenterPreProcessingTcl {
                 $LOGIC PrintText "TCL: $errmsg"
 
                 ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
-                file delete -force $outputAtlasVolumeFileName                
+                file delete -force $outputAtlasVolumeFileName
             }
+            #end for loop
+
     }
+    # end CTHandRegistration
+
     #
     # TASK SPECIFIC FUNCTIONS
     #
-    proc CTHandExtractBlurrySegemtnation { inputFileName outputFileName flip_is_necessary } {
+    proc CTHandExtractBlurrySegmentation { inputFileName outputFileName flip_is_necessary } {
         variable LOGIC
 
         set CTHandBoneHelper [vtkCTHandBoneClass New]
@@ -341,11 +365,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         $LOGIC PrintText "threshold..."
-        #TODO
-        # set fiducialfile "/tmp/Subject2.fcsv"
-        #TODO
-        # set logfile "/tmp/logfile.txt"
-        #set ret [$CTHandBoneHelper fiducial_threshold $TargetFlipFileName $TargetFlipThresholdFileName $fiducialfile $logfile]
         set ret [$CTHandBoneHelper fiducial_threshold $TargetFlipFileName $TargetFlipThresholdFileName]
 
         $LOGIC PrintText "blur..."
@@ -357,11 +376,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "largest..."
         set ret [$CTHandBoneHelper largest_component $TargetFlipThresholdBlurBinaryFileName $outputFileName]
 
-        $LOGIC PrintText "atlas template..."
-
         $CTHandBoneHelper Delete
 
     }
+# end CTHandExtractBlurrySegmentation
+
 
     # Generates Background class by subtracting  the atlases of the other classes and inverting the results  
     proc CTHandGenerateBackground  { } {
@@ -509,7 +528,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $addResults Delete
     }
 }
-
+# end namespace eval EMSegmenterPreProcessingTcl
 
 namespace eval EMSegmenterSimpleTcl {
     # 0 = Do not create a check list for the simple user interface
