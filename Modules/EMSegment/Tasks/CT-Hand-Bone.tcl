@@ -128,11 +128,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable workingDN
         variable LOGIC
 
-        $LOGIC PrintText "TCLCT: ==> Preprocessing Setting: $atlasAlignedFlag $rightHandFlag"
-
         $LOGIC PrintText "TCLCT: =========================================="
         $LOGIC PrintText "TCLCT: == Register CT Atlas"
         $LOGIC PrintText "TCLCT: =========================================="
+
+        $LOGIC PrintText "TCLCT: ==> Preprocessing Setting: $alignFlag $rightHandFlag"
 
         set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
         set bSplineFlag [expr ([$mrmlManager GetRegistrationDeformableType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
