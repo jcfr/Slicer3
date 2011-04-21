@@ -174,6 +174,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     # vtkMRMLVolumeNode *volumeNode, const char *name)
     proc CreateVolumeNode { volumeNode name } {
         variable SCENE
+        variable mrmlManager 
         if {$volumeNode == ""} { return "" }
         # clone the display node
         set clonedDisplayNode [vtkMRMLScalarVolumeDisplayNode New]
@@ -185,7 +186,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         set clonedVolumeNode [vtkMRMLScalarVolumeNode New]
         $clonedVolumeNode CopyWithScene $volumeNode
         # MRML interprets "" as a ID -> can cause issues when trying to do a UpdateScene
-        # $clonedVolumeNode SetAndObserveStorageNodeID ""
+        # If it is not set then it it uses the old other storage node - which is not a good idea  
+        $mrmlManager SetStorageNodeToNULL $clonedVolumeNode 
         $clonedVolumeNode SetName "$name"
         $clonedVolumeNode SetAndObserveDisplayNodeID $dispID
 

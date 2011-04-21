@@ -93,21 +93,23 @@ namespace eval EMSegmenterPreProcessingTcl {
         set rightHandFlag [ GetCheckButtonValueFromMRML $rightHandFlagID ]
    
         # ----------------------------------------------------------------------------
-        # We have to create this function so that we can run it in command line mode
+        # Step 2 : Registration
         #
         CTHandRegistration $atlasAlignedFlag  $rightHandFlag 
 
-        CTHandGenerateBackground 
-        
         # -------------------------------------
-        # Step 6: Perform autosampling to define intensity distribution
+        # Step 3: Perform autosampling to define intensity distribution
         if { [ComputeIntensityDistributions] } {
             PrintError "Run: Could not automatically compute intensity distribution !"
             return 1
         }
 
         # -------------------------------------
-        # Step 7: Check validity of Distributions
+        # Step 4: Now create background - do not do it before bc otherwise it compute intensity distribution 
+        CTHandGenerateBackground 
+        
+        # -------------------------------------
+        # Step 5: Check validity of Distributions
         set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
         if { $failedIDList != "" } {
             set MSG "Log Covariance matrices for the following classes seemed incorrect:\n "
@@ -397,29 +399,28 @@ namespace eval EMSegmenterPreProcessingTcl {
                   set bgAtlasID                      [ $mrmlManager  MapMRMLNodeIDToVTKNodeID [$bgDummyNode GetID] ]             
          }
 
-             # Assign node to all background classes 
-         foreach bgID $bgList {
+          # Assign node to all background classes 
+           foreach bgID $bgList {
            $mrmlManager SetTreeNodeSpatialPriorVolumeID $bgID $bgAtlasID
          }
 
             # Check if outputAtlasNode is defined 
         set bgAtlasNode [ $mrmlManager GetAlignedSpatialPriorFromTreeNodeID $treeID]
         if { $bgAtlasNode == ""  } {
-                  $LOGIC PrintText "TCLCT: Created  BG Atlas Node"  
                  # We need to create the node 
-         set outputAtlasNode             [$mrmlManager GetAtlasAlignedNode ] 
+                 set outputAtlasNode             [$mrmlManager GetAtlasAlignedNode ] 
                  set outputAtlasVolumeNode [ $outputAtlasNode GetNthVolumeNode 0 ] 
                  set bgAtlasNode                   [ CreateVolumeNode $outputAtlasVolumeNode  "BGAtlas(Aligned)"]
                  # This should not be done here but in MRML Manager - Kilian change it later once it works          
          }
            
             # Make sure all the output allso point to the same volume 
-            foreach bgID $bgList {
+        foreach bgID $bgList {
               set treeNode   [ $mrmlManager GetTreeNode $bgID] 
-        $outputAtlasNode                 AddVolume [$treeNode GetID]  [$bgAtlasNode GetID]
+             $outputAtlasNode                 AddVolume [$treeNode GetID]  [$bgAtlasNode GetID]
          }
 
-       $LOGIC PrintText "TCLCT: Creating BG Atlas Node  [$bgAtlasNode   GetName]"    
+       $LOGIC PrintText "TCLCT: Creating BG Atlas Volume Node  [$bgAtlasNode   GetName]"    
 
             # Check if output Data is defined 
         set bgAtlasData [ $bgAtlasNode  GetImageData ]
