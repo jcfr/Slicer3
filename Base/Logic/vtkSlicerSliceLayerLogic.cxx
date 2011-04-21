@@ -399,6 +399,25 @@ void vtkSlicerSliceLayerLogic::UpdateTransforms()
     vtkMatrix4x4::Multiply4x4(rasToIJK, xyToIJK, xyToIJK); 
   }
 
+  // now look for entries in the xyToIJK matrix that are 'epsilon' or smaller, since these
+  // are probably the result of rounding error and will prevent the use of optimized
+  // patways in the image reslice step.  If the values are due to something besides rounding
+  // error, it won't matter since they are so small.  In practice values on the order of 1e-18
+  // appeared from these calculations - use 1e-9 to be on the safe side.
+  double epsilon = 1e-9;
+  int row, col;
+  for (col = 0; col < 3; col++)
+    {
+    for (row = 0; row < 3; row++)
+      {
+      if ( fabs(xyToIJK->GetElement(row, col)) < epsilon )
+        {
+        xyToIJK->SetElement(row, col, 0.0);
+        }
+      }
+    }
+
+
   this->XYToIJKTransform->SetMatrix( xyToIJK );
 
   this->Slice->SetOutputDimensions( dimensions[0], dimensions[1], dimensions[2]);
