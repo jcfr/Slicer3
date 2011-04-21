@@ -637,7 +637,13 @@ int vtkMRMLFiducialListStorageNode::WriteData(vtkMRMLNode *refNode)
     int sel = fiducialListNode->GetNthFiducialSelected(i);
     int vis = fiducialListNode->GetNthFiducialVisibility(i);
     of << label;
+    // fix precision of fractional part to 4 digits using scientific format
+    of.setf(ios::scientific, ios::floatfield);
+    of.precision(4);
     of << "," << xyz[0] << "," << xyz[1] << "," << xyz[2];
+    // reset to default format and default precision (6 digits for the whole number, i.e. integral and fractional part)
+    of.unsetf(ios::floatfield);
+    of.precision(6);
     of << "," << sel << "," << vis;
     of << endl;   
     }
