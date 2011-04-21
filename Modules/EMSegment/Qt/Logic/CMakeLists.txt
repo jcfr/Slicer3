@@ -23,15 +23,17 @@ SET(module_logic_include_directories
 
 # Source files
 SET(module_logic_SRCS
+  #${EMSegment_SOURCE_DIR}/vtkEMSegmentLogic.cxx 
   ${EMSegment_BASE_SRCS}
   #vtkSlicerEMSegmentLogic.cxx
-  vtkEMSegmentLogic.cxx
+  #vtkEMSegmentLogic.cxx
   )
 
 # Additional Target libraries
 SET(module_logic_target_libraries
   #EMSegmentMRML
   #EMSegmentRegistration
+  vtkSlicerVolumesModuleLogic
   )
 
 

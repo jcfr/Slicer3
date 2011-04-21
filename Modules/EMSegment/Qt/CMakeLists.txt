@@ -11,9 +11,6 @@ SET(qt_module_export_directive "Q_SLICER_QTMODULES_EMSEGMENT_EXPORT")
 
 # Additional includes - Current_{source,binary} and Slicer_{Libs,Base} already included
 SET(qt_module_include_directories
-  ${EMSegment_BASE_SRCS}
-  ${EMSegmentMRML_SOURCE_DIR}
-  ${EMSegmentMRML_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/Logic
   ${CMAKE_CURRENT_BINARY_DIR}/Logic
   ${CMAKE_CURRENT_SOURCE_DIR}/Widgets

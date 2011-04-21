@@ -32,7 +32,7 @@
 #include "qSlicerEMSegmentRunSegmentationStep.h"
 #include "ui_qSlicerEMSegmentRunSegmentationStep.h"
 #include "qSlicerEMSegmentRunSegmentationStep_p.h"
-#include "vtkSlicerEMSegmentLogic.h"
+#include "vtkEMSegmentLogic.h"
 
 // EMSegment/MRML includes
 #include <vtkEMSegmentMRMLManager.h>
