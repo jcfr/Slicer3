@@ -1835,16 +1835,16 @@ SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID,
     return;
     }
 
-  if (volumeID == -1)
+    if (volumeID == -1)
     {
       if (n->GetSpatialPriorVolumeName())
-    {
-      n->SetSpatialPriorVolumeName(NULL);
-    }
+      {
+          n->SetSpatialPriorVolumeName(NULL);
+      }
       else 
-    {
-      // Did not change anything
-      return;
+      {
+        // Did not change anything
+        return;
     }
     }
   else

@@ -52,15 +52,15 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Always has to be done initially so that variables are correctly defined
         if { [InitVariables] } {
-            PrintError "ERROR: CT Hand Bone: ShowUserInterface: Not all variables are correctly defined!"
+            PrintError "ERROR: MRI-HumanBrain: ShowUserInterface: Not all variables are correctly defined!"
             return 1
         }
-        $LOGIC PrintText "TCLMRI: Preprocessing CT Hand Bone - ShowUserInterface"
+        $LOGIC PrintText "TCLCT: Preprocessing MRI Human Brain - ShowUserInterface"
 
         $preGUI DefineTextLabel "This task only applies to right handed scans scans! \n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton "- register the atlas to the input scan ?" 0 $atlasAlignedFlagID
         $preGUI DefineCheckButton "- right hand scan?" 0 $rightHandFlagID
-
+ 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $preGUI SetButtonsFromMRML
     }
@@ -80,9 +80,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable atlasAlignedFlagID
         variable rightHandFlagID
 
-        $LOGIC PrintText "TCLMRI: =========================================="
-        $LOGIC PrintText "TCLMRI: == Preprocress Data"
-        $LOGIC PrintText "TCLMRI: =========================================="
+        $LOGIC PrintText "TCLCT: =========================================="
+        $LOGIC PrintText "TCLCT: == Preprocress Data"
+        $LOGIC PrintText "TCLCT: =========================================="
         # ---------------------------------------
         # Step 1 : Initialize/Check Input
         if {[InitPreProcessing]} {
@@ -91,51 +91,79 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set atlasAlignedFlag [ GetCheckButtonValueFromMRML $atlasAlignedFlagID ]
         set rightHandFlag [ GetCheckButtonValueFromMRML $rightHandFlagID ]
+   
+        # ----------------------------------------------------------------------------
+        # We have to create this function so that we can run it in command line mode
+        #
+        CTHandRegistration $atlasAlignedFlag  $rightHandFlag 
 
-        $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $rightHandFlag"
+        CTHandGenerateBackground 
+        
+        # -------------------------------------
+        # Step 6: Perform autosampling to define intensity distribution
+        if { [ComputeIntensityDistributions] } {
+            PrintError "Run: Could not automatically compute intensity distribution !"
+            return 1
+        }
 
-        set inputTargetNode [$mrmlManager GetTargetInputNode]
-        set alignedTargetNode [$workingDN GetAlignedTargetNode]
+        # -------------------------------------
+        # Step 7: Check validity of Distributions
+        set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
+        if { $failedIDList != "" } {
+            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n "
+            foreach ID $failedIDList {
+                set MSG "${MSG}[$mrmlManager GetTreeNodeName $ID]\n"
+            }
+            set MSG "${MSG}This can cause failure of the automatic segmentation. To address the issue, please visit the web site listed under Help"
+            $preGUI PopUpWarningWindow "$MSG"
+        }
+        return 0
+    }
+
+    # ----------------------------------------------------------------------------
+    proc CTHandRegistration { alignFlag  rightHandFlag  } {
+            variable mrmlManager
+            variable workingDN
+            variable LOGIC
+
+
+          $LOGIC PrintText "TCL: =========================================="
+          $LOGIC PrintText "TCL: == Register CT Atlas"
+          $LOGIC PrintText "TCL: =========================================="
+
+        set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
+        set bSplineFlag [expr ([$mrmlManager GetRegistrationDeformableType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
+
+        if {($alignFlag == 0) || (( $affineFlag == 0 ) && ( $bSplineFlag == 0 )) } {
+            return [SkipAtlasRegistration]
+        }
+
+        # ----------------------------------------------------------------
+        # Setup
+        # ----------------------------------------------------------------
         set inputAtlasNode [$mrmlManager GetAtlasInputNode]
         set alignedAtlasNode [$mrmlManager GetAtlasAlignedNode]
-
-        if { $inputTargetNode != "" } {
-            $LOGIC PrintText "Detected [$inputTargetNode GetNumberOfVolumes] inputTargetNodeVolumes"
-        }
-        if { $alignedTargetNode != "" } {
-            $LOGIC PrintText "Detected [$alignedTargetNode GetNumberOfVolumes] alignedTargetNodeVolumes"
-        }
-        if { $inputAtlasNode != "" } {
-            $LOGIC PrintText "Detected [$inputAtlasNode GetNumberOfVolumes] inputAtlasNodeVolumes"
-        }
-        if { $alignedAtlasNode != "" } {
-            $LOGIC PrintText "Detected [$alignedAtlasNode GetNumberOfVolumes] alignedAtlasNodeVolumes"
-        }
-
-
         if { $alignedAtlasNode == "" } {
             $LOGIC PrintText "TCL: Aligned Atlas was empty"
+            #  $LOGIC PrintText "TCL: set outputAtlasNode \[ $mrmlManager CloneAtlasNode $inputAtlasNode \"AlignedAtlas\"\] "
             set alignedAtlasNode [ $mrmlManager CloneAtlasNode $inputAtlasNode "Aligned"]
-            $workingDN SetReferenceAlignedAtlasNodeID [$alignedAtlasNode GetID]
+            $workingDN SetReferenceAlignedAtlasNodeID [$outputAtlasNode GetID]
         } else {
             $LOGIC PrintText "TCL: Atlas was just synchronized"
             $mrmlManager SynchronizeAtlasNode $inputAtlasNode $alignedAtlasNode "Aligned"
         }
 
+            set inputTargetNode [$mrmlManager GetTargetInputNode]
+            if { $inputTargetNode != "" } {
+                    $LOGIC PrintText "Detected [$inputTargetNode GetNumberOfVolumes] inputTargetNodeVolumes"
+             }
 
-        # -------------------------------------
-        # Step 5: Atlas Alignment 
-        # Defines $workingDN GetAlignedAtlasNode
-#        if { [RegisterAtlas $atlasAlignedFlag] } {
-#            PrintError "Run: Atlas alignment failed !"
-#            return 1
-#        }
+            set alignedTargetNode [$workingDN GetAlignedTargetNode]
+            if { $alignedTargetNode != "" } {
+                $LOGIC PrintText "Detected [$alignedTargetNode GetNumberOfVolumes] alignedTargetNodeVolumes"
+             }
 
-        if { $atlasAlignedFlag } {
-            # (flip), fiducial_threshold, blur, binarize, choose largest component of: atlas and target
-            # RegisterHandAtlas
-
-            set inputTargetVolumeNode [$inputTargetNode GetNthVolumeNode 0]
+             set inputTargetVolumeNode [$inputTargetNode GetNthVolumeNode 0]
             set inputTargetVolumeFileName [WriteDataToTemporaryDir $inputTargetVolumeNode Volume]
 
             if { $rightHandFlag } {
@@ -145,9 +173,6 @@ namespace eval EMSegmenterPreProcessingTcl {
                 set flip_is_necessary_for_target 0
                 set flip_is_necessary_for_atlas 1
             }
-
-
-
 
             set atlasRegistrationVolumeIndex -1;
             if {[[$mrmlManager GetGlobalParametersNode] GetRegistrationAtlasVolumeKey] != "" } {
@@ -166,17 +191,15 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
             set blurredInputTargetVolumeFileName [CreateTemporaryFileNameForNode $inputTargetVolumeNode]
-            CTHandBonePipeline $inputTargetVolumeFileName $blurredInputTargetVolumeFileName $flip_is_necessary_for_target
-
-            $LOGIC PrintText "pre-process atlas template..."
+            CTHandExtractBlurrySegemtnation $inputTargetVolumeFileName $blurredInputTargetVolumeFileName $flip_is_necessary_for_target
 
             set blurredInputAtlasVolumeFileName [CreateTemporaryFileNameForNode $inputAtlasVolumeNode]
-            CTHandBonePipeline $inputAtlasVolumeFileName $blurredInputAtlasVolumeFileName $flip_is_necessary_for_atlas
+            CTHandExtractBlurrySegemtnation $inputAtlasVolumeFileName $blurredInputAtlasVolumeFileName $flip_is_necessary_for_atlas
 
 
-            ### Call BRAINSFit ###
+            ### Call Brainsfit ###
 
-            #  set transformfile RegisterAtlasToSubject { $outputAtlasFileName $outputFileName }
+            #        set transformfile RegisterAtlasToSubject { $outputAtlasFileName $outputFileName }
 
             set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
             set CMD "${PLUGINS_DIR}/BRAINSFit"
@@ -233,7 +256,6 @@ namespace eval EMSegmenterPreProcessingTcl {
             #TODO: check here for return code
 
             ### Call Resample ###
-
             set fixedTargetChannel 0
             set fixedTargetVolumeNode [$alignedTargetNode GetNthVolumeNode $fixedTargetChannel]
             set fixedTargetVolumeFileName [WriteImageDataToTemporaryDir $fixedTargetVolumeNode]
@@ -276,41 +298,13 @@ namespace eval EMSegmenterPreProcessingTcl {
                 $LOGIC PrintText "TCL: $errmsg"
 
                 ReadDataFromDisk $outputAtlasVolumeNode $outputAtlasVolumeFileName Volume
-                file delete -force $outputAtlasVolumeFileName
+                file delete -force $outputAtlasVolumeFileName                
             }
-            #end for loop
-        }
-        # end atlas alignment
-
-        # Status: At this point our atlas is aligned to the input data
-
-
-        # -------------------------------------
-        # Step 6: Perform autosampling to define intensity distribution
-        if { [ComputeIntensityDistributions] } {
-            PrintError "Run: Could not automatically compute intensity distribution !"
-            return 1
-        }
-
-        # -------------------------------------
-        # Step 7: Check validity of Distributions
-        set failedIDList [CheckAndCorrectTreeCovarianceMatrix]
-        if { $failedIDList != "" } {
-            set MSG "Log Covariance matrices for the following classes seemed incorrect:\n"
-            foreach ID $failedIDList {
-                set MSG "${MSG}[$mrmlManager GetTreeNodeName $ID]\n"
-            }
-            set MSG "${MSG}This can cause failure of the automatic segmentation. To address the issue, please visit the web site listed under Help"
-            $preGUI PopUpWarningWindow "$MSG"
-        }
-
-        return 0
     }
-
     #
     # TASK SPECIFIC FUNCTIONS
     #
-    proc CTHandBonePipeline { inputFileName outputFileName flip_is_necessary } {
+    proc CTHandExtractBlurrySegemtnation { inputFileName outputFileName flip_is_necessary } {
         variable LOGIC
 
         set CTHandBoneHelper [vtkCTHandBoneClass New]
@@ -345,6 +339,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         $LOGIC PrintText "threshold..."
+        #TODO
+        # set fiducialfile "/tmp/Subject2.fcsv"
+        #TODO
+        # set logfile "/tmp/logfile.txt"
+        #set ret [$CTHandBoneHelper fiducial_threshold $TargetFlipFileName $TargetFlipThresholdFileName $fiducialfile $logfile]
         set ret [$CTHandBoneHelper fiducial_threshold $TargetFlipFileName $TargetFlipThresholdFileName]
 
         $LOGIC PrintText "blur..."
@@ -356,12 +355,159 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "largest..."
         set ret [$CTHandBoneHelper largest_component $TargetFlipThresholdBlurBinaryFileName $outputFileName]
 
+        $LOGIC PrintText "atlas template..."
+
         $CTHandBoneHelper Delete
 
     }
-# end CTHandBonePipeline
+
+    # Generates Background class by subtracting  the atlases of the other classes and inverting the results  
+    proc CTHandGenerateBackground  { } {
+            variable outputAtlasNode
+            variable inputAtlasNode
+            variable mrmlManager
+            variable LOGIC
+
+            # All nodes that are not parent classes are assigned to background 
+           set n [$mrmlManager GetTreeNodeNumberOfChildren  [$mrmlManager GetTreeRootNodeID]  ]
+            set bgList ""
+          set rootID [$mrmlManager  GetTreeRootNodeID ]
+            for {set i 0 } { $i < $n  } { incr i } {
+                set id [ $mrmlManager GetTreeNodeChildNodeID $rootID $i ]
+                if { [ $mrmlManager GetTreeNodeIsLeaf $id ] } {
+                   set bgList "${bgList} $id"
+                 } 
+         }
+
+            # Check if atlas bg node is defined  
+           set treeID     [ lindex $bgList 0 ]
+       set bgAtlasID [ $mrmlManager GetTreeNodeSpatialPriorVolumeID $treeID]
+
+
+            # Create dummy AtlasBgNode for inputnode 
+        if {  $bgAtlasID == 0  } {
+                  # I do this bc it is easier for debugging 
+                  set inputAtlasNode             [$mrmlManager GetAtlasInputNode]
+                  set inputAtlasVolumeNode [ $inputAtlasNode GetNthVolumeNode 0 ] 
+                  set bgDummyNode            [ CreateVolumeNode $inputAtlasVolumeNode  "BGAtlas(Place Holder)"]
+                  # do this as otherwise the program can crash 
+                  set bgDummyData  [vtkImageData New]
+                  $bgDummyNode SetAndObserveImageData  $bgDummyData
+                  $bgDummyData Delete
+                  set bgAtlasID                      [ $mrmlManager  MapMRMLNodeIDToVTKNodeID [$bgDummyNode GetID] ]             
+         }
+
+             # Assign node to all background classes 
+         foreach bgID $bgList {
+           $mrmlManager SetTreeNodeSpatialPriorVolumeID $bgID $bgAtlasID
+         }
+
+            # Check if outputAtlasNode is defined 
+        set bgAtlasNode [ $mrmlManager GetAlignedSpatialPriorFromTreeNodeID $treeID]
+        if { $bgAtlasNode == ""  } {
+                  $LOGIC PrintText "TCLCT: Created  BG Atlas Node"  
+                 # We need to create the node 
+         set outputAtlasNode             [$mrmlManager GetAtlasAlignedNode ] 
+                 set outputAtlasVolumeNode [ $outputAtlasNode GetNthVolumeNode 0 ] 
+                 set bgAtlasNode                   [ CreateVolumeNode $outputAtlasVolumeNode  "BGAtlas(Aligned)"]
+                 # This should not be done here but in MRML Manager - Kilian change it later once it works          
+         }
+           
+            # Make sure all the output allso point to the same volume 
+            foreach bgID $bgList {
+              set treeNode   [ $mrmlManager GetTreeNode $bgID] 
+        $outputAtlasNode                 AddVolume [$treeNode GetID]  [$bgAtlasNode GetID]
+         }
+
+       $LOGIC PrintText "TCLCT: Creating BG Atlas Node  [$bgAtlasNode   GetName]"    
+
+            # Check if output Data is defined 
+        set bgAtlasData [ $bgAtlasNode  GetImageData ]
+        if { $bgAtlasData == "" } {
+           $LOGIC PrintText "TCLCT: Created Image Data" 
+                 set bgAtlasData  [vtkImageData New]
+                 $bgAtlasNode SetAndObserveImageData  $bgAtlasData
+                 $bgAtlasData Delete
+
+                 # important to do this in tcl
+                 set bgAtlasData [ $bgAtlasNode  GetImageData ]
+         }
+
+            # 
+             # Set up operation 
+             #  
+        set addResults [ vtkImageData New]
+        set addFilter [ vtkImageMathematics New]
+            $addFilter SetOperationToAdd
+            $addFilter SetInput1 $addResults 
+
+             set numInputs 0
+              
+             # carefull - this setup can fail if adding values up is beyond scalar range of scalar type   
+             foreach ID [GetAllLeafNodeIDsInTree] {
+                 # background class
+         if { [lsearch "$bgList" $ID]  > -1 } {
+                     continue
+         }
+               
+                # no spatial prior defined 
+                set leafAtlasNode [ $mrmlManager GetAlignedSpatialPriorFromTreeNodeID $ID]
+         if { $leafAtlasNode == "" }   {
+                     continue
+        }
+
+         $LOGIC PrintText "TCLCT:  Adding [$leafAtlasNode GetName ] from class [[ $mrmlManager GetTreeNode $ID] GetName] "
+         if { $numInputs > 0 } {
+                     $addFilter SetInput2  [$leafAtlasNode GetImageData ]
+                     $addFilter Update
+                     $addResults  DeepCopy [$addFilter GetOutput]   
+         } else {
+             $addResults  DeepCopy [$leafAtlasNode GetImageData ]
+         }
+                 incr numInputs 
+         }
+
+         $addFilter Delete        
+  
+     if { $numInputs  == 0 } {
+             PrintError "CT-Hand-Bone: No enough spatial atlases defined "
+            $addResults Delete
+             return 
+     } 
+     
+        set MAX [lindex [$addResults GetScalarRange] 1] 
+        # Need to do that for unsigned types
+        set castInFilter [ vtkImageCast New]
+        $castInFilter SetOutputScalarTypeToFloat
+    $castInFilter SetInput $addResults  
+        $castInFilter Update 
+
+        set subFilter [ vtkImageMathematics New]
+        $subFilter SetOperationToAddConstant 
+    $subFilter SetConstantC -$MAX 
+        $subFilter SetInput1 [$castInFilter GetOutput]  
+        $subFilter Update
+
+        set mulFilter [ vtkImageMathematics New]
+        $mulFilter SetOperationToMultiplyByK 
+    $mulFilter SetConstantK -1.0 
+        $mulFilter SetInput1 [$subFilter GetOutput]
+        $mulFilter Update
+
+        set castOutFilter [ vtkImageCast New]
+        $castOutFilter SetOutputScalarType [$addResults GetScalarType]   
+    $castOutFilter SetInput [$mulFilter  GetOutput]  
+        $castOutFilter Update 
+ 
+        $bgAtlasData DeepCopy [$castOutFilter GetOutput]
+
+        $castOutFilter  Delete
+        $mulFilter  Delete
+        $subFilter  Delete
+        $castInFilter  Delete
+        $addResults Delete
+    }
 }
-# end namespace eval EMSegmenterPreProcessingTcl
 
 
 namespace eval EMSegmenterSimpleTcl {
@@ -385,6 +531,7 @@ namespace eval EMSegmenterSimpleTcl {
         $inputChannelGUI DefineTextLabel "Is the subject right handed?" 0
         $inputChannelGUI DefineCheckButton "- Are you providing a right hand scan?" 0 $EMSegmenterPreProcessingTcl::rightHandFlagID
 
+
         # Define this at the end of the function so that values are set by corresponding MRML node
         $inputChannelGUI SetButtonsFromMRML
         return 0
@@ -396,6 +543,6 @@ namespace eval EMSegmenterSimpleTcl {
     }
 
     proc PrintError { TEXT } {
-        puts stderr "TCLMRI: ERROR:EMSegmenterSimpleTcl::${TEXT}"
+        puts stderr "TCLCT: ERROR:EMSegmenterSimpleTcl::${TEXT}"
     }
 }
