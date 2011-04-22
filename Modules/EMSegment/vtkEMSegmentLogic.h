@@ -136,6 +136,8 @@ public:
                  std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string>  & DefinePreprocessingTasksFile);
 //ETX
 
+  int StartSegmentationWithoutPreprocessingAndSaving();
+
 protected: 
   // the mrml manager is created in the constructor
   vtkSetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager);
@@ -210,6 +212,7 @@ protected:
 private:
   vtkEMSegmentLogic(const vtkEMSegmentLogic&);
   void operator=(const vtkEMSegmentLogic&);
+
 };
 
 #endif
