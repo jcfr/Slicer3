@@ -67,8 +67,8 @@ message("######### LOCAL_CMAKE_BUILD_OPTIONS:            ${LOCAL_CMAKE_BUILD_OPT
 
 set(PROJECTNAME CMTK)
 ExternalProject_Add(${PROJECTNAME}
-#  SVN_REPOSITORY "http://www.nitrc.org/svn/cmtk/tags/Slicer3"
-  SVN_REPOSITORY "http://www.nitrc.org/svn/cmtk/trunk/core"
+  SVN_REPOSITORY "http://www.nitrc.org/svn/cmtk/tags/Slicer3"
+#  SVN_REPOSITORY "http://www.nitrc.org/svn/cmtk/trunk/core"
   SVN_USERNAME "slicerbot"
   SVN_PASSWORD "slicer"
   CMAKE_ARGS
