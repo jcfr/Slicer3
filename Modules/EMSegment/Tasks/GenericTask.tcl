@@ -1067,7 +1067,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 set CMD "$CMD --numberOfHistogramBins 40"
                 set CMD "$CMD --numberOfMatchPoints 10"
                 set CMD "$CMD --useCachingOfBSplineWeightsMode ON"
-                set CMD "$CMD --costMetric MM"
+                set CMD "$CMD --costMetric MMI"
 
 
                 $LOGIC PrintText "TCL: Executing $CMD"
