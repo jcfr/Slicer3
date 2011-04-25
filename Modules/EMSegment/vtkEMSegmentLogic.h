@@ -70,7 +70,7 @@ public:
   /// Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
   virtual void RegisterNodes()
   {
-    std::cout << "Registering Nodes.." << std::endl;
+    // std::cout << "Registering Nodes.." << std::endl;
     // make sure the scene is attached
     this->MRMLManager->SetMRMLScene(this->GetMRMLScene());
     this->RegisterMRMLNodesWithScene();
