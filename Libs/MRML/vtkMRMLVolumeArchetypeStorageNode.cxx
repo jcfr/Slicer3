@@ -641,7 +641,27 @@ std::string vtkMRMLVolumeArchetypeStorageNode::UpdateFileList(vtkMRMLNode *refNo
   vtksys_stl::vector<vtksys_stl::string> pathComponents;
   vtksys::SystemTools::SplitPath(originalDir.c_str(), pathComponents);
   // add a temp dir to it
-  pathComponents.push_back(std::string("TempWrite"));
+  if (this->GetID())
+    {
+    // use the volume id to create a unique temporary directory name, for more
+    // cluster-friendly operation
+    std::string fullID = std::string(this->GetID());
+    size_t pos = fullID.find("Node");
+    // Add the end of the ID string, from Node onward, to TempWrite-, to try
+    // and avoid generating too long a directory name
+    if (pos != std::string::npos)
+      {
+      pathComponents.push_back(std::string("TempWrite-")+fullID.substr(pos));
+      }
+    else
+      {
+      pathComponents.push_back(std::string("TempWrite-")+fullID);
+      }
+    }
+  else
+    {
+    pathComponents.push_back(std::string("TempWrite"));
+    }
   std::string tempDir = vtksys::SystemTools::JoinPath(pathComponents);
   vtkDebugMacro("UpdateFileList: deleting and then re-creating temp dir "<< tempDir.c_str());
   vtksys::SystemTools::RemoveADirectory(tempDir.c_str());
