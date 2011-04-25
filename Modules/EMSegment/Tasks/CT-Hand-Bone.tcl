@@ -165,7 +165,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Aligned Atlas was empty"
             #  $LOGIC PrintText "TCL: set outputAtlasNode \[ $mrmlManager CloneAtlasNode $inputAtlasNode \"AlignedAtlas\"\] "
             set alignedAtlasNode [ $mrmlManager CloneAtlasNode $inputAtlasNode "Aligned"]
-            $workingDN SetReferenceAlignedAtlasNodeID [$outputAtlasNode GetID]
+            $workingDN SetReferenceAlignedAtlasNodeID [$alignedAtlasNode GetID]
             ###???      $workingDN SetReferenceAlignedAtlasNodeID [$alignedAtlasNode GetID]
         } else {
             $LOGIC PrintText "TCL: Atlas was just synchronized"
@@ -297,23 +297,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set CMD "$CMD --inputVolume $inputAtlasVolumeFileName  --referenceVolume $fixedTargetVolumeFileName"
             set CMD "$CMD --outputVolume $outputAtlasVolumeFileName --deformationVolume $deformationfield"
 
-            set CMD "$CMD --pixelType"
-            set fixedTargetVolume [$fixedTargetVolumeNode GetImageData]
-            set scalarType [$fixedTargetVolume GetScalarTypeAsString]
-            switch -exact "$scalarType" {
-                "bit" { set CMD "$CMD binary" }
-                "unsigned char" { set CMD "$CMD uchar" }
-                "unsigned short" { set CMD "$CMD ushort" }
-                "unsigned int" { set CMD "$CMD uint" }
-                "short" -
-                "int" -
-                "float" { set CMD "$CMD $scalarType" }
-                default {
-                    PrintError "BRAINSResample: cannot resample a volume of type $scalarType"
-                    return 1
-                }
-            }
-
+            set CMD "$CMD --pixelType [BRAINSGetPixelTypeFromVolumeNode $fixedTargetVolumeNode]"
 
             $LOGIC PrintText "TCL: Executing $CMD"
             catch { eval exec $CMD } errmsg
