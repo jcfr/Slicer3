@@ -779,7 +779,8 @@ proc CropVolumeApply {this} {
   
   # set a descriptive name for the output volume
   set inputName [$volumeNode GetName]
-  set outputName "${inputName}-Subvolume-resample_scale-${userSpacing}"
+  set outputName [format "%s-Subvolume-resample_scale-%i" $inputName [ expr {int($userSpacing)} ] ]
+  #set outputName "${inputName}-Subvolume-resample_scale-${userSpacing}"
   $outVolumeNode SetName $outputName
   $outVolumeNode SetLabelMap [$volumeNode GetLabelMap]
 
