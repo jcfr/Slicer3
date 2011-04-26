@@ -249,7 +249,6 @@ proc launch_SetEnvironment {} {
       set ::env(MRMLCLI_DIR)        $::env(Slicer3_HOME)/lib/MRMLCLI
       set ::env(ModuleDescriptionParser_DIR)        $::env(Slicer3_HOME)/lib/ModuleDescriptionParser
       set ::env(MRMLIDImageIO_DIR)  $::env(Slicer3_HOME)/lib/MRMLIDImageIO
-      set ::env(Qdec_DIR)           $::env(Slicer3_HOME)/lib/Qdec
       set ::env(RemoteIO_DIR)       $::env(Slicer3_HOME)/lib/RemoteIO
       set ::env(FileWatcher_DIR)    $::env(Slicer3_HOME)/lib/FileWatcher
       set ::env(SlicerIO_DIR)       $::env(Slicer3_HOME)/lib/SlicerIO
@@ -404,7 +403,6 @@ proc launch_SetEnvironment {} {
       set ::env(MRMLCLI_DIR)        [file normalize "$::Slicer3_HOME/lib/$::BUILD_SUBDIR"]
       set ::env(ModuleDescriptionParser_DIR)        [file normalize "$::Slicer3_HOME/lib/$::BUILD_SUBDIR"]
       set ::env(MRMLIDImageIO_DIR)  [file normalize "$::Slicer3_HOME/lib/$::BUILD_SUBDIR"]
-      set ::env(Qdec_DIR)           [file normalize "$::Slicer3_HOME/lib/$::BUILD_SUBDIR"]
       set ::env(RemoteIO_DIR)       [file normalize "$::Slicer3_HOME/lib/$::BUILD_SUBDIR"]
       set ::env(FileWatcher_DIR)    [file normalize "$::Slicer3_HOME/lib/$::BUILD_SUBDIR"]
       set ::env(SlicerIO_DIR)       [file normalize "$::Slicer3_HOME/lib/$::BUILD_SUBDIR"]
@@ -586,7 +584,6 @@ proc launch_SetPaths {} {
             set ::env(LD_LIBRARY_PATH) $::env(MRMLCLI_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(ModuleDescriptionParser_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(MRMLIDImageIO_DIR):$::env(LD_LIBRARY_PATH)
-            set ::env(LD_LIBRARY_PATH) $::env(Qdec_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(RemoteIO_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(FileWatcher_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(SlicerIO_DIR):$::env(LD_LIBRARY_PATH)
@@ -637,7 +634,6 @@ proc launch_SetPaths {} {
             set ::env(DYLD_LIBRARY_PATH) $::env(MRMLCLI_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(ModuleDescriptionParser_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(MRMLIDImageIO_DIR):$::env(DYLD_LIBRARY_PATH)
-            set ::env(DYLD_LIBRARY_PATH) $::env(Qdec_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(RemoteIO_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(FileWatcher_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(SlicerIO_DIR):$::env(DYLD_LIBRARY_PATH)
@@ -685,7 +681,6 @@ proc launch_SetPaths {} {
             set ::env(Path) $::env(MRMLCLI_DIR)\;$::env(Path)
             set ::env(Path) $::env(ModuleDescriptionParser_DIR)\;$::env(Path)
             set ::env(Path) $::env(MRMLIDImageIO_DIR)\;$::env(Path)
-            set ::env(Path) $::env(Qdec_DIR)\;$::env(Path)
             set ::env(Path) $::env(RemoteIO_DIR)\;$::env(Path)
             set ::env(Path) $::env(FileWatcher_DIR)\;$::env(Path)
             set ::env(Path) $::env(SlicerIO_DIR)\;$::env(Path)
