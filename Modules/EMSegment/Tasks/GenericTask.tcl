@@ -999,21 +999,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                 set CMD "$CMD --floating $atlas_mask_FileName"
 
                 # set the right scalar type
-                set referenceVolume [$inputVolumeNode GetImageData]
-                set scalarType [$referenceVolume GetScalarTypeAsString]
-                switch -exact "$scalarType" {
-                    "char"           { set CMD "$CMD --char" }
-                    "unsigned char"  { set CMD "$CMD --byte" }
-                    "short"          { set CMD "$CMD --short" }
-                    "unsigned short" { set CMD "$CMD --ushort" }
-                    "int"            { set CMD "$CMD --int" }
-                    "float"          { set CMD "$CMD --float" }
-                    "double"         { set CMD "$CMD --double" }
-                    default {
-                        PrintError "CMTKResampleCLI: cannot resample a volume of type $scalarType"
-                        return 1
-                    }
-                }
+                set CMD "$CMD [CMTKGetPixelTypeFromVolumeNode $inputVolumeNode]"
 
                 set CMD "$CMD $fixedVolumeFileName"
                 set CMD "$CMD $outTransformDirName"
@@ -1181,6 +1167,27 @@ namespace eval EMSegmenterPreProcessingTcl {
             "float"          { set PIXELTYPE "$scalarType" }
             default {
                 PrintError "BRAINSGetPixelTypeFromVolumeNode: Cannot handle a volume of type $scalarType"
+                set PIXELTYPE "INVALID"
+            }
+        }
+        return $PIXELTYPE
+    }
+
+    proc CMTKGetPixelTypeFromVolumeNode { volumeNode } {
+
+        set referenceVolume [$volumeNode GetImageData]
+        set scalarType [$referenceVolume GetScalarTypeAsString]
+        switch -exact "$scalarType" {
+            "char"           { set PIXELTYPE "--char" }
+            "unsigned char"  { set PIXELTYPE "--byte" }
+            "short"          { set PIXELTYPE "--short" }
+            "unsigned short" { set PIXELTYPE "--ushort" }
+            "int"            { set PIXELTYPE "--int" }
+            "unsigned int"   { set PIXELTYPE "--uint" }
+            "float"          { set PIXELTYPE "--float" }
+            "double"         { set PIXELTYPE "--double" }
+            default {
+                PrintError "CMTKGetPixelTypeFromVolumeNode: Cannot handle a volume of type $scalarType"
                 set PIXELTYPE "INVALID"
             }
         }
@@ -1425,23 +1432,8 @@ namespace eval EMSegmenterPreProcessingTcl {
             }
         }
 
-        # set the right scalar type
-        set referenceVolume [$referenceVolumeNode GetImageData]
-        set scalarType [$referenceVolume GetScalarTypeAsString]
-        switch -exact "$scalarType" {
-            "char"           { set CMD "$CMD --char" }
-            "unsigned char"  { set CMD "$CMD --byte" }
-            "short"          { set CMD "$CMD --short" }
-            "unsigned short" { set CMD "$CMD --ushort" }
-            "int"            { set CMD "$CMD --int" }
-            "unsigned int"   { set CMD "$CMD --uint" }
-            "float"          { set CMD "$CMD --float" }
-            "double"         { set CMD "$CMD --double" }
-            default {
-                PrintError "CMTKResampleCLI: cannot resample a volume of type $scalarType"
-                return 1
-            }
-        }
+        set CMD "$CMD [CMTKGetPixelTypeFromVolumeNode $referenceVolumeNode]"
+
         # - no attributes after this line that start with the flag ---
         set CMD "$CMD \"$referenceVolumeFileName\""
         set CMD "$CMD \"$transformDirName\""
