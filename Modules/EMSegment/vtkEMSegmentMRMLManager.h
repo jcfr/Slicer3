@@ -65,7 +65,8 @@ public:
   // populates the nodes with default values, adds the nodes to the
   // MRML scene.
   virtual void        CreateAndObserveNewParameterSet();
-  virtual int         SetLoadedParameterSetIndex(int i);
+  int         SetLoadedParameterSetIndex(int i);
+  int         SetLoadedParameterSetIndex(vtkMRMLEMSTemplateNode* tNode);
   virtual int         CheckEMSTemplateVolumeNodes(vtkMRMLEMSTemplateNode* emsTemplateNode);
 
   //
