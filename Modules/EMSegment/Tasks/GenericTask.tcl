@@ -1530,6 +1530,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
         set tmpName [CreateTemporaryFileNameForNode $Node]
+
+        #        # $tmptmpName is of the form XXXXXXX.tmp, now try to remove the 
+        #        if [string match *.tmp "$tmptmpName"] 
+        #            set tmpName [string range $v 0 end-4]
         if { $tmpName == "" } { return "" }
 
         if { "$Type" == "Volume" } {
@@ -1538,14 +1542,21 @@ namespace eval EMSegmenterPreProcessingTcl {
             set out [vtkMRMLTransformStorageNode New]
         } else {
             PrintError "WriteDataToTemporaryDir: Unkown type $Type"
-            return 0
+            return ""
         }
 
         $out SetScene $SCENE
         $out SetFileName $tmpName
+        if { [file exists $tmpName] && [file size $tmpName] == 0 } {
+            # remove empty file immediately before we write into it.
+            file delete $tmpName
+        } else {
+            PrintError "tried to overwrite a non-empty existing file"
+            return ""
+        }
         set FLAG [$out WriteData $Node]
         $out Delete
-        if  { $FLAG == 0 } {
+        if { $FLAG == 0 } {
             PrintError "WriteDataToTemporaryDir: could not write file $tmpName"
             return ""
         }
