@@ -719,6 +719,80 @@ if(NOT DISABLE_CXX_TESTING)
     endif(EMSEG_RUN_COMPARE_TESTS)
 
 
+    # Task Human-Eye
+    add_test(
+      EMSegCL_Task_HumanEye_${registrationpackage}_${size}
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/Human-Eye.mrml
+      --targetVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_MRIHumanBrain_T1_aligned.nrrd
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanEye.nrrd
+      --taskPreProcessingSetting
+      "|C1|C0"
+      --registrationPackage
+      ${registrationpackage}
+      --registrationAffineType
+      -1
+      --registrationDeformableType
+      -1
+      )
+    set_tests_properties(
+      EMSegCL_Task_HumanEye_${registrationpackage}_${size}
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
+#    if(EMSEG_RUN_COMPARE_TESTS)
+#      midas_add_test(
+#        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
+#        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+#        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
+#                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
+#        )
+#    endif(EMSEG_RUN_COMPARE_TESTS)
+
+
+    #TODO: all test *nrrd files are taken from other tasks, generate new ones
+    # this task is using Generic.tcl, otherwise the logmean value will be overwritten and the bug is not visible
+    # Task Human-Eye_LogMean
+    add_test(
+      EMSegCL_Task_HumanEye_LogMean_${registrationpackage}_${size}
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Testing/TestData/Human-Eye_LogMeanError.mrml
+      --targetVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_MRIHumanBrain_T1_aligned.nrrd
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanEye.nrrd
+      --taskPreProcessingSetting
+      "|C0|C0"
+      --registrationPackage
+      ${registrationpackage}
+      --registrationAffineType
+      -1
+      --registrationDeformableType
+      -1
+      )
+    set_tests_properties(
+      EMSegCL_Task_HumanEye_${registrationpackage}_${size}
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
+#    if(EMSEG_RUN_COMPARE_TESTS)
+#      midas_add_test(
+#        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
+#        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+#        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
+#                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
+#        )
+#    endif(EMSEG_RUN_COMPARE_TESTS)
+
+
 
     # Task MRI-Human-Brain-Exp
     add_test(
