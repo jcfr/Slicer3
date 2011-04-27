@@ -84,7 +84,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         if { [$Node GetClassName] == "vtkMRMLScalarVolumeNode" } {
             set NAME "_[$Node GetID].nrrd"
-        } elseif { [$Node GetClassName] == "vtkMRMLScene"  } {
+        } elseif { [$Node GetClassName] == "vtkMRMLScene" } {
             set NAME "_[file tail [$Node GetURL]]"
         } else {
             #TODO,FIXME: need a elseif here
@@ -157,7 +157,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "CreateDirName: Unknown type"
         }
 
-        if { $NAME != ""} {
+        if { $NAME != "" } {
             set dirname $basefilename$NAME
             $LOGIC PrintText "TCL: Create directory: $dirname"
             set CMD "mkdir \"$dirname\""
@@ -171,7 +171,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
     # TODO: ChangeName of this function, its doing more than only creating a volume node
-    # vtkMRMLVolumeNode *volumeNode, const char *name)
+    # vtkMRMLVolumeNode *volumeNode, const char *name
     proc CreateVolumeNode { volumeNode name } {
         variable SCENE
         variable mrmlManager
@@ -265,11 +265,14 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     proc GetEntryValueFromMRML { Type ID } {
         variable mrmlManager
+        variable LOGIC
+
         set TEXT [string range [string map { "|" "\} \{" } "[[$mrmlManager GetGlobalParametersNode] GetTaskPreProcessingSetting]"] 1 end]
         set TEXT "${TEXT}\}"
+        $LOGIC PrintText "TCL: GetEntryValueFromMRML: $TEXT"
         set index 0
         foreach ARG $TEXT {
-            if {"[string index $ARG 0]" == "$Type" } {
+            if { "[string index $ARG 0]" == "$Type" } {
                 if { $index == $ID } {
                     return "[string range $ARG 1 end]"
                 }
@@ -698,10 +701,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         # - environment variables  and
         # - command line executables
         #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
-        #if { $PLUGINS_DIR == "" } {
+        #if { $PLUGINS_DIR == "" }
         #    PrintError "InitPreProcessing: Environmet variable not set corretly"
         #    return 1
-        #}
 
         # -----------------------------------------------------------
         # Check and set valid variables
@@ -1676,17 +1678,18 @@ namespace eval EMSegmenterPreProcessingTcl {
         $transformNode Delete
         set RemoveFiles "$RemoveFiles \"$outputTransformFileName\""
 
-
-#        if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
-#            set CMD "$CMD --numberOfIterations 3    --numberOfSamples 100"
-#        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
-#            set CMD "$CMD --numberOfIterations 1500 --numberOfSamples 1000"
-#        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
-#            set CMD "$CMD --numberOfIterations 1500 --numberOfSamples 300000"
-#        } else {
-#            PrintError "BRAINSRegistration: Unknown affineType: $affineType"
-#            return ""
-#        }
+        if {0} { ;# this is a comment because of tcl's bracket rules in comments
+            if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
+                set CMD "$CMD --numberOfIterations 3    --numberOfSamples 100"
+            } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
+                set CMD "$CMD --numberOfIterations 1500 --numberOfSamples 1000"
+            } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
+                set CMD "$CMD --numberOfIterations 1500 --numberOfSamples 300000"
+            } else {
+                PrintError "BRAINSRegistration: Unknown affineType: $affineType"
+                return ""
+            }
+        }
 
         if { $deformableType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
             set CMD "$CMD --numberOfIterations 3    --numberOfSamples 100"
@@ -2267,9 +2270,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # set tmpFileName [WriteDataToTemporaryDir $inputICCMaskNode Volume ]
             # set RemoveFiles "$RemoveFiles \"$tmpFileName\""
-            # if { $tmpFileName == "" } {
-            # return 1
-            #     }
+            # if { $tmpFileName == "" } { return 1 }
             # set CMD "$CMD --maskimag \"$tmpFileName\""
 
             # create a new node for our output-list
@@ -2290,9 +2291,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # set CMD "$CMD --iterations \"3,2,1\""
 
             # set outbiasVolumeFileName [ CreateTemporaryFileNameForNode $outbiasVolumeFileName ]
-            # if { $outbiasVolumeFileName == "" } {
-            #     return 1
-            # }
+            # if { $outbiasVolumeFileName == "" } { return 1 }
             # set CMD "$CMD --outputbiasfield \"$outbiasVolumeFileName\""
 
             # execute algorithm
