@@ -110,7 +110,7 @@ void qSlicerEMSegmentSegmentationLogicStep::onEntry(
     }
 
   // start the segmentation
-  //logic->StartSegmentationWithoutPreprocessing();
+  logic->StartSegmentationWithoutPreprocessingAndSaving();
 
   // Indicates that we are finished
   this->onEntryComplete();

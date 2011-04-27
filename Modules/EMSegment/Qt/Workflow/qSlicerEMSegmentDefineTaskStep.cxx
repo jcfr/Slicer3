@@ -70,7 +70,10 @@ void qSlicerEMSegmentDefineTaskStepPrivate::selectTask(vtkMRMLNode* mrmlNode)
 {
   Q_Q(qSlicerEMSegmentDefineTaskStep);
   Q_ASSERT(q->mrmlManager());
-  q->mrmlManager()->SetNodeWithCheck(vtkMRMLEMSTemplateNode::SafeDownCast(mrmlNode));
+
+  q->mrmlManager()->SetLoadedParameterSetIndex(vtkMRMLEMSTemplateNode::SafeDownCast(mrmlNode));
+
+  //q->mrmlManager()->SetNodeWithCheck(vtkMRMLEMSTemplateNode::SafeDownCast(mrmlNode));
 }
 
 //-----------------------------------------------------------------------------

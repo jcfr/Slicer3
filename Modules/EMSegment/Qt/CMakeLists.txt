@@ -17,6 +17,8 @@ SET(qt_module_include_directories
   ${CMAKE_CURRENT_BINARY_DIR}/Widgets
   ${CMAKE_CURRENT_SOURCE_DIR}/Workflow
   ${CMAKE_CURRENT_BINARY_FIR}/Workflow
+  ${Slicer_SOURCE_DIR}/QTModules/Annotation/MRML
+  ${Slicer_BINARY_DIR}/QTModules/Annotation  
   )
 
 # Widget source files
@@ -136,6 +138,7 @@ SET(qt_module_UI_SRCS
 SET(qt_module_target_libraries
   vtkSlicerEMSegmentModuleLogic
   vtkCharts
+  qSlicerAnnotationModule
   )
 
 # Resources
@@ -157,8 +160,8 @@ slicerMacroBuildQtModule(
 # --------------------------------------------------------------------------
 # Sub directories
 #
-ADD_SUBDIRECTORY(Widgets/Plugins)
-ADD_SUBDIRECTORY(Workflow/Plugins)
+#ADD_SUBDIRECTORY(Widgets/Plugins)
+#ADD_SUBDIRECTORY(Workflow/Plugins)
 
 if(BUILD_TESTING)
   SET(EMSegment_TESTING_DATA_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Testing/Data)

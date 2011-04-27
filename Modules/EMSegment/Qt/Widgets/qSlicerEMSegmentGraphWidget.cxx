@@ -312,7 +312,7 @@ void qSlicerEMSegmentGraphWidget::onCurrentInput0VolumeChanged(const QString& vo
     d->updateClass(classID, 0);
     }
 
-  d->Chart0->SetTitle(volumeName.toLatin1());
+  d->Chart0->SetTitle(vtkStdString(volumeName.toLatin1()));
   d->Chart0->RecalculateBounds();
   d->Chart0View->Render();
 }
@@ -332,7 +332,7 @@ void qSlicerEMSegmentGraphWidget::onCurrentInput1VolumeChanged(const QString& vo
     {
     d->updateClass(classID, 1);
     }
-  d->Chart1->SetTitle(volumeName.toLatin1());
+  d->Chart1->SetTitle(vtkStdString(volumeName.toLatin1()));
   d->Chart1->RecalculateBounds();
   d->Chart1View->Render();
 }
