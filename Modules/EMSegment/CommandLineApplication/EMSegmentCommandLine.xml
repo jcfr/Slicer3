@@ -69,21 +69,21 @@
       <label>Parameters Node Name</label>
     </string>    
 
-    <boolean>
+    <integer>
       <name>disableMultithreading</name>
       <longflag>disableMultithreading</longflag>
-      <description>Disable multithreading for the EMSegmenter algorithm only! Preprocessing might still run in multi-threaded mode</description>
+      <description>Disable multithreading for the EMSegmenter algorithm only! Preprocessing might still run in multi-threaded mode. -1: Do not overwrite default value. 0: Disable. 1: Enable.</description>
       <label>Disable Multithreading</label>
-      <default>false</default>
-    </boolean>
+      <default>-1</default>
+    </integer>
 
-    <boolean>
+    <integer>
       <name>dontUpdateIntermediateData</name>
       <longflag>dontUpdateIntermediateData</longflag>
-      <description>Disable update of intermediate results.</description>
+      <description>Disable update of intermediate results.  -1: Do not overwrite default value. 0: Disable. 1: Enable.</description>
       <label>Skip Intermediate Data Update</label>
-      <default>false</default>
-    </boolean>
+      <default>-1</default>
+    </integer>
 
     <boolean>
       <name>verbose</name>
@@ -156,37 +156,28 @@
       <channel>input</channel>
     </file>
 
-    <boolean>
-      <name>disableRegistration</name>
-      <longflag>disableRegistration</longflag>
-      <description>Skip registration in the preprocessing.</description>
-      <label>Skip Registration</label>
-      <default>false</default>
-    </boolean>
-
     <string>
       <name>registrationPackage</name>
       <longflag>registrationPackage</longflag>
       <description>specify the registration package for preprocessing (CMTK or BRAINS)</description>
       <label>Registration Package</label>
-      <default>CMTK</default>
     </string>
 
-    <string>
+    <integer>
       <name>registrationAffineType</name>
       <longflag>registrationAffineType</longflag>
-      <description>specify the accuracy of the affine registration</description>
+      <description>specify the accuracy of the affine registration. -2: Do not overwrite default, -1: Test, 0: Disable, 1: Fast, 2: Accurate</description>
       <label>Registration Affine Type</label>
-      <default>1</default>
-    </string>
+      <default>-2</default>
+    </integer>
 
-    <string>
+    <integer>
       <name>registrationDeformableType</name>
       <longflag>registrationDeformableType</longflag>
-      <description>specify the accuracy of the deformable registration</description>
+      <description>specify the accuracy of the deformable registration. -2: Do not overwrite default, -1: Test, 0: Disable, 1: Fast, 2: Accurate</description>
       <label>Registration Deformable Type</label>
-      <default>1</default>
-    </string>
+      <default>-2</default>
+    </integer>
 
   </parameters>
 </executable>

@@ -2,7 +2,7 @@
 #include "EMSegmentAPIHelper.h"
 #include "EMSegmentCommandLineFct.h"
 
- // =======================================================================
+// =======================================================================
 //  MAIN
 // =======================================================================
 int main(int argc, char** argv)
@@ -14,7 +14,7 @@ int main(int argc, char** argv)
   //
   // =======================================================================
 
-   // parse arguments using the CLP system; this creates variables.
+  // parse arguments using the CLP system; this creates variables.
   PARSE_ARGS;
 
   ProgressReporter progressReporter;
@@ -22,7 +22,7 @@ int main(int argc, char** argv)
   float totalSteps  = 6.0f;
 
   progressReporter.ReportProgress("Parsing Arguments...",
-                                   currentStep++ / totalSteps);
+                                  currentStep++ / totalSteps);
 
   bool useDefaultParametersNode = parametersMRMLNodeName.empty();
   bool useDefaultTarget         = targetVolumeFileNames.empty();
@@ -35,8 +35,8 @@ int main(int argc, char** argv)
 
   if (!generateEmptyMRMLSceneAndQuit.empty())
     {
-    GenerateEmptyMRMLScene(generateEmptyMRMLSceneAndQuit.c_str());
-    return EXIT_SUCCESS;
+      GenerateEmptyMRMLScene(generateEmptyMRMLSceneAndQuit.c_str());
+      return EXIT_SUCCESS;
     }
 
 #ifdef _WIN32
@@ -52,13 +52,13 @@ int main(int argc, char** argv)
   bool argsOK = true;
   if (mrmlSceneFileName.empty())
     {
-    std::cerr << "Error: mrmlSceneFileName must be specified." << std::endl;
-    argsOK = false;
+      std::cerr << "Error: mrmlSceneFileName must be specified." << std::endl;
+      argsOK = false;
     }
   if (!argsOK)
     {
-    std::cerr << "Try --help for usage..." << std::endl;
-    return EXIT_FAILURE;
+      std::cerr << "Try --help for usage..." << std::endl;
+      return EXIT_FAILURE;
     }
 
   //
@@ -135,53 +135,53 @@ int main(int argc, char** argv)
       return EXIT_FAILURE;
     }
 
-   // ================== MRMLScene  ==================
+  // ================== MRMLScene  ==================
 
-    vtkMRMLScene* mrmlScene = vtkMRMLScene::New();
-    vtkMRMLScene::SetActiveScene(mrmlScene);
-    appLogic->SetAndObserveMRMLScene(mrmlScene);
+  vtkMRMLScene* mrmlScene = vtkMRMLScene::New();
+  vtkMRMLScene::SetActiveScene(mrmlScene);
+  appLogic->SetAndObserveMRMLScene(mrmlScene);
 
-    vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New ( );
-    colorLogic->SetMRMLScene(mrmlScene);
-    colorLogic->AddDefaultColorNodes();
-    colorLogic->SetMRMLScene(NULL);
-    colorLogic->Delete();
+  vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New ( );
+  colorLogic->SetMRMLScene(mrmlScene);
+  colorLogic->AddDefaultColorNodes();
+  colorLogic->SetMRMLScene(NULL);
+  colorLogic->Delete();
 
-   // ================== EMSegmenter  ==================
+  // ================== EMSegmenter  ==================
 
-   // create an instance of vtkEMSegmentLogic and connect it with theMRML scene
-    vtkEMSegmentLogic* EMSLogic = vtkEMSegmentLogic::New();
-    EMSLogic->SetModuleName("EMSegment");
-    EMSLogic->SetAndObserveMRMLScene(mrmlScene);
-    EMSLogic->RegisterMRMLNodesWithScene();
-    std::string EMSLogicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,EMSLogic));
+  // create an instance of vtkEMSegmentLogic and connect it with theMRML scene
+  vtkEMSegmentLogic* EMSLogic = vtkEMSegmentLogic::New();
+  EMSLogic->SetModuleName("EMSegment");
+  EMSLogic->SetAndObserveMRMLScene(mrmlScene);
+  EMSLogic->RegisterMRMLNodesWithScene();
+  std::string EMSLogicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,EMSLogic));
 
-    vtkIntArray *emsEvents                 = vtkIntArray::New();
-    emsEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-    emsEvents->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-    EMSLogic->SetAndObserveMRMLSceneEvents(mrmlScene, emsEvents);
-    emsEvents->Delete();
+  vtkIntArray *emsEvents                 = vtkIntArray::New();
+  emsEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+  emsEvents->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+  EMSLogic->SetAndObserveMRMLSceneEvents(mrmlScene, emsEvents);
+  emsEvents->Delete();
 
-    // For the EMSegment logic, getting and setting of parameters in the
-    // MRML scene is delegated to the EMSegment MRML manager.  Get a
-    // shortcut to the manager.
-    vtkEMSegmentMRMLManager* emMRMLManager = EMSLogic->GetMRMLManager();
-    std::string emMRMLManagerTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,emMRMLManager));
-    emMRMLManager->SetMRMLScene( mrmlScene );
+  // For the EMSegment logic, getting and setting of parameters in the
+  // MRML scene is delegated to the EMSegment MRML manager.  Get a
+  // shortcut to the manager.
+  vtkEMSegmentMRMLManager* emMRMLManager = EMSLogic->GetMRMLManager();
+  std::string emMRMLManagerTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,emMRMLManager));
+  emMRMLManager->SetMRMLScene( mrmlScene );
 
-    vtkEMSegmentKWLogic* EMSKWLogic = vtkEMSegmentKWLogic::New();
-    EMSKWLogic->SetSlicerApp(app);
-    EMSKWLogic->SetEMSLogic(EMSLogic);
-    std::string EMSKWLogicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,EMSKWLogic));
+  vtkEMSegmentKWLogic* EMSKWLogic = vtkEMSegmentKWLogic::New();
+  EMSKWLogic->SetSlicerApp(app);
+  EMSKWLogic->SetEMSLogic(EMSLogic);
+  std::string EMSKWLogicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,EMSKWLogic));
 
-   // ================== Data IO  ==================
-    vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
-    Slicer3Helper::AddDataIOToScene(mrmlScene,app,appLogic,dataIOManagerLogic);
+  // ================== Data IO  ==================
+  vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
+  Slicer3Helper::AddDataIOToScene(mrmlScene,app,appLogic,dataIOManagerLogic);
 
-    //
-    // global try block makes sure data is cleaned up if anything goes  wrong
-    //
-   try
+  //
+  // global try block makes sure data is cleaned up if anything goes  wrong
+  //
+  try
     {
 
       // =======================================================================
@@ -195,183 +195,180 @@ int main(int argc, char** argv)
       // ================== MRML ==============
       mrmlScene->SetURL(mrmlSceneFileName.c_str());
       if (LoadMRMLScene(emMRMLManager, mrmlScene,  verbose))
-    {
-           throw std::runtime_error("ERROR: failed to import mrml scene.");
-    }
-       progressReporter.ReportProgress("Loading Data...", currentStep / totalSteps, 0.4f);
+        {
+          throw std::runtime_error("ERROR: failed to import mrml scene.");
+        }
+      progressReporter.ReportProgress("Loading Data...", currentStep / totalSteps, 0.4f);
 
       // ================== EMS Template ==================
       if (DefineEMSTemplate(useDefaultParametersNode, parametersMRMLNodeName, emMRMLManager, verbose) )
-     {
-            throw std::runtime_error("ERROR: failed to set EMSegment parameters.");
-     }
-       else {
-           // don't use manual sampling because the target images might change this is a hack; do better !!!
-           emMRMLManager->ChangeTreeNodeDistributionsFromManualSamplingToManual();
+        {
+          throw std::runtime_error("ERROR: failed to set EMSegment parameters.");
+        }
+      else {
+        // don't use manual sampling because the target images might change this is a hack; do better !!!
+        emMRMLManager->ChangeTreeNodeDistributionsFromManualSamplingToManual();
 
-           // change the default tcl preprocessing parameter
-           if (taskPreProcessingSetting.size())
-       {
-                emMRMLManager->GetGlobalParametersNode()->SetTaskPreProcessingSetting(taskPreProcessingSetting.c_str());
-       }
-       }
+        // change the default tcl preprocessing parameter
+        if (taskPreProcessingSetting.size())
+          {
+            emMRMLManager->GetGlobalParametersNode()->SetTaskPreProcessingSetting(taskPreProcessingSetting.c_str());
+          }
+      }
       progressReporter.ReportProgress("Loading Data...", currentStep / totalSteps,0.6f);
 
       // ================== Target Images ================
       if (DefineTargetVolume( useDefaultTarget, targetVolumeFileNames, EMSLogic , mrmlScene, appLogic, verbose))
-      {
-             throw std::runtime_error("ERROR: failed to define target image ");
+        {
+          throw std::runtime_error("ERROR: failed to define target image ");
+        }
+
+      progressReporter.ReportProgress("Loading Data...", currentStep / totalSteps, 0.8f);
+
+      // =================== Atlas ====================
+      if (!useDefaultAtlas)
+        {
+          if (LoadUserDefinedAtlas (atlasVolumeFileNames, EMSLogic, mrmlScene, appLogic, verbose))
+            {
+              throw std::runtime_error("ERROR: failed to load user specified atlas ");
+            }
+        }
+
+      // ================== Final Result ================
+      if (DefineFinalOutput(useDefaultOutput, resultVolumeFileName, emMRMLManager, mrmlScene, verbose))
+        {
+          throw std::runtime_error("ERROR: failed to define volume node for final output.");
+        }
+
+      // =======================================================================
+      //
+      //  Update Misc. Parameters
+      //
+      // =======================================================================
+      progressReporter.ReportProgress("Updating Parameters...", currentStep++ / totalSteps, 0.0f);
+
+      // ================== Registration  ==================
+
+      if (!registrationPackage.empty()) {
+
+        if (registrationPackage == "CMTK")
+          {
+            emMRMLManager->SetRegistrationPackageType(0); //CMTK
+          }
+        else if (registrationPackage == "BRAINS")
+          {
+            emMRMLManager->SetRegistrationPackageType(1); // BRAINS
+          }
+        else
+          {
+            throw std::runtime_error("ERROR: registration package not known.");
+          }
       }
 
-     progressReporter.ReportProgress("Loading Data...", currentStep / totalSteps, 0.8f);
+      if (verbose)
+        std::cout << "Registration Package is " << registrationPackage << std::endl;
 
-     // =================== Atlas ====================
-     if (!useDefaultAtlas)
-      {
-         if (LoadUserDefinedAtlas (atlasVolumeFileNames, EMSLogic, mrmlScene, appLogic, verbose))
-      {
-             throw std::runtime_error("ERROR: failed to load user specified atlas ");
-      }
+      if ( registrationAffineType != -2) {
+        emMRMLManager->SetRegistrationAffineType(registrationAffineType);
       }
 
-    // ================== Final Result ================
-     if (DefineFinalOutput(useDefaultOutput, resultVolumeFileName, emMRMLManager, mrmlScene, verbose))
-     {
-       throw std::runtime_error("ERROR: failed to define volume node for final output.");
+      if ( registrationDeformableType != -2) {
+        emMRMLManager->SetRegistrationDeformableType(registrationDeformableType);
       }
 
-    // =======================================================================
-    //
-    //  Update Misc. Parameters
-    //
-    // =======================================================================
-    progressReporter.ReportProgress("Updating Parameters...", currentStep++ / totalSteps, 0.0f);
 
-    // ================== Registration  ==================
-
-    if (registrationPackage == "CMTK")
-      {
-        emMRMLManager->SetRegistrationPackageType(0); //CMTK
+      // ================== Multithreading  ==================
+      if (disableMultithreading != -1) {
+        emMRMLManager->SetEnableMultithreading(!disableMultithreading);
       }
-    else if (registrationPackage == "BRAINS")
-      {
-        emMRMLManager->SetRegistrationPackageType(1); // BRAINS
+      if (verbose)
+        std::cout << "Multithreading is "
+                  << (disableMultithreading ? "disabled." : "enabled.")
+                  << std::endl;
+
+      // ================== Intermediate Results  ==================
+      if (dontUpdateIntermediateData != -1) {
+        emMRMLManager->SetUpdateIntermediateData(!dontUpdateIntermediateData);
       }
-    else
-      {
-        throw std::runtime_error("ERROR: registration package not known.");
-      }
+      if (verbose)
+        std::cout << "Update intermediate data: "
+                  << (dontUpdateIntermediateData ? "disabled." : "enabled.")
+                  << std::endl;
 
-    if (verbose)
-      std::cout << "Registration Package is " << registrationPackage << std::endl;
+      // set intermediate results directory
+      if (writeIntermediateResults)
+        {
+          emMRMLManager->SetSaveIntermediateResults(true);
+          vtkstd::string absolutePath = vtksys::SystemTools::
+            CollapseFullPath(intermediateResultsDirectory.c_str());
+          emMRMLManager->
+            SetSaveWorkingDirectory(absolutePath.c_str());
+          std::cout << "Intermediate results will be written to: "
+                    << absolutePath << std::endl;
+        }
+      else
+        {
+          emMRMLManager->SetSaveIntermediateResults(false);
+        }
 
-    if (disableRegistration)
-      {
-        // Set both affine and deformable to off - and so preprocessing will jump over
-        emMRMLManager->GetGlobalParametersNode()->SetRegistrationAffineType(0);
-        emMRMLManager->GetGlobalParametersNode()->SetRegistrationDeformableType(0);
-      }
-    else {
-      if ( !registrationAffineType.empty() ) {
-        int affineType = atoi(registrationAffineType.c_str());
-        emMRMLManager->SetRegistrationAffineType(affineType);
-      }
+      // ================== Segmentation Boundary  ==================
+      int segmentationBoundaryMin[3];
+      int segmentationBoundaryMax[3];
+      emMRMLManager->GetSegmentationBoundaryMin(segmentationBoundaryMin);
+      emMRMLManager->GetSegmentationBoundaryMax(segmentationBoundaryMax);
+      if (verbose) std::cout
+                     << "Default ROI is ["
+                     << segmentationBoundaryMin[0] << ", "
+                     << segmentationBoundaryMin[1] << ", "
+                     << segmentationBoundaryMin[2] << "] -->> ["
+                     << segmentationBoundaryMax[0] << ", "
+                     << segmentationBoundaryMax[1] << ", "
+                     << segmentationBoundaryMax[2] << "]" << std::endl;
 
-      if ( !registrationDeformableType.empty() ) {
-        int deformableType = atoi(registrationDeformableType.c_str());
-        emMRMLManager->SetRegistrationDeformableType(deformableType);
-      }
-    }
-
-
-    // ================== Multithreading  ==================
-    emMRMLManager->SetEnableMultithreading(!disableMultithreading);
-    if (verbose)
-      std::cout << "Multithreading is "
-                << (disableMultithreading ? "disabled." : "enabled.")
-                << std::endl;
-
-    // ================== Intermediate Results  ==================
-    emMRMLManager->SetUpdateIntermediateData(!dontUpdateIntermediateData);
-    if (verbose)
-      std::cout << "Update intermediate data: "
-                << (dontUpdateIntermediateData ? "disabled." : "enabled.")
-                << std::endl;
-
-     // set intermediate results directory
-    if (writeIntermediateResults)
-      {
-      emMRMLManager->SetSaveIntermediateResults(true);
-      vtkstd::string absolutePath = vtksys::SystemTools::
-        CollapseFullPath(intermediateResultsDirectory.c_str());
-      emMRMLManager->
-        SetSaveWorkingDirectory(absolutePath.c_str());
-      std::cout << "Intermediate results will be written to: "
-                << absolutePath << std::endl;
-      }
-    else
-      {
-      emMRMLManager->SetSaveIntermediateResults(false);
-      }
-
-    // ================== Segmentation Boundary  ==================
-    int segmentationBoundaryMin[3];
-    int segmentationBoundaryMax[3];
-    emMRMLManager->GetSegmentationBoundaryMin(segmentationBoundaryMin);
-    emMRMLManager->GetSegmentationBoundaryMax(segmentationBoundaryMax);
-    if (verbose) std::cout
-      << "Default ROI is ["
-      << segmentationBoundaryMin[0] << ", "
-      << segmentationBoundaryMin[1] << ", "
-      << segmentationBoundaryMin[2] << "] -->> ["
-      << segmentationBoundaryMax[0] << ", "
-      << segmentationBoundaryMax[1] << ", "
-      << segmentationBoundaryMax[2] << "]" << std::endl;
-
-    if (verbose) {
+      if (verbose) {
         std::cout << "=============== Print EMSegmentMRMLManager" << std::endl;
         emMRMLManager->PrintInfo(std::cout);
-    }
-
-     // ================== Check Frinal Parameter Definition  ==================
-    if (!emMRMLManager->CheckMRMLNodeStructureForProcessing())
-      {
-        throw std::runtime_error("ERROR: EMSegment invalid parameter node structure");
       }
 
-    // =======================================================================
-    //
-    //  Process Data
-    //
-    // =======================================================================
+      // ================== Check Frinal Parameter Definition  ==================
+      if (!emMRMLManager->CheckMRMLNodeStructureForProcessing())
+        {
+          throw std::runtime_error("ERROR: EMSegment invalid parameter node structure");
+        }
 
-    progressReporter.ReportProgress("Running Segmentation...",
-                                     currentStep++ / totalSteps);
+      // =======================================================================
+      //
+      //  Process Data
+      //
+      // =======================================================================
 
-    try
-      {
-        // ================== Preprocessing ==================
-    if (RunPreprocessing( EMSKWLogic,  EMSLogicTcl, EMSKWLogicTcl,  emMRMLManagerTcl, app, emMRMLManager, verbose) ) {
-        throw std::runtime_error("");
-          }
+      progressReporter.ReportProgress("Running Segmentation...",
+                                      currentStep++ / totalSteps);
 
-         // ================== Segmentation ==================
-          if (verbose) std::cout << "EMSEG: Start Segmentation." << std::endl;
-          if ( EMSKWLogic->StartSegmentationWithoutPreprocessing(appLogic) == 1 )
-          {
-            std::cerr << "ERROR: StartSegmentationWithoutPreprocessing failed." << std::endl;
+      try
+        {
+          // ================== Preprocessing ==================
+          if (RunPreprocessing( EMSKWLogic,  EMSLogicTcl, EMSKWLogicTcl,  emMRMLManagerTcl, app, emMRMLManager, verbose) ) {
             throw std::runtime_error("");
           }
-          if (verbose) std::cout << "Segmentation complete." << std::endl;
-       }
-     catch (...)
-       {
-         throw std::runtime_error("ERROR: failed to run preprocessing/segmentation.");
-       }
 
-    //
-    // End of global try block
-    //
+          // ================== Segmentation ==================
+          if (verbose) std::cout << "EMSEG: Start Segmentation." << std::endl;
+          if ( EMSKWLogic->StartSegmentationWithoutPreprocessing(appLogic) == 1 )
+            {
+              std::cerr << "ERROR: StartSegmentationWithoutPreprocessing failed." << std::endl;
+              throw std::runtime_error("");
+            }
+          if (verbose) std::cout << "Segmentation complete." << std::endl;
+        }
+      catch (...)
+        {
+          throw std::runtime_error("ERROR: failed to run preprocessing/segmentation.");
+        }
+
+      //
+      // End of global try block
+      //
     }
   catch (std::runtime_error& e)
     {
@@ -385,22 +382,22 @@ int main(int argc, char** argv)
     }
 
   progressReporter.ReportProgress("Updating Results...",
-                                   currentStep++ / totalSteps);
+                                  currentStep++ / totalSteps);
 
-   // =======================================================================
-   //
-   //  Write out results and clean up
-   //
-   // =======================================================================
+  // =======================================================================
+  //
+  //  Write out results and clean up
+  //
+  // =======================================================================
 
   // ================== Write Out Results  ==================
   if (segmentationSucceeded && !dontWriteResults)
     {
-       segmentationSucceeded = WriteResultsToFile(disableCompression,  emMRMLManager, verbose);
+      segmentationSucceeded = WriteResultsToFile(disableCompression,  emMRMLManager, verbose);
     }
   else
     {
-       if (verbose) std::cout << "Skipping over saving segmentation results." << std::endl;
+      if (verbose) std::cout << "Skipping over saving segmentation results." << std::endl;
     }
 
   // ================== Compare To Standard==================
@@ -412,9 +409,9 @@ int main(int argc, char** argv)
   // ==================Write Out MRML ==================
   if (segmentationSucceeded && !resultMRMLSceneFileName.empty())
     {
-    if (verbose) std::cout << "Writing mrml scene...";
-    mrmlScene->Commit(resultMRMLSceneFileName.c_str());
-    if (verbose) std::cout << "DONE" << std::endl;
+      if (verbose) std::cout << "Writing mrml scene...";
+      mrmlScene->Commit(resultMRMLSceneFileName.c_str());
+      if (verbose) std::cout << "DONE" << std::endl;
     }
 
   progressReporter.ReportProgress("Cleaning Up...", currentStep++ / totalSteps);
