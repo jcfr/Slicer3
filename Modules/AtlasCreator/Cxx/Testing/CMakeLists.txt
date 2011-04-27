@@ -47,7 +47,9 @@ SIMPLE_TEST( vtkMRMLAtlasCreatorNodeTest1 )
 # add a tcl test 
 # ADD_TEST(MeasurementsTest1 ${Slicer3_BINARY_DIR}/Slicer3 --test-mode --script ${Slicer3_SOURCE_DIR}/Modules/Measurements/Testing/Tcl/MeasurementsTest1.tcl)
 
-# add python tests
+IF(NOT WIN32)
+# add python tests but only if we are not in windows
 ADD_TEST(AtlasCreatorLaunchFixedTest ${Slicer3_BINARY_DIR}/Slicer3 --test-mode -p ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest1.py)
 ADD_TEST(AtlasCreatorLaunchFixedFailProofTest ${Slicer3_BINARY_DIR}/Slicer3 --test-mode -p ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest2.py)
 ADD_TEST(AtlasCreatorLaunchDynamicTest ${Slicer3_BINARY_DIR}/Slicer3 --test-mode -p ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest3.py)
+ENDIF()
