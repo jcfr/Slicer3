@@ -267,8 +267,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable mrmlManager
         variable LOGIC
 
-        set TEXT [string range [string map { "|" "\} \{" } "[[$mrmlManager GetGlobalParametersNode] GetTaskPreProcessingSetting]"] 1 end]
-        set TEXT "${TEXT}\}"
+        $LOGIC PrintText "TCL: GetEntryValueFromMRML: [[$mrmlManager GetGlobalParametersNode] GetTaskPreProcessingSetting]"
+        set TEXT [string map { ";" "\} \{" } "[[$mrmlManager GetGlobalParametersNode] GetTaskPreProcessingSetting]"]
+        set TEXT "\{${TEXT}\}"
         $LOGIC PrintText "TCL: GetEntryValueFromMRML: $TEXT"
         set index 0
         foreach ARG $TEXT {
