@@ -329,7 +329,7 @@ void vtkEMSegmentKWDynamicFrame::SetButtonsFromMRML()
       if (defText.size()) 
     {
           size_t  startPos =1;
-          size_t  endPos =defText.find("|",1);
+          size_t  endPos =defText.find(":",1);
   
           while ( 1 ) 
         {
@@ -396,7 +396,7 @@ void vtkEMSegmentKWDynamicFrame::SetButtonsFromMRML()
           else
         {
           startPos = endPos +1;
-          endPos =defText.find("|",startPos);
+          endPos =defText.find(":",startPos);
         }
         }
     }
@@ -464,7 +464,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
 
   if (oldText.size())
     {
-      endPos =oldText.find("|",1);
+      endPos =oldText.find(":",1);
     }
   else {
     // Nothing to update
@@ -481,7 +481,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
     {
       // assumes that the entry with index 0 is used during processing otherwise have problems
       if (this->checkButton[i]) {
-         defText << "|C";
+         defText << ":C";
          defText << this->checkButton[i]->GetWidget()->GetSelectedState();
       } else {
          defText << oldText.substr(startPos,endPos-startPos).c_str();
@@ -495,7 +495,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
       else {
         startPos = endPos;
         endPos ++;
-        endPos =oldText.find("|",startPos); 
+        endPos =oldText.find(":",startPos); 
       }
     }
 
@@ -504,7 +504,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
       // assumes that the entry with index 0 is used during processin otherwise have problems
       if (this->volumeMenuButton.size()) 
     {
-      defText << "|V";
+      defText << ":V";
       vtkMRMLVolumeNode* volumeNode = MRMLManager->GetVolumeNode(this->volumeMenuButtonID[i]);
       if (!volumeNode) 
         {
@@ -528,7 +528,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
       else {
     startPos = endPos;
     endPos ++;
-    endPos =oldText.find("|",startPos); 
+    endPos =oldText.find(":",startPos); 
       }
     }
 
@@ -537,7 +537,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
     {
       // assumes that the entry with index 0 is used during processin otherwise have problems
       if (this->textEntry[i] && this->textEntry[i]->GetWidget()) {
-    defText << "|E";
+    defText << ":E";
     defText <<  this->textEntry[i]->GetWidget()->GetValue();
       } else {
     defText << oldText.substr(startPos,endPos-startPos).c_str();
@@ -551,7 +551,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
       else {
     startPos = endPos;
     endPos ++;
-    endPos =oldText.find("|",startPos); 
+    endPos =oldText.find(":",startPos); 
       }
     }
   this->MRMLManager->GetGlobalParametersNode()->SetTaskPreProcessingSetting(defText.str().c_str());
@@ -571,7 +571,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
 // 
 //   for (int i =0 ; i < (int)  this->checkButton.size(); i++)
 //     {
-//       defText << "|C";
+//       defText << ":C";
 //       if (this->checkButton[i] && this->checkButton[i]->GetWidget())
 //     {
 //       defText << this->checkButton[i]->GetWidget()->GetSelectedState();
@@ -580,7 +580,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
 // 
 //   for (int i =0 ; i < (int) volumeMenuButtonID.size() ; i++)
 //     {
-//        defText << "|V";
+//        defText << ":V";
 //        if (this->volumeMenuButtonID[i]) {
 //      vtkMRMLVolumeNode* volumeNode = MRMLManager->GetVolumeNode(this->volumeMenuButtonID[i]);
 //      if (!volumeNode) 
@@ -602,7 +602,7 @@ void vtkEMSegmentKWDynamicFrame::SaveSettingToMRML()
 // 
 //   for (int i =0 ; i < (int)  this->textEntry.size(); i++)
 //     {
-//       defText << "|E";
+//       defText << ":E";
 //       if (this->textEntry[i] && this->textEntry[i]->GetWidget())
 //     {
 //       defText << this->textEntry[i]->GetWidget()->GetValue();
