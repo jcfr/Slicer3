@@ -16,8 +16,18 @@
 #include "vtkMRMLEMSTemplateNode.h"
 #include "vtkImageIslandFilter.h"
 #include "vtkDataIOManagerLogic.h"
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+// Slicer3
 #include "../../Applications/GUI/Slicer3Helper.cxx"
 
+//#else
+
+// Slicer4
+// TODO
+
+#endif
 
 // A helper class to compare two maps
 template <class T>
@@ -2153,10 +2163,24 @@ bool vtkEMSegmentLogic::PackageAndWriteData(vtkSlicerApplicationLogic* appLogic,
     }
     }
 
-    Slicer3Helper::RemoveDataIOFromScene(newScene,dataIOManagerLogic);
-    dataIOManagerLogic->Delete();
-    dataIOManagerLogic = NULL;
-    newScene->Delete();
+#ifdef Slicer3_USE_KWWIDGETS
 
-    return !errorFlag;
+  // Slicer3
+
+  Slicer3Helper::RemoveDataIOFromScene(newScene,dataIOManagerLogic);
+
+
+  //#else
+
+  // TODO Slicer4
+
+#endif
+
+  dataIOManagerLogic->Delete();
+  dataIOManagerLogic = NULL;
+  newScene->Delete();
+
+  return !errorFlag;
 }
+
+

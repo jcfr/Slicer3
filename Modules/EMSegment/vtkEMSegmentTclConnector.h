@@ -33,10 +33,14 @@ public:
   vtkTypeMacro(vtkEMSegmentTclConnector,  vtkObject);
 
   virtual int SourceTclFile(const char *tclFile);
+  virtual int SourceTaskFiles();
 
-
-
-
+//BTX
+  vtkstd::string GetTclTaskDirectory();
+  vtkstd::string DefineTclTaskFileFromMRML();
+  vtkstd::string DefineTclTaskFullPathName(const char* TclFileName);
+  vtkstd::string GetTemporaryTaskDirectory();
+//ETX
 
 
 
@@ -50,7 +54,10 @@ public:
 #else
 
   // Slicer4
-  vtkSetObjectMacro(SlicerApp, qSlicerApplication);
+  void SetSlicerApp(qSlicerApplication* app)
+  {
+    this->SlicerApp = app;
+  }
 
 #endif
 
