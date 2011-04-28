@@ -121,7 +121,7 @@ vtkEMSegmentPreProcessingStep::Validate()
     const char* path = this->Script("::EMSegmenterPreProcessingTcl::Get_CMTK_Installation_Path");
     if ( *path == '\0' ) {
       if (!vtkKWMessageDialog::PopupYesNo(this->GetApplication(), NULL, "CMTK is not installed",
-                                          "For optimal results please install the CMTK extension. \n\nDo you want to proceed with BRAINSTools instead?",
+                                          "\nDo you want to proceed with BRAINSTools instead?",
                                           vtkKWMessageDialog::WarningIcon | vtkKWMessageDialog::InvokeAtPointer))
         {
           wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
