@@ -391,6 +391,8 @@ int main(int argc, char* argv[])
   //////////////////////////////////////////////////
   // 0a) read one slice and figure out vendor
   InputNamesGeneratorType::Pointer inputNames = InputNamesGeneratorType::New();
+  inputNames->SetLoadSequences( true );
+  inputNames->SetLoadPrivateTags( true );
   inputNames->SetInputDirectory( inputDicomDirectory.c_str() );
 
   ReaderType::FileNamesContainer filenames;
@@ -1027,7 +1029,7 @@ int main(int argc, char* argv[])
         useVolume.push_back(0);
         continue;
         }
-      else if (( !B0FieldFound || b == 0 ) || ( DiffusionDirectionality.find("NONE") != std::string::npos ) || ( DiffusionDirectionality == ""  )  )
+      else if (( !B0FieldFound || b == 0 ) || ( DiffusionDirectionality.find("NONE") != std::string::npos )  )
         { //Deal with b0 images
         bValues.push_back(b);
         UnmodifiedDiffusionVectorsInDicomLPSCoordinateSystem.push_back(vect3d);
@@ -1035,7 +1037,7 @@ int main(int argc, char* argv[])
         useVolume.push_back(1);
         continue;
         }
-      else if (DiffusionDirectionality.find("DIRECTIONAL") != std::string::npos)
+      else if (DiffusionDirectionality.find("DIRECTIONAL") != std::string::npos || ( DiffusionDirectionality == "" ))
         { //Deal with gradient direction images
         bValues.push_back(b);
         //std::cout << "HACK: GRADIENT IMAGEFILE: " << k << " of " << filenames.size() << " " << filenames[k] << std::endl;
