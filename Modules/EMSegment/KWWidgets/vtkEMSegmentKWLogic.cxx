@@ -51,6 +51,8 @@ vtkEMSegmentTclConnector* vtkEMSegmentKWLogic::GetTclConnector()
   if (!this->TclConnector)
     {
     this->TclConnector = vtkEMSegmentTclConnector::New();
+    this->TclConnector->SetSlicerApp(this->SlicerApp);
+    this->TclConnector->SetEMSLogic(this->GetEMSLogic());
     }
 
   return this->TclConnector;
