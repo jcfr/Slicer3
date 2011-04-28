@@ -289,11 +289,11 @@ int main(int argc, char** argv)
       // ================== Intermediate Results  ==================
       if (dontUpdateIntermediateData != -1) {
         emMRMLManager->SetUpdateIntermediateData(!dontUpdateIntermediateData);
-      }
-      if (verbose)
-        std::cout << "Update intermediate data: "
+        if (verbose)
+           std::cout << "Update intermediate data: "
                   << (dontUpdateIntermediateData ? "disabled." : "enabled.")
                   << std::endl;
+      }
 
       // set intermediate results directory
       if (writeIntermediateResults)
@@ -305,10 +305,6 @@ int main(int argc, char** argv)
             SetSaveWorkingDirectory(absolutePath.c_str());
           std::cout << "Intermediate results will be written to: "
                     << absolutePath << std::endl;
-        }
-      else
-        {
-          emMRMLManager->SetSaveIntermediateResults(false);
         }
 
       // ================== Segmentation Boundary  ==================
