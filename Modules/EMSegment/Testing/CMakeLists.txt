@@ -405,7 +405,7 @@ if(NOT DISABLE_CXX_TESTING)
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
-    --disableMultithreading 
+    --disableMultithreading -1
     )
   set_tests_properties(
     EMSegCL_DisableMultithreading
