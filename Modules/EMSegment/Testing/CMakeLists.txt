@@ -20,7 +20,8 @@ set(EMSegment_TESTDATA_DIR
 
 
 #### MIDAS
-include( ../../../Applications/CLI/BRAINSTools/BuildScripts/MIDAS.cmake )
+# http://www.kitware.com/midaswiki/index.php/MIDAS%2BCTest
+include(MIDAS)
 SETIFEMPTY(MIDAS_REST_URL "http://midas.kitware.com/api/rest" CACHE STRING "The MIDAS server where testing data resides")
 set(MIDAS_KEY_DIR "${EMSegment_SOURCE_DIR}/Testing/TestData/MIDAS_Keys")
 #### MIDAS
