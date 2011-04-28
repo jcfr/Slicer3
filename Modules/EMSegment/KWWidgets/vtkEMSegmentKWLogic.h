@@ -35,10 +35,6 @@ public:
   vtkstd::string GetTemporaryTaskDirectory();
   //ETX
   
-  // copy all nodes relating to the EMSegmenter into newScene
-  // and write to file 
-  virtual bool PackageAndWriteData(vtkSlicerApplicationLogic *appLogic, const char* packageDirectoryName);
-
   int UpdateTasks();
 
 //BTX

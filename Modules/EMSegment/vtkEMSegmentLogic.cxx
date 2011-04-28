@@ -15,6 +15,8 @@
 #include "vtkMRMLLabelMapVolumeDisplayNode.h"
 #include "vtkMRMLEMSTemplateNode.h"
 #include "vtkImageIslandFilter.h"
+#include "vtkDataIOManagerLogic.h"
+#include "../../Applications/GUI/Slicer3Helper.cxx"
 
 
 // A helper class to compare two maps
@@ -2053,4 +2055,108 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessingAndSaving()
   //
   segmenter->Delete();
   return EXIT_SUCCESS;
+}
+
+//----------------------------------------------------------------------------
+bool
+vtkEMSegmentLogic::SaveIntermediateResults(vtkSlicerApplicationLogic *appLogic)
+{
+  //
+  // get output directory
+  std::string outputDirectory(this->GetMRMLManager()->GetSaveWorkingDirectory());
+
+  if (!vtksys::SystemTools::FileExists(outputDirectory.c_str()))
+    {
+       // try to create directory
+       bool createdOK = true;
+       createdOK = vtksys::SystemTools::MakeDirectory(outputDirectory.c_str());
+       if (!createdOK) {
+              std::string  msg = "SaveIntermediateResults: could not create " + outputDirectory  + "!" ;
+              ErrorMsg += msg + "\n";
+              vtkErrorMacro(<< msg);
+              return false;
+       }
+    }
+
+  // check again whether or not directory exists
+  if (!vtksys::SystemTools::FileExists(outputDirectory.c_str()))
+    {
+      std::string  msg = "SaveIntermediateResults: Directory " + outputDirectory  + " does not exist !" ;
+      ErrorMsg += msg + "\n";
+      vtkErrorMacro(<< msg);
+      return false;
+    }
+
+  //
+  // package EMSeg-related parameters together and write them to disk
+  bool writeSuccessful = this->PackageAndWriteData(appLogic,outputDirectory.c_str());
+
+  return writeSuccessful;
+}
+
+
+//----------------------------------------------------------------------------
+bool vtkEMSegmentLogic::PackageAndWriteData(vtkSlicerApplicationLogic* appLogic, const char* packageDirectory)
+{
+  //
+  // create a scene and copy the EMSeg related nodes to it
+  //
+  if (!this->GetMRMLManager())
+    {
+      return false;
+    }
+
+  std::string outputDirectory(packageDirectory);
+  std::string mrmlURL(outputDirectory + "/_EMSegmenterScene.mrml");
+
+  vtkMRMLScene* newScene = vtkMRMLScene::New();
+  newScene->SetRootDirectory(packageDirectory);
+  newScene->SetURL(mrmlURL.c_str());
+
+  vtkDataIOManagerLogic* dataIOManagerLogic = vtkDataIOManagerLogic::New();
+  cout << " DEBUG" << endl;
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+
+
+  Slicer3Helper::AddDataIOToScene(newScene,0,appLogic,dataIOManagerLogic);
+
+//#else
+
+  // TODO Slicer4
+
+#endif
+
+  this->GetMRMLManager()->CopyEMRelatedNodesToMRMLScene(newScene);
+
+  // update filenames to match standardized package structure
+  this->CreatePackageFilenames(newScene, packageDirectory);
+
+  //
+  // create directory structure on disk
+  bool errorFlag = !this->CreatePackageDirectories(packageDirectory);
+
+  if (errorFlag)
+    {
+    vtkErrorMacro("PackageAndWriteData: failed to create directories");
+    }
+  else
+    {
+      //
+      // write the scene out to disk
+      errorFlag = !this->WritePackagedScene(newScene);
+      if (errorFlag)
+    {
+      vtkErrorMacro("PackageAndWrite: failed to write scene");
+    }
+    }
+
+    Slicer3Helper::RemoveDataIOFromScene(newScene,dataIOManagerLogic);
+    dataIOManagerLogic->Delete();
+    dataIOManagerLogic = NULL;
+    newScene->Delete();
+
+    return !errorFlag;
 }

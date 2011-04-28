@@ -8,7 +8,7 @@
 #include "vtkImageEMLocalSegmenter.h"
 #include "vtkKWTkUtilities.h"
 #include "vtkDataIOManagerLogic.h"
-#include "../../Applications/GUI/Slicer3Helper.cxx"
+#include "../../Applications/GUI/Slicer3Helper.h"
 
 
 
@@ -41,7 +41,11 @@ vtkEMSegmentKWLogic::~vtkEMSegmentKWLogic() {
   this->SetSlicerApp(NULL);
   this->SetEMSLogic(NULL);
 
-  this->TclConnector = NULL;
+  if (this->TclConnector)
+    {
+    this->TclConnector->Delete();
+    this->TclConnector = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -63,37 +67,7 @@ vtkEMSegmentTclConnector* vtkEMSegmentKWLogic::GetTclConnector()
 bool
 vtkEMSegmentKWLogic::SaveIntermediateResults(vtkSlicerApplicationLogic *appLogic)
 {
-  //
-  // get output directory
-  std::string outputDirectory(this->EMSLogic->GetMRMLManager()->GetSaveWorkingDirectory());
-
-  if (!vtksys::SystemTools::FileExists(outputDirectory.c_str()))
-    {
-       // try to create directory
-       bool createdOK = true;
-       createdOK = vtksys::SystemTools::MakeDirectory(outputDirectory.c_str());
-       if (!createdOK) {
-              std::string  msg = "SaveIntermediateResults: could not create " + outputDirectory  + "!" ;
-              ErrorMsg += msg + "\n";
-              vtkErrorMacro(<< msg);
-              return false;
-       }
-    }
-
-  // check again whether or not directory exists
-  if (!vtksys::SystemTools::FileExists(outputDirectory.c_str()))
-    {
-      std::string  msg = "SaveIntermediateResults: Directory " + outputDirectory  + " does not exist !" ;
-      ErrorMsg += msg + "\n"; 
-      vtkErrorMacro(<< msg);
-      return false;
-    }  
-
-  //
-  // package EMSeg-related parameters together and write them to disk
-  bool writeSuccessful = this->PackageAndWriteData(appLogic,outputDirectory.c_str());
-
-  return writeSuccessful;
+  return this->GetEMSLogic()->SaveIntermediateResults(appLogic);
 }
 
 //----------------------------------------------------------------------------
@@ -364,60 +338,6 @@ std::string vtkEMSegmentKWLogic::DefineTclTaskFullPathName(const char* TclFileNa
   return  tmp_full_file_path;
 }
 
-//----------------------------------------------------------------------------
-// cannot be moved to vtkEMSEgmentGUI bc of command line interface !
-bool vtkEMSegmentKWLogic::PackageAndWriteData(vtkSlicerApplicationLogic* appLogic, const char* packageDirectory)
-{
-  //
-  // create a scene and copy the EMSeg related nodes to it
-  //
-  if (!this->EMSLogic->GetMRMLManager())
-    {
-      return false;
-    }
-
-  std::string outputDirectory(packageDirectory);
-  std::string mrmlURL(outputDirectory + "/_EMSegmenterScene.mrml");
-
-  vtkMRMLScene* newScene = vtkMRMLScene::New();
-  newScene->SetRootDirectory(packageDirectory);
-  newScene->SetURL(mrmlURL.c_str());
-
-  vtkDataIOManagerLogic* dataIOManagerLogic = vtkDataIOManagerLogic::New();
-  cout << " DEBUG" << endl;
-  Slicer3Helper::AddDataIOToScene(newScene,this->SlicerApp,appLogic,dataIOManagerLogic);
-
-  this->EMSLogic->GetMRMLManager()->CopyEMRelatedNodesToMRMLScene(newScene);
-
-  // update filenames to match standardized package structure
-  this->EMSLogic->CreatePackageFilenames(newScene, packageDirectory);
-
-  //
-  // create directory structure on disk
-  bool errorFlag = !this->EMSLogic->CreatePackageDirectories(packageDirectory);
-
-  if (errorFlag)
-    {
-    vtkErrorMacro("PackageAndWriteData: failed to create directories");
-    }
-  else 
-    {
-      //
-      // write the scene out to disk
-      errorFlag = !this->EMSLogic->WritePackagedScene(newScene);
-      if (errorFlag)
-    {
-      vtkErrorMacro("PackageAndWrite: failed to write scene");
-    }
-    }
-
-    Slicer3Helper::RemoveDataIOFromScene(newScene,dataIOManagerLogic);
-    dataIOManagerLogic->Delete();
-    dataIOManagerLogic = NULL;
-    newScene->Delete();
-
-    return !errorFlag;
-}
 
 //----------------------------------------------------------------------------
 // Updates the .tcl Tasks from an external website and replaces the content

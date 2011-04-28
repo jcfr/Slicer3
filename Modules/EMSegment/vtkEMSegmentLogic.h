@@ -147,6 +147,16 @@ public:
 
   int StartSegmentationWithoutPreprocessingAndSaving();
 
+  //
+  // actions
+  //
+  virtual bool      SaveIntermediateResults(vtkSlicerApplicationLogic *appLogic);
+
+  // copy all nodes relating to the EMSegmenter into newScene
+  // and write to file
+  virtual bool PackageAndWriteData(vtkSlicerApplicationLogic *appLogic, const char* packageDirectoryName);
+
+
 protected: 
   // the mrml manager is created in the constructor
   vtkSetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager);
