@@ -267,6 +267,10 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilte
   void  GEImageReader(vtkImageReader *VOLUME, const char FileName[], int Zmin, int Zmax, int ScalarType);
   int   GEImageWriter(vtkImageData *Volume, char *FileName,int PrintFlag);
 
+  static double CalculateMean(vtkImageData *image);
+  static double CalculateCovariance(vtkImageData *image1, double mean) ;
+  // Normalized Cross Correlation
+  double CalculateNCC(vtkImageData *image1, vtkImageData *image2);
 
 protected:
   vtkImageEMGeneral() {};

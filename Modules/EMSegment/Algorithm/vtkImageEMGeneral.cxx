@@ -1008,3 +1008,83 @@ double vtkImageEMGeneral::CalcSoftSimularityMeasure (vtkImageData *Image1, vtkIm
    
    return    nominator/denominator;
 }  
+
+double vtkImageEMGeneral::CalculateMean(vtkImageData *image)  {
+  vtkImageSumOverVoxels* sum =  vtkImageSumOverVoxels::New();
+  sum->SetInput(image);
+  sum->Update();
+  int *dim = image->GetDimensions();
+  double n = double(dim[0]*dim[1]*dim[2]);
+  double mean = sum->GetVoxelSum()/n;
+  sum->Delete();
+  return mean;
+}  
+
+double vtkImageEMGeneral::CalculateCovariance(vtkImageData *image, double mean)  {
+  vtkImageMathematics* shift = vtkImageMathematics::New();
+  shift->SetInput(image);
+  shift->SetOperationToAddConstant();
+  shift->SetConstantC(-mean);
+  shift->Update();
+
+  vtkImageMathematics* sqr = vtkImageMathematics::New();
+  sqr->SetInput(shift->GetOutput());
+  sqr->SetOperationToSquare();
+  sqr->Update();
+
+  vtkImageSumOverVoxels* sum =  vtkImageSumOverVoxels::New();
+  sum->SetInput(sqr->GetOutput());
+  sum->Update();
+  int *dim = image->GetDimensions();
+  double n = double(dim[0]*dim[1]*dim[2]);
+  double cov = sum->GetVoxelSum()/(n -1);
+
+  sum->Delete();
+  sqr->Delete();
+  shift->Delete();
+
+  return cov;
+}  
+
+// Assumes that images have the same dimension
+double vtkImageEMGeneral::CalculateNCC(vtkImageData *image1, vtkImageData *image2)
+{
+  int *dim = image1->GetDimensions();
+  double n = double(dim[0]*dim[1]*dim[2]);
+
+  double mean1 =  this->CalculateMean(image1);
+  double cov1 =  this->CalculateCovariance(image1,mean1)*(n-1);
+  double mean2 =  this->CalculateMean(image2);
+  double cov2 =  this->CalculateCovariance(image2,mean2)*(n-1);
+ 
+ vtkImageMathematics* shift1 = vtkImageMathematics::New();
+  shift1->SetInput(image1);
+  shift1->SetOperationToAddConstant();
+  shift1->SetConstantC(-mean1);
+  shift1->Update();
+
+ vtkImageMathematics* shift2 = vtkImageMathematics::New();
+  shift2->SetInput(image2);
+  shift2->SetOperationToAddConstant();
+  shift2->SetConstantC(-mean2);
+  shift2->Update();
+
+  vtkImageMathematics* mul = vtkImageMathematics::New();
+  mul->SetInput1(shift1->GetOutput());
+  mul->SetInput2(shift2->GetOutput());
+  mul->SetOperationToMultiply();
+  mul->Update();
+
+  vtkImageSumOverVoxels* numerator =  vtkImageSumOverVoxels::New();
+  numerator->SetInput(mul->GetOutput());
+  numerator->Update();
+
+  double NCC =  numerator->GetVoxelSum() / (sqrt(cov1) *sqrt(cov2));
+ 
+  numerator->Delete();
+  mul->Delete();
+  shift2->Delete();
+  shift1->Delete();
+  return NCC;
+  
+}
