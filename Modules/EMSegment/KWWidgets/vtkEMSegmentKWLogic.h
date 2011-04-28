@@ -4,6 +4,10 @@
 #include  "vtkSlicerApplication.h" 
 #include  "vtkEMSegmentLogic.h"
 
+// until this class is fully obsolete, we peu-a-peu replace the code here by interfaces to the vtkEMSegmentTclConnector
+#include "vtkEMSegmentTclConnector.h"
+#include <vtkSmartPointer.h>
+
 // lists all functions that include KW Applications , i.e. make tcl calls 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentKWLogic : 
   public vtkObject
@@ -48,6 +52,8 @@ public:
   vtkSetObjectMacro(EMSLogic,  vtkEMSegmentLogic);
   vtkGetObjectMacro(EMSLogic,  vtkEMSegmentLogic);
 
+  vtkEMSegmentTclConnector* GetTclConnector();
+
  //BTX
   std::string GetErrorMessage() {return this->ErrorMsg;}
   //ETX 
@@ -60,6 +66,9 @@ private:
 
   vtkSlicerApplication* SlicerApp;
   vtkEMSegmentLogic *EMSLogic;
+
+  vtkEMSegmentTclConnector *TclConnector;
+
   //BTX
   std::string ErrorMsg; 
   //ETX

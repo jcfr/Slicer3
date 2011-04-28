@@ -11,6 +11,8 @@
 #include "../../Applications/GUI/Slicer3Helper.cxx"
 
 
+
+
 //----------------------------------------------------------------------------
 vtkEMSegmentKWLogic* vtkEMSegmentKWLogic::New()
 {
@@ -30,12 +32,29 @@ vtkEMSegmentKWLogic* vtkEMSegmentKWLogic::New()
 vtkEMSegmentKWLogic::vtkEMSegmentKWLogic() { 
     this->SlicerApp =NULL;
     this->EMSLogic = NULL;
+
+    this->TclConnector = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkEMSegmentKWLogic::~vtkEMSegmentKWLogic() { 
   this->SetSlicerApp(NULL);
   this->SetEMSLogic(NULL);
+
+  this->TclConnector = NULL;
+}
+
+//----------------------------------------------------------------------------
+vtkEMSegmentTclConnector* vtkEMSegmentKWLogic::GetTclConnector()
+{
+
+  if (!this->TclConnector)
+    {
+    this->TclConnector = vtkEMSegmentTclConnector::New();
+    }
+
+  return this->TclConnector;
+
 }
 
 //----------------------------------------------------------------------------
@@ -81,13 +100,7 @@ vtkEMSegmentKWLogic::SaveIntermediateResults(vtkSlicerApplicationLogic *appLogic
 
 int vtkEMSegmentKWLogic::SourceTclFile(const char *tclFile)
 {
-  // Load Tcl File defining the setting
-  if (!this->SlicerApp->LoadScript(tclFile))
-    {
-      vtkErrorMacro("Could not load in data for task. The following file does not exist: " << tclFile);
-      return 1;
-    }
-  return 0 ;
+  return this->GetTclConnector()->SourceTclFile(tclFile);
 }
 
 //----------------------------------------------------------------------------
