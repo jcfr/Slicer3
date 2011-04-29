@@ -6,7 +6,7 @@ from subprocess import call
 import getopt
 import os
 import sys
-
+import socket
 
 '''=========================================================================================='''
 def info(message):
@@ -253,6 +253,7 @@ def main(argv):
     
     info("AtlasCreator for 3D Slicer")
     info("Version v0.4")
+    info(socket.gethostbyaddr(socket.gethostname()))
     info("")
     
     if len(argv) == 0:
