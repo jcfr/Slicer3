@@ -265,9 +265,9 @@ namespace eval EMSegmenterPreProcessingTcl {
             PrintError "Failed to create a temporary file"
         }
         set CMD "$CMD -o $oArgument -O $deformationfield"
-        #set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
+        set CMD "$CMD -i 1000,500,250,125,60 -n 5 -e --numberOfMatchPoints 16"
         # fast - for debugging
-        set CMD "$CMD -i 5,5,2,2,1 -n 5 -e --numberOfMatchPoints 16"
+        #set CMD "$CMD -i 5,5,2,2,1 -n 5 -e --numberOfMatchPoints 16"
 
         $LOGIC PrintText "TCL: Executing $CMD"
         catch { eval exec $CMD } errmsg
