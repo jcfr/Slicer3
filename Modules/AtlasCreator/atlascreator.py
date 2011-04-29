@@ -343,7 +343,7 @@ def main(argv):
     
     dryrun = False
     
-    testMode = True
+    testMode = False
     
     for opt, arg in opts:                
         if opt in ("-h", "--help"):
