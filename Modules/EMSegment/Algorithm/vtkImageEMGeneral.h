@@ -25,20 +25,10 @@
 #ifndef __vtkImageEMGeneral_h
 #define __vtkImageEMGeneral_h
 #include "vtkEMSegment.h"
-#include <math.h>
-#include <cmath>
-#include "vtkMath.h"
 #include "vtkImageMultipleInputFilter.h"
-#include "vtkImageThreshold.h"
-#include "vtkImageMathematics.h"
-#include "vtkImageAccumulate.h"
-#include "vtkImageData.h" 
+class vtkImageData;
+class vtkImageReader;
 // Just made for vtkImageEMGeneral and its kids
-#include "vtkDataDef.h"
-#include "vtkFileOps.h" 
-#include "vtkImageReader.h"
-
-
 
 // ------------------------------------
 // Definitions for gauss calculations
@@ -91,6 +81,128 @@
 
 // the same as 1 / (e^6 - 1) - needed for Mean Field Approximation
 #define EMSEGMENT_INVERSE_NEIGHBORHOOD_ENERGY 0.00248491165684
+
+// For Super Class and sub class
+enum classType {CLASS, SUPERCLASS};
+
+
+// Defines the maximum number of threads used throughout this program.
+// This is very helpful when validating results from machines with different cpu number
+// EMLOCALSEGMENTER_MAX_MULTI_THREAD = -1 => no restriction
+ 
+#define EMLOCALSEGMENTER_MAX_MULTI_THREAD -1
+
+//--------------------------------------------------------------------
+// Registration Parameters 
+//--------------------------------------------------------------------
+// Parameters needed to define cost function 
+#define EMSEGMENT_REGISTRATION_DISABLED     0
+#define EMSEGMENT_REGISTRATION_APPLY        1 
+#define EMSEGMENT_REGISTRATION_GLOBAL_ONLY  2
+#define EMSEGMENT_REGISTRATION_CLASS_ONLY   3
+#define EMSEGMENT_REGISTRATION_SIMULTANEOUS 4
+#define EMSEGMENT_REGISTRATION_SEQUENTIAL   5
+ 
+#define EMSEGMENT_REGISTRATION_INTERPOLATION_LINEAR 1
+#define EMSEGMENT_REGISTRATION_INTERPOLATION_NEIGHBOUR 2 
+
+#define EMSEGMENT_REGISTRATION_SIMPLEX 1 
+#define EMSEGMENT_REGISTRATION_POWELL 2 
+
+#define EMSEGMENT_STOP_FIXED    0 
+#define EMSEGMENT_STOP_LABELMAP 1 
+#define EMSEGMENT_STOP_WEIGHTS  2 
+
+#define EMSEGMENT_PCASHAPE_DEPENDENT 0
+#define EMSEGMENT_PCASHAPE_INDEPENDENT 1
+#define EMSEGMENT_PCASHAPE_APPLY 2
+
+//BTX
+// Class for  capturing different protocols throughout the segmentation process
+
+class  VTK_EMSEGMENT_EXPORT ProtocolMessages {
+public:
+  int GetFlag() {return this->Flag;}
+  char* GetMessages();
+  void ResetParameters();
+  // This is for programs that use a constant char as input
+  void AddMessage(const char* os);
+
+  ~ProtocolMessages() { this->DeleteMessage();}
+  ProtocolMessages() {this->Message = new vtkOStrStreamWrapper; this->Flag = 0;}
+
+  vtkOStrStreamWrapper *Message;
+  int Flag; 
+private: 
+  void DeleteMessage();
+};
+
+// Needed for convenience so we can just enter things with << 
+
+#define vtkEMAddMessageNoOutput(MessageNoOutputPtr, xout)        \
+   {                                                          \
+     vtkOStreamWrapper::EndlType endl;                        \
+     vtkOStreamWrapper::UseEndl(endl);                        \
+     MessageNoOutputPtr->Message->rdbuf()->freeze(0);         \
+     (*MessageNoOutputPtr->Message) <<  xout << "\n";         \
+     MessageNoOutputPtr->Flag =  1;                           \
+   }
+
+
+#define vtkEMAddMessage(output,MessagePtr, x)                 \
+   {                                                          \
+     vtkEMAddMessageNoOutput(MessagePtr, x)                   \
+     output << "MESSAGE: In " __FILE__ ", line " << __LINE__ << "\n" << x << "\n";                    \
+   }
+
+// Message is not printed out 
+#define vtkEMJustAddErrorMessage(x) {        \
+   vtkEMAddMessageNoOutput((&this->ErrorMessage), x) ; \
+ }
+
+#define vtkEMJustAddErrorMessageSelf(x) {        \
+   vtkEMAddMessageNoOutput((self->GetErrorMessagePtr()), x) ; \
+ }
+
+#define vtkEMJustAddWarningMessage(x) {        \
+   vtkEMAddMessageNoOutput((&this->WarningMessage), x) ; \
+ }
+
+#define vtkEMJustAddWarningMessageSelf(x) {        \
+   vtkEMAddMessageNoOutput((self->GetWarningMessagePtr()), x) ; \
+ }
+
+#ifdef _WIN32
+#define vtkEMAddErrorMessage(x) {\
+   vtkEMAddMessage(std::cerr, (&this->ErrorMessage), "- ERROR: " << x) ; \
+ }
+
+#else  
+#define vtkEMAddErrorMessage(x) {\
+    vtkEMAddMessage(std::cerr, (&this->ErrorMessage), "- ERROR: " << x) ; \
+  }
+#endif
+
+#ifdef _WIN32
+#define vtkEMAddErrorMessageSelf(x) {\
+    vtkEMAddMessage(std::cerr,self->GetErrorMessagePtr(), "- ERROR: " << x); \
+  }
+#else  
+#define vtkEMAddErrorMessageSelf(x) {\
+    vtkEMAddMessage(std::cerr,self->GetErrorMessagePtr(), "- ERROR: " << x); \
+  }
+#endif 
+
+#define vtkEMAddWarningMessage(x) {\
+   vtkEMAddMessage(std::cerr, (&this->WarningMessage), "- WARNING: " << x) ; \
+ }
+
+#define vtkEMAddWarningMessageSelf(x) {\
+   vtkEMAddMessage(std::cerr,self->GetWarningMessagePtr(), "- WARNING: " << x); \
+}
+//ETX
+
+
 
 
 //ETX
@@ -265,7 +377,6 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilte
 
   void* GetPointerToVtkImageData(vtkImageData *Image, int DataType, int Ext[6]); 
   void  GEImageReader(vtkImageReader *VOLUME, const char FileName[], int Zmin, int Zmax, int ScalarType);
-  int   GEImageWriter(vtkImageData *Volume, char *FileName,int PrintFlag);
 
   static double CalculateMean(vtkImageData *image);
   static double CalculateCovariance(vtkImageData *image1, double mean) ;

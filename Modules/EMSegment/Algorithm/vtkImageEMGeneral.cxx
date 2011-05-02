@@ -12,22 +12,116 @@
 
 =========================================================================auto=*/
 #include "vtkImageEMGeneral.h"
-#include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 #include "vtkImageWriter.h"
 #include "vtkImageClip.h"
 #include "vtkImageCast.h"
 #include "vtkImageSumOverVoxels.h"
+#include "vtkImageAccumulate.h"
+#include "vtkMath.h"
+#include "vtkImageThreshold.h"
+#include "vtkImageMathematics.h"
+#include "vtkImageReader.h"
+#include "vtkObjectFactory.h"
 
-#include <stdio.h>
+#include <vtksys/SystemTools.hxx>
 #include <sstream>
-// #include <stdlib.h>
-// #include <unistd.h>
+
 
 // Similar to above.  This one computes an
 // approximation to the Gaussian of the square
 // root of the argument, in other words, the
 // argument should already be squared.
+
+
+// Opens up a new file and writes down result in the file
+void vtkImageEMGeneral_WriteVectorMatlabFile (const char *filename, const char *name, unsigned char *vec, int xMax)  {
+  int appendFlag = 0;
+  FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
+  if ( f == NULL ) {
+    cerr << "Could not open file " << filename << "\n";
+    return;
+  }
+  if (name != NULL) fprintf(f,"%s = [", name);
+  xMax --;
+  for (int x = 0; x < xMax; x++ )
+      fprintf(f,"%d ", vec[x]);
+  fprintf(f,"%d", vec[xMax]);
+  if (name != NULL) fprintf(f,"];\n");
+  fflush(f);
+  fclose(f);
+}
+
+void vtkImageEMGeneral_WriteVectorMatlabFile (const char *filename, const char *name,float *vec, int xMax)  {
+  int appendFlag = 0;
+  FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
+  if ( f == NULL ) {
+    cerr << "Could not open file " << filename << "\n";
+    return;
+  }
+  if (name != NULL) fprintf(f,"%s = [", name);
+  xMax --;
+  for (int x = 0; x < xMax; x++ ) fprintf(f,"%10.6f ", vec[x]);
+  fprintf(f,"%10.6f", vec[xMax]);
+  if (name != NULL) fprintf(f,"];\n");
+  fflush(f);
+  fclose(f);
+}
+
+
+// Writes Vector to file in Matlab format if name is specified otherwise just 
+// writes the values in the file
+void vtkImageEMGeneral_WriteVectorMatlabFile (FILE *f, const char *name, double *vec, int xMax)  {
+  if (name != NULL) fprintf(f,"%s = [", name);
+  xMax --;
+  for (int x = 0; x < xMax; x++ )
+      fprintf(f,"%10.6f ", vec[x]);
+  fprintf(f,"%10.6f", vec[xMax]);
+  if (name != NULL) fprintf(f,"];\n");
+}
+
+// Opens up a new file and writes down result in the file
+void vtkImageEMGeneral_WriteVectorMatlabFile (const char *filename, const char *varname,double *vec, int xMax)  {
+  int appendFlag = 0;
+  FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
+  if ( f == NULL ) {
+    cerr << "Could not open file " << filename << "\n";
+    return;
+  }
+  vtkImageEMGeneral_WriteVectorMatlabFile(f,varname,vec,xMax);
+  fflush(f);
+  fclose(f);
+}
+
+// Writes Matrix to file in Matlab format if name is specified otherwise just 
+// writes the values in the file
+void vtkImageEMGeneral_WriteMatrixMatlabFile (FILE *f, const char *name, double **mat, int imgY, int imgX) 
+{
+  if (name != NULL) fprintf(f,"%s = [", name);
+  for (int y = 0; y < imgY; y++ ) {
+    vtkImageEMGeneral_WriteVectorMatlabFile(f,NULL,mat[y],imgX);
+    if (y < (imgY-1)) fprintf(f,";\n");
+  }
+  if (name != NULL) fprintf(f,"];\n");
+  fprintf(f,"\n");
+}
+
+
+
+// Opens up a new file and writes down result in the file
+void vtkImageEMGeneral_WriteMatrixMatlabFile (const char *filename, const char *varname, double **mat, int imgY, int imgX)  {
+  int appendFlag = 0;
+  FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
+  if ( f == NULL ) {
+    cerr << "Could not open file " << filename << "\n";
+    return;
+  }
+  vtkImageEMGeneral_WriteMatrixMatlabFile(f,varname,mat,imgY,imgX);
+  fflush(f);
+  fclose(f);
+}
+
+
 
 float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
 {
@@ -562,7 +656,7 @@ FILE* vtkImageEMGeneral::OpenTextFile(const char* FileDir, const char FileName[]
   ss << ".txt";
   strcpy (OpenFileName,ss.str().c_str());
 
-  if (vtkFileOps::makeDirectoryIfNeeded(OpenFileName) == -1) return NULL;
+  if (vtksys::SystemTools::MakeDirectory(OpenFileName) == false) return NULL;
   
 #ifdef _WIN32
   OpenFile= fopen(OpenFileName, "wb");
@@ -598,44 +692,6 @@ void vtkImageEMGeneral::GEImageReader(vtkImageReader *VOLUME, const char FileNam
   VOLUME->Update();
 }
 
-//----------------------------------------------------------------------------
-int vtkImageEMGeneral::GEImageWriter(vtkImageData *Volume, char *FileName,int PrintFlag) {
-  if (PrintFlag) std::cerr << "Write to file " <<  FileName << endl;
-
-#ifdef _WIN32 
-  // Double or Float is not correctly printed out in windwos 
-  if (Volume->GetScalarType() == VTK_DOUBLE || Volume->GetScalarType() == VTK_FLOAT) {
-    int *Extent =Volume->GetExtent();
-    void* VolumeDataPtr = Volume->GetScalarPointerForExtent(Extent);
-    int ImageX = Extent[1] - Extent[0] +1; 
-    int ImageY = Extent[3] - Extent[2] +1; 
-    int ImageXY = ImageX * ImageY;
-
-    vtkIdType outIncX, OutIncY, outIncZ;
-    Volume->GetContinuousIncrements(Extent, outIncX, OutIncY, outIncZ);
-
-    if (OutIncY != 0 || outIncZ != 0 ) return 0;
-    
-    char *SliceFileName = new char[int(strlen(FileName)) + 6];
-    for (int i = Extent[4]; i <= Extent[5]; i++) {
-      sprintf(SliceFileName,"%s.%03d",FileName,i);
-      switch (Volume->GetScalarType()) {
-    vtkTemplateMacro5(vtkFileOps_WriteToFlippedGEFile,SliceFileName,(VTK_TT*)  VolumeDataPtr, ImageX, ImageY, ImageXY);
-      }
-    }
-    delete []SliceFileName;
-    return 1;
-  }
-#endif
-
-  vtkImageWriter *Write=vtkImageWriter::New();
-  Write->SetInput(Volume);
-  Write->SetFilePrefix(FileName);
-  Write->SetFilePattern("%s.%03d");
-  Write->Write();
-  Write->Delete();
-  return 1;
-}
 
 // -------------------------------------------------------------------------------------------------------------------
 // CalculateGaussLookupTable
@@ -750,8 +806,8 @@ void vtkImageEMGeneral::TestMatrixFunctions(int MatrixDim,int iter) {
       for (j=1; j < MatrixDim; j++) mat[i][j] = double(int(vtkMath::Random(0,10)*100))/ 100.0; 
     }
     sprintf(name,"TestDet%d.m",k+1);
-    vtkFileOps write;
-    write.WriteMatrixMatlabFile(name,"mat",mat,MatrixDim,MatrixDim);
+
+    vtkImageEMGeneral_WriteMatrixMatlabFile(name,"mat",mat,MatrixDim,MatrixDim);
     std::cerr << "Result of " << k << endl;
     std::cerr <<" Determinant: " << vtkImageEMGeneral::determinant(mat,MatrixDim) << endl;
     std::cerr <<" Square: " << endl;

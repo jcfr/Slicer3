@@ -53,7 +53,7 @@ set(EMSegment_BASE_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/EMLocalRegistrationCostFunction.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/EMLocalShapeCostFunction.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkDataDef.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkFileOps.cxx
+  # ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkFileOps.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMGeneral.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMGenericClass.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMLocalClass.cxx
@@ -69,13 +69,22 @@ set(EMSegment_BASE_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkImageIslandFilter.cxx 
   ${CMAKE_CURRENT_SOURCE_DIR}/ImageFilters/vtkImageSumOverVoxels.cxx
 
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkImageLogOdds.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkImageMultiLevelSets.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkImageLevelSets.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkLevelSetFastMarching.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkImageFastSignedChamfer.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkImageIsoContourDist.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkImagePropagateDist.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkImagePropagateDist2.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/AMF/vtkLevelSets.cxx
+
   # Registration
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkRigidRegistrator.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkBSplineRegistrator.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Registration/vtkITKTransformAdapter.cxx
 
   # not used in current implementation---used in slicer2 modules
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMMarkov.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Tasks/vtkCTHandBoneClass.cxx
 
   # module
@@ -91,6 +100,7 @@ include_directories(
   ${EMSegment_SOURCE_DIR}/Algorithm
   ${EMSegment_SOURCE_DIR}/ImageFilters
   ${EMSegment_SOURCE_DIR}/Registration
+  ${EMSegment_SOURCE_DIR}/AMF
   ${EMSegment_SOURCE_DIR}/Tasks
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
@@ -122,7 +132,7 @@ install(
 
 
 file(GLOB TCLFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Tcl/*.tcl" )
-
+MESSAGE(STATUS  "${TCLFILES} ${CMAKE_CURRENT_SOURCE_DIR}")
 foreach(file ${TCLFILES})
  configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/${file}

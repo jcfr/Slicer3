@@ -14,6 +14,7 @@
 #include "vtkImageEMLocalClass.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
+#include "assert.h"
 
 //------------------------------------------------------------------------
 vtkImageEMLocalClass* vtkImageEMLocalClass::New()
@@ -339,3 +340,7 @@ void vtkImageEMLocalClass::ExecuteData(vtkDataObject *)
    }
 }
 
+void* vtkImageEMLocalClass::GetPCAEigenVectorPtr(int index, int type) { 
+   assert(this->PCAEigenVectorImageData); 
+   return this->GetDataPtr(this->PCAEigenVectorImageData[index],type); 
+}

@@ -173,9 +173,14 @@ void vtkEMSegmentKWLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
   }
 
   vtkMRMLVolumeNode*  atlasNode = this->EMSLogic->GetMRMLManager()->GetAlignedSpatialPriorFromTreeNodeID(nodeID);
+  if (!atlasNode)  {
+    vtkErrorMacro("No aligned atlas defined for node with ID" << nodeID << " and name " << this->EMSLogic->GetMRMLManager()->GetTreeNodeName(nodeID) << "! ");
+    return ;
+  }
+
   if (!this->EMSLogic->GetMRMLManager()->GetTreeNodeSpatialPriorVolumeID(nodeID)) 
   {
-    vtkErrorMacro("Atlas not yet aligned for " << nodeID << " ! ");
+    vtkErrorMacro("No atlas defined for node " << nodeID << " ! ");
     return ;
   }
 

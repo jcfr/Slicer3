@@ -159,6 +159,9 @@ public:
   virtual int      GetTreeNodePrintWeight(vtkIdType nodeID);
   virtual void     SetTreeNodePrintWeight(vtkIdType nodeID, int shouldPrint);
 
+  virtual void     PrintWeightOnForEntireTree(); 
+
+
   virtual int      GetTreeNodePrintQuality(vtkIdType nodeID);
   virtual void     SetTreeNodePrintQuality(vtkIdType nodeID, int shouldPrint);
 
@@ -627,6 +630,8 @@ private:
   //ETX
 
   virtual void         SetOutputVolumeID(vtkIdType volumeID);
+
+  void PrintWeightOnForTree(vtkIdType rootID); 
 
 };
 

@@ -16,11 +16,9 @@
 
 
 #include "vtkEMSegment.h"
-#include "vtkObject.h"
-#include "assert.h"
-// #include "ostream.h"
-// #include <stdio.h>
-// #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <iostream>
 
 /// ----------------------------------------------------

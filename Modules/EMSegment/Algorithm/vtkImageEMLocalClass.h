@@ -18,7 +18,6 @@
 #include "vtkEMSegment.h"
 
 #include "vtkImageEMLocalGenericClass.h"
-#include "assert.h"
 
 #define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
 
@@ -49,7 +48,7 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMLocalGenericC
   //BTX
   // Description:
   // SegmentationBoundary condition are taken into account (Type == 1) or not (Type == 0);
-  void* GetPCAEigenVectorPtr(int index, int type) { assert(this->PCAEigenVectorImageData); return this->GetDataPtr(this->PCAEigenVectorImageData[index],type); }
+  void* GetPCAEigenVectorPtr(int index, int type);
 
   // Description:
   // Increments for PCAEigenVector in Y and Z Dimension 

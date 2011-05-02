@@ -183,3 +183,16 @@ void  vtkImageEMGenericClass::ExecuteData(vtkDataObject*) {
     }
     // Do not check labels bc super classes have labeles automatically assigned to them 
  }
+
+char* vtkImageEMGenericClass::GetErrorMessages() {
+  return this->ErrorMessage.GetMessages(); 
+}
+
+
+int vtkImageEMGenericClass::GetErrorFlag() {
+   return  this->ErrorMessage.GetFlag();
+}
+
+void vtkImageEMGenericClass::ResetErrorMessage() {
+  this->ErrorMessage.ResetParameters();
+}

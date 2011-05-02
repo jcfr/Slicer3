@@ -26,7 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef _EMLOCALALGORITHM_H_INCLUDED
 #define _EMLOCALALGORITHM_H_INCLUDED 1
 
-#include "EMLocalShapeCostFunction.h"
+class EMLocalShapeCostFunction;
+class vtkMultiThreader;
 #include "EMLocalRegistrationCostFunction.h"
 
 // -----------------------------------------------------------

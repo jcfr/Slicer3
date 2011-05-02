@@ -18,12 +18,18 @@
 #define __vtkImageEMLocalSegmenter_h 
      
 #include "vtkEMSegment.h"
-#include "vtkImageEMGeneral.h" 
-#include "vtkImageEMLocalSuperClass.h"
+#include "vtkImageEMGeneral.h"
+
+class  vtkImageEMLocalSuperClass;
+
+//BTX
+class EMVolume;
+class EMTriVolume;
+//ETX
 
 // Just for debugging purposes
 #define EM_DEBUG 1
- 
+
 // Kilian: Move it into ClassFunction later as soon as you know how to properly mention it here  
 //--------------------------------------------------------------------
 // Class Definition 
@@ -172,10 +178,10 @@ protected:
   int NumberOfTrainingSamples;    // Number of Training Samples Probability Image has been summed up over !  
 
 
-  vtkImageEMLocalSuperClass *activeSuperClass;   // Currently Active Super Class -> Important for interface with TCL
+  vtkImageEMLocalSuperClass* activeSuperClass;   // Currently Active Super Class -> Important for interface with TCL
   classType    activeClassType;
 
-  vtkImageEMLocalSuperClass *HeadClass;          // Initial Class
+  vtkImageEMLocalSuperClass* HeadClass;          // Initial Class
 
   void   *activeClass;               // Currently Active Class -> Important for interface with TCL
 

@@ -18,7 +18,6 @@
 #include "vtkEMSegment.h"
 
 #include "vtkImageEMLocalClass.h"
-#include "EMLocalInterface.h" 
 
 class VTK_EMSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMLocalGenericClass
 {

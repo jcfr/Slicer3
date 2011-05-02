@@ -21,10 +21,8 @@
 #define __vtkImageEMGenericClass_h 
   
 #include "vtkEMSegment.h"
-#include <iostream>
 #include "vtkImageMultipleInputFilter.h"
-#include "vtkImageData.h"
-#include "vtkOStreamWrapper.h"
+#include "vtkImageEMGeneral.h"
 
 // #ifndef EM_VTK_OLD_SETTINGS
 // #if (VTK_MAJOR_VERSION == 4 && (VTK_MINOR_VERSION >= 3 || (VTK_MINOR_VERSION == 2 && VTK_BUILD_VERSION > 5)))
@@ -33,94 +31,6 @@
 //   #define EM_VTK_OLD_SETTINGS 1
 // #endif
 // #endif
-
-// For Super Class and sub class
-enum classType {CLASS, SUPERCLASS};
-
-//BTX
-// Class for  capturing different protocols throughout the segmentation process
-class  VTK_EMSEGMENT_EXPORT ProtocolMessages {
-public:
-  int GetFlag() {return this->Flag;}
-  char* GetMessages();
-  void ResetParameters();
-  // This is for programs that use a constant char as input
-  void AddMessage(const char* os);
-
-  ~ProtocolMessages() { this->DeleteMessage();}
-  ProtocolMessages() {this->Message = new vtkOStrStreamWrapper; this->Flag = 0;}
-
-  vtkOStrStreamWrapper *Message;
-  int Flag; 
-private: 
-  void DeleteMessage();
-};
-
-// Needed for convenience so we can just enter things with << 
-
-#define vtkEMAddMessageNoOutput(MessageNoOutputPtr, xout)        \
-   {                                                          \
-     vtkOStreamWrapper::EndlType endl;                        \
-     vtkOStreamWrapper::UseEndl(endl);                        \
-     MessageNoOutputPtr->Message->rdbuf()->freeze(0);         \
-     (*MessageNoOutputPtr->Message) <<  xout << "\n";         \
-     MessageNoOutputPtr->Flag =  1;                           \
-   }
-
-
-#define vtkEMAddMessage(output,MessagePtr, x)                 \
-   {                                                          \
-     vtkEMAddMessageNoOutput(MessagePtr, x)                   \
-     output << "MESSAGE: In " __FILE__ ", line " << __LINE__ << "\n" << x << "\n";                    \
-   }
-
-// Message is not printed out 
-#define vtkEMJustAddErrorMessage(x) {        \
-   vtkEMAddMessageNoOutput((&this->ErrorMessage), x) ; \
- }
-
-#define vtkEMJustAddErrorMessageSelf(x) {        \
-   vtkEMAddMessageNoOutput((self->GetErrorMessagePtr()), x) ; \
- }
-
-#define vtkEMJustAddWarningMessage(x) {        \
-   vtkEMAddMessageNoOutput((&this->WarningMessage), x) ; \
- }
-
-#define vtkEMJustAddWarningMessageSelf(x) {        \
-   vtkEMAddMessageNoOutput((self->GetWarningMessagePtr()), x) ; \
- }
-
-#ifdef _WIN32
-#define vtkEMAddErrorMessage(x) {\
-   vtkEMAddMessage(std::cerr, (&this->ErrorMessage), "- ERROR: " << x) ; \
- }
-
-#else  
-#define vtkEMAddErrorMessage(x) {\
-    vtkEMAddMessage(std::cerr, (&this->ErrorMessage), "- ERROR: " << x) ; \
-  }
-#endif
-
-#ifdef _WIN32
-#define vtkEMAddErrorMessageSelf(x) {\
-    vtkEMAddMessage(std::cerr,self->GetErrorMessagePtr(), "- ERROR: " << x); \
-  }
-#else  
-#define vtkEMAddErrorMessageSelf(x) {\
-    vtkEMAddMessage(std::cerr,self->GetErrorMessagePtr(), "- ERROR: " << x); \
-  }
-#endif 
-
-#define vtkEMAddWarningMessage(x) {\
-   vtkEMAddMessage(std::cerr, (&this->WarningMessage), "- WARNING: " << x) ; \
- }
-
-#define vtkEMAddWarningMessageSelf(x) {\
-   vtkEMAddMessage(std::cerr,self->GetWarningMessagePtr(), "- WARNING: " << x); \
-}
-//ETX
-
 
 class VTK_EMSEGMENT_EXPORT vtkImageEMGenericClass : public vtkImageMultipleInputFilter
 {
@@ -199,9 +109,9 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMGenericClass : public vtkImageMultipleInput
   // =============================
   // For Message Protocol
   // So we can also enter streams for functions outside vtk
-  char* GetErrorMessages() {return this->ErrorMessage.GetMessages(); }
-  int GetErrorFlag() {return  this->ErrorMessage.GetFlag();}
-  void ResetErrorMessage() {this->ErrorMessage.ResetParameters();}
+  char* GetErrorMessages();
+  int GetErrorFlag();
+  void ResetErrorMessage();
 
   //BTX
   ProtocolMessages* GetErrorMessagePtr(){return &this->ErrorMessage;}

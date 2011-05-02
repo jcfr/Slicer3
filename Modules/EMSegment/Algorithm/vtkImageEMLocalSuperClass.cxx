@@ -14,6 +14,8 @@
 #include "vtkImageEMLocalSuperClass.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
+#include "assert.h"
+
 
 //------------------------------------------------------------------------
 vtkImageEMLocalSuperClass* vtkImageEMLocalSuperClass::New()

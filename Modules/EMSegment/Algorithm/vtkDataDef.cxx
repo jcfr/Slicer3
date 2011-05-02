@@ -39,12 +39,12 @@ inline void convVector(float vec[], float u[], int uLen, float v[], int vLen){
 void EMVolume::Print(char name[]) {
   int y,x,z;
   for (z = 0; z < this->MaxZ; z++) {
-    std::cerr << name  << "[" << z+1 << "] = [" << endl; 
+    std::cerr << name  << "[" << z+1 << "] = [" << std::endl; 
     for (y = 0; y < this->MaxY; y++) {
       for (x = 0; x < this->MaxX; x++) std::cerr << (*this)(z,y,x) << " ";
-      if (y < this->MaxY-1) std::cerr << endl;
+      if (y < this->MaxY-1) std::cerr << std::endl;
     }
-    std::cerr << "]; " << endl;
+    std::cerr << "]; " << std::endl;
   }
 }
 
@@ -263,7 +263,7 @@ void EMVolume::ConvZ(float *v, int vLen) {
 //       for (i = M1; i <= M2; i++) {
 //         for (j = N1; j <= N2; j++) {
 //           coeff++;
-//       // std::cerr << coeff << endl;
+//       // std::cerr << coeff << std::endl;
 //           if (o < k || o > k + nslice - 1) continue;
 //           if (m < i || m > i + nrow - 1) continue;
 //           if (n < j || n > j + ncol - 1) continue;

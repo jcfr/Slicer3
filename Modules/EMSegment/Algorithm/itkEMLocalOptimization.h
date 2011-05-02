@@ -27,9 +27,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkEMSegment.h"
 #include "itkSingleValuedCostFunction.h"
-#include "EMLocalRegistrationCostFunction.h"
-#include "EMLocalShapeCostFunction.h"
 #include "itkPowellOptimizer.h"
+
 //BTX
 namespace itk
 {

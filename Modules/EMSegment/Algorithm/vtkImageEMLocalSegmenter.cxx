@@ -16,6 +16,9 @@
 #include "vtkImageEMLocalSegmenter.h"
 #include "vtkObjectFactory.h"
 #include "EMLocalAlgorithm.h"
+#include "vtkImageEMLocalSuperClass.h"
+#include "vtkDataDef.h"
+
 #include "assert.h"
 //------------------------------------------------------------------------------
 // General vtkImageEMLocalSegmenter functions

@@ -28,6 +28,8 @@ template <class T> void EMLocalAlgorithm_PrintVector(T* parameters, int Min,  in
 VTK_THREAD_RETURN_TYPE EMLocalAlgorithm_E_Step_Threader_Function(void *arg);
 
 #include "vtkTimeDef.h"
+#include "vtkDataDef.h"
+
 #include "EMLocalAlgorithm_Initialization.txx"
 #include "EMLocalAlgorithm_MeanField.txx"
 #include "EMLocalAlgorithm_Miscellaneous.txx"

@@ -115,6 +115,9 @@ public:
   vtkSetMacro(Island2DFlag, int);
   vtkGetMacro(Island2DFlag, int);
 
+  vtkSetMacro(AMFSmoothing, int);
+  vtkGetMacro(AMFSmoothing, int);
+
   vtkSetStringMacro(Colormap);
   vtkGetStringMacro(Colormap);
 
@@ -190,10 +193,11 @@ protected:
   int                                 Island2DFlag;
 
   int                                 TemplateSaveAfterSegmentation;
-  char*                               TemplateFileName;
+  char*                            TemplateFileName;
 
   int                                 EnableSubParcellation;
 
+  int                                AMFSmoothing;
 
 };
 

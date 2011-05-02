@@ -17,13 +17,12 @@
 #define __vtkImageEMMarkov_h
 
 #include "vtkEMSegment.h"
-#include "vtkImageData.h"
+class vtkImageData;
 #include "vtkImageToImageFilter.h"
-//!!!bcd!!!#include "vtkSlicer.h"
 
-#include <stdio.h>
-#include <math.h>
-#include <ctype.h>
+//#include <stdio.h>
+//#include <math.h>
+//#include <ctype.h>
 
 // Error Definiton  
 // 1  = eveything correct

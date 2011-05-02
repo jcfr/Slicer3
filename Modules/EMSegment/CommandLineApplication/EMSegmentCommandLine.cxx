@@ -323,7 +323,7 @@ int main(int argc, char** argv)
 
       if (verbose) {
         std::cout << "=============== Print EMSegmentMRMLManager" << std::endl;
-        emMRMLManager->PrintInfo(std::cout);
+        // emMRMLManager->PrintInfo(std::cout);
       }
 
       // ================== Check Frinal Parameter Definition  ==================
