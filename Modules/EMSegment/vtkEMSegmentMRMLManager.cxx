@@ -5114,3 +5114,22 @@ SetTreeNodeInteractionMatrices2DFlag(vtkIdType nodeID, int flag)
   n->GetParentParametersNode()->SetMFA2DFlag(flag);
 }
 
+
+void vtkEMSegmentMRMLManager::PrintWeightOnForEntireTree() {
+  this->PrintWeightOnForTree(this->GetTreeRootNodeID());
+}
+
+void vtkEMSegmentMRMLManager::PrintWeightOnForTree(vtkIdType rootID) {  
+  unsigned int numChildren =   this->GetTreeNodeNumberOfChildren(rootID);
+    for (unsigned int i = 0; i < numChildren; ++i)
+    {
+      vtkIdType childID = this->GetTreeNodeChildNodeID(rootID, i);
+      this->SetTreeNodePrintWeight(childID, 1);
+      bool isLeaf = this->GetTreeNodeIsLeaf(childID);
+
+      if (!isLeaf)
+      {
+        this->PrintWeightOnForTree(childID);
+      }
+    }
+}

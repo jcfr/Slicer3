@@ -16,7 +16,7 @@
 #include "vtkMRMLEMSTemplateNode.h"
 #include "vtkImageIslandFilter.h"
 #include "vtkDataIOManagerLogic.h"
-
+#include "vtkMath.h"
 #ifdef Slicer3_USE_KWWIDGETS
 
 // Slicer3
@@ -1934,6 +1934,18 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessingAndSaving()
   outVolume->CopyOrientation(inVolume);
   outVolume->SetAndObserveTransformNodeID(inVolume->GetTransformNodeID());
 
+  // if AMF flag is activated make sure that the segmentations of the first level are written out 
+  int AMFFlag = this->GetMRMLManager()->GetGlobalParametersNode()->GetAMFSmoothing();
+  if (AMFFlag) {
+      this->GetMRMLManager()->PrintWeightOnForEntireTree(); 
+      vtkIdType rootID = this->GetMRMLManager()->GetTreeRootNodeID();
+      int printFreq = this->GetMRMLManager()->GetTreeNodePrintFrequency(rootID);
+      if (printFreq != 1 && printFreq != -1)
+    {
+      this->GetMRMLManager()->SetTreeNodePrintFrequency(rootID, -1);
+    }
+  }
+
   //
   // create segmenter class
   //
@@ -1995,6 +2007,11 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessingAndSaving()
   vtkstd::cout << "[Start] Postprocessing ..." << vtkstd::endl;
   vtkImageData* postProcessing = vtkImageData::New(); 
   postProcessing->ShallowCopy(segmenter->GetOutput());
+
+  // AMF Smoothing 
+  if (AMFFlag) {
+    // STILL Need to make the link 
+  }
 
   // Subparcellation
   if (this->GetMRMLManager()->GetEnableSubParcellation()) {
