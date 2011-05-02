@@ -5,6 +5,7 @@
 
 #include <list>
 #include <vector>
+#include <fstream>
 
 //#include "boost/shared_ptr.hpp"
 
@@ -24,11 +25,23 @@ public:
   typedef typename SuperClassType::NodeType NodeType;
   typedef typename SuperClassType::CSFLSLayer CSFLSLayer;
 
+  typedef itk::Image<unsigned short, 3> UshortImage_t;
+  typedef typename UshortImage_t::Pointer UshortImagePointer_t;
+
   /*================================================================================
     ctor */
   CSFLSRobustStatSegmentor3DLabelMap() : CSFLSSegmentor3D< TPixel >()
   {
     basicInit();
+  }
+
+
+  /**
+   * dtor
+   */
+  virtual ~CSFLSRobustStatSegmentor3DLabelMap()
+  {
+    m_debug_file.close();
   }
 
   /* New */
@@ -41,6 +54,8 @@ public:
      ----------------------------------------------------------------------
      ----------------------------------------------------------------------
      ---------------------------------------------------------------------- */
+
+  typedef typename SuperClassType::ImageType ImageType_t;
 
   typedef typename SuperClassType::TCharImage TLabelImage;
   typedef typename TLabelImage::Pointer TLabelImagePointer;
@@ -61,6 +76,7 @@ public:
    * functions
    * ============================================================*/
 
+  void convertInputImageToShortImage();
   void setInputLabelImage(TLabelImagePointer l);
 
   void doSegmenation();
@@ -72,6 +88,8 @@ public:
 
 protected:
   /* data */
+  UshortImagePointer_t m_input_image_in_ushort;
+
   TLabelImagePointer m_inputLabelImage;
   std::vector<std::vector<long> > m_seeds; // in IJK
 
@@ -92,6 +110,10 @@ protected:
 
 
   double m_kernelWidthFactor; // kernel_width = empirical_std/m_kernelWidthFactor, Eric has it at 10.0
+
+
+  // to store debug info
+  std::ofstream m_debug_file;
 
 
   /* fn */

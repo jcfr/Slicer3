@@ -17,6 +17,11 @@
 #include "itkImageRegionConstIteratorWithIndex.h"
 #include "itkImageRegionConstIterator.h"
 
+#include "itkCastImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
+
+#include "itkImageFileWriter.h"
+
 
 /* ============================================================   */
 template< typename TPixel >
@@ -36,6 +41,8 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
 
   m_inputImageIntensityMin = 0;
   m_inputImageIntensityMax = 0;
+
+  m_debug_file.open("/tmp/rss_debug_info.log");
 
 
   return;
@@ -161,7 +168,7 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
   ImageRegionConstIteratorWithIndex_t it(m_inputLabelImage, m_inputLabelImage->GetLargestPossibleRegion() );
   it.GoToBegin();
 
-  std::ofstream sf("_seeds.txt");
+  std::ofstream sf("/tmp/_seeds.txt");
 
   {
     std::vector<long> thisSeed(3);
@@ -187,6 +194,78 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
   return;
 }
 
+
+/* ============================================================  */
+template< typename TPixel >
+void
+CSFLSRobustStatSegmentor3DLabelMap< TPixel >
+::convertInputImageToShortImage()
+{
+  /**
+   * cast to float, rescale, then cast to ushort
+   */
+  typedef itk::CastImageFilter< ImageType_t, TFloatImage > CastFilter1_t;
+  typename CastFilter1_t::Pointer caster1 = CastFilter1_t::New();
+  caster1->SetInput( this->mp_img );
+  caster1->Update();
+
+//   //tst
+//   typedef itk::ImageFileWriter< ImageType_t > WriterType0;
+//   typename WriterType0::Pointer outputWriter0 = WriterType0::New();
+//   outputWriter0->SetFileName("/tmp/convertedImg0.nrrd");
+//   outputWriter0->SetInput(this->mp_img);
+//   outputWriter0->Update();
+//   //tst//
+
+
+//   //tst
+//   typedef itk::ImageFileWriter< TFloatImage > WriterType1;
+//   typename WriterType1::Pointer outputWriter1 = WriterType1::New();
+//   outputWriter1->SetFileName("/tmp/convertedImg1.nrrd");
+//   outputWriter1->SetInput(caster1->GetOutput());
+//   outputWriter1->Update();
+//   //tst//
+
+
+  typedef itk::RescaleIntensityImageFilter< TFloatImage, TFloatImage > Rescaler_t;
+  typename Rescaler_t::Pointer intensityRescaler = Rescaler_t::New();
+  intensityRescaler->SetInput( caster1->GetOutput() );
+  intensityRescaler->SetOutputMinimum(   0 );
+  intensityRescaler->SetOutputMaximum( 65535 );
+  intensityRescaler->Update();
+
+
+//   //tst
+//   typename WriterType1::Pointer outputWriter2 = WriterType1::New();
+//   outputWriter2->SetFileName("/tmp/convertedImg2.nrrd");
+//   outputWriter2->SetInput(intensityRescaler->GetOutput());
+//   outputWriter2->Update();
+//   //tst//
+
+
+  typedef itk::CastImageFilter< TFloatImage, UshortImage_t > CastFilter2_t;
+  typename CastFilter2_t::Pointer caster2 = CastFilter2_t::New();
+  caster2->SetInput( intensityRescaler->GetOutput() );
+  caster2->Update();
+
+  this->m_input_image_in_ushort = caster2->GetOutput();
+
+  //debug
+  m_debug_file<<"input image converted to ushort\n";
+  //debug//
+
+
+//   //tst
+//   typedef itk::ImageFileWriter< UshortImage_t > WriterType;
+//   typename WriterType::Pointer outputWriter = WriterType::New();
+//   outputWriter->SetFileName("/tmp/convertedImg.nrrd");
+//   outputWriter->SetInput(this->m_input_image_in_ushort);
+//   outputWriter->Update();
+//   //tst//
+
+  return;
+}
+
 /* ============================================================  */
 template< typename TPixel >
 void
@@ -198,6 +277,8 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
    2. Compute feature at each point
    3. Extract feature at/around the seeds
   */
+
+  convertInputImageToShortImage();
 
   inputLableImageToSeeds();
 
@@ -308,7 +389,7 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
                       && 0 <= iiz && iiz < this->m_nz)
                     {
                       TIndex idxa = {{iix, iiy, iiz}};
-                      neighborIntensities.push_back(this->mp_img->GetPixel(idxa));
+                      neighborIntensities.push_back(this->m_input_image_in_ushort->GetPixel(idxa));
                     }
                 }
             }
@@ -339,9 +420,10 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
 
   getThingsReady();
 
-  std::ofstream f("/tmp/d.txt", std::ios_base::app);
-  f<<"m_maxRunningTime = "<<this->m_maxRunningTime<<std::endl;
-  f.close();
+    //debug
+  m_debug_file<<"m_maxRunningTime = "<<this->m_maxRunningTime<<std::endl;
+  //debug//
+  
   
 
 
@@ -396,16 +478,16 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
       this->updateInsideVoxelCount();
       if (it > 2 && oldVoxelCount >= this->m_insideVoxelCount)
         {
-          std::ofstream f("/tmp/o.txt");
-          f<<"In the "<<it<<"-th iteration\n";
+          //std::ofstream f("/tmp/o.txt");
+          m_debug_file<<"In the "<<it<<"-th iteration\n";
 
-          f<<"stop grow\n";
-          f<<"oldVoxelCount = "<<oldVoxelCount<<std::endl;
-          f<<"m_insideVoxelCount = "<<this->m_insideVoxelCount<<std::endl;
+          m_debug_file<<"stop grow\n";
+          m_debug_file<<"oldVoxelCount = "<<oldVoxelCount<<std::endl;
+          m_debug_file<<"m_insideVoxelCount = "<<this->m_insideVoxelCount<<std::endl;
 
-          f<<"m_kernelWidthFactor = "<<m_kernelWidthFactor<<std::endl;
-          f<<"m_maxRunningTime = "<<this->m_maxRunningTime<<std::endl;          
-          f.close();
+          m_debug_file<<"m_kernelWidthFactor = "<<m_kernelWidthFactor<<std::endl;
+          m_debug_file<<"m_maxRunningTime = "<<this->m_maxRunningTime<<std::endl;          
+          //f.close();
 
           break;
         }
@@ -420,14 +502,14 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
       if (volumeIn > (this->m_maxVolume))
         {
           //          std::fstream f("/tmp/o.txt", std::ios_base::app);
-          std::ofstream f("/tmp/o.txt");
-          f<<"In the "<<it<<"-th iteration\n";
-          f<<"reach max volume\n";
+          //std::ofstream f("/tmp/o.txt");
+          m_debug_file<<"In the "<<it<<"-th iteration\n";
+          m_debug_file<<"reach max volume\n";
 
-          f<<"m_maxVolume = "<<this->m_maxVolume<<std::endl;
-          f<<"volumeIn = "<<volumeIn<<std::endl;
+          m_debug_file<<"m_maxVolume = "<<this->m_maxVolume<<std::endl;
+          m_debug_file<<"volumeIn = "<<volumeIn<<std::endl;
 
-          f.close();
+          //f.close();
 
 
           break;
@@ -439,10 +521,10 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
       double ellapsedTime = (clock() - startingTime)/static_cast<double>(CLOCKS_PER_SEC);
       if (ellapsedTime > (this->m_maxRunningTime))
         {
-          std::ofstream f("/tmp/o.txt");
-          f<<"running time = "<<ellapsedTime<<std::endl;
-          f<<"m_maxRunningTime = "<<this->m_maxRunningTime<<std::endl;
-          f.close();
+          //std::ofstream f("/tmp/o.txt");
+          m_debug_file<<"running time = "<<ellapsedTime<<std::endl;
+          m_debug_file<<"m_maxRunningTime = "<<this->m_maxRunningTime<<std::endl;
+          //m_debug_file.close();
 
           break;
         }
@@ -941,7 +1023,7 @@ void
 CSFLSRobustStatSegmentor3DLabelMap< TPixel >
 ::computeMinMax()
 {
-  if (!(this->mp_img))
+  if (!(this->m_input_image_in_ushort))
     {
       std::cerr<<"Error: set input image first.\n";
       raise(SIGABRT);
@@ -949,9 +1031,10 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
 
   typedef itk::Image<TPixel, 3> itkImage_t;
 
-  typedef itk::ImageRegionConstIterator<itkImage_t> itkImageRegionConstIterator_t;
+  typedef itk::ImageRegionConstIterator<UshortImage_t> itkImageRegionConstIterator_t;
 
-  itkImageRegionConstIterator_t it((this->mp_img), (this->mp_img)->GetLargestPossibleRegion() );
+  itkImageRegionConstIterator_t it((this->m_input_image_in_ushort), \
+                                   (this->m_input_image_in_ushort)->GetLargestPossibleRegion() );
   it.GoToBegin();
 
   m_inputImageIntensityMin = std::numeric_limits<unsigned>::max(); // yes, it's twisted so easity to compute.

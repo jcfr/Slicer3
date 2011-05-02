@@ -21,7 +21,7 @@ int main(int argc, char** argv)
   PARSE_ARGS; 
 
 
-  typedef short PixelType;
+  typedef float PixelType;
   typedef CSFLSRobustStatSegmentor3DLabelMap< PixelType > SFLSRobustStatSegmentor3DLabelMap_c;
 
   // read input image
