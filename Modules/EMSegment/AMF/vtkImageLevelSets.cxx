@@ -41,6 +41,10 @@
 #include <strings.h>
 #endif
 
+#include "assert.h"
+
+
+
 #define NOT_VESSEL 2  // can be anything positive
 #define VESSEL    -1   // anything negative
 
@@ -3989,6 +3993,12 @@ void vtkImageLevelSets::PrintSelf(ostream& os, vtkIndent indent)
 
 } // PrintSelf()
 
+void vtkImageLevelSets::SetlogCondIntensityCoefficient(float init) {
+    assert(this->DMmethod == DISTMAP_LOGODDS); 
+    this->logCondIntensityCoefficient = init;  
+}
 
-
-
+ vtkImageData* vtkImageLevelSets::GetOutput() {
+    assert(0); 
+    return NULL;
+}

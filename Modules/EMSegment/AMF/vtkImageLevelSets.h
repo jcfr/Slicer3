@@ -36,8 +36,6 @@
 #include "vtkImageIsoContourDist.h"
 #include "vtkImageFastSignedChamfer.h"
 #include "vtkImagePropagateDist2.h"
-#include "assert.h"
-
 
 // Kilian: IPMI07 
 #define DISTMAP_LOGODDS      4
@@ -223,7 +221,7 @@ public:
   vtkGetObjectMacro(logCondIntensityImage,vtkImageData);
 
 
-  void SetlogCondIntensityCoefficient(float init) {assert(this->DMmethod == DISTMAP_LOGODDS); this->logCondIntensityCoefficient = init;  }
+  void SetlogCondIntensityCoefficient(float init);
   vtkGetMacro(logCondIntensityCoefficient,float);
 
   // Inside is greater 0
@@ -370,7 +368,7 @@ public:
   float ExpansionMap( float I, unsigned char compute=0);
  
   // Disabled GetOutput bc it is not properly defined 
-  vtkImageData* GetOutput() {assert(0);}
+  vtkImageData* GetOutput();
 
 protected:
   vtkImageLevelSets();
