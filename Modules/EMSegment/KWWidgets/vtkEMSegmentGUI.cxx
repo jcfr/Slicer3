@@ -29,7 +29,6 @@
 
 #include <vtksys/stl/string>
 #include <vtksys/SystemTools.hxx>
-#include "vtkEMSegmentKWLogic.h"
 #include "vtkMRMLEMSTemplateNode.h"
 
 vtkCxxSetObjectMacro(vtkEMSegmentGUI,Node,vtkMRMLEMSTemplateNode);
@@ -53,7 +52,6 @@ vtkEMSegmentGUI* vtkEMSegmentGUI::New()
 vtkEMSegmentGUI::vtkEMSegmentGUI()
 {
   this->Logic        = NULL;
-  this->KWLogic        = NULL;
   this->Node         = NULL;
   this->ModuleName   = NULL;
 
@@ -95,11 +93,6 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
   this->SetLogic(NULL);
   this->SetNode(NULL);
 
-  if (this->KWLogic)
-    {
-      this->KWLogic->Delete();
-      this->KWLogic = NULL;      
-    }
 
   if (this->WizardWidget)
     {
@@ -188,12 +181,6 @@ void vtkEMSegmentGUI::SetModuleLogic(vtkSlicerLogic* logic)
   this->SetLogic( dynamic_cast<vtkEMSegmentLogic*> (logic) );
   this->GetLogic()->GetMRMLManager()->SetMRMLScene( this->GetMRMLScene() ); 
 
-  if (!this->KWLogic)
-    {
-      this->KWLogic = vtkEMSegmentKWLogic::New();
-    }
-  this->KWLogic->SetEMSLogic(this->GetLogic());
-  this->KWLogic->SetSlicerApp((vtkSlicerApplication *)this->GetApplication());
 }
 
 //----------------------------------------------------------------------------
@@ -628,7 +615,7 @@ void vtkEMSegmentGUI::StartSegmentation()
           currentStep->ShowUserInterface();
           this->StartSegmentStep = NULL;
         }
-    std::string msg = this->KWLogic->GetErrorMessage(); 
+    std::string msg = this->Logic->GetErrorMessage();
     if (msg.size()) 
       {
         vtkKWMessageDialog::PopupMessage(this->GetApplication(),NULL,"Error In Segmentation", msg.c_str() , vtkKWMessageDialog::ErrorIcon | vtkKWMessageDialog::InvokeAtPointer);

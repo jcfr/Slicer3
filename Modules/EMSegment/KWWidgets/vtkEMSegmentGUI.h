@@ -4,7 +4,6 @@
 #include "vtkSlicerModuleGUI.h"
 #include "vtkEMSegment.h"
 
-class vtkEMSegmentKWLogic;
 class vtkEMSegmentLogic;
 class vtkEMSegmentMRMLManager;
 class vtkKWWizardWidget;
@@ -42,7 +41,6 @@ public:
   // Description: 
   // Get/Set logic node
   vtkGetObjectMacro(Logic, vtkEMSegmentLogic);
-  vtkGetObjectMacro(KWLogic, vtkEMSegmentKWLogic);
 
   /// Implement setter for vtkLogic* pointer
   virtual void SetModuleLogic(vtkSlicerLogic*);
@@ -168,7 +166,7 @@ private:
   void SetLogic(vtkEMSegmentLogic*);
 
   vtkEMSegmentLogic       *Logic;
-  vtkEMSegmentKWLogic *KWLogic; 
+
   // Never Delete it - it is needed to know what the current node is ! 
   vtkMRMLEMSTemplateNode* Node; 
 

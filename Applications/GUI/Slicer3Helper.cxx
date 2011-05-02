@@ -4,6 +4,12 @@
 //-----------------------------------------------------------------------------
 void Slicer3Helper::AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplication *app, vtkSlicerApplicationLogic *appLogic, vtkDataIOManagerLogic *dataIOManagerLogic)
 {
+
+  if (!app)
+    {
+    app = vtkSlicerApplication::GetInstance();
+    }
+
   if (!app || !appLogic)
     {
       cout << "Parameter of DataIO are not set according to app or appLogic bc one of them is NULL - this might cause issues when downloading data form the web!" << endl;
@@ -130,4 +136,16 @@ void Slicer3Helper::RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOMana
 
   mrmlScene->SetUserTagTable( NULL );
 
+}
+
+//-----------------------------------------------------------------------------
+const char* Slicer3Helper::GetSvnRevision()
+{
+  return vtkSlicerApplication::GetInstance()->GetSvnRevision();
+}
+
+//-----------------------------------------------------------------------------
+const char* Slicer3Helper::GetTemporaryDirectory()
+{
+  return vtkSlicerApplication::GetInstance()->GetTemporaryDirectory();
 }

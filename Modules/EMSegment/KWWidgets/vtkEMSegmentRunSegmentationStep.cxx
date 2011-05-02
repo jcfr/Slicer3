@@ -1,7 +1,7 @@
 #include "vtkEMSegmentRunSegmentationStep.h"
 
 #include "vtkEMSegmentGUI.h"
-#include "vtkEMSegmentKWLogic.h"
+#include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentMRMLManager.h"
 
 #include "vtkKWCheckButton.h"
@@ -754,10 +754,11 @@ void vtkEMSegmentRunSegmentationStep::MultiThreadingCallback(int state)
 //----------------------------------------------------------------------------
 void vtkEMSegmentRunSegmentationStep::StartSegmentationCallback()
 {
-  vtkEMSegmentKWLogic *KWLogic = this->GetGUI()->GetKWLogic();
+
+  vtkEMSegmentLogic *Logic = this->GetGUI()->GetLogic();
   vtkEMSegmentMRMLManager* mrmlManager = this->GetGUI()->GetMRMLManager();
 
-  if (!mrmlManager || !KWLogic)
+  if (!mrmlManager)
     {
     return;
     }
@@ -827,11 +828,11 @@ void vtkEMSegmentRunSegmentationStep::StartSegmentationCallback()
   progress->Create();
   progress->SetMessageText("Please wait until segmentation has been finished.");
   progress->Display();
-  int returnCode = KWLogic->StartSegmentationWithoutPreprocessing(this->GetGUI()->GetApplicationLogic());
+  int returnCode = Logic->StartSegmentationWithoutPreprocessing(this->GetGUI()->GetApplicationLogic());
   progress->SetParent(NULL);
   progress->Delete();
 
-  std::string error_msg = KWLogic->GetErrorMessage();
+  std::string error_msg = Logic->GetErrorMessage();
   if (returnCode != EXIT_SUCCESS || error_msg.size() > 0)
     {
     vtkKWMessageDialog::PopupMessage(this->GetApplication(), NULL,

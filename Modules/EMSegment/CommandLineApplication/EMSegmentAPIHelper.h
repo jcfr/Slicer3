@@ -151,13 +151,16 @@ vtkSlicerApplicationLogic* InitializeApplication(Tcl_Interp *interp, vtkSlicerAp
 }
 
 
-void CleanUp(vtkSlicerApplication* app, vtkSlicerApplicationLogic* appLogic  )
+void CleanUp(vtkSlicerApplicationLogic* appLogic  )
 {
   if (appLogic)
     {
       appLogic->Delete();
       appLogic = NULL;  
     }
+
+
+  vtkSlicerApplication* app = vtkSlicerApplication::GetInstance();
 
   if (app)
     {

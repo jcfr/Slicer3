@@ -1,6 +1,7 @@
 #include "vtkEMSegmentIntensityDistributionsStep.h"
 
 #include "vtkEMSegmentGUI.h"
+#include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentMRMLManager.h"
 
 #include "vtkKWLabel.h"
@@ -17,7 +18,6 @@
 #include "vtkKWMatrixWidget.h"
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
-#include "vtkEMSegmentKWLogic.h" 
 
 #include "vtkEMSegmentAnatomicalStructureStep.h"
 

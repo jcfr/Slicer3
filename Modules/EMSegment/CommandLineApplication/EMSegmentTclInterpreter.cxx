@@ -28,7 +28,7 @@ int main(int argc, char** argv)
   vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,app,argc,argv);
   if (!appLogic)
     {
-      CleanUp(app,appLogic);
+      CleanUp(appLogic);
       return EXIT_FAILURE;
     }
 
@@ -50,6 +50,6 @@ int main(int argc, char** argv)
   // =======================================================================
   //  Clean up
   // =======================================================================
-  CleanUp(app,appLogic);
+  CleanUp(appLogic);
   return exitFlag;
 }

@@ -16,6 +16,7 @@
 #include "vtkEMSegmentParametersSetStep.h"
 
 #include "vtkEMSegmentGUI.h"
+#include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentMRMLManager.h"
 
 #include "vtkKWWizardWidget.h"
@@ -37,7 +38,6 @@
 #include "vtkSlicerApplication.h"
 #include "vtkKWTkUtilities.h"
 #include "vtkKWMessageDialog.h"
-#include "vtkEMSegmentKWLogic.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkMRMLEMSTemplateNode.h"
 
@@ -209,7 +209,7 @@ void vtkEMSegmentParametersSetStep::ShowUserInterface()
 void vtkEMSegmentParametersSetStep::UpdateTasksCallback()
 {
   
-  if (this->GetGUI()->GetKWLogic()->UpdateTasks()) 
+  if (this->GetGUI()->GetLogic()->UpdateTasks())
     {
        // if we get here, we are DONE and successfull !
        this->UpdateTasksButton->SetText("Update completed!");
@@ -456,7 +456,7 @@ void vtkEMSegmentParametersSetStep::SelectedParameterSetChangedCallback(int inde
     anat_step->GetAnatomicalStructureTree()->GetWidget()->DeleteAllNodes();
     }
 
-  std::string tclFileName = this->GetGUI()->GetKWLogic()->DefineTclTaskFullPathName(mrmlManager->GetTclTaskFilename());
+  std::string tclFileName = this->GetGUI()->GetLogic()->DefineTclTaskFullPathName(mrmlManager->GetTclTaskFilename());
 
   this->SourceTclFile(tclFileName.c_str());
   if (flag && (!this->SettingSegmentationMode(0)))
@@ -736,7 +736,7 @@ void vtkEMSegmentParametersSetStep::DefineDefaultTasksList()
 {
   //  cout << "-------- DefineDefaultTasksList Start" << endl;
   // set define list of parameters
-  this->GetGUI()->GetKWLogic()->CreateDefaultTasksList(this->pssDefaultTasksName,
+  this->GetGUI()->GetLogic()->CreateDefaultTasksList(this->pssDefaultTasksName,
                     this->pssDefaultTasksFile,this->DefinePreprocessingTasksName, this->DefinePreprocessingTasksFile);
  
   if (!this->pssDefaultTasksFile.size()) 

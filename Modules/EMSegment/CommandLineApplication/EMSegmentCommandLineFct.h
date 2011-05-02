@@ -4,7 +4,7 @@
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkMRMLEMSVolumeCollectionNode.h"
 #include "vtkEMSegmentMRMLManager.h"
-#include "vtkEMSegmentKWLogic.h"
+#include "vtkEMSegmentLogic.h"
 #include "vtkSlicerColorLogic.h"
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
@@ -489,7 +489,7 @@ int DefineFinalOutput(  int useDefaultOutput, std::string resultVolumeFileName, 
 }
 
 // -------------------------------------------------------------------------------------------
-int RunPreprocessing(vtkEMSegmentKWLogic* EMSKWLogic,  std::string EMSLogicTcl, std::string EMSKWLogicTcl,   std::string emMRMLManagerTcl, vtkSlicerApplication* app, vtkEMSegmentMRMLManager* emMRMLManager, int verbose) 
+int RunPreprocessing(vtkEMSegmentLogic* EMSLogic, std::string EMSLogicTcl, std::string emMRMLManagerTcl, vtkSlicerApplication* app, vtkEMSegmentMRMLManager* emMRMLManager, int verbose)
 {
    try
        {
@@ -499,13 +499,13 @@ int RunPreprocessing(vtkEMSegmentKWLogic* EMSKWLogic,  std::string EMSLogicTcl, 
          emMRMLManager->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
 
 
-         if (EMSKWLogic->SourcePreprocessingTclFiles())
+         if (EMSLogic->SourcePreprocessingTclFiles())
            {
              throw std::runtime_error("ERROR: could not source tcl files. ");
            }
 
         // Have to init variables again bc first time EMLogic was not fully set up
-        std::string CMD = "::EMSegmenterPreProcessingTcl::InitVariables " + EMSLogicTcl + " " + EMSKWLogicTcl + " " + emMRMLManagerTcl + " NULL";
+        std::string CMD = "::EMSegmenterPreProcessingTcl::InitVariables " + EMSLogicTcl + " " + emMRMLManagerTcl + " NULL";
         if (atoi(app->Script(CMD.c_str())))
         {
            throw std::runtime_error("ERROR: could not init files. ");

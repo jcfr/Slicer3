@@ -131,7 +131,7 @@ int main(int argc, char** argv)
   vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,app,argc,argv);
   if (!appLogic)
     {
-      CleanUp(app,appLogic);
+      CleanUp(appLogic);
       return EXIT_FAILURE;
     }
 
@@ -168,11 +168,6 @@ int main(int argc, char** argv)
   vtkEMSegmentMRMLManager* emMRMLManager = EMSLogic->GetMRMLManager();
   std::string emMRMLManagerTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,emMRMLManager));
   emMRMLManager->SetMRMLScene( mrmlScene );
-
-  vtkEMSegmentKWLogic* EMSKWLogic = vtkEMSegmentKWLogic::New();
-  EMSKWLogic->SetSlicerApp(app);
-  EMSKWLogic->SetEMSLogic(EMSLogic);
-  std::string EMSKWLogicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,EMSKWLogic));
 
   // ================== Data IO  ==================
   vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
@@ -344,13 +339,13 @@ int main(int argc, char** argv)
       try
         {
           // ================== Preprocessing ==================
-          if (RunPreprocessing( EMSKWLogic,  EMSLogicTcl, EMSKWLogicTcl,  emMRMLManagerTcl, app, emMRMLManager, verbose) ) {
+          if (RunPreprocessing( EMSLogic, EMSLogicTcl,  emMRMLManagerTcl, app, emMRMLManager, verbose) ) {
             throw std::runtime_error("");
           }
 
           // ================== Segmentation ==================
           if (verbose) std::cout << "EMSEG: Start Segmentation." << std::endl;
-          if ( EMSKWLogic->StartSegmentationWithoutPreprocessing(appLogic) == 1 )
+          if ( EMSLogic->StartSegmentationWithoutPreprocessing(appLogic) == 1 )
             {
               std::cerr << "ERROR: StartSegmentationWithoutPreprocessing failed." << std::endl;
               throw std::runtime_error("");
@@ -421,9 +416,6 @@ int main(int argc, char** argv)
   dataIOManagerLogic->Delete();
   dataIOManagerLogic = NULL;
 
-  EMSKWLogic->Delete();
-  EMSKWLogic = NULL;
-
 
 
   EMSLogic->SetAndObserveMRMLScene(NULL);
@@ -432,7 +424,7 @@ int main(int argc, char** argv)
   mrmlScene->Clear(true);
   mrmlScene->Delete();
 
-  CleanUp(app,appLogic);
+  CleanUp(appLogic);
 
   if (verbose) std::cout << "DONE" << std::endl;
 

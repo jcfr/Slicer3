@@ -1,12 +1,12 @@
 #include "vtkEMSegmentPreProcessingStep.h"
 
 #include "vtkEMSegmentGUI.h"
+#include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentMRMLManager.h"
 
 #include "vtkKWWizardWidget.h"
 #include "vtkSlicerApplication.h"
 #include "vtkKWMessageDialog.h"
-#include "vtkEMSegmentKWLogic.h"
 #include "vtkKWWizardWorkflow.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
 #include "vtkKWCheckButtonWithLabel.h"
@@ -51,7 +51,7 @@ vtkEMSegmentPreProcessingStep::ShowUserInterface()
   // Source TCL Files 
   //
   //----------------------------------------------------------------------------
-   if (this->GUI->GetKWLogic()->SourcePreprocessingTclFiles())
+   if (this->GUI->GetLogic()->SourcePreprocessingTclFiles())
     {
       return;
     }

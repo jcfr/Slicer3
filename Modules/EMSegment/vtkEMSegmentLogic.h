@@ -4,6 +4,7 @@
 #include "vtkSlicerModuleLogic.h"
 #include "vtkEMSegment.h"
 #include "vtkEMSegmentMRMLManager.h"
+#include "vtkEMSegmentTclConnector.h"
 
 #include <vtkImageData.h>
 #include <vtkTransform.h>
@@ -14,6 +15,9 @@
 #include <vtkMRMLVolumeArchetypeStorageNode.h>
 #include <vtkMRMLScalarVolumeNode.h>
 #include <vtkMRMLVolumeNode.h>
+
+// needed to get the CMake variables
+#include <vtkSlicerConfigure.h>
 
 class vtkImageEMLocalSegmenter;
 class vtkImageEMLocalGenericClass;
@@ -146,6 +150,7 @@ public:
 //ETX
 
   int StartSegmentationWithoutPreprocessingAndSaving();
+  virtual int StartSegmentationWithoutPreprocessing(vtkSlicerApplicationLogic *appLogic);
 
   //
   // actions
@@ -156,6 +161,43 @@ public:
   // and write to file
   virtual bool PackageAndWriteData(vtkSlicerApplicationLogic *appLogic, const char* packageDirectoryName);
 
+//BTX
+  vtkstd::string GetTemporaryTaskDirectory();
+//ETX
+
+  int UpdateTasks();
+
+  //
+  // TCL CONNECTOR INTERFACE STARTS HERE
+  //
+
+  vtkEMSegmentTclConnector* GetTclConnector();
+  virtual int       SourceTclFile(const char *tclFile);
+
+  //
+  // TCL CONNECTOR INTERFACE ENDS HERE
+  //
+
+
+  virtual int       SourceTaskFiles();
+  virtual int       SourcePreprocessingTclFiles();
+  int               ComputeIntensityDistributionsFromSpatialPrior();
+
+
+  //BTX
+  vtkstd::string GetTclTaskDirectory();
+  vtkstd::string DefineTclTaskFileFromMRML();
+  vtkstd::string DefineTclTaskFullPathName(const char* TclFileName);
+  //ETX
+
+
+
+//BTX
+  void CreateDefaultTasksList(std::vector<std::string> & DefaultTasksName,  std::vector<std::string> & DefaultTasksFile,
+                  std::vector<std::string> & DefinePreprocessingTasksName, std::vector<std::string> & DefinePreprocessingTasksFile);
+//ETX
+
+  void UpdateIntensityDistributionAuto(vtkIdType nodeID);
 
 protected: 
   // the mrml manager is created in the constructor
@@ -208,7 +250,6 @@ protected:
   vtkSetMacro(ProgressGlobalFractionCompleted, double);
   vtkSetMacro(ProgressCurrentFractionCompleted, double);
 
-
   //
   // because the mrml nodes are very complicated for this module, we
   // delegate the handeling of them to a MRML manager
@@ -231,6 +272,8 @@ protected:
 private:
   vtkEMSegmentLogic(const vtkEMSegmentLogic&);
   void operator=(const vtkEMSegmentLogic&);
+
+  vtkEMSegmentTclConnector *TclConnector;
 
 };
 

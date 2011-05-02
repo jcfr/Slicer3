@@ -15,6 +15,8 @@ class Slicer3Helper {
  public:
   static void AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplication *app, vtkSlicerApplicationLogic *appLogic,  vtkDataIOManagerLogic *dataIOManagerLogic);
   static void RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOManagerLogic *dataIOManagerLogic);
+  static const char* GetSvnRevision();
+  static const char* GetTemporaryDirectory();
 };
 
 #endif

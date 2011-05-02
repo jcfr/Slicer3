@@ -26,7 +26,6 @@ file(GLOB headers
 
 
 set(EMSegment_SRCS ${EMSegment_SRCS} ${EMSegment_BASE_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentKWLogic.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentGUI.cxx 
   # wizard
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentStep.cxx

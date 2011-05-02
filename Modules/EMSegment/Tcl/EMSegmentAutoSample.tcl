@@ -57,9 +57,9 @@ namespace eval EMSegmenterAutoSampleTcl {
     # string VolDataType is the type of the volumes in MRIVolumeList
     # .END
     #-------------------------------------------------------------------------------
-    proc EMSegmentGaussCurveCalculationFromID {KWLOGIC CutOffProbability LogGaussFlag MRIVolumeIDList ProbVolumeID ClassName} {
+    proc EMSegmentGaussCurveCalculationFromID {LOGIC CutOffProbability LogGaussFlag MRIVolumeIDList ProbVolumeID ClassName} {
         global EMSegment
-        set LOGIC [$KWLOGIC GetEMSLogic ]
+
         set mrmlManager [$LOGIC GetMRMLManager ] 
 
         # puts [$mrmlManager Print ]

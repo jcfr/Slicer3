@@ -1,7 +1,7 @@
 #include "vtkEMSegmentInputChannelsStep.h"
 
 #include "vtkEMSegmentGUI.h"
-#include "vtkEMSegmentKWLogic.h"
+#include "vtkEMSegmentLogic.h"
 
 #include "vtkKWFrame.h"
 #include "vtkKWLabel.h"
@@ -262,7 +262,7 @@ void vtkEMSegmentInputChannelsStep::ShowUserInterface()
 
   if (!this->GetGUI()->IsSegmentationModeAdvanced()) 
     {
-      this->GUI->GetKWLogic()->SourceTaskFiles();
+      this->GUI->GetLogic()->SourceTaskFiles();
       
       int showCheckList = atoi(this->Script("::EMSegmenterSimpleTcl::CreateCheckList"));
       if (showCheckList) 

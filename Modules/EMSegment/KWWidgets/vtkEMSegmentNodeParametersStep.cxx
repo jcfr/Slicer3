@@ -1,6 +1,7 @@
 #include "vtkEMSegmentNodeParametersStep.h"
 
 #include "vtkEMSegmentGUI.h"
+#include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentMRMLManager.h"
 
 #include "vtkKWWizardWidget.h"
@@ -29,7 +30,6 @@
 
 #include "vtkMRMLEMSWorkingDataNode.h"
 #include "vtkMRMLEMSVolumeCollectionNode.h"
-#include "vtkEMSegmentKWLogic.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentNodeParametersStep);
