@@ -2696,7 +2696,21 @@ int vtkEMSegmentLogic::SourceTclFile(const char *tclFile)
 vtkstd::string  vtkEMSegmentLogic::GetTclTaskDirectory()
 {
   //workaround for the mrml library, we need to have write access to this folder
-  const char* tmp_dir = this->GetTclConnector()->GetTempDirectory();
+  const char* tmp_dir = "";
+
+
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  tmp_dir = Slicer3Helper::GetTemporaryDirectory();
+
+  //#else
+
+  // TODO Slicer4
+
+#endif
+
 
 
   if (tmp_dir)

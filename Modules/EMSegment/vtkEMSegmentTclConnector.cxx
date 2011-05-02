@@ -58,28 +58,6 @@ int vtkEMSegmentTclConnector::SourceTclFile(const char *tclFile)
 
 }
 
-
-//----------------------------------------------------------------------------
-const char*  vtkEMSegmentTclConnector::GetTempDirectory()
-{
-
-
-#ifdef Slicer3_USE_KWWIDGETS
-
-  // Slicer3
-  return vtkSlicerApplication::GetInstance()->GetTemporaryDirectory();
-
-  //#else
-
-  // TODO Slicer4
-
-#endif
-
-  vtkErrorMacro("Something went wrong.")
-  return 0;
-
-}
-
 //-----------------------------------------------------------------------------
 const char* vtkEMSegmentTclConnector::Script(const char* format)
 {

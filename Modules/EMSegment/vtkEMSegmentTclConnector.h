@@ -28,8 +28,6 @@ public:
 //BTX
   int SourceTclFile(const char *tclFile);
 
-  const char* GetTempDirectory();
-
   const char* Script(const char* format);
   const char* Script(const char* format, int row);
   const char* Script(const char* format, int row, int column);
