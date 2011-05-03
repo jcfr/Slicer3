@@ -29,16 +29,16 @@ public:
   vtkTypeMacro(vtkSlicerCommonInterface, vtkObject);
 
 //BTX
-  static int SourceTclFile(const char *tclFile);
-  static const char* EvaluateTcl(const char* command);
-  static const char* GetTclNameFromPointer(vtkObject *obj);
+  int SourceTclFile(const char *tclFile);
+  const char* EvaluateTcl(const char* command);
+  const char* GetTclNameFromPointer(vtkObject *obj);
 
-  static const char* GetTemporaryDirectory();
-  static const char* GetRepositoryRevision();
-  static vtkHTTPHandler* GetHTTPHandler(vtkMRMLScene* mrmlScene);
+  const char* GetTemporaryDirectory();
+  const char* GetRepositoryRevision();
+  vtkHTTPHandler* GetHTTPHandler(vtkMRMLScene* mrmlScene);
 
-  static void AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplicationLogic *appLogic, vtkDataIOManagerLogic *dataIOManagerLogic);
-  static void RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOManagerLogic *dataIOManagerLogic);
+  void AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplicationLogic *appLogic, vtkDataIOManagerLogic *dataIOManagerLogic);
+  void RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOManagerLogic *dataIOManagerLogic);
 //ETX
 
 private:
