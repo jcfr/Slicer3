@@ -390,16 +390,16 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
         # Create dummy AtlasBgNode for inputnode
-        if {  $bgAtlasID == 0  } {
+        if { $bgAtlasID == 0 } {
             # I do this bc it is easier for debugging
-            set inputAtlasNode             [$mrmlManager GetAtlasInputNode]
-            set inputAtlasVolumeNode [ $inputAtlasNode GetNthVolumeNode 0 ]
-            set bgDummyNode            [ CreateVolumeNode $inputAtlasVolumeNode  "BGAtlas(Place Holder)"]
+            set inputAtlasNode [$mrmlManager GetAtlasInputNode]
+            set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode 0]
+            set bgDummyNode [ CreateVolumeNode $inputAtlasVolumeNode "BGAtlas(Place Holder)"]
             # do this as otherwise the program can crash
-            set bgDummyData  [vtkImageData New]
-            $bgDummyNode SetAndObserveImageData  $bgDummyData
+            set bgDummyData [vtkImageData New]
+            $bgDummyNode SetAndObserveImageData $bgDummyData
             $bgDummyData Delete
-            set bgAtlasID                      [ $mrmlManager  MapMRMLNodeIDToVTKNodeID [$bgDummyNode GetID] ]
+            set bgAtlasID [ $mrmlManager MapMRMLNodeIDToVTKNodeID [$bgDummyNode GetID] ]
         }
 
         # Assign node to all background classes
@@ -408,40 +408,40 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # Check if outputAtlasNode is defined
-        set bgAtlasNode [ $mrmlManager GetAlignedSpatialPriorFromTreeNodeID $treeID]
+        set bgAtlasNode [$mrmlManager GetAlignedSpatialPriorFromTreeNodeID $treeID]
         if { $bgAtlasNode == ""  } {
             # We need to create the node
-            set outputAtlasNode             [$mrmlManager GetAtlasAlignedNode ]
-            set outputAtlasVolumeNode [ $outputAtlasNode GetNthVolumeNode 0 ]
-            set bgAtlasNode                   [ CreateVolumeNode $outputAtlasVolumeNode  "BGAtlas(Aligned)"]
+            set outputAtlasNode [$mrmlManager GetAtlasAlignedNode]
+            set outputAtlasVolumeNode [$outputAtlasNode GetNthVolumeNode 0]
+            set bgAtlasNode [CreateVolumeNode $outputAtlasVolumeNode "BGAtlas(Aligned)"]
             # This should not be done here but in MRML Manager - Kilian change it later once it works
         }
 
         # Make sure all the output allso point to the same volume
         foreach bgID $bgList {
-            set treeNode   [ $mrmlManager GetTreeNode $bgID]
-            $outputAtlasNode                 AddVolume [$treeNode GetID]  [$bgAtlasNode GetID]
+            set treeNode [$mrmlManager GetTreeNode $bgID]
+            $outputAtlasNode AddVolume [$treeNode GetID] [$bgAtlasNode GetID]
         }
 
         $LOGIC PrintText "TCLCT: Creating BG Atlas Volume Node  [$bgAtlasNode   GetName]"
 
         # Check if output Data is defined
-        set bgAtlasData [ $bgAtlasNode  GetImageData ]
+        set bgAtlasData [$bgAtlasNode GetImageData]
         if { $bgAtlasData == "" } {
             $LOGIC PrintText "TCLCT: Created Image Data"
-            set bgAtlasData  [vtkImageData New]
-            $bgAtlasNode SetAndObserveImageData  $bgAtlasData
+            set bgAtlasData [vtkImageData New]
+            $bgAtlasNode SetAndObserveImageData $bgAtlasData
             $bgAtlasData Delete
 
             # important to do this in tcl
-            set bgAtlasData [ $bgAtlasNode  GetImageData ]
+            set bgAtlasData [$bgAtlasNode GetImageData]
         }
 
         #
         # Set up operation
         #
-        set addResults [ vtkImageData New]
-        set addFilter [ vtkImageMathematics New]
+        set addResults [vtkImageData New]
+        set addFilter [vtkImageMathematics New]
         $addFilter SetOperationToAdd
         $addFilter SetInput1 $addResults
 
@@ -450,7 +450,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # carefull - this setup can fail if adding values up is beyond scalar range of scalar type
         foreach ID [GetAllLeafNodeIDsInTree] {
             # background class
-            if { [lsearch "$bgList" $ID]  > -1 } {
+            if { [lsearch "$bgList" $ID] > -1 } {
                 continue
             }
 
@@ -462,11 +462,11 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             $LOGIC PrintText "TCLCT:  Adding [$leafAtlasNode GetName ] from class [[ $mrmlManager GetTreeNode $ID] GetName] "
             if { $numInputs > 0 } {
-                $addFilter SetInput2  [$leafAtlasNode GetImageData ]
+                $addFilter SetInput2 [$leafAtlasNode GetImageData]
                 $addFilter Update
-                $addResults  DeepCopy [$addFilter GetOutput]
+                $addResults DeepCopy [$addFilter GetOutput]
             } else {
-                $addResults  DeepCopy [$leafAtlasNode GetImageData ]
+                $addResults DeepCopy [$leafAtlasNode GetImageData]
             }
             incr numInputs
         }
@@ -481,18 +481,18 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set MAX [lindex [$addResults GetScalarRange] 1]
         # Need to do that for unsigned types
-        set castInFilter [ vtkImageCast New]
+        set castInFilter [vtkImageCast New]
         $castInFilter SetOutputScalarTypeToFloat
         $castInFilter SetInput $addResults
         $castInFilter Update
 
-        set subFilter [ vtkImageMathematics New]
+        set subFilter [vtkImageMathematics New]
         $subFilter SetOperationToAddConstant
         $subFilter SetConstantC -$MAX
         $subFilter SetInput1 [$castInFilter GetOutput]
         $subFilter Update
 
-        set mulFilter [ vtkImageMathematics New]
+        set mulFilter [vtkImageMathematics New]
         $mulFilter SetOperationToMultiplyByK
         $mulFilter SetConstantK -1.0
         $mulFilter SetInput1 [$subFilter GetOutput]
@@ -505,10 +505,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         $bgAtlasData DeepCopy [$castOutFilter GetOutput]
 
-        $castOutFilter  Delete
-        $mulFilter  Delete
-        $subFilter  Delete
-        $castInFilter  Delete
+        $castOutFilter Delete
+        $mulFilter Delete
+        $subFilter Delete
+        $castInFilter Delete
         $addResults Delete
     }
 }
