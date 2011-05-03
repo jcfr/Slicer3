@@ -396,8 +396,6 @@ inline void EMLocalRegistrationCostFunction::CostFunction_Sum_WeightxProbability
   int    NumTotalTypeCLASS     = this->GetNumTotalTypeCLASS();
   int*   ProbDataIncY          = this->GetProbDataIncY();
   int*   ProbDataIncZ          = this->GetProbDataIncZ();
-  vtkNotUsed(float* ProbDataMinusWeight   = this->GetProbDataMinusWeight(); );
-  vtkNotUsed(float* ProbDataWeight        = this->GetProbDataWeight(); );
 
   // Pointer variables 
   unsigned char *Boundary_ROIVectorPtr   = this->Boundary_ROIVector;

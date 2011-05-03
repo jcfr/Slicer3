@@ -66,6 +66,7 @@ void vtkImageEMLocalSuperClass::CreateVariables() {
   this->PCAShapeModelType = EMSEGMENT_PCASHAPE_INDEPENDENT;
   
   this->RegistrationIndependentSubClassFlag =0;
+  this->InhomogeneityInitialData =NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -108,6 +109,11 @@ void vtkImageEMLocalSuperClass::DeleteSuperClassVariables() {
   this->ClassListType       = NULL;
   this->ParentClass         = NULL;
   this->NumClasses    = 0;
+ 
+ if (this->InhomogeneityInitialData) {
+    delete[] this->InhomogeneityInitialData;
+    this->InhomogeneityInitialData = NULL;
+  }
 }
 //------------------------------------------------------------------------------
 void vtkImageEMLocalSuperClass::AddSubClass(void* ClassData, classType initType, int index)
@@ -211,6 +217,7 @@ void vtkImageEMLocalSuperClass::AddSubClass(void* ClassData, classType initType,
 
   dataAsVTKObject->Register(this);
   this->ClassList[index] = ClassData;
+  this->ClassListType[index] = initType;
 }
 
 //------------------------------------------------------------------------------
@@ -818,3 +825,26 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
    }
    // std::cerr << "End vtkImageEMLocalSuperClass::ExecuteData" << endl; 
 }
+
+void vtkImageEMLocalSuperClass::SetInhomogeneityInitialData(vtkImageData *img , int index) { 
+    assert(index < this->NumInputImages && index >= 0);
+    if (!this->InhomogeneityInitialData) {
+      this->InhomogeneityInitialData = new vtkImageData*[this->NumInputImages];
+      for (int i = 0 ; i < this->NumInputImages; i++) this->InhomogeneityInitialData[i] = NULL;
+    } 
+    this->InhomogeneityInitialData[index] = img; 
+    
+  }
+
+float* vtkImageEMLocalSuperClass::GetInhomogeneityInitialDataPtr(int index) {
+     assert(index < this->NumInputImages && index >= 0);
+     if ((this->InhomogeneityInitialData == NULL) || (this->InhomogeneityInitialData[index] == NULL)) return NULL;
+     assert(this->InhomogeneityInitialData[index]->GetScalarType() == VTK_FLOAT);
+     int DataExtent[6];
+     this->InhomogeneityInitialData[index]->GetWholeExtent(DataExtent);
+     for (int i = 0; i < 3; i ++ ) assert((DataExtent[2*i+1] - DataExtent[2*i] +1)  == this->DataDim[i]);
+     vtkIdType Inc[3];
+     this->InhomogeneityInitialData[index]->GetContinuousIncrements(DataExtent, Inc[0], Inc[1], Inc[2]);
+     assert((Inc[1] == 0) && (Inc[2] == 0));
+     return (float*)this->InhomogeneityInitialData[index]->GetScalarPointerForExtent(DataExtent);
+  }

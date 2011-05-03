@@ -52,9 +52,19 @@ void EMLocalAlgorithm<T>::DetermineLabelMap(short* LabelMap) {
           w_m[ClassIndex]++;
           ClassIndex ++;
     }
-        // std::cerr << endl;
+        // cout << endl;
     if (!(temp == temp)) {
-      std::cerr << ":Error: EMLocalAlgorithm::DetermineLabelMap: in index "<< idx << " Produced a nan " << endl;
+      ClassIndex = 0;
+      cout << "Values: ";
+      for (int j=0; j< this->NumClasses; j++) {
+        for (k=0; k < NumChildClasses[l]; k++) {
+          if (j <= l) w_m[ClassIndex] --;
+              cout << *w_m[ClassIndex] << " " ;
+          ClassIndex ++;
+        }
+      }
+          cout << endl;
+      cout << ":Error: EMPrivateAlgorithm::DetermineLabelMap: in index "<< idx << " Produced a nan " << endl;
       exit(1);
     }
           if ( temp > MaxProbValue) {MaxProbValue = temp; MaxProbIndex = l;}

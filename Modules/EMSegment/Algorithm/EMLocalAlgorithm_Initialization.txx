@@ -465,6 +465,18 @@ template  <class T> void EMLocalAlgorithm<T>::InitializeBias() {
       }
     delete[] BiasDirectory;
   }
+
+  // MICCAI 07
+  if (this->actSupCl->GetInhomogeneityInitialDataPtr(0) ) {
+    this->InhomogeneityInitialDataPtr = new float*[this->NumInputImages];
+    for (int i =0; i < this->NumInputImages; i++ ) {
+      // Set all of them or non
+      this->InhomogeneityInitialDataPtr[i] = this->actSupCl->GetInhomogeneityInitialDataPtr(i);
+      assert(this->InhomogeneityInitialDataPtr[i]);
+    }
+  } else {
+    this->InhomogeneityInitialDataPtr  = NULL;
+  }
 }
 
 // -----------------------------------------------------------

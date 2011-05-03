@@ -24,6 +24,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // All the functions used with respect to introduce shape 
 #include "EMLocalShapeCostFunction.h"
 #include "assert.h"
+#define EMPRIVATE_HEAVISIDE_FCT_FLAG 0
+
+
 
 /* Foreward Defintion */
      template  <class Tin> 
@@ -644,9 +647,14 @@ void EMLocalShapeCostFunction::TransfereArrayIntoPCAShapeParameters(float* PCAPa
 double EMLocalShapeCostFunction::Transfere_DistanceMap_Into_SpatialPrior(double distance, float variance, float boundary, float Min, float Max)
 {
   // Currently just doing it because if the maximum value is 0 or 20 then you get something like 0.001 and 0.99993 => error 
+#if (EMPRIVATE_HEAVISIDE_FCT_FLAG) 
+  if (distance < boundary) return 0.0;
+  return double(this->NumberOfTrainingSamples);
+#else  
   if (distance < Min) return 0.0;
   if (distance > Max) return double(this->NumberOfTrainingSamples);
   return (double(this->NumberOfTrainingSamples)/(1.0 + exp(-variance  * (distance -  boundary ))));
+#endif
 }
 
 //----------------------------------------------------------------------------------
