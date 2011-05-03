@@ -18,6 +18,8 @@
 #include "vtkImageIslandFilter.h"
 #include "vtkDataIOManagerLogic.h"
 #include "vtkMath.h"
+#include "vtkImageThreshold.h"
+#include "vtkImageMathematics.h"
 
 
 // A helper class to compare two maps
