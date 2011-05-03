@@ -40,6 +40,13 @@ if {[info exists ::env(SVN)]} {
     set ::SVN svn
 }
 
+if {[info exists ::env(GIT)]} {
+    set ::GIT $::env(GIT)
+} else {
+    set ::GIT git 
+}
+
+
 ################################################################################
 #
 # check to see if need to build a package
@@ -1173,6 +1180,14 @@ if { [BuildThis $::ITK_TEST_FILE "itk"] == 1 } {
 
     runcmd $::CVS -d :pserver:anoncvs:@www.vtk.org:/cvsroot/Insight login
     eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anoncvs@www.vtk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight"
+#    if { ![file exists Insight] } {
+#        eval "runcmd $::GIT clone -b $::ITK_GIT_BRANCH git://itk.org/ITK.git Insight"
+#        cd $Slicer3_LIB/Insight
+#        eval "runcmd $::GIT checkout $::ITK_GIT_TAG"
+#    } else {
+#        cd $Slicer3_LIB/Insight
+#        eval "runcmd $::GIT pull"
+#    }
 
     if {$::GENLIB(buildit)} {
       file mkdir $Slicer3_LIB/Insight-build

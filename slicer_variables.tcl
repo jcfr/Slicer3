@@ -139,6 +139,8 @@ set ::KWWidgets_TAG "Slicer-3-6"
 #set ::VTK_TAG "http://svn.github.com/pieper/SlicerVTK.git" ;# slicer's patched vtk 5.6
 set ::VTK_TAG "http://svn.slicer.org/Slicer3-lib-mirrors/branches/Slicer-3-6/VTK" ;# slicer's patched vtk 5.6
 set ::ITK_TAG ITK-3-20
+set ::ITK_GIT_BRANCH release
+set ::ITK_GIT_TAG v3.20.0
 #set ::PYTHON_TAG "http://svn.python.org/projects/python/branches/release26-maint"
 #set ::PYTHON_REVISION 76651 ;# avoid windows manifest "fix"
 set ::PYTHON_TAG http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Python-2.6.6
