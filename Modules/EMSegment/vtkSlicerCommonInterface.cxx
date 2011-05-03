@@ -100,7 +100,7 @@ const char* vtkSlicerCommonInterface::GetTemporaryDirectory()
 #else
 
   // Slicer4
-  return qSlicerApplication::application()->temporaryPath().latin1();
+  return qSlicerApplication::application()->temporaryPath().toLatin1();
 
 #endif
 
@@ -118,7 +118,7 @@ const char* vtkSlicerCommonInterface::GetRepositoryRevision()
 #else
 
   // Slicer4
-  return qSlicerApplication::application()->repositoryRevision().latin1();
+  return qSlicerApplication::application()->repositoryRevision().toLatin1();
 
 #endif
 
