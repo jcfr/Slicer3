@@ -447,7 +447,7 @@ class AtlasCreatorLogic(object):
             # this will ensure that we can later 
             # use the transforms (if they exist) and the template to resample
             # at this point, the defaultCase is either the meanImage or the fixed defaultCase
-            pathToTemplate = outputDir + "template." + os.path.splitext(defaultCase)[1]
+            pathToTemplate = outputDir + "template" + os.path.splitext(defaultCase)[1]
             self.Helper().info("Saving template to " + str(pathToTemplate))
             shutil.copyfile(defaultCase, pathToTemplate)
             
