@@ -90,7 +90,7 @@ set(EMSegment_BASE_SRCS
   # module
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentMRMLManager.cxx 
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentLogic.cxx 
-  ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentTclConnector.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkSlicerCommonInterface.cxx
 )
 
 include_directories(

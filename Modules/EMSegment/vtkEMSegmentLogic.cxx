@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <sstream>
 
 #include "vtkEMSegmentLogic.h"
 #include "vtkObjectFactory.h"
@@ -17,17 +18,7 @@
 #include "vtkImageIslandFilter.h"
 #include "vtkDataIOManagerLogic.h"
 #include "vtkMath.h"
-#ifdef Slicer3_USE_KWWIDGETS
 
-// Slicer3
-#include "../../Applications/GUI/Slicer3Helper.cxx"
-
-//#else
-
-// Slicer4
-// TODO
-
-#endif
 
 // A helper class to compare two maps
 template <class T>
@@ -73,7 +64,7 @@ vtkEMSegmentLogic::vtkEMSegmentLogic()
   this->SetMRMLManager(manager);
   manager->Delete();
 
-  this->TclConnector = NULL;
+  this->SlicerCommonInterface = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -83,24 +74,23 @@ vtkEMSegmentLogic::~vtkEMSegmentLogic()
   this->SetProgressCurrentAction(NULL);
   this->SetModuleName(NULL);
 
-  if (this->TclConnector)
+  if (this->SlicerCommonInterface)
     {
-    this->TclConnector->Delete();
-    this->TclConnector = NULL;
+    this->SlicerCommonInterface->Delete();
+    this->SlicerCommonInterface = NULL;
     }
 }
 
 //----------------------------------------------------------------------------
-vtkEMSegmentTclConnector* vtkEMSegmentLogic::GetTclConnector()
+vtkSlicerCommonInterface* vtkEMSegmentLogic::GetSlicerCommonInterface()
 {
 
-  if (!this->TclConnector)
+  if (!this->SlicerCommonInterface)
     {
-    this->TclConnector = vtkEMSegmentTclConnector::New();
-    //this->TclConnector->SetEMSLogic(this);
+    this->SlicerCommonInterface = vtkSlicerCommonInterface::New();
     }
 
-  return this->TclConnector;
+  return this->SlicerCommonInterface;
 
 }
 
@@ -2165,18 +2155,7 @@ bool vtkEMSegmentLogic::PackageAndWriteData(vtkSlicerApplicationLogic* appLogic,
   vtkDataIOManagerLogic* dataIOManagerLogic = vtkDataIOManagerLogic::New();
   cout << " DEBUG" << endl;
 
-#ifdef Slicer3_USE_KWWIDGETS
-
-  // Slicer3
-
-
-  Slicer3Helper::AddDataIOToScene(newScene,0,appLogic,dataIOManagerLogic);
-
-//#else
-
-  // TODO Slicer4
-
-#endif
+  this->GetSlicerCommonInterface()->AddDataIOToScene(newScene,appLogic,dataIOManagerLogic);
 
   this->GetMRMLManager()->CopyEMRelatedNodesToMRMLScene(newScene);
 
@@ -2202,18 +2181,7 @@ bool vtkEMSegmentLogic::PackageAndWriteData(vtkSlicerApplicationLogic* appLogic,
     }
     }
 
-#ifdef Slicer3_USE_KWWIDGETS
-
-  // Slicer3
-
-  Slicer3Helper::RemoveDataIOFromScene(newScene,dataIOManagerLogic);
-
-
-  //#else
-
-  // TODO Slicer4
-
-#endif
+  this->GetSlicerCommonInterface()->RemoveDataIOFromScene(newScene,dataIOManagerLogic);
 
   dataIOManagerLogic->Delete();
   dataIOManagerLogic = NULL;
@@ -2231,35 +2199,9 @@ vtkstd::string vtkEMSegmentLogic::GetTemporaryTaskDirectory()
   // FIXME, what happens if user has no write permission to this directory
   std::string taskDir("");
 
-  const char* tmpDir = "";
+  const char* tmpDir = this->GetSlicerCommonInterface()->GetTemporaryDirectory();
 
-#ifdef Slicer3_USE_KWWIDGETS
-
-  // Slicer3
-  tmpDir = Slicer3Helper::GetTemporaryDirectory();
-
-  //#else
-
-  // TODO Slicer4
-
-#endif
-
-
-  const char* svn_revision = "";
-
-
-#ifdef Slicer3_USE_KWWIDGETS
-
-  // Slicer3
-  svn_revision = Slicer3Helper::GetSvnRevision();
-
-  //#else
-
-  // TODO Slicer4
-
-#endif
-
-
+  const char* svn_revision = this->GetSlicerCommonInterface()->GetRepositoryRevision();
 
   if (tmpDir)
     {
@@ -2296,18 +2238,7 @@ int vtkEMSegmentLogic::UpdateTasks()
   // ** PATH MANAGEMENT **
   //
   // the Slicer temporary directory
-  const char* tmpDir = "";
-
-#ifdef Slicer3_USE_KWWIDGETS
-
-  // Slicer3
-  tmpDir = Slicer3Helper::GetTemporaryDirectory();
-
-  //#else
-
-  // TODO Slicer4
-
-#endif
+  const char* tmpDir = this->GetSlicerCommonInterface()->GetTemporaryDirectory();
 
   if (!tmpDir)
     {
@@ -2315,19 +2246,7 @@ int vtkEMSegmentLogic::UpdateTasks()
       return 0;
     }
 
-  const char* svn_revision = "";
-
-
-#ifdef Slicer3_USE_KWWIDGETS
-
-  // Slicer3
-  svn_revision = Slicer3Helper::GetSvnRevision();
-
-  //#else
-
-  // TODO Slicer4
-
-#endif
+  const char* svn_revision = this->GetSlicerCommonInterface()->GetRepositoryRevision();
 
   // also add the manifest filename
   std::string tmpManifestFilename( std::string(tmpDir) + "/" + std::string(svn_revision) + std::string("/EMSegmentTasksManifest.html") );
@@ -2340,7 +2259,7 @@ int vtkEMSegmentLogic::UpdateTasks()
   //
   // our HTTP handler
   //vtkHTTPHandler* httpHandler = vtkHTTPHandler::New();
-  vtkHTTPHandler* httpHandler = vtkHTTPHandler::SafeDownCast(this->GetMRMLScene()->FindURIHandlerByName("HTTPHandler"));
+  vtkHTTPHandler* httpHandler = this->GetSlicerCommonInterface()->GetHTTPHandler(this->GetMRMLScene());
 
 
   // prevent funny behavior on windows with the side-effect of more network resources are used
@@ -2689,29 +2608,14 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing(vtkSlicerApplicatio
 
 int vtkEMSegmentLogic::SourceTclFile(const char *tclFile)
 {
-  return this->GetTclConnector()->SourceTclFile(tclFile);
+  return this->GetSlicerCommonInterface()->SourceTclFile(tclFile);
 }
 
 //----------------------------------------------------------------------------
 vtkstd::string  vtkEMSegmentLogic::GetTclTaskDirectory()
 {
   //workaround for the mrml library, we need to have write access to this folder
-  const char* tmp_dir = "";
-
-
-
-#ifdef Slicer3_USE_KWWIDGETS
-
-  // Slicer3
-  tmp_dir = Slicer3Helper::GetTemporaryDirectory();
-
-  //#else
-
-  // TODO Slicer4
-
-#endif
-
-
+  const char* tmp_dir = this->GetSlicerCommonInterface()->GetTemporaryDirectory();
 
   if (tmp_dir)
     {
@@ -2857,7 +2761,7 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
   {
     vtkstd::stringstream CMD ;
 
-    CMD <<  "::EMSegmenterAutoSampleTcl::EMSegmentGaussCurveCalculationFromID " << this->GetTclConnector()->GetTclNameFromPointer(this) << " 0.95 1 { " ;
+    CMD <<  "::EMSegmenterAutoSampleTcl::EMSegmentGaussCurveCalculationFromID " << this->GetSlicerCommonInterface()->GetTclNameFromPointer(this) << " 0.95 1 { " ;
 
     for (int i = 0 ; i < numTargetImages; i++) {
       CMD << workingTarget->GetNthVolumeNodeID(i) << " " ;
@@ -2867,7 +2771,7 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
     // cout << CMD.str().c_str() << endl;
 
 
-    if (atoi(this->GetTclConnector()->Script(CMD.str().c_str()))) { return; }
+    if (atoi(this->GetSlicerCommonInterface()->EvaluateTcl(CMD.str().c_str()))) { return; }
 
 
   }
@@ -2882,7 +2786,12 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
     {
       { // own scope starts
 
-        double value = atof(this->GetTclConnector()->Script("expr $::EMSegment(GaussCurveCalc,Mean,%d)",r));
+        std::ostringstream os;
+        os << "expr $::EMSegment(GaussCurveCalc,Mean,";
+        os << r;
+        os << ")";
+
+        double value = atof(this->GetSlicerCommonInterface()->EvaluateTcl(os.str().c_str()));
 
         leafNode->SetLogMean(r, value);
       } // own scope ends
@@ -2892,7 +2801,14 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
       {
 
 
-        double value = atof(this->GetTclConnector()->Script("expr $::EMSegment(GaussCurveCalc,Covariance,%d,%d)",r,c));
+        std::ostringstream os;
+        os << "expr $::EMSegment(GaussCurveCalc,Covariance,";
+        os << r;
+        os << ",";
+        os << c;
+        os << ")";
+
+        double value = atof(this->GetSlicerCommonInterface()->EvaluateTcl(os.str().c_str()));
 
         leafNode->SetLogCovariance(r, c, value);
 

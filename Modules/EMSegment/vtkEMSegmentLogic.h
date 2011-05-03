@@ -4,7 +4,7 @@
 #include "vtkSlicerModuleLogic.h"
 #include "vtkEMSegment.h"
 #include "vtkEMSegmentMRMLManager.h"
-#include "vtkEMSegmentTclConnector.h"
+#include "vtkSlicerCommonInterface.h"
 
 #include <vtkImageData.h>
 #include <vtkTransform.h>
@@ -168,14 +168,14 @@ public:
   int UpdateTasks();
 
   //
-  // TCL CONNECTOR INTERFACE STARTS HERE
+  // SLICER COMMON INTERFACE STARTS HERE
   //
 
-  vtkEMSegmentTclConnector* GetTclConnector();
+  vtkSlicerCommonInterface* GetSlicerCommonInterface();
   virtual int       SourceTclFile(const char *tclFile);
 
   //
-  // TCL CONNECTOR INTERFACE ENDS HERE
+  // SLICER COMMON INTERFACE ENDS HERE
   //
 
 
@@ -273,7 +273,7 @@ private:
   vtkEMSegmentLogic(const vtkEMSegmentLogic&);
   void operator=(const vtkEMSegmentLogic&);
 
-  vtkEMSegmentTclConnector *TclConnector;
+  vtkSlicerCommonInterface *SlicerCommonInterface;
 
 };
 
