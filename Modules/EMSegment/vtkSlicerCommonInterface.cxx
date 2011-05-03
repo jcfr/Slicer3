@@ -15,7 +15,7 @@ vtkSlicerCommonInterface* vtkSlicerCommonInterface::New()
 {
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret =
-    vtkObjectFactory::CreateInstance("vtkEMSegmentTclConnector");
+    vtkObjectFactory::CreateInstance("vtkSlicerCommonInterface");
   if(ret)
     {
     return (vtkSlicerCommonInterface*)ret;
