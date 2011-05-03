@@ -182,6 +182,11 @@ def usage():
     info("        --schedulerCommand EXECUTABLE")
     info("                The executable to use as a scheduler in cluster mode, f.e. \"qsub\".")
     info("")
+    info("--numberOfThreads")
+    info("        Specify the number of threads to use for Registration.")
+    info("        By default, this is set to use the maximal number of threads for your machine.")
+    info("        DEFAULT: -1")
+    info("")
     info("--pca")
     info("        Perform PCA Analysis on top of Resampling.")
     info("")
@@ -252,7 +257,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.4")
+    info("Version v0.41")
     info(socket.gethostbyaddr(socket.gethostname()))
     info("")
     
@@ -285,6 +290,7 @@ def main(argv):
                                                         "outputCast=",
                                                         "cluster",
                                                         "schedulerCommand=",
+                                                        "numberOfThreads=",
                                                         "pca",
                                                         "pcaMaxEigenVectors=",
                                                         "pcaCombine",
@@ -335,6 +341,8 @@ def main(argv):
     
     cluster = False
     schedulerCommand = None
+    
+    numberOfThreads = -1
     
     pca = False
     pcaMaxEigenVectors = 10
@@ -393,6 +401,8 @@ def main(argv):
             cluster = True
         elif opt in ("--schedulerCommand"):
             schedulerCommand = arg
+        elif opt in ("--numberOfThreads"):
+            numberOfThreads = arg
         elif opt in ("--pca"):
             pca = True
         elif opt in ("--pcaMaxEigenVectors"):
@@ -605,6 +615,12 @@ def main(argv):
     if cluster and not schedulerCommand:
         info("Error: In cluster mode, a schedulerCommand is required.")
         info("Error: Value of --schedulerCommand: " + str(schedulerCommand))
+        errorOccured = True
+            
+    if not is_int(numberOfThreads):
+        info("Error: The number of threads must be an integer.")
+        info("Error: Value of --numberOfThreads: " + str(numberOfThreads))
+        errorOccured = True
             
     if errorOccured:
         info("")
@@ -707,7 +723,7 @@ def main(argv):
     else:
         evalpythonCommand += "n.SetPCACombine(0);"
         
-    
+    evalpythonCommand += "n.SetNumberOfThreads(" + str(numberOfThreads) + ");"
 
     evalpythonCommand += "n.SetOutputCast('" + outputCast + "');"
     

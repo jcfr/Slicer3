@@ -83,6 +83,8 @@ vtkMRMLAtlasCreatorNode::vtkMRMLAtlasCreatorNode()
   this->UseCluster = 0;
   this->SchedulerCommand = 0;
 
+  this->NumberOfThreads = 0;
+
   this->SkipRegistration = 0;
   this->ExistingTemplate = 0;
   this->TransformsDirectory = 0;
@@ -254,6 +256,9 @@ void vtkMRMLAtlasCreatorNode::WriteXML(ostream& of, int nIndent)
     {
     of << " SchedulerCommand =\"" << this->SchedulerCommand << "\"";
     }
+
+
+  of << " NumberOfThreads =\"" << this->NumberOfThreads << "\"";
 
 
   of << " SkipRegistration =\"" << this->SkipRegistration << "\"";
@@ -466,6 +471,18 @@ void vtkMRMLAtlasCreatorNode::ReadXMLAttributes(const char** atts)
       }
 
 
+    if ( !strcmp(attName, "NumberOfThreads") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetNumberOfThreads(val);
+      }
+
+
     if ( !strcmp(attName, "SkipRegistration") )
       {
       std::stringstream ss;
@@ -551,6 +568,8 @@ void vtkMRMLAtlasCreatorNode::Copy(vtkMRMLNode *anode)
   this->SetUseCluster( node->GetUseCluster());
   this->SetSchedulerCommand( node->GetSchedulerCommand());
 
+  this->SetNumberOfThreads( node->GetNumberOfThreads());
+
   this->SetSkipRegistration( node->GetSkipRegistration());
   this->SetExistingTemplate( node->GetExistingTemplate());
   this->SetTransformsDirectory( node->GetTransformsDirectory());
@@ -595,6 +614,8 @@ void vtkMRMLAtlasCreatorNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "UseCluster: " << this->GetUseCluster() << "\n";
   os << indent << "SchedulerCommand: " << (this->GetSchedulerCommand() ? this->GetSchedulerCommand() : "(none)") << "\n";
 
+  os << indent << "NumberOfThreads: " << this->GetNumberOfThreads() << "\n";
+
   os << indent << "SkipRegistration: " << this->GetSkipRegistration() << "\n";
   os << indent << "ExistingTemplate: " << (this->GetExistingTemplate() ? this->GetExistingTemplate() : "(none)") << "\n";
   os << indent << "TransformsDirectory: " << (this->GetTransformsDirectory() ? this->GetTransformsDirectory() : "(none)") << "\n";
@@ -637,6 +658,8 @@ void vtkMRMLAtlasCreatorNode::InitializeByDefault()
 
   this->UseCluster = 0;
   this->SetSchedulerCommand("");
+
+  this->NumberOfThreads = -1;
 
   this->SkipRegistration = 0;
   this->SetExistingTemplate("");

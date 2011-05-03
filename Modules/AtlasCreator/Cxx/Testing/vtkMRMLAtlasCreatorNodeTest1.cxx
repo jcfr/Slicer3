@@ -71,6 +71,8 @@ int vtkMRMLAtlasCreatorNodeTest1(int , char * [] )
   TEST_SET_GET_INT( node1, UseCluster, 1 );
   TEST_SET_GET_INT( node1, SkipRegistration, 0 );
   TEST_SET_GET_INT( node1, SkipRegistration, 1 );
+  TEST_SET_GET_INT( node1, NumberOfThreads, -1);
+  TEST_SET_GET_INT( node1, NumberOfThreads, 5);
   TEST_SET_GET_INT( node1, DebugMode, 0 );
   TEST_SET_GET_INT( node1, DebugMode, 1 );
   TEST_SET_GET_INT( node1, DryrunMode, 0 );

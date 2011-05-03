@@ -101,6 +101,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._saveTransformsCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._deleteAlignedImagesCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._deleteAlignedSegmentationsCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._numberOfThreadsEntry = slicer.vtkKWEntryWithLabel()
         self._debugCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._dryrunCheckBox = slicer.vtkKWCheckButtonWithLabel() 
         # End Misc. Frame
@@ -195,6 +196,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._outputCastComboTag = self.AddObserverByNumber(self._outputCastCombo.GetWidget(),vtkKWComboBox_EntryValueChangedEvent)
         self._deleteAlignedImagesCheckBoxTag = self.AddObserverByNumber(self._deleteAlignedImagesCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
         self._deleteAlignedSegmentationsCheckBoxTag = self.AddObserverByNumber(self._deleteAlignedSegmentationsCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        self._numberOfThreadsEntryTag = self.AddObserverByNumber(self._numberOfThreadsEntry.GetWidget(),vtkKWEntry_EntryValueChangedEvent)
         self._debugCheckBoxTag = self.AddObserverByNumber(self._debugCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
         self._dryrunCheckBoxTag = self.AddObserverByNumber(self._dryrunCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
 
@@ -254,6 +256,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self.RemoveObserver(self._outputCastComboTag)
         self.RemoveObserver(self._deleteAlignedImagesCheckBoxTag)
         self.RemoveObserver(self._deleteAlignedSegmentationsCheckBoxTag)
+        self.RemoveObserver(self._numberOfThreadsEntryTag)
         self.RemoveObserver(self._debugCheckBoxTag)
         self.RemoveObserver(self._dryrunCheckBoxTag)
         
@@ -381,6 +384,9 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             self.UpdateMRML()
             
         elif caller == self._deleteAlignedSegmentationsCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+            self.UpdateMRML()
+            
+        elif caller == self._numberOfThreadsEntry.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
             self.UpdateMRML()
             
         elif caller == self._debugCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
@@ -808,6 +814,10 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             else:
                 self._associatedMRMLNode.SetDeleteAlignedSegmentations(0)
                 
+            numberOfThreads = self._numberOfThreadsEntry.GetWidget().GetValue()
+            if numberOfThreads:
+                self._associatedMRMLNode.SetNumberOfThreads(int(numberOfThreads))
+                
             if self._debugCheckBox.GetWidget().GetSelectedState():
                 self._associatedMRMLNode.SetDebugMode(1)
             else:
@@ -1047,6 +1057,10 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             if not deleteAlignedSegmentations:
                 self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(0)
             
+            numberOfThreads = n.GetNumberOfThreads()
+            if numberOfThreads:
+                self._numberOfThreadsEntry.GetWidget().SetValue(str(numberOfThreads))
+            
             debug = n.GetDebugMode()
             if debug:
                 self._debugCheckBox.GetWidget().SetSelectedState(1)
@@ -1130,7 +1144,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self.GetUIPanel().AddPage("AtlasCreator","AtlasCreator","")
         self._atlascreatorPage = self.GetUIPanel().GetPageWidget("AtlasCreator")
-        helpText = """**Atlas Creator v0.4**
+        helpText = """**Atlas Creator v0.41**
         
 More Information available at <a>http://www.slicer.org/slicerWiki/index.php/Modules:AtlasCreator</a>
 
@@ -1479,6 +1493,13 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
         self._deleteAlignedSegmentationsCheckBox.SetBalloonHelpString("If selected, all aligned segmentations will be deleted after use.")        
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deleteAlignedSegmentationsCheckBox.GetWidgetName())        
         
+        self._numberOfThreadsEntry.SetParent(self._miscFrame.GetFrame())
+        self._numberOfThreadsEntry.Create()
+        self._numberOfThreadsEntry.SetLabelText("Number of Threads:")
+        self._numberOfThreadsEntry.SetLabelWidth(20)
+        self._numberOfThreadsEntry.SetBalloonHelpString("The number of threads used for Registration. If -1, the maximal number of threads will be used.")
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._numberOfThreadsEntry.GetWidgetName())
+        
         self._debugCheckBox.SetParent(self._miscFrame.GetFrame())
         self._debugCheckBox.Create()
         self._debugCheckBox.SetLabelText("Debug Output:")
@@ -1609,6 +1630,7 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
             self._outputCastCombo.GetWidget().SetValue("'Short'")
             self._deleteAlignedImagesCheckBox.GetWidget().SetSelectedState(1)
             self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(1)
+            self._numberOfThreadsEntry.GetWidget().SetValue(-1)
             self._debugCheckBox.GetWidget().SetSelectedState(0)
             self._dryrunCheckBox.GetWidget().SetSelectedState(0)
             

@@ -176,6 +176,11 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkSetStringMacro (SchedulerCommand);
 
 
+  // Description: The number of threads to use for Registration and Resampling, -1: Use Maximum Number of Threads
+  vtkGetMacro(NumberOfThreads,int);
+  vtkSetMacro(NumberOfThreads,int);
+
+
   // Description: 1: Skip Registration 0: Don't skip registration
   vtkGetMacro(SkipRegistration,int);
   vtkSetMacro(SkipRegistration,int);
@@ -232,6 +237,8 @@ protected:
 
   int UseCluster;
   char *SchedulerCommand;
+
+  int NumberOfThreads;
 
   int SkipRegistration;
   char *ExistingTemplate;

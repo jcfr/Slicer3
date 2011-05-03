@@ -490,7 +490,7 @@ class AtlasCreatorHelper(object):
     
     
     '''=========================================================================================='''    
-    def GetBRAINSFitRegistrationCommand(self, templateFilePath, movingImageFilePath, outputTransformFilePath, outputImageFilePath, onlyAffineReg, multiThreading, backgroundValue):
+    def GetBRAINSFitRegistrationCommand(self, templateFilePath, movingImageFilePath, outputTransformFilePath, outputImageFilePath, onlyAffineReg, numberOfThreads, backgroundValue):
         '''
             Get the command to Register an image to a template using BRAINSFit
             
@@ -504,8 +504,8 @@ class AtlasCreatorHelper(object):
                 the file path to the aligned image output
             onlyAffineReg
                 if true, just use affine registration and no BSpline
-            multiThreading
-                if true, use multi threading
+            numberOfThreads
+                the number of threads to use or -1 for the maximal number of threads
             backgroundValue
                 the backgroundValue of the moving image                
                 
@@ -527,11 +527,7 @@ class AtlasCreatorHelper(object):
         if not onlyAffineReg:
             registrationCommand += " --useBSpline"
             
-        if not multiThreading:
-            registrationCommand += " --debugNumberOfThreads 1"
-        else:
-            registrationCommand += " --debugNumberOfThreads -1"
-
+        registrationCommand += " --debugNumberOfThreads " + str(numberOfThreads)
         registrationCommand += " --backgroundFillValue " + str(backgroundValue)
         
         # in test mode, use limited DOF

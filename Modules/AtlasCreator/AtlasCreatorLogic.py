@@ -291,17 +291,21 @@ class AtlasCreatorLogic(object):
         os.makedirs(notifyCombineToAtlasDirectory) 
              
         # executable configuration
-        multiThreading = True # enable multiThreading by default
+        numberOfThreads = node.GetNumberOfThreads()
+        if numberOfThreads == -1:
+            self.Helper().info("Using maximal number of threads..")
+        else:
+            self.Helper().info("Using " + str(numberOfThreads) + " threads..")
+            
         sleepValue = 1 # seconds to wait between each check on completed jobs
         schedulerCommand = "" # assume no scheduler by default
         
         if clusterMode:
-            # if this is a cluster mode, add the schedulerCommand and disable multiThreading
+            # if this is a cluster mode, add the schedulerCommand
             # also, raise the seconds to wait between each check on completed jobs to 60
             self.Helper().info("Found cluster configuration..")
             schedulerCommand = node.GetSchedulerCommand()
             self.Helper().debug("Scheduler Command: " + str(schedulerCommand))
-            multiThreading = False
             sleepValue = 60             
              
              
@@ -335,7 +339,7 @@ class AtlasCreatorLogic(object):
                                               scriptsRegistrationDirectory,
                                               notifyRegistrationDirectory,
                                               node.GetRegistrationType(),
-                                              multiThreading,
+                                              numberOfThreads,
                                               useCMTK,
                                               sleepValue)
                 
@@ -396,7 +400,7 @@ class AtlasCreatorLogic(object):
                                                   uniqueScriptsDirectory,
                                                   uniqueNotifyDirectory,
                                                   node.GetRegistrationType(),
-                                                  multiThreading,
+                                                  numberOfThreads,
                                                   useCMTK,
                                                   sleepValue) 
     
@@ -734,7 +738,7 @@ class AtlasCreatorLogic(object):
 
     
     '''=========================================================================================='''
-    def Register(self, schedulerCommand, filePathsList, templateFilePath, outputTransformsDirectory, outputAlignedDirectory, outputScriptsDirectory, outputNotifyDirectory, registrationType, multiThreading, useCMTK=False, sleepValue=5):
+    def Register(self, schedulerCommand, filePathsList, templateFilePath, outputTransformsDirectory, outputAlignedDirectory, outputScriptsDirectory, outputNotifyDirectory, registrationType, numberOfThreads, useCMTK=False, sleepValue=5):
         '''
             Register a set of images, get a transformation and save it
             
@@ -755,8 +759,8 @@ class AtlasCreatorLogic(object):
             registrationType
                 type of registration as String, could be "affine" and "non-rigid"
                 if the value is invalid, affine registration is assumed
-            multiThreading
-                if TRUE, use multiThreading
+            numberOfThreads
+                if -1, use the maximal number of threads else use the specified number
             useCMTK
                 if TRUE, use CMTK instead of BRAINSFit
             sleepValue
@@ -844,9 +848,9 @@ class AtlasCreatorLogic(object):
             
             if useCMTK:
                 
-                if not multiThreading:
-                    # for CMTK, we have to set the variable to disable multiThreading
-                    command += "CMTK_NUM_THREADS=1\n"
+                if numberOfThreads!=-1:
+                    # for CMTK, we have to set the variable to configure the number of threads
+                    command += "CMTK_NUM_THREADS="+str(numberOfThreads)+"\n"
                 
                 command += str(launchCommandPrefix) + self.Helper().GetCMTKAffineRegistrationCommand(templateFilePath,
                                                                                                     movingImageFilePath,
@@ -872,7 +876,7 @@ class AtlasCreatorLogic(object):
                                                                                                    outputTransformFilePath,
                                                                                                    outputAlignedImageFilePath,
                                                                                                    onlyAffineReg,
-                                                                                                   multiThreading,
+                                                                                                   numberOfThreads,
                                                                                                    backgroundGuess)
             
             self.Helper().debug("Register command(s): " + str(command))
