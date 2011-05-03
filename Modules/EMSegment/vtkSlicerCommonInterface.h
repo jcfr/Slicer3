@@ -11,8 +11,6 @@
 
 // Slicer3 includes
 #include  "vtkSlicerApplication.h"
-#include "vtkDataIOManagerLogic.h"
-#include "vtkHTTPHandler.h"
 
 #else
 
@@ -20,6 +18,9 @@
 #include "qSlicerApplication.h"
 
 #endif
+
+#include "vtkDataIOManagerLogic.h"
+#include "vtkHTTPHandler.h"
 
 // the Tcl connector accesses Tcl in Slicer3 and Slicer4
 class VTK_EMSEGMENT_EXPORT vtkSlicerCommonInterface: public vtkObject
