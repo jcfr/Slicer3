@@ -906,7 +906,8 @@ CopyTreeDataToSegmenter(vtkImageEMLocalSuperClass* node, vtkIdType nodeID)
       this->MRMLManager->GetTreeNodeClassProbability(childID);
     }
 
-  if (totalProbability != 1.0)
+  // check if totalProbability != 1.0
+  if (abs(totalProbability - 1.0) > 0.000001)
     {
     vtkWarningMacro("Warning: child probabilities don't sum to unity for node "
                     << this->MRMLManager->GetTreeNodeName(nodeID)
@@ -2738,7 +2739,7 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
   }
 
   vtkMRMLVolumeNode*  atlasNode = this->GetMRMLManager()->GetAlignedSpatialPriorFromTreeNodeID(nodeID);
-  if (!this->GetMRMLManager()->GetTreeNodeSpatialPriorVolumeID(nodeID))
+  if (!atlasNode)
   {
     vtkErrorMacro("Atlas not yet aligned for " << nodeID << " ! ");
     return ;
