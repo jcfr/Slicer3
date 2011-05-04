@@ -169,6 +169,28 @@ namespace eval EMSegmenterPreProcessingTcl {
         return $dirname
     }
 
+    proc CreateNewVolumeNodeAndAddToScene { name } {
+        variable SCENE
+        variable mrmlManager
+
+        set newVolumeNode [vtkMRMLScalarVolumeNode New]
+        $newVolumeNode SetName "$name"
+
+        set newVolumeData [vtkImageData New]
+        $newVolumeNode SetAndObserveImageData $newVolumeData
+        $newVolumeData Delete
+
+        set newDisplayNode [vtkMRMLScalarVolumeDisplayNode New]
+        $SCENE AddNode $newDisplayNode
+        set newDisplayNodeID [$newDisplayNode GetID]
+        $newVolumeNode SetAndObserveDisplayNodeID $newDisplayNodeID
+        $newDisplayNode Delete
+
+        $SCENE AddNode $newVolumeNode
+        set newVolumeNodeID [$newVolumeNode GetID]
+        $newVolumeNode Delete
+        return [$SCENE GetNodeByID $newVolumeNodeID]
+    }
 
     # TODO: ChangeName of this function, its doing more than only creating a volume node
     # vtkMRMLVolumeNode *volumeNode, const char *name
