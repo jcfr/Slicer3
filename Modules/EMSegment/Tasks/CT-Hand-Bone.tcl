@@ -137,7 +137,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set affineFlag [expr ([$mrmlManager GetRegistrationAffineType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
         set bSplineFlag [expr ([$mrmlManager GetRegistrationDeformableType] != [$mrmlManager GetRegistrationTypeFromString RegistrationOff])]
 
-        if {($alignFlag == 0) || (( $affineFlag == 0 ) && ( $bSplineFlag == 0 )) } {
+        if {($alignFlag == 0) || ( ($affineFlag == 0) && ($bSplineFlag == 0) ) } {
             return [SkipAtlasRegistration]
         }
 
@@ -366,7 +366,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     # end CTHandExtractBlurrySegmentation
 
 
-    # Generates Background class by subtracting  the atlases of the other classes and inverting the results
+    # Generates Background class by subtracting the atlases of the other classes and inverting the results
     proc CTHandGenerateBackground  { } {
         variable outputAtlasNode
         variable inputAtlasNode
@@ -374,19 +374,22 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable LOGIC
 
         # All nodes that are not parent classes are assigned to background
-        set n [$mrmlManager GetTreeNodeNumberOfChildren  [$mrmlManager GetTreeRootNodeID]  ]
+
+        # add all tree leafes to $bgList
+        set rootID [$mrmlManager GetTreeRootNodeID]
+        set n [$mrmlManager GetTreeNodeNumberOfChildren $rootID]
         set bgList ""
-        set rootID [$mrmlManager  GetTreeRootNodeID ]
-        for {set i 0 } { $i < $n  } { incr i } {
+        for { set i 0 } { $i < $n } { incr i } {
             set id [ $mrmlManager GetTreeNodeChildNodeID $rootID $i ]
             if { [ $mrmlManager GetTreeNodeIsLeaf $id ] } {
                 set bgList "${bgList} $id"
             }
         }
 
-        # Check if atlas bg node is defined
-        set treeID     [ lindex $bgList 0 ]
-        set bgAtlasID [ $mrmlManager GetTreeNodeSpatialPriorVolumeID $treeID]
+        # Check if atlas bg node is defined 
+        # Implicit assumption: is first leaf a background leaf ?
+        set treeID    [lindex $bgList 0]
+        set bgAtlasID [$mrmlManager GetTreeNodeSpatialPriorVolumeID $treeID]
 
 
         # Create dummy AtlasBgNode for inputnode
@@ -394,7 +397,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # I do this bc it is easier for debugging
             set inputAtlasNode [$mrmlManager GetAtlasInputNode]
             set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode 0]
-            set bgDummyNode [ CreateVolumeNode $inputAtlasVolumeNode "BGAtlas(Place Holder)"]
+            set bgDummyNode [ CreateVolumeNode $inputAtlasVolumeNode "BGAtlas(Place Holder)" ]
             # do this as otherwise the program can crash
             set bgDummyData [vtkImageData New]
             $bgDummyNode SetAndObserveImageData $bgDummyData
@@ -409,7 +412,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Check if outputAtlasNode is defined
         set bgAtlasNode [$mrmlManager GetAlignedSpatialPriorFromTreeNodeID $treeID]
-        if { $bgAtlasNode == ""  } {
+        if { $bgAtlasNode == "" } {
             # We need to create the node
             set outputAtlasNode [$mrmlManager GetAtlasAlignedNode]
             set outputAtlasVolumeNode [$outputAtlasNode GetNthVolumeNode 0]
@@ -417,13 +420,13 @@ namespace eval EMSegmenterPreProcessingTcl {
             # This should not be done here but in MRML Manager - Kilian change it later once it works
         }
 
-        # Make sure all the output allso point to the same volume
+        # Make sure all the output also point to the same volume
         foreach bgID $bgList {
             set treeNode [$mrmlManager GetTreeNode $bgID]
             $outputAtlasNode AddVolume [$treeNode GetID] [$bgAtlasNode GetID]
         }
 
-        $LOGIC PrintText "TCLCT: Creating BG Atlas Volume Node  [$bgAtlasNode   GetName]"
+        $LOGIC PrintText "TCLCT: Creating BG Atlas Volume Node [$bgAtlasNode GetName]"
 
         # Check if output Data is defined
         set bgAtlasData [$bgAtlasNode GetImageData]
@@ -455,7 +458,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             }
 
             # no spatial prior defined
-            set leafAtlasNode [ $mrmlManager GetAlignedSpatialPriorFromTreeNodeID $ID]
+            set leafAtlasNode [$mrmlManager GetAlignedSpatialPriorFromTreeNodeID $ID]
             if { $leafAtlasNode == "" }   {
                 continue
             }
