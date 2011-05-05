@@ -28,8 +28,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   
 #include <vtkEMSegment.h> 
 #include "vtkImageMultipleInputFilter.h"
-#include "assert.h"
-
+#include <vtkstd/vector> 
 
 // Modes of operating this filter
 // Probabilities are turned into LogOdds
@@ -49,6 +48,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define LOGODDS_INSIDE_POSTIVE 1
 #define LOGODDS_INSIDE_NEGATIVE -1
  
+typedef std::vector<int> labelListType;
 
 class VTK_EMSEGMENT_EXPORT vtkImageLogOdds : public vtkImageMultipleInputFilter
 {
@@ -64,18 +64,18 @@ class VTK_EMSEGMENT_EXPORT vtkImageLogOdds : public vtkImageMultipleInputFilter
   void SetDimProbSpace(int init);
 
   // Only use when input is defined through probabilities (Mode = Prob2Log)
-  void SetProbabilities(int index, vtkImageData *image) {assert(this->Mode ==  LOGODDS_PROB2LOG); this->SetInput(index,image);}
+  void SetProbabilities(int index, vtkImageData *image);
   // Only use when input is defined through LogOdds (Mode = Log2Prob, LorNorm, Log2Map)
-  void SetLogOdds(int index, vtkImageData *image)       {assert(this->Mode > LOGODDS_PROB2LOG);  this->SetInput(index,image);}
+  void SetLogOdds(int index, vtkImageData *image);
 
   // See earlier explanations about different modes 
-  void SetMode_Log2Prob() {assert(!this->Mode); this->Mode = LOGODDS_LOG2PROB;}
-  void SetMode_Prob2Log() {assert(!this->Mode); this->Mode = LOGODDS_PROB2LOG;}
-  void SetMode_LogNorm()  {assert(!this->Mode); this->Mode = LOGODDS_LOGNORM;}
-  void SetMode_Log2Map()  {assert(!this->Mode); this->Mode = LOGODDS_LOG2MAP;}
+  void SetMode_Log2Prob();
+  void SetMode_Prob2Log();
+  void SetMode_LogNorm();
+  void SetMode_Log2Map();
 
   // Anything voxel with MaxProb MinProb is assigned in the label map to the background ! 
-  void SetMapMinProb(float init) {assert(this->Mode == LOGODDS_LOG2MAP); this->MapMinProb = init;}
+  void SetMapMinProb(float init);
 
   vtkGetMacro(Mode,int);
 
@@ -97,17 +97,21 @@ class VTK_EMSEGMENT_EXPORT vtkImageLogOdds : public vtkImageMultipleInputFilter
   // where my distance maps define inside by positive values 
   void SetLogOddsInsidePositive() {this->LogOddsType = LOGODDS_INSIDE_POSTIVE;};
   void SetLogOddsInsideNegative() {this->LogOddsType = LOGODDS_INSIDE_NEGATIVE;};
+
+
+  void SetLabelList(labelListType initList) {this->LabelList = initList;}
  
 protected:
   vtkImageLogOdds();
   vtkImageLogOdds(const vtkImageLogOdds&) {};
-  ~vtkImageLogOdds(){ }; 
+  ~vtkImageLogOdds(); 
  
   int CheckInput(vtkImageData *InData);
 
-  vtkImageData** InitializeOutputs();
+  void InitializeOutputs();
 
-  vtkImageData** GetOutputs() {return (vtkImageData **) this->Outputs;}
+  // Noy a valid function anymore 
+  // vtkImageData** GetOutputs() {return (vtkImageData **) this->Outputs;}
 
   vtkImageData* GetOutput(int index);
 
@@ -117,7 +121,7 @@ protected:
   void operator=(const vtkImageLogOdds&) {};
   void ExecuteData(vtkDataObject *);   
 
-  void ThreadedExecute(vtkImageData **inData, vtkImageData *outData,int outExt[6], int id) {assert(0);} 
+  void ThreadedExecute(vtkImageData **inData, vtkImageData *outData,int outExt[6], int id);
 
   // -------------------------------
   // Core Functions
@@ -133,6 +137,10 @@ protected:
 
   // LogOdds -> Map : label of LogOdds map is shifted by one (e.g. input 0 => label 1) BG is assigned to 0 !
    void LogOddsMap(float **inptr, short **outptr);
+
+//BTX
+  std::vector<vtkImageData*> results;
+//ETX
 
   // -------------------------------
   // Dimension of probability space
@@ -152,6 +160,10 @@ protected:
   float MapMinProb;
   float Alpha;
   int LogOddsType;
+  //BTX
+  
+  labelListType LabelList;
+  //ETX
 };
 #endif
 

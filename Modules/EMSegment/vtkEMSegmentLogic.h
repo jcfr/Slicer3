@@ -282,6 +282,8 @@ private:
 
   vtkSlicerCommonInterface *SlicerCommonInterface;
 
+  void WriteImage(vtkImageData* file , const char* filename);
+
 };
 
 #endif

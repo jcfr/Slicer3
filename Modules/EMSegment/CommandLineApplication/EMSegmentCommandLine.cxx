@@ -354,7 +354,7 @@ int main(int argc, char** argv)
         }
       catch (...)
         {
-          throw std::runtime_error("ERROR: failed to run preprocessing/segmentation.");
+          throw std::runtime_error("ERROR: failed to run preprocessing,segmentation, or postprocessing.");
         }
 
       //

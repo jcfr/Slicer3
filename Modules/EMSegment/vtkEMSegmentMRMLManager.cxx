@@ -296,7 +296,7 @@ GetTreeNodeParentNodeID(vtkIdType childNodeID)
   vtkMRMLEMSTreeNode* parentNode = childNode->GetParentNode();
   if (parentNode == NULL)
     {
-    vtkErrorMacro("Child's parent node is null for nodeID: " << childNodeID);
+      vtkErrorMacro("Child's parent node is null for nodeID: " << childNodeID << " and Name: " << childNode->GetName());
     return ERROR_NODE_VTKID;
     }
   else

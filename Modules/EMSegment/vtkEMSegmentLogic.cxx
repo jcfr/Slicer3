@@ -24,9 +24,11 @@
 #include "vtkMultiThreader.h"
 #include "vtkImageThreshold.h"
 #include "vtkImageMathematics.h"
-
-
-
+#include "vtkImageAppend.h"
+#include "vtkImageClip.h"
+#include "vtkImageTranslateExtent.h"
+#include "vtkITKImageWriter.h" 
+#include "vtkImageEllipsoidSource.h"
 // A helper class to compare two maps
 template <class T>
 class MapCompare
@@ -779,6 +781,11 @@ CopyDataToSegmenter(vtkImageEMLocalSegmenter* segmenter)
   this->CopyTreeDataToSegmenter(rootNode, 
                                 this->MRMLManager->GetTreeRootNodeID());
   segmenter->SetHeadClass(rootNode);
+
+  //cout << "====  vtkEMSegmentLogic::CopyDataToSegmenter: Print out  entire tree " << endl;
+  // vtkIndent indent;
+  // rootNode->PrintSelf(cout , indent);
+
   rootNode->Delete();
 }
 
@@ -1013,15 +1020,18 @@ CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericClass* node,
                                                                i), i);
     }
 
-  if ( this->GetMRMLManager()->GetGlobalParametersNode()->GetAMFSmoothing() && (this->GetMRMLManager()->GetTreeNodeParentNodeID(nodeID) == this->GetMRMLManager()->GetTreeRootNodeID()))
+  if ( this->GetMRMLManager()->GetGlobalParametersNode()->GetAMFSmoothing() 
+       && (nodeID != this->GetMRMLManager()->GetTreeRootNodeID())
+       && ( this->GetMRMLManager()->GetTreeNodeParentNodeID(nodeID) == this->GetMRMLManager()->GetTreeRootNodeID() ) )
     {
+      // Set up posterior image data ! 
       if (!node->GetPosteriorImageData())
-    {
+      {
           vtkImageData* imgData =  vtkImageData::New();
           node->SetPosteriorImageData(imgData);
-    }
-      vtkIndent indent;
-        node->GetPosteriorImageData()->PrintSelf(cout,indent);
+          imgData->Delete();
+      }
+      
     }
   
   //
@@ -1102,7 +1112,6 @@ CopyTreeParentDataToSegmenter(vtkImageEMLocalSuperClass* node,
   // New in 3.6. : Alpha now reflects user interface and is now correctly set for each parent node
   // cout << "Alpha setting for " << this->MRMLManager->GetTreeNodeName(nodeID) << " " << this->MRMLManager->GetTreeNodeAlpha(nodeID) << endl;
   node->SetAlpha(this->MRMLManager->GetTreeNodeAlpha(nodeID)); 
-  vtkIndent indent;
 
   // Set Markov matrices
   // this should already be set correctly 
@@ -1138,12 +1147,6 @@ CopyTreeParentDataToSegmenter(vtkImageEMLocalSuperClass* node,
         }
       }
     }
-
-
-  node->PrintSelf(cout , indent);
-
-                      
-
 }
 
 //-----------------------------------------------------------------------------
@@ -2885,99 +2888,184 @@ void vtkEMSegmentLogic::CreateDefaultTasksList(std::vector<std::string> & Defaul
 //-----------------------------------------------------------------------------
 int vtkEMSegmentLogic::ActiveMeanField(vtkImageEMLocalSegmenter* segmenter, vtkImageData* result) {
     vtkIdType rootID = this->GetMRMLManager()->GetTreeRootNodeID();
+
     unsigned int numChildren = this->MRMLManager->GetTreeNodeNumberOfChildren(rootID);
+    unsigned int probDim = numChildren +1;
+    int numCurves = int(probDim)-1;
+
+
     vtkImageEMLocalSuperClass* rootNode =   segmenter->GetHeadClass();
 
     //
     // Turn Probabilities into LogOdds
     //
+
     vtkImageLogOdds* logOdds = vtkImageLogOdds::New();
-    logOdds->SetDimProbSpace(numChildren);
     logOdds->SetMode_Prob2Log() ;
+    logOdds->SetDimProbSpace(probDim);
     logOdds->SetLogOddsInsidePositive(); 
 
+    // Background  - dummy map - necessary so that real background pushes against foreground
+    vtkImageEllipsoidSource* bgProbability = vtkImageEllipsoidSource::New();
+    bgProbability->SetCenter(0, 0, 0); 
+    bgProbability->SetRadius(1, 1, 1); 
+    bgProbability->SetOutValue(0);
+    bgProbability->SetInValue(0);
+    bgProbability->SetOutputScalarTypeToFloat();
+
+    labelListType  labelList(probDim) ;
     for (unsigned int i = 0; i < numChildren; i++)
     {
         vtkImageEMLocalGenericClass* classNode =   (vtkImageEMLocalGenericClass*)   rootNode->GetClassListEntry(i);
-        if (!classNode || classNode->GetPosteriorImageData())
+        if (!classNode || !classNode->GetPosteriorImageData())
         {
            std::stringstream convert;
-       convert << i ;
-       ErrorMsg =  convert.str() +  "th class noide is NULL or no posterior defined -> could not proceed with postprocessing" ;
-       vtkErrorMacro( <<ErrorMsg );
+           convert << i ;
+           ErrorMsg =  convert.str() +  "th class node is NULL or no posterior defined -> could not proceed with postprocessing" ;
+           vtkErrorMacro( <<ErrorMsg );
            return EXIT_FAILURE;
         }
-
-        if (i) 
-          {
-        logOdds->SetProbabilities(i -1,classNode->GetPosteriorImageData()) ;
-      } 
-        else 
+        logOdds->SetProbabilities(i ,classNode->GetPosteriorImageData()) ;
+        
+        vtkIdType ID =  this->MRMLManager->GetTreeNodeChildNodeID(rootID,i);
+        if ( this->MRMLManager->GetTreeNodeIsLeaf(ID) )
       {
-            // Remember always to assigne the background to the last class !
-        logOdds->SetProbabilities(numChildren -1,classNode->GetPosteriorImageData()) ;
+            labelList[i] =   this->GetMRMLManager()->GetTreeNodeIntensityLabel(ID);
+      }
+    else 
+      {
+            labelList[i] = 0;
+      }
+     if (!i)
+      {
+        bgProbability->SetWholeExtent(classNode->GetPosteriorImageData()->GetExtent());
+             bgProbability->Update();
+             logOdds->SetProbabilities( numChildren, bgProbability->GetOutput());
+         labelList[numChildren]=0;
       }
     }
+
     logOdds->Update();
 
     //
     // Set up  AMF 
     //
-    int numCurves = numChildren-1;
-    vtkImageMultiLevelSets* aMF = vtkImageMultiLevelSets::New();
-    aMF->SetMultiLevelVersion(0);
-    aMF->SetNumberOfCurves(numCurves);
-    aMF->SetprobCondWeightMin(0.05);
-    aMF->SetLogCondIntensityInsideBright();
 
-    // Did not change spacing
-    //        Volume(curve,$ID,resLevel,vol) SetSpacing 1 1 1
+    int* extent =  logOdds->GetLogOdds(0) ->GetExtent();
+    int numSlices = extent[5] - extent[4] +1;
+
+     vtkImageMultiLevelSets* aMF = vtkImageMultiLevelSets::New();
+        aMF->SetMultiLevelVersion(0);
+        aMF->SetNumberOfCurves(numCurves);
+        aMF->SetprobCondWeightMin(0.05);
+        aMF->SetLogCondIntensityInsideBright();
+
+    typedef std::vector<vtkImageTranslateExtent *> logOddsShiftExtentType;
+    logOddsShiftExtentType logOddsInShiftExtent(numCurves);
+
+    typedef std::vector<vtkImageClip*> logOddsSliceType;
+    logOddsSliceType   logOddsInSlice(numCurves);
 
     typedef std::vector<vtkImageLevelSets*> levelsetCurvesInputType;
     levelsetCurvesInputType  levelSetInCurves(numCurves);
 
-    typedef std::vector<vtkImageData*> levelsetCurvesOutputType;
-    levelsetCurvesOutputType  levelSetOutCurves(numCurves);
+    typedef std::vector<std::vector<vtkImageData*> > levelsetCurvesOutputType;
+    levelsetCurvesOutputType  levelSetOutCurves;
+    levelSetOutCurves.resize(numCurves);
     
-    for (int i = 0 ;  i < numCurves ; i++ )
+    typedef std::vector<vtkImageAppend*> logOddsVolumeType;
+    logOddsVolumeType  logOddsOutVolume(numCurves);
+
+     // Just do 2D for Cardiology    
+     for (int i = 0 ;  i < numCurves ; i++ )
+        {
+
+        logOddsInSlice[i] = vtkImageClip::New();
+            logOddsInSlice[i]->SetInput(logOdds->GetLogOdds(i));
+            logOddsInSlice[i]->ClipDataOn();
+
+        logOddsInShiftExtent[i] = vtkImageTranslateExtent::New();
+            logOddsInShiftExtent[i]->SetInput(logOddsInSlice[i]->GetOutput());
+
+            levelSetInCurves[i] =  vtkImageLevelSets::New();
+ 
+            levelSetOutCurves[i].resize(numSlices);
+            for (int j = 0 ;  j < numSlices ; j++ )
+          {
+                 levelSetOutCurves[i][j] =  vtkImageData::New();
+          }
+            logOddsOutVolume[i] = vtkImageAppend::New();
+            logOddsOutVolume[i]->SetAppendAxis(2);
+    }
+
+    vtkIdType matrixIndex = 0;
+    for (vtkIdType sli = extent[4] ; sli <= extent[5]; sli++)
       {
-        levelSetInCurves[i] =  vtkImageLevelSets::New();
-    this->InitializeLevelSet(levelSetInCurves[i], logOdds->GetLogOdds(i));
-        levelSetOutCurves[i] =  vtkImageData::New();
-        aMF->SetCurve(i, levelSetInCurves[i],  logOdds->GetLogOdds(i),  logOdds->GetLogOdds(i) ,0.001, 0.001,   levelSetOutCurves[i]);
+      //   for (int i = 6 ;  i < 6 ; i++ )
+
+        for (int i = 0 ;  i < numCurves ; i++ )
+        {
+      logOddsInSlice[i]->SetOutputWholeExtent(extent[0],extent[1],extent[2],extent[3], sli,sli);
+            logOddsInSlice[i]->Update();
+          logOddsInShiftExtent[i]->SetTranslation(0,0,-sli);
+            logOddsInShiftExtent[i]->Update();
+
+            this->InitializeLevelSet(levelSetInCurves[i],  logOddsInShiftExtent [i]->GetOutput()); 
+            aMF->SetCurve(i, levelSetInCurves[i],   logOddsInShiftExtent[i]->GetOutput(),  logOddsInShiftExtent[i]->GetOutput() ,0.001, 0.001,   levelSetOutCurves[i][matrixIndex]);
+    }
+         // Did not change spacing
+         //        Volume(curve,$ID,resLevel,vol) SetSpacing 1 1 1
+        aMF->InitParam();
+        aMF->InitEvolution();
+  
+        //
+        // Start AMF
+        //
+        cout << "\n=== Evolve Curves ===\n" ; 
+        cout << "Completed: ";
+        for (int i = 0; i < 301; i++)
+         {
+           aMF->Iterate();
+           if (!(i % 300) && i) {
+         printf("%3d", i/3 );
+             cout << "%";
+             cout.flush();
+            } 
+         }
+
+         cout <<  "\n=== Completed Curve Evolution" << endl;
+  
+         // Will create leaks but was not called before either in the LevelSetSegmenterFct.tcl 
+         // aMF->EndEvolution();
+         
+        for (int i = 0 ;  i < numCurves ; i++ )
+        {
+        logOddsOutVolume[i]->AddInput(levelSetOutCurves[i][matrixIndex]);
+    }
+        matrixIndex  ++;
       }
 
-    aMF->InitParam();
-    aMF->InitEvolution();
-
-    //
-    // Start AMF
-    //
-    cout << "\n=== Evolve Curves ===\n" ; 
-
-     for (int i = 0; i < 300; i++)
-    {
-           aMF->Iterate();
-           if (!(i % 30)) {
-             cout << "Completed: " << i/3  << endl; 
-       } 
-    }
-     cout <<  "\n=== Completed Curve Evolution" << endl;
-    
     //
     // Copy resulting Segmentation to result 
     //
 
      vtkImageLogOdds* outcomeProb = vtkImageLogOdds::New();
      outcomeProb->SetMode_Log2Map(); 
+     outcomeProb->SetLabelList(labelList);
+
      outcomeProb->SetMapMinProb(0.01);
      outcomeProb->SetLogOddsInsideNegative();
-     outcomeProb->SetDimProbSpace(numChildren);
+     outcomeProb->SetDimProbSpace(probDim);
      for (int i = 0;  i < numCurves; i++) { 
-         outcomeProb->SetLogOdds(i, levelSetOutCurves[i]); 
+       logOddsOutVolume[i]->Update();
+       outcomeProb->SetLogOdds(i,  logOddsOutVolume[i]->GetOutput());
       }
     outcomeProb->Update();
     result->DeepCopy( outcomeProb->GetMap());
+
+    //         vtkstd::stringstream filename;
+    //         filename << "/tmp/log_sli_" << i <<  "_" << sli ; 
+    //         this->WriteImage(logOddsInSlice[i]->GetOutput(),filename.str().c_str());
 
      // 
     // Clean up 
@@ -2987,13 +3075,28 @@ int vtkEMSegmentLogic::ActiveMeanField(vtkImageEMLocalSegmenter* segmenter, vtkI
 
     for (int i = 0 ;  i < numCurves ; i++ )
       {
-    levelSetInCurves[i]->Delete();
-    levelSetInCurves[i] = NULL;
 
-    levelSetOutCurves[i]->Delete();
-    levelSetOutCurves[i] = NULL;
+    logOddsOutVolume[i] ->Delete();
+ 
+        for (int j = 0 ;  j < numSlices ; j++ )
+      {
+            levelSetOutCurves[i][j]->Delete();
       }
+       levelSetOutCurves[i].clear();
+
+          levelSetInCurves[i]->Delete();
+         
+          logOddsInSlice[i]->Delete();
+          logOddsInShiftExtent[i]->Delete();
+      }
+    logOddsOutVolume.clear(); 
+    levelSetOutCurves.clear();
+    levelSetInCurves.clear();
+    logOddsInSlice.clear();
+    logOddsInShiftExtent.clear();
+
     aMF->Delete();
+    bgProbability->Delete();
     logOdds->Delete();  
 
     // Set ImageData to null 
@@ -3032,7 +3135,7 @@ void  vtkEMSegmentLogic::InitializeLevelSet( vtkImageLevelSets*  levelset , vtkI
   levelset->SetBand(200);
   levelset->SetTube(199);
   levelset->SetReinitFreq(6);
-  levelset->SetDimension(3);
+  levelset->SetDimension( 2+ (initVolume->GetDimensions()[2] > 1) );
   levelset->SetHistoGradThreshold(0.2); 
   levelset->Setadvection_scheme(2);
   levelset->SetDMmethod(4);
@@ -3048,4 +3151,19 @@ void  vtkEMSegmentLogic::InitializeLevelSet( vtkImageLevelSets*  levelset , vtkI
   levelset->SetLogCondIntensityInsideBright();
   levelset->SetprobCondWeightMin(0.05);
   levelset->Setverbose(0);
+}
+
+void vtkEMSegmentLogic::WriteImage(vtkImageData* Volume , const char* FileName)
+{
+   std::string  name =  std::string (FileName) +  std::string(".nhdr");
+    std::cout << "Write to file " <<   name.c_str() << endl;
+   vtkITKImageWriter*  export_iwriter =  vtkITKImageWriter::New();
+   export_iwriter->SetInput(Volume);
+   export_iwriter->SetFileName(name.c_str());
+   vtkMatrix4x4* mat = vtkMatrix4x4::New();
+   export_iwriter->SetRasToIJKMatrix(mat);
+   export_iwriter->SetUseCompression(1);
+   export_iwriter->Write();
+   mat->Delete();
+   export_iwriter->Delete();
 }

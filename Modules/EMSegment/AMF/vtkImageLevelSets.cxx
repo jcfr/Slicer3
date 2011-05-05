@@ -1748,7 +1748,7 @@ void vtkImageLevelSets::InitParam( vtkImageData* input, vtkImageData* output)
     if (tz==1) {
       Dimension = 2;
       SliceNum  = 0;
-      fprintf(stderr,"vtkImageLevelSets::InitParam: Run 2D Curve Evolution \n");
+      // fprintf(stderr,"vtkImageLevelSets::InitParam: Run 2D Curve Evolution \n");
     }
 
     // Kilian does not work for 2 slices 
@@ -3116,7 +3116,7 @@ void vtkImageLevelSets::InitEvolution()
        // Initializing level set through initImage
        // 
  
-       fprintf(stderr,"vtkImageLevelSets::InitEvolution: Copy the initial image !! \n");
+       // fprintf(stderr,"vtkImageLevelSets::InitEvolution: Copy the initial image !! \n");
        outputImage->CopyAndCastFrom(initImage,initImage->GetExtent());
        outPtr = (float*) outputImage->GetScalarPointer();
        for (i=0; i<imsize; i++) {
