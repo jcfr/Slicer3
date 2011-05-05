@@ -1314,17 +1314,17 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set inputAtlasNode [$mrmlManager GetAtlasInputNode]
         if { $inputAtlasNode == "" } {
-              PrintError "AtlasCreator: No AtlasInput Node defined "
+            PrintError "AtlasCreator: No AtlasInput Node defined"
             return
-    }
-       $inputAtlasNode SetNumberOfTrainingSamples $normalizeTo
+        }
+        $inputAtlasNode SetNumberOfTrainingSamples $normalizeTo
 
         set alignedAtlasNode [$mrmlManager GetAtlasAlignedNode]
         if { $alignedAtlasNode == "" } {
-             set alignedAtlasNode [$mrmlManager CloneAtlasNode $inputAtlasNode "AtlasCreatorOutput"]
+            set alignedAtlasNode [$mrmlManager CloneAtlasNode $inputAtlasNode "AtlasCreatorOutput"]
             $alignedAtlasNode SetNumberOfTrainingSamples $normalizeTo
             $workingDN SetReferenceAlignedAtlasNodeID [$alignedAtlasNode GetID]
-        } 
+        }
 
         $alignedAtlasNode RemoveAllNodes
 
@@ -1345,16 +1345,17 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # Check if  node is defined - if not create a place holder
             set tmpSpatialProprID [$mrmlManager GetTreeNodeSpatialPriorVolumeID $ID]
+            set ERROR_NODE_VTKID 0
             if { $tmpSpatialProprID == $ERROR_NODE_VTKID } {
-                set tmpSpatialProprID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_Place Holder" ]
+                set tmpSpatialProprID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_Place Holder"]
                 $mrmlManager SetTreeNodeSpatialPriorVolumeID $ID $tmpSpatialProprID
-        }
-   
-            # Always create atlas node 
-            set alignedAtlasVolumeID [$mrmlManager  CreateVolumeScalarNodeVolumeID $targetVolumeNode  "atlas${tmpName}_AC"]
-            $mrmlManager  SetAlignedSpatialPrior $ID  $alignedAtlasVolumeID
-            set  alignedAtlasVolumeNode [ $mrmlManager   GetAlignedSpatialPriorFromTreeNodeID $alignedAtlasVolumeID ]
-    
+            }
+
+            # Always create atlas node
+            set alignedAtlasVolumeID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_AC"]
+            $mrmlManager SetAlignedSpatialPrior $ID $alignedAtlasVolumeID
+            set alignedAtlasVolumeNode [$mrmlManager GetAlignedSpatialPriorFromTreeNodeID $alignedAtlasVolumeID]
+
             # for this particular label search for the corressponding atlas file
             set alignedAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel.nrrd
             ReadDataFromDisk $alignedAtlasVolumeNode $alignedAtlasVolumeFileName Volume
@@ -1365,7 +1366,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "DEBUG: $alignedAtlasNode [$SCENE GetNodeByID [$alignedAtlasNode GetID]] [$alignedAtlasNode GetID]"
         $LOGIC PrintText "TCL: GetInputTargetNode:  [[$mrmlManager GetWorkingDataNode] GetInputTargetNode]"
         $LOGIC PrintText "TCL: GetAlignedAtlasNode: [[$mrmlManager GetWorkingDataNode] GetAlignedAtlasNode]"
-         $workingDN SetAlignedAtlasNodeIsValid 1
+        $workingDN SetAlignedAtlasNodeIsValid 1
 
         return 0
     }
@@ -1684,10 +1685,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set CMD "$CMD --useRigid --useScaleSkewVersor3D --useAffine"
         if { $deformableType != 0 } {
-          set CMD "$CMD --useBSpline"
-          set CMD "$CMD --splineGridSize 6,6,6"
-          set CMD "$CMD --maxBSplineDisplacement 0"
-          set CMD "$CMD --useCachingOfBSplineWeightsMode ON"
+            set CMD "$CMD --useBSpline"
+            set CMD "$CMD --splineGridSize 6,6,6"
+            set CMD "$CMD --maxBSplineDisplacement 0"
+            set CMD "$CMD --useCachingOfBSplineWeightsMode ON"
         }
         set CMD "$CMD --initializeTransformMode useCenterOfHeadAlign"
         set CMD "$CMD --minimumStepLength 0.005"
