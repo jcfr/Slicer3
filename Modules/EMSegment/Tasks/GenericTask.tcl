@@ -46,6 +46,8 @@ namespace eval EMSegmenterPreProcessingTcl {
     # spatial priors aligned to target node
     variable outputAtlasNode
 
+    variable ERROR_NODE_VTKID 0
+
     variable inputSubParcellationNode
     variable outputSubParcellationNode
 
@@ -1170,6 +1172,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable outputAtlasNode
         variable mrmlManager
         variable workingDN
+        variable ERROR_NODE_VTKID
 
         #variable SCENE
         #set SCENE [$::slicer3::Application GetMRMLScene]
@@ -1343,20 +1346,28 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             $LOGIC PrintText "TCL: $tmpName ($ID) has label $tmpIntensityLabel"
 
-            # Check if  node is defined - if not create a place holder
-            set tmpSpatialProprID [$mrmlManager GetTreeNodeSpatialPriorVolumeID $ID]
-            set ERROR_NODE_VTKID 0
-            if { $tmpSpatialProprID == $ERROR_NODE_VTKID } {
-                set tmpSpatialProprID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_Place Holder"]
-                $mrmlManager SetTreeNodeSpatialPriorVolumeID $ID $tmpSpatialProprID
+            # Check if node is defined - if not create a place holder
+            set tmpSpatialPriorID [$mrmlManager GetTreeNodeSpatialPriorVolumeID $ID]
+            $LOGIC PrintText "TCL: tmpSpatialPriorID: $tmpSpatialPriorID"
+            if { $tmpSpatialPriorID == $ERROR_NODE_VTKID } {
+                $LOGIC PrintText "TCL: Prior doesn't exists, create a place holder..."
+                set tmpSpatialPriorID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_Place Holder"]
+                $mrmlManager SetTreeNodeSpatialPriorVolumeID $ID $tmpSpatialPriorID
+                $LOGIC PrintText "TCL: ...DONE"
             }
 
             # Always create atlas node
+            $LOGIC PrintText "TCL: CreateVolumeScalarNodeVolumeID $targetVolumeNode atlas${tmpName}_AC"
             set alignedAtlasVolumeID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_AC"]
+
+            $LOGIC PrintText "TCL: SetAlignedSpatialPrior $ID $alignedAtlasVolumeID"
             $mrmlManager SetAlignedSpatialPrior $ID $alignedAtlasVolumeID
+
+            $LOGIC PrintText "TCL: GetAlignedSpatialPriorFromTreeNodeID $alignedAtlasVolumeID"
             set alignedAtlasVolumeNode [$mrmlManager GetAlignedSpatialPriorFromTreeNodeID $alignedAtlasVolumeID]
 
             # for this particular label search for the corressponding atlas file
+            $LOGIC PrintText "TCL: read in atlas file $outputDir/atlas$tmpIntensityLabel.nrrd"
             set alignedAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel.nrrd
             ReadDataFromDisk $alignedAtlasVolumeNode $alignedAtlasVolumeFileName Volume
             #file delete -force $alignedAtlasVolumeFileName

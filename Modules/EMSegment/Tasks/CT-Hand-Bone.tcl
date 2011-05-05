@@ -36,7 +36,6 @@ namespace eval EMSegmenterPreProcessingTcl {
     # Text Entry
     # not defined for this task
 
-    set ERROR_NODE_VTKID 0
     #
     # OVERWRITE DEFAULT
     #
@@ -373,6 +372,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable inputAtlasNode
         variable mrmlManager
         variable LOGIC
+        variable ERROR_NODE_VTKID
 
         # All nodes that are not parent classes are assigned to background
 
