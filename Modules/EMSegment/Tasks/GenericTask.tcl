@@ -196,7 +196,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     # vtkMRMLVolumeNode *volumeNode, const char *name
     proc CreateVolumeNode { volumeNode name } {
         variable mrmlManager
-        return [$mrmlManager  CreateVolumeNode $volumeNode "$name"]
+        return [$mrmlManager CreateVolumeScalarNode $volumeNode "$name"]
     }
 
     proc PrintError { TEXT } {
