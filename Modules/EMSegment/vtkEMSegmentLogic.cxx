@@ -3026,7 +3026,7 @@ int vtkEMSegmentLogic::ActiveMeanField(vtkImageEMLocalSegmenter* segmenter, vtkI
         for (int i = 0; i < 301; i++)
          {
            aMF->Iterate();
-           if (!(i % 300) && i) {
+           if (!(i % 30) && i) {
          printf("%3d", i/3 );
              cout << "%";
              cout.flush();

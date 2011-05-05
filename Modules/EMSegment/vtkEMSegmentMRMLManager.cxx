@@ -23,7 +23,7 @@
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkSlicerColorLogic.h"
 #include "vtkMRMLLabelMapVolumeDisplayNode.h"
-
+#include "vtkMRMLScalarVolumeNode.h"
 // needed to translate between enums
 #include "EMLocalInterface.h"
 #include <math.h>
@@ -36,6 +36,7 @@
 // For legacy 
 #include "vtkMRMLEMSNode.h"
 #include "vtkMRMLEMSSegmenterNode.h"
+
 
 //----------------------------------------------------------------------------
 vtkEMSegmentMRMLManager* vtkEMSegmentMRMLManager::New()
@@ -5114,10 +5115,12 @@ SetTreeNodeInteractionMatrices2DFlag(vtkIdType nodeID, int flag)
   n->GetParentParametersNode()->SetMFA2DFlag(flag);
 }
 
-
+//----------------------------------------------------------------------------
 void vtkEMSegmentMRMLManager::PrintWeightOnForEntireTree() {
   this->PrintWeightOnForTree(this->GetTreeRootNodeID());
 }
+
+//----------------------------------------------------------------------------
 
 void vtkEMSegmentMRMLManager::PrintWeightOnForTree(vtkIdType rootID) {  
   unsigned int numChildren =   this->GetTreeNodeNumberOfChildren(rootID);
@@ -5133,3 +5136,36 @@ void vtkEMSegmentMRMLManager::PrintWeightOnForTree(vtkIdType rootID) {
       }
     }
 }
+
+//----------------------------------------------------------------------------
+vtkMRMLScalarVolumeNode*  vtkEMSegmentMRMLManager::CreateVolumeScalarNode(vtkMRMLScalarVolumeNode*  referenceNode , const char *name)
+{
+     vtkMRMLScalarVolumeNode *clonedVolumeNode = vtkMRMLScalarVolumeNode::New();
+     clonedVolumeNode->CopyWithScene(referenceNode);
+     clonedVolumeNode->SetAndObserveStorageNodeID(NULL);
+     clonedVolumeNode->SetName(name);
+
+     vtkMRMLScalarVolumeDisplayNode* clonedDisplayNode =  vtkMRMLScalarVolumeDisplayNode::New();
+     clonedDisplayNode->CopyWithScene(referenceNode->GetDisplayNode());
+     this->MRMLScene->AddNode(clonedDisplayNode);
+     clonedVolumeNode->SetAndObserveDisplayNodeID(clonedDisplayNode->GetID());
+     clonedDisplayNode->Delete();
+
+     vtkImageData* volumeData =  vtkImageData::New();
+     clonedVolumeNode->SetAndObserveImageData(volumeData);
+     volumeData->Delete();
+
+     // add the cloned volume to the scene
+     this->MRMLScene->AddNode(clonedVolumeNode);
+
+     const char* volID = clonedVolumeNode->GetID();
+     clonedVolumeNode->Delete();
+     return  vtkMRMLScalarVolumeNode::SafeDownCast(this->MRMLScene->GetNodeByID(volID));
+}
+
+vtkIdType vtkEMSegmentMRMLManager::CreateVolumeScalarNodeVolumeID(vtkMRMLScalarVolumeNode*  referenceNode , const char *name)
+{
+    vtkMRMLScalarVolumeNode* node = this->CreateVolumeScalarNode(referenceNode, name);
+    return this->MapMRMLNodeIDToVTKNodeID(node->GetID());
+}
+

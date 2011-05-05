@@ -195,41 +195,8 @@ namespace eval EMSegmenterPreProcessingTcl {
     # TODO: ChangeName of this function, its doing more than only creating a volume node
     # vtkMRMLVolumeNode *volumeNode, const char *name
     proc CreateVolumeNode { volumeNode name } {
-        variable SCENE
         variable mrmlManager
-        if {$volumeNode == ""} { return "" }
-        # clone the display node
-        set clonedDisplayNode [vtkMRMLScalarVolumeDisplayNode New]
-        $clonedDisplayNode CopyWithScene [$volumeNode GetDisplayNode]
-        $SCENE AddNode $clonedDisplayNode
-        set dispID [$clonedDisplayNode GetID]
-        $clonedDisplayNode Delete
-
-        set clonedVolumeNode [vtkMRMLScalarVolumeNode New]
-        $clonedVolumeNode CopyWithScene $volumeNode
-        # MRML interprets "" as a ID -> can cause issues when trying to do a UpdateScene
-        # If it is not set then it uses the old other storage node - which is not a good idea
-        $mrmlManager SetStorageNodeToNULL $clonedVolumeNode
-        $clonedVolumeNode SetName "$name"
-        $clonedVolumeNode SetAndObserveDisplayNodeID $dispID
-
-        if {0} {
-            # copy over the volume's data
-            $clonedVolumeData [vtkImageData New]
-            $clonedVolumeData DeepCopy [volumeNode GetImageData]
-            $clonedVolumeNode SetAndObserveImageData $clonedVolumeData
-            $clonedVolumeNode SetModifiedSinceRead 1
-            $clonedVolumeData Delete
-        } else {
-            $clonedVolumeNode SetAndObserveImageData ""
-        }
-
-        # add the cloned volume to the scene
-        $SCENE AddNode $clonedVolumeNode
-        set volID [$clonedVolumeNode GetID]
-        $clonedVolumeNode Delete
-        # Have to do it this way bc unlike in c++ the link to $clonedVolumeNode gets deleted
-        return [$SCENE GetNodeByID $volID]
+        return [$mrmlManager  CreateVolumeNode $volumeNode "$name"]
     }
 
     proc PrintError { TEXT } {

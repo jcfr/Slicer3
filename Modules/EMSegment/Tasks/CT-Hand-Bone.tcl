@@ -397,12 +397,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # I do this bc it is easier for debugging
             set inputAtlasNode [$mrmlManager GetAtlasInputNode]
             set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode 0]
-            set bgDummyNode [ CreateVolumeNode $inputAtlasVolumeNode "BGAtlas(Place Holder)" ]
-            # do this as otherwise the program can crash
-            set bgDummyData [vtkImageData New]
-            $bgDummyNode SetAndObserveImageData $bgDummyData
-            $bgDummyData Delete
-            set bgAtlasID [ $mrmlManager MapMRMLNodeIDToVTKNodeID [$bgDummyNode GetID] ]
+            set  bgAtlasID [$mrmlManager CreateVolumeScalarNodeVolumeID $inputAtlasVolumeNode "BGAtlas(Place Holder)" ]
         }
 
         # Assign node to all background classes
@@ -416,8 +411,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # We need to create the node
             set outputAtlasNode [$mrmlManager GetAtlasAlignedNode]
             set outputAtlasVolumeNode [$outputAtlasNode GetNthVolumeNode 0]
-            set bgAtlasNode [CreateVolumeNode $outputAtlasVolumeNode "BGAtlas(Aligned)"]
-            # This should not be done here but in MRML Manager - Kilian change it later once it works
+            set bgAtlasNode [$mrmlManager  CreateVolumeNode $outputAtlasVolumeNode "BGAtlas(Aligned)"]
         }
 
         # Make sure all the output also point to the same volume
