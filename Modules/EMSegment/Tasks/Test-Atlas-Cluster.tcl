@@ -66,9 +66,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         $preGUI DefineTextLabel "This task only applies to non-skull stripped scans! \n\nShould the EMSegmenter " 0
         $preGUI DefineCheckButton "- register the atlas to the input scan ?" 0 $atlasAlignedFlagID
         $preGUI DefineCheckButton "- perform image inhomogeneity correction on input scan ?" 0 $inhomogeneityCorrectionFlagID
-        $preGUI DefineTextEntry "Enter path to images"             "../../" $ac_imagesDirTextID
-        $preGUI DefineTextEntry "Enter path to segmentations"      "../../" $ac_segmentationsDirTextID
-        $preGUI DefineTextEntry "Enter path to output directory"   "../../" $ac_outputDirTextID
+        $preGUI DefineTextEntry "Enter path to images"             "../../" $ac_imagesDirTextID          40
+        $preGUI DefineTextEntry "Enter path to segmentations"      "../../" $ac_segmentationsDirTextID   40
+        $preGUI DefineTextEntry "Enter path to output directory"   "../../" $ac_outputDirTextID          40
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $preGUI SetButtonsFromMRML
@@ -127,17 +127,16 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
         $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
-        set Slicer3_HOME $::env(Slicer3_HOME)
-        AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $alignedTargetNode
-        return 0
+
 
         # -------------------------------------
         # Step 5: Atlas Alignment - you will also have to include the masks
         # Defines $workingDN GetAlignedAtlasNode
-#        if { [RegisterAtlas $atlasAlignedFlag] } {
-#            PrintError "Run: Atlas alignment failed !"
-#            return 1
-#        }
+        set Slicer3_HOME $::env(Slicer3_HOME)
+        if { [AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $alignedTargetNode] } {
+            PrintError "Run: atlas creation failed !"
+            return 1
+        }
 
 
         # -------------------------------------
@@ -195,9 +194,9 @@ namespace eval EMSegmenterSimpleTcl {
 
         $inputChannelGUI DefineTextLabel "Please insure that input scans are not skull stripped" 0
         $inputChannelGUI DefineCheckButton "Perform image inhomogeneity correction on input scans ?" 0 $EMSegmenterPreProcessingTcl::inhomogeneityCorrectionFlagID
-        $inputChannelGUI DefineTextEntry "Enter path to images"             "../../" $EMSegmenterPreProcessingTcl::ac_imagesDirTextID
-        $inputChannelGUI DefineTextEntry "Enter path to segmentations"      "../../" $EMSegmenterPreProcessingTcl::ac_segmentationsDirTextID
-        $inputChannelGUI DefineTextEntry "Enter path to output directory"   "../../" $EMSegmenterPreProcessingTcl::ac_outputDirTextID
+        $inputChannelGUI DefineTextEntry "Enter path to images"             "../../" $EMSegmenterPreProcessingTcl::ac_imagesDirTextID          40
+        $inputChannelGUI DefineTextEntry "Enter path to segmentations"      "../../" $EMSegmenterPreProcessingTcl::ac_segmentationsDirTextID   40
+        $inputChannelGUI DefineTextEntry "Enter path to output directory"   "../../" $EMSegmenterPreProcessingTcl::ac_outputDirTextID          40
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $inputChannelGUI SetButtonsFromMRML
