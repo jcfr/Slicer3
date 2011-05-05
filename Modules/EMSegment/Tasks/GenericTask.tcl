@@ -192,13 +192,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         return [$SCENE GetNodeByID $newVolumeNodeID]
     }
 
-    # TODO: ChangeName of this function, its doing more than only creating a volume node
-    # vtkMRMLVolumeNode *volumeNode, const char *name
-    proc CreateVolumeNode { volumeNode name } {
-        variable mrmlManager
-        return [$mrmlManager CreateVolumeScalarNode $volumeNode "$name"]
-    }
-
     proc PrintError { TEXT } {
         variable LOGIC
         $LOGIC PrintText "TCL: ERROR: EMSegmenterPreProcessingTcl::${TEXT}"
@@ -754,6 +747,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     proc calcDFVolumeNode { inputVolumeNode referenceVolumeNode transformationNode }   {
         variable LOGIC
+        variable mrmlManager
 
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Create deformation field"
@@ -774,10 +768,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set tmpReferenceVolumeFileName [WriteImageDataToTemporaryDir $referenceVolumeNode]
         if { $tmpReferenceVolumeFileName == "" } { return "" }
 
-        set DFNode [CreateVolumeNode $referenceVolumeNode "deformVolume"]
-        set outputVolume [vtkImageData New]
-        $DFNode SetAndObserveImageData $outputVolume
-        $outputVolume Delete
+        set DFNode [$mrmlManager CreateVolumeScalarNode $referenceVolumeNode "deformVolume"]
 
         set deformationFieldFilename [ CreateTemporaryFileNameForNode $DFNode ]
 
@@ -1115,10 +1106,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
             # create a new volume node for our output-list (function is adding the node to the scene)
-            set outputVolumeNode [CreateVolumeNode $inputVolumeNode "[$inputVolumeNode GetName]_stripped"]
-            set outputVolumeData [vtkImageData New]
-            $outputVolumeNode SetAndObserveImageData $outputVolumeData
-            $outputVolumeData Delete
+            set outputVolumeNode [$mrmlManager CreateVolumeScalarNode $inputVolumeNode "[$inputVolumeNode GetName]_stripped"]
 
             # Read results back
             ReadDataFromDisk $outputVolumeNode $outputVolumeFileName Volume
@@ -2154,6 +2142,8 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc RemoveNegativeValues { targetNode } {
         variable LOGIC
         variable SCENE
+        variable mrmlManager
+
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Remove Negative Values "
         $LOGIC PrintText "TCL: =========================================="
@@ -2181,10 +2171,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             $LOGIC PrintText "TCL: Start thresholding target image - start"
 
             # Define output
-            set outputNode [CreateVolumeNode $inputNode "[$inputNode GetName]_pos"]
-            set outputVolume [vtkImageData New]
-            $outputNode SetAndObserveImageData $outputVolume
-            $outputVolume Delete
+            set outputNode [$mrmlManager CreateVolumeScalarNode $inputNode "[$inputNode GetName]_pos"]
 
             # Thresholding
             set thresh [vtkImageThreshold New]
@@ -2232,6 +2219,8 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc N4ITKBiasFieldCorrectionCLI { inputNode inputICCMaskNode } {
         variable SCENE
         variable LOGIC
+        variable mrmlManager
+
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: ==     N4ITKBiasFieldCorrectionCLI      =="
         $LOGIC PrintText "TCL: =========================================="
@@ -2268,10 +2257,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # set CMD "$CMD --maskimag \"$tmpFileName\""
 
             # create a new node for our output-list
-            set outputVolumeNode [CreateVolumeNode $inputVolumeNode "[$inputVolumeNode GetName]_N4corrected"]
-            set outputVolumeData [vtkImageData New]
-            $outputVolumeNode SetAndObserveImageData $outputVolumeData
-            $outputVolumeData Delete
+            set outputVolumeNode [$mrmlManager CreateVolumeScalarNode $inputVolumeNode "[$inputVolumeNode GetName]_N4corrected"]
 
             set outputVolumeFileName [ CreateTemporaryFileNameForNode $outputVolumeNode ]
             $LOGIC PrintText "$outputVolumeFileName"
