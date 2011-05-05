@@ -12,7 +12,6 @@ class vtkKWLabelWithLabel;
 class vtkKWMenuButtonWithLabel;
 class vtkKWEntryWithLabel;
 class vtkKWWidget ;
-class vtkSlicerApplication;
 
 
 // should be a vtkKW widget but for simplicity did it this way 
@@ -43,8 +42,6 @@ public:
   // Description:
   vtkSetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager);
 
-  // void Create( vtkKWWidget *parent, vtkSlicerApplication* initSlicerApp, vtkEMSegmentMRMLManager *initMRMLManager);
-
   void SaveSettingToMRML();
 
   void CreateEntryLists();
@@ -63,7 +60,6 @@ private:
   std::vector<vtkKWCheckButtonWithLabel*> checkButton;
   std::vector<vtkKWLabelWithLabel*> textLabel;
   std::vector<vtkKWEntryWithLabel*> textEntry;
-  vtkSlicerApplication* slicerApp; 
   vtkEMSegmentMRMLManager *MRMLManager;
   //ETX
 };

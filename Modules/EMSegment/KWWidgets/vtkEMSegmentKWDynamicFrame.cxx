@@ -5,12 +5,11 @@
 #include "vtkKWMenuButtonWithLabel.h"
 #include "vtkKWEntryWithLabel.h"
 #include "vtkKWFrameWithLabel.h"
-#include "vtkSlicerApplication.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkEMSegmentMRMLManager.h"
 #include "vtkEMSegmentGUI.h"
 #include "vtkKWMessageDialog.h"
-
+#include "vtkKWApplication.h"
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentKWDynamicFrame);
 vtkCxxRevisionMacro(vtkEMSegmentKWDynamicFrame, "$Revision: 1.0 $");
@@ -23,7 +22,6 @@ vtkEMSegmentKWDynamicFrame::vtkEMSegmentKWDynamicFrame()
   this->volumeMenuButton.clear();
   this->volumeMenuButtonID.clear();
   this->textEntry.clear();
-  this->slicerApp = NULL;
   this->MRMLManager= NULL;
 }
 
@@ -73,7 +71,6 @@ vtkEMSegmentKWDynamicFrame::~vtkEMSegmentKWDynamicFrame()
       }
     this->textEntry.clear();
   }
-  this->slicerApp = NULL;
   this->SetMRMLManager(NULL);
 }
 

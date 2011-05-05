@@ -279,6 +279,7 @@ public:
   virtual vtkIdType GetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID);
   virtual void      SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID, vtkIdType volumeID);
   vtkMRMLVolumeNode* GetAlignedSpatialPriorFromTreeNodeID(vtkIdType nodeID);
+  virtual void SetAlignedSpatialPrior(vtkIdType nodeID, vtkIdType volumeID);
 
   virtual vtkIdType GetTreeNodeSubParcellationVolumeID(vtkIdType nodeID);
   virtual void      SetTreeNodeSubParcellationVolumeID(vtkIdType nodeID, vtkIdType volumeID);

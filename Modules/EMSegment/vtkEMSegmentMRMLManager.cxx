@@ -4659,6 +4659,40 @@ vtkMRMLVolumeNode*  vtkEMSegmentMRMLManager::GetAlignedSpatialPriorFromTreeNodeI
 }
 
 //----------------------------------------------------------------------------
+void  vtkEMSegmentMRMLManager::SetAlignedSpatialPrior(vtkIdType nodeID, vtkIdType volumeID)
+{
+   vtkMRMLEMSAtlasNode* workingAtlas = this->GetWorkingDataNode()->GetAlignedAtlasNode();
+   if (workingAtlas == NULL)
+     {
+        vtkErrorMacro("No aligned atlas defined");
+        return;
+     }
+
+   vtkMRMLEMSTreeNode* node = this->GetTreeNode(nodeID);
+    if (node == NULL)
+     {
+         vtkErrorMacro("Invalid ID: " << nodeID);
+         return;
+     }
+
+   if (!node->GetSpatialPriorVolumeName() )
+     {
+          vtkErrorMacro("No input spatial atlas defined for : " << nodeID);
+           return;
+     }
+   std::string atlasVolumeKey = node->GetSpatialPriorVolumeName() ;
+
+   vtkMRMLNode* volumeNode = this->GetVolumeNode(volumeID);
+   if (volumeNode == NULL)
+     {
+          vtkErrorMacro("VolumeID " << volumeID << " does not exist" ); 
+           return;
+     } 
+   workingAtlas->AddVolume(atlasVolumeKey.c_str(),  volumeNode->GetID() );
+}
+
+
+//----------------------------------------------------------------------------
 const char*  vtkEMSegmentMRMLManager::GetTclTaskFilename()
 {
   if (!this->Node || !this->Node->GetGlobalParametersNode()  )

@@ -36,6 +36,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     # Text Entry
     # not defined for this task
 
+    set ERROR_NODE_VTKID 0
     #
     # OVERWRITE DEFAULT
     #
@@ -393,7 +394,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
         # Create dummy AtlasBgNode for inputnode
-        if { $bgAtlasID == 0 } {
+        if { $bgAtlasID == $ERROR_NODE_VTKID } {
             # I do this bc it is easier for debugging
             set inputAtlasNode [$mrmlManager GetAtlasInputNode]
             set inputAtlasVolumeNode [$inputAtlasNode GetNthVolumeNode 0]
@@ -411,7 +412,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             # We need to create the node
             set outputAtlasNode [$mrmlManager GetAtlasAlignedNode]
             set outputAtlasVolumeNode [$outputAtlasNode GetNthVolumeNode 0]
-            set bgAtlasNode [$mrmlManager  CreateVolumeNode $outputAtlasVolumeNode "BGAtlas(Aligned)"]
+            set bgAtlasNode [$mrmlManager  CreateVolumeScalarNode $outputAtlasVolumeNode "BGAtlas(Aligned)"]
         }
 
         # Make sure all the output also point to the same volume
