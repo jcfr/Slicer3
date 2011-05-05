@@ -181,8 +181,13 @@ int EMLocalAlgorithm_GEImageWriter(vtkImageData *Volume, char *FileName,int Prin
 // OriginalExtensionFlag = 1 => inputExtension_Vector already has extension defined by self->GetExtent()
 
 template <class T,class TIn>
-static void EMLocalAlgorithm_PrintDataToOutputExtension(EMLocalAlgorithm<T> *selfPtr,TIn* inputExtension_Vector, int outputScalar, char* FileName ,int SliceNum, int OriginalExtensionFlag, int PrintOutputFlag){
-  vtkImageData *OriginalExtension_Data = vtkImageData::New(); 
+static void  EMLocalAlgorithm_StoreDataToOutputExtension(EMLocalAlgorithm<T> *selfPtr,TIn* inputExtension_Vector, int outputScalar, vtkImageData* OriginalExtension_Data,int SliceNum, int OriginalExtensionFlag)
+{
+  if (!OriginalExtension_Data)
+  {  
+     cout << "No outputdata defined in  EMLocalAlgorithm_PrintDataToOutputExtension" << endl; 
+     return;
+  }
   int ChangedExtent[6];
   memcpy(ChangedExtent, selfPtr->GetExtent(), sizeof(int)*6); 
   // Just move it one up - this is just a shortcut - fix it later 
@@ -202,17 +207,23 @@ static void EMLocalAlgorithm_PrintDataToOutputExtension(EMLocalAlgorithm<T> *sel
     int NumX = ChangedExtent[1] -ChangedExtent[0] + 1;
     for(int z = 0; z <= ChangedExtent[5] -ChangedExtent[4]; z++) {
       for(int y = 0; y <= ChangedExtent[3] -ChangedExtent[2]; y++) {
-    memcpy(OriginalExtension_DataPtr, inputExtension_Vector,sizeof(TIn)*NumX);
-    inputExtension_Vector += NumX;
-    OriginalExtension_DataPtr += NumX+OutIncY;
+         memcpy(OriginalExtension_DataPtr, inputExtension_Vector,sizeof(TIn)*NumX);
+         inputExtension_Vector += NumX;
+         OriginalExtension_DataPtr += NumX+OutIncY;
       }
       OriginalExtension_DataPtr += OutIncZ;
     }
   } else {
     int outInc[3] = {OutIncX, OutIncY, OutIncZ};
-
     EMLocalAlgorithm_TransfereDataToOutputExtension(selfPtr,inputExtension_Vector,OriginalExtension_DataPtr ,outInc,SliceNum);
   } 
+}
+
+template <class T,class TIn>
+static void EMLocalAlgorithm_PrintDataToOutputExtension(EMLocalAlgorithm<T> *selfPtr,TIn* inputExtension_Vector, int outputScalar, char* FileName ,int SliceNum, int OriginalExtensionFlag, int PrintOutputFlag)
+{
+  vtkImageData *OriginalExtension_Data = vtkImageData::New(); 
+  EMLocalAlgorithm_StoreDataToOutputExtension(selfPtr, inputExtension_Vector, outputScalar, OriginalExtension_Data , SliceNum,  OriginalExtensionFlag);
   EMLocalAlgorithm_GEImageWriter(OriginalExtension_Data,FileName,PrintOutputFlag);
   OriginalExtension_Data->Delete();    
 }
@@ -253,53 +264,54 @@ template <class T> void EMLocalAlgorithm<T>::Print_E_StepResultsToFile(int iter)
     } 
 
     int index =0;
-    float *outputWeight = NULL;
-    int PrintClassWeight;
-    float *sumWeight = NULL;
     for ( int c = 0 ; c < this->NumClasses; c++) {
-      PrintClassWeight = 0;
-      // Define outputWeight
-      if (this->ClassListType[c] == CLASS) {
-    if (((vtkImageEMLocalClass*) this->ClassList[c])->GetPrintWeights()) {
-      outputWeight = this->w_mPtr[index]; 
-      PrintClassWeight = 1;
-    }
-    index ++;
-      } else {
-    if (((vtkImageEMLocalSuperClass*) this->ClassList[c])->GetPrintWeights() ) {
-      PrintClassWeight = 1;
-      // Add the weights of all the substructures together
-      sumWeight= new float[this->ImageProd]; 
-      memcpy(sumWeight,this->w_mPtr[index],sizeof(float)*this->ImageProd); 
-      index ++;
-      for (int i = 1 ; i < this->NumChildClasses[c]; i++) {
-        for (int x = 0 ; x < this->ImageProd; x++) sumWeight[x] += this->w_mPtr[index][x];
-        index ++;
-      }
-      outputWeight = sumWeight; 
-    } else {
-      index += this->NumChildClasses[c];
-    }
-      }
-      // Define Filename 
-      sprintf(FileName,"%s/Weights/iter%02d/EMWeightL%sC%d",this->PrintDir,iter, this->LevelName,c);
-      // Print out data 
-      switch (((vtkImageEMLocalClass*) this->ClassList[c])->GetPrintWeights()) {
-         case 1:  
-       EMLocalAlgorithm_PrintDataToOutputExtension(this,outputWeight,VTK_FLOAT,FileName,0,0,0);
-       break;
-         case 2:
-       short *outputShortWeight = new short[this->ImageProd];
-       for (int i = 0 ; i < this->ImageProd; i++) outputShortWeight[i] = short(1000.0 *outputWeight[i]); 
-       EMLocalAlgorithm_PrintDataToOutputExtension(this,outputShortWeight,VTK_SHORT,FileName,0,0,1);
-       delete[] outputShortWeight;
-       break;
-      }
-      if (sumWeight) {
-    delete[] sumWeight;
-    sumWeight = NULL;
-      }
-    }
+        // Define outputWeight
+       vtkImageEMLocalGenericClass* classNode = (vtkImageEMLocalGenericClass*) this->ClassList[c];
+        if (classNode->GetPrintWeights()) {
+           vtkImageData* img = classNode->GetPosteriorImageData();
+           float *outputWeight = NULL; 
+           float *sumWeight = NULL;
+           if (this->ClassListType[c] == CLASS) {
+                outputWeight = this->w_mPtr[index];
+                index ++;
+           } else {
+               sumWeight= new float[this->ImageProd]; 
+               memcpy(sumWeight,this->w_mPtr[index],sizeof(float)*this->ImageProd); 
+                index ++;
+                for (int i = 1 ; i < this->NumChildClasses[c]; i++) {
+                    for (int x = 0 ; x < this->ImageProd; x++) sumWeight[x] += this->w_mPtr[index][x];
+                    index ++;
+                }
+               outputWeight = sumWeight; 
+          } 
+           if (img)
+             { 
+                 EMLocalAlgorithm_StoreDataToOutputExtension(this,outputWeight,VTK_FLOAT,img,0,0);     
+             }
+           else 
+            {
+               // Define Filename 
+               sprintf(FileName,"%s/Weights/iter%02d/EMWeightL%sC%d",this->PrintDir,iter, this->LevelName,c);
+               EMLocalAlgorithm_PrintDataToOutputExtension(this,outputWeight,VTK_FLOAT,FileName,0,0,0);                 
+               // short *outputShortWeight = new short[this->ImageProd];
+               //   for (int i = 0 ; i < this->ImageProd; i++) outputShortWeight[i] = short(1000.0 *outputWeight[i]); 
+               //    EMLocalAlgorithm_PrintDataToOutputExtension(this,outputShortWeight,VTK_SHORT,FileName,0,0,1);
+               //    delete[] outputShortWeight;
+            } 
+          if (sumWeight) {
+             delete[] sumWeight;
+             sumWeight = NULL;
+           }
+       }  
+     else  //  classNode->GetPrintWeights()
+       {  
+           if (this->ClassListType[c] == CLASS) {
+              index ++;
+          } else {
+              index += this->NumChildClasses[c];
+          }
+       }
+    } // for ....
     delete[] FileName;
   }
 

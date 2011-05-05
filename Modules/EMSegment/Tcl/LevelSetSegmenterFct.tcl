@@ -48,6 +48,7 @@ proc LevelSetsInit {InputType NumberOfCurves}  {
       "TwoBalls" -
       "MRI" -
       "MRIBalls" -
+      "cMRIA1" -  
       "VISION"
            { set LevelSets(InputType) "$InputType"
                    puts "=========================================================="
@@ -817,7 +818,7 @@ proc LevelSetsSaveOutcome { } {
         # better compression
         set ::MathImage(SaveFileFormat) "nhdr"
     } else {
-        set ::MathImage(SaveFileFormat) "nrrd"
+        set ::MathImage(SaveFileFormat) "nhdr"
     }
 
     if {[info command Volume(curve,All,resLabel,Copy)] == "Volume(curve,All,resLabel,Copy)"} {
@@ -825,7 +826,7 @@ proc LevelSetsSaveOutcome { } {
     } else {
         set LabelMap [Volume(curve,All,resLabel,vol) GetMap ]
     }
-    VolumeWriter $LabelMap $LevelSets(SavePath)/movie blub_[format %03d ${LevelSets(SaveIndex)}] [lindex $::MathImage(volRange) 0] [lindex $::MathImage(volRange) 1]
+    VolumeMathWriter $LabelMap $LevelSets(SavePath)/movie [file root [file tail $::Volume(1,filePrefix) ]]_i[format %03d ${LevelSets(SaveIndex)}] 
         if { 0 } { 
           # Currently just debugging - should have a flag somewhere and do is as part of initialization 
           # saving combined log odds results  - 

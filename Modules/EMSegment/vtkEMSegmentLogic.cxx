@@ -18,8 +18,13 @@
 #include "vtkImageIslandFilter.h"
 #include "vtkDataIOManagerLogic.h"
 #include "vtkMath.h"
+#include "vtkImageLevelSets.h"
+#include "vtkImageMultiLevelSets.h"
+#include "vtkImageLogOdds.h"
+#include "vtkMultiThreader.h"
 #include "vtkImageThreshold.h"
 #include "vtkImageMathematics.h"
+
 
 
 // A helper class to compare two maps
@@ -1008,6 +1013,17 @@ CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericClass* node,
                                                                i), i);
     }
 
+  if ( this->GetMRMLManager()->GetGlobalParametersNode()->GetAMFSmoothing() && (this->GetMRMLManager()->GetTreeNodeParentNodeID(nodeID) == this->GetMRMLManager()->GetTreeRootNodeID()))
+    {
+      if (!node->GetPosteriorImageData())
+    {
+          vtkImageData* imgData =  vtkImageData::New();
+          node->SetPosteriorImageData(imgData);
+    }
+      vtkIndent indent;
+        node->GetPosteriorImageData()->PrintSelf(cout,indent);
+    }
+  
   //
   // registration related data
   //
@@ -1939,7 +1955,7 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessingAndSaving()
     this->GetMRMLManager()->GetTargetInputNode()->GetNthVolumeNodeID(0);
   vtkMRMLScalarVolumeNode *inVolume = vtkMRMLScalarVolumeNode::
     SafeDownCast(this->GetMRMLScene()->GetNodeByID(inMRLMID));
-  if (inVolume == NULL)
+   if (inVolume == NULL)
     {
     ErrorMsg     = "Can't get first target image.";
     vtkErrorMacro( << ErrorMsg); 
@@ -1953,12 +1969,13 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessingAndSaving()
   int AMFFlag = this->GetMRMLManager()->GetGlobalParametersNode()->GetAMFSmoothing();
   if (AMFFlag) {
       this->GetMRMLManager()->PrintWeightOnForEntireTree(); 
+      
       vtkIdType rootID = this->GetMRMLManager()->GetTreeRootNodeID();
       int printFreq = this->GetMRMLManager()->GetTreeNodePrintFrequency(rootID);
       if (printFreq != 1 && printFreq != -1)
-    {
-      this->GetMRMLManager()->SetTreeNodePrintFrequency(rootID, -1);
-    }
+      {
+         this->GetMRMLManager()->SetTreeNodePrintFrequency(rootID, -1);
+      }
   }
 
   //
@@ -2025,9 +2042,12 @@ int vtkEMSegmentLogic::StartSegmentationWithoutPreprocessingAndSaving()
 
   // AMF Smoothing 
   if (AMFFlag) {
-    // STILL Need to make the link 
+    if (this->ActiveMeanField(segmenter,postProcessing) == EXIT_FAILURE)
+      {
+    postProcessing->Delete();
+        return  EXIT_FAILURE;
+      }
   }
-
   // Subparcellation
   if (this->GetMRMLManager()->GetEnableSubParcellation()) {
     vtkstd::cout << "=== Sub-Parcellation === " << vtkstd::endl;
@@ -2862,4 +2882,170 @@ void vtkEMSegmentLogic::CreateDefaultTasksList(std::vector<std::string> & Defaul
   this->AddDefaultTasksToList(this->GetTemporaryTaskDirectory().c_str(), DefaultTasksName,DefaultTasksFile, DefinePreprocessingTasksName, DefinePreprocessingTasksFile);
 }
 
+//-----------------------------------------------------------------------------
+int vtkEMSegmentLogic::ActiveMeanField(vtkImageEMLocalSegmenter* segmenter, vtkImageData* result) {
+    vtkIdType rootID = this->GetMRMLManager()->GetTreeRootNodeID();
+    unsigned int numChildren = this->MRMLManager->GetTreeNodeNumberOfChildren(rootID);
+    vtkImageEMLocalSuperClass* rootNode =   segmenter->GetHeadClass();
 
+    //
+    // Turn Probabilities into LogOdds
+    //
+    vtkImageLogOdds* logOdds = vtkImageLogOdds::New();
+    logOdds->SetDimProbSpace(numChildren);
+    logOdds->SetMode_Prob2Log() ;
+    logOdds->SetLogOddsInsidePositive(); 
+
+    for (unsigned int i = 0; i < numChildren; i++)
+    {
+        vtkImageEMLocalGenericClass* classNode =   (vtkImageEMLocalGenericClass*)   rootNode->GetClassListEntry(i);
+        if (!classNode || classNode->GetPosteriorImageData())
+        {
+           std::stringstream convert;
+       convert << i ;
+       ErrorMsg =  convert.str() +  "th class noide is NULL or no posterior defined -> could not proceed with postprocessing" ;
+       vtkErrorMacro( <<ErrorMsg );
+           return EXIT_FAILURE;
+        }
+
+        if (i) 
+          {
+        logOdds->SetProbabilities(i -1,classNode->GetPosteriorImageData()) ;
+      } 
+        else 
+      {
+            // Remember always to assigne the background to the last class !
+        logOdds->SetProbabilities(numChildren -1,classNode->GetPosteriorImageData()) ;
+      }
+    }
+    logOdds->Update();
+
+    //
+    // Set up  AMF 
+    //
+    int numCurves = numChildren-1;
+    vtkImageMultiLevelSets* aMF = vtkImageMultiLevelSets::New();
+    aMF->SetMultiLevelVersion(0);
+    aMF->SetNumberOfCurves(numCurves);
+    aMF->SetprobCondWeightMin(0.05);
+    aMF->SetLogCondIntensityInsideBright();
+
+    // Did not change spacing
+    //        Volume(curve,$ID,resLevel,vol) SetSpacing 1 1 1
+
+    typedef std::vector<vtkImageLevelSets*> levelsetCurvesInputType;
+    levelsetCurvesInputType  levelSetInCurves(numCurves);
+
+    typedef std::vector<vtkImageData*> levelsetCurvesOutputType;
+    levelsetCurvesOutputType  levelSetOutCurves(numCurves);
+    
+    for (int i = 0 ;  i < numCurves ; i++ )
+      {
+        levelSetInCurves[i] =  vtkImageLevelSets::New();
+    this->InitializeLevelSet(levelSetInCurves[i], logOdds->GetLogOdds(i));
+        levelSetOutCurves[i] =  vtkImageData::New();
+        aMF->SetCurve(i, levelSetInCurves[i],  logOdds->GetLogOdds(i),  logOdds->GetLogOdds(i) ,0.001, 0.001,   levelSetOutCurves[i]);
+      }
+
+    aMF->InitParam();
+    aMF->InitEvolution();
+
+    //
+    // Start AMF
+    //
+    cout << "\n=== Evolve Curves ===\n" ; 
+
+     for (int i = 0; i < 300; i++)
+    {
+           aMF->Iterate();
+           if (!(i % 30)) {
+             cout << "Completed: " << i/3  << endl; 
+       } 
+    }
+     cout <<  "\n=== Completed Curve Evolution" << endl;
+    
+    //
+    // Copy resulting Segmentation to result 
+    //
+
+     vtkImageLogOdds* outcomeProb = vtkImageLogOdds::New();
+     outcomeProb->SetMode_Log2Map(); 
+     outcomeProb->SetMapMinProb(0.01);
+     outcomeProb->SetLogOddsInsideNegative();
+     outcomeProb->SetDimProbSpace(numChildren);
+     for (int i = 0;  i < numCurves; i++) { 
+         outcomeProb->SetLogOdds(i, levelSetOutCurves[i]); 
+      }
+    outcomeProb->Update();
+    result->DeepCopy( outcomeProb->GetMap());
+
+     // 
+    // Clean up 
+    //
+    // Delete  AMF
+    outcomeProb->Delete();
+
+    for (int i = 0 ;  i < numCurves ; i++ )
+      {
+    levelSetInCurves[i]->Delete();
+    levelSetInCurves[i] = NULL;
+
+    levelSetOutCurves[i]->Delete();
+    levelSetOutCurves[i] = NULL;
+      }
+    aMF->Delete();
+    logOdds->Delete();  
+
+    // Set ImageData to null 
+    for (unsigned int i = 0; i < numChildren; i++)
+    {
+        vtkImageEMLocalGenericClass* classNode =   (vtkImageEMLocalGenericClass*)   rootNode->GetClassListEntry(i);
+        if (!classNode)
+        {
+         std::stringstream convert;
+       convert << i ;
+       ErrorMsg =  convert.str()  +  "th class noide is NULL -> could not proceed with postprocessing" ;
+       vtkErrorMacro(<< ErrorMsg );
+           return EXIT_FAILURE;
+        }
+    classNode->SetPosteriorImageData(NULL);
+    }
+   return EXIT_SUCCESS;
+}
+
+//-----------------------------------------------------------------------------
+void  vtkEMSegmentLogic::InitializeLevelSet( vtkImageLevelSets*  levelset , vtkImageData* initVolume) {
+ 
+  levelset->Setsavedistmap(0);
+  levelset->SetNumIters(300);
+  levelset->SetAdvectionCoeff(0);
+  levelset->Setcoeff_curvature(0.04);
+  levelset->Setballoon_coeff(1);
+  levelset->Setballoon_value(0.025);
+  levelset->SetDoMean(1);
+  levelset->SetStepDt(0.8);
+
+  vtkMultiThreader *thread =  vtkMultiThreader::New();
+  levelset->SetEvolveThreads(thread->GetGlobalDefaultNumberOfThreads());
+  thread->Delete();
+
+  levelset->SetBand(200);
+  levelset->SetTube(199);
+  levelset->SetReinitFreq(6);
+  levelset->SetDimension(3);
+  levelset->SetHistoGradThreshold(0.2); 
+  levelset->Setadvection_scheme(2);
+  levelset->SetDMmethod(4);
+  levelset->SetNumGaussians(1);
+  levelset->SetGaussian(0, 100, 15);
+  levelset->SetProbabilityThreshold(0.3); 
+  levelset->SetProbabilityHighThreshold(0);
+  levelset->SetinitImage(initVolume);
+  levelset->SetInitThreshold(0);
+  levelset->SetInitIntensityBright();
+  levelset->SetlogCondIntensityCoefficient(0.001);
+  levelset->SetlogCondIntensityImage(initVolume); 
+  levelset->SetLogCondIntensityInsideBright();
+  levelset->SetprobCondWeightMin(0.05);
+  levelset->Setverbose(0);
+}

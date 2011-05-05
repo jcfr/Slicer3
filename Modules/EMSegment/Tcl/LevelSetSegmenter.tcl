@@ -741,6 +741,37 @@ if {$LevelSets(InputType) == "MRIBalls"  } {
 
 }
 
+
+if {$LevelSets(InputType) == "cMRIA1"  } { 
+
+       set LevelSets(NumIters)                    500 
+       set LevelSets(DisplayFreq)                5
+       set LevelSets(SavePath)   /data/UPENN/Cardio/A1Trial
+       set LevelSets(probCondWeightMin) 0.05  
+       set LevelSets(BandSize)                    200
+       set LevelSets(TubeSize)                    199
+       set LevelSets(DebugCurveID) 0
+       set LevelSets(SaveData) 0
+   puts " ====> $LevelSets(SaveScreen) ||  $LevelSets(SaveData)  "
+      # Fix it later 
+      #  set ::MathImage(volRange) "[lrange [Volume(1,vol) GetExtent] 4 5 ]" 
+
+
+       set colorList "0 { 0 0 0  } { 0 0 1 }     { 0 1 0 }  { 1 0 0 } { 1 0 1  } { 1 1 0  }" 
+       for {set id 1} { $id <= $LevelSets(NumCurves) } {incr id } {
+           set LevelSets(curve,$id,InitVol)    $id
+           set LevelSets(curve,$id,InitVolIntensity) Bright
+           set LevelSets(logCondIntensity,$id,Volume)   $id
+           set LevelSets(curve,$id,logCondIntensityCoefficient) 0.001
+           set LevelSets(curve,$id,logCouplingCoefficient)      0.001
+           set LevelSets(curve,$id,SmoothingCoeff)              0.04
+           set LevelSets(curve,$id,BalloonCoeff)                1
+           set LevelSets(curve,$id,BalloonValue)                0.025
+           set LevelSets(curve,$id,Color)                       "[lindex $colorList $id]" 
+       }
+ } 
+
+
 if {$LevelSets(InputType) == "VISION" } { 
 
     
@@ -845,6 +876,8 @@ if {$LevelSets(InputType) == "VISION" & 0  } {
     # set LevelSets(curve,1,Color) "0.0 0.9 0.0"    
 }
 
+
+
 set app [vtkKWApplication New]
 $app RestoreApplicationSettingsFromRegistry
 $app SetName "Kili's Viewer"
@@ -928,3 +961,7 @@ catch {JointWindow Delete }
 catch { $::LevelSets(LabelViewer) Delete }
 catch { viewer Delete }
 catch {  $LevelSets(LevelViewer) Delete }
+
+for {set i 1} {$i <= $VolumeNumber} {incr i} {
+     catch {Volume($i,vol)  Delete } 
+}

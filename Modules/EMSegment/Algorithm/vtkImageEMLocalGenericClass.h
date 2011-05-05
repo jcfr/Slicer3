@@ -129,9 +129,15 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalGenericClass : public vtkImageEMGeneri
   void SetRegistrationCovariance(double CovTran1, double CovTran2, double CovTran3, double CovRot1, double CovRot2, double CovRot3, double CovSca1, double CovSca2, double CovSca3) {
     double temp[9] = {CovTran1, CovTran2, CovTran3, CovRot1, CovRot2, CovRot3, CovSca1, CovSca2, CovSca3};return this-> SetRegistrationCovariance(temp); }
 
+   // Description:
+  // Saves the weights/posterior computed by EM so that one can use them for further processing 
+  vtkGetObjectMacro(PosteriorImageData, vtkImageData);
+  vtkSetObjectMacro(PosteriorImageData, vtkImageData);
+
 protected:
   vtkImageEMLocalGenericClass();
-  ~vtkImageEMLocalGenericClass(){this->ProbImageData = NULL;}
+  ~vtkImageEMLocalGenericClass(); 
+
   vtkImageEMLocalGenericClass(const vtkImageEMLocalGenericClass&);
   void operator=(const vtkImageEMLocalGenericClass&);
  
@@ -155,6 +161,9 @@ protected:
   int ExcludeFromIncompleteEStepFlag;
   int PrintRegistrationParameters;
   int PrintRegistrationSimularityMeasure;
+
+private:
+  vtkImageData*  PosteriorImageData;
 };
 
 #endif

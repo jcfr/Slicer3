@@ -25,6 +25,7 @@ class vtkImageEMLocalSuperClass;
 class vtkImageEMLocalClass;
 class vtkSlicerApplicationLogic;
 class vtkGridTransform;
+class vtkImageLevelSets;
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentLogic : public vtkSlicerModuleLogic
 {
@@ -250,12 +251,18 @@ protected:
   vtkSetMacro(ProgressGlobalFractionCompleted, double);
   vtkSetMacro(ProgressCurrentFractionCompleted, double);
 
+
+  // 
+  int ActiveMeanField(vtkImageEMLocalSegmenter* segmenter, vtkImageData* result);
+  void InitializeLevelSet( vtkImageLevelSets*  levelset , vtkImageData* initVolume);
+
   //
   // because the mrml nodes are very complicated for this module, we
   // delegate the handeling of them to a MRML manager
   vtkEMSegmentMRMLManager* MRMLManager;
 
   char *ModuleName;
+
 
   //
   // information related to progress bars: this mechanism is not

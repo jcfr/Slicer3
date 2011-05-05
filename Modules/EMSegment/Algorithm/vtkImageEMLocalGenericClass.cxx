@@ -48,6 +48,15 @@ vtkImageEMLocalGenericClass::vtkImageEMLocalGenericClass()
   this->RegistrationClassSpecificRegistrationFlag =0;
 
   this->ExcludeFromIncompleteEStepFlag =0;
+
+  this->PosteriorImageData = NULL;
+
+}
+
+vtkImageEMLocalGenericClass::~vtkImageEMLocalGenericClass()
+{
+  this->ProbImageData = NULL;
+  this->SetPosteriorImageData(NULL);
 }
 
 void vtkImageEMLocalGenericClass::SetRegistrationCovariance(double Init[9]) {
@@ -69,6 +78,14 @@ void vtkImageEMLocalGenericClass::PrintSelf(ostream& os,vtkIndent indent) {
     os << this->ProbImageData << endl;
   }
   else os << "(None)" << endl;
+  os << indent << "PosteriorImageData:           " ;
+  if (this->PosteriorImageData) { 
+    //   if (this->ProbImageData) this->ProbImageData->PrintSelf(os,indent.GetNextIndent());
+    os << this->PosteriorImageData << endl;
+  }
+  else os << "(None)" << endl;
+
+
 
   os << indent << "RegistrationTranslation:            " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;
   os << indent << "RegistrationRotation:               " << this->RegistrationRotation[0] << ", " << this->RegistrationRotation[1] << ", " << this->RegistrationRotation[2] << "\n" ;
