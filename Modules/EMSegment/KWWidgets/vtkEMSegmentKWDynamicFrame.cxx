@@ -74,7 +74,7 @@ vtkEMSegmentKWDynamicFrame::~vtkEMSegmentKWDynamicFrame()
     this->textEntry.clear();
   }
   this->slicerApp = NULL;
-  this->MRMLManager= NULL;
+  this->SetMRMLManager(NULL);
 }
 
 //----------------------------------------------------------------------------

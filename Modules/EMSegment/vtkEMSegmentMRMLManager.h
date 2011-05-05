@@ -527,6 +527,11 @@ public:
 //BTX
   void ImportMRMLFile(const char *mrmlFile,  vtksys_stl::string errMSG);  
 //ETX
+
+  //  referenceNode is only needed to create a volume node of the same type - Returns VTKNodeID 
+  vtkMRMLScalarVolumeNode*  CreateVolumeScalarNode(vtkMRMLScalarVolumeNode*  referenceNode , const char *name); 
+  vtkIdType CreateVolumeScalarNodeVolumeID(vtkMRMLScalarVolumeNode*  referenceNode , const char *name);
+ 
 private:
   vtkEMSegmentMRMLManager();
   ~vtkEMSegmentMRMLManager();
