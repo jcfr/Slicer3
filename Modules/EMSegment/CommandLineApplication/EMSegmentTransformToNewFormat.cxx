@@ -2,7 +2,6 @@
 #include "EMSegmentTransformToNewFormatCLP.h"
 #include "vtkSlicerColorLogic.h"
 #include "vtkEMSegmentLogic.h"
-#include "../../../Applications/GUI/Slicer3Helper.cxx"
 
 int main(int argc, char** argv)
 {
@@ -41,26 +40,32 @@ int main(int argc, char** argv)
   //
   // =======================================================================
 
+  // SLICER COMMON INTERFACE
+  vtkSlicerCommonInterface *slicerCommon = vtkSlicerCommonInterface::New();
+
   // interp has to be set to initialize vtkSlicer
-  Tcl_Interp *interp =CreateTclInterp(argc,argv);
+  Tcl_Interp *interp =CreateTclInterp(argc,argv,slicerCommon);
   if (!interp)
     {
       return EXIT_FAILURE;
     }
 
-  vtkSlicerApplication* app = vtkSlicerApplication::GetInstance();
-  vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,app,argc,argv);
+  vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,slicerCommon,argc,argv);
   if (!appLogic)
     {
-      CleanUp(appLogic);
+      CleanUp(appLogic,slicerCommon);
       return EXIT_FAILURE;
     }
 
   vtkMRMLScene* mrmlScene = vtkMRMLScene::New();
   vtkMRMLScene::SetActiveScene(mrmlScene);
   appLogic->SetAndObserveMRMLScene(mrmlScene);
-  std::string appLogicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp, appLogic));;
-  app->Script ("namespace eval slicer3 set ApplicationLogic %s", appLogicTcl.c_str());
+  std::string appLogicTcl = vtksys::SystemTools::DuplicateString(slicerCommon->GetTclNameFromPointer(appLogic));
+
+  std::ostringstream os2;
+  os2 << "namespace eval slicer3 set ApplicationLogic ";
+  os2 << appLogicTcl;
+  slicerCommon->EvaluateTcl(os2.str().c_str());
 
   vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New ( );
   colorLogic->SetMRMLScene(mrmlScene);
@@ -80,7 +85,8 @@ int main(int argc, char** argv)
   emsEvents->Delete();
 
   vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
-  Slicer3Helper::AddDataIOToScene(mrmlScene,app,appLogic,dataIOManagerLogic);
+  slicerCommon->AddDataIOToScene(mrmlScene,appLogic,dataIOManagerLogic);
+
   vtkEMSegmentMRMLManager* emMRMLManager = emLogic->GetMRMLManager();
 
   // =======================================================================
@@ -171,10 +177,11 @@ int main(int argc, char** argv)
   //
   std::cout << "Cleaning up...";
 
-  CleanUp(appLogic);
-
   emLogic->SetAndObserveMRMLScene(NULL);
-  Slicer3Helper::RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
+  slicerCommon->RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
+
+  CleanUp(appLogic,slicerCommon);
+
   emLogic->Delete();
 
   dataIOManagerLogic->Delete();
@@ -182,6 +189,7 @@ int main(int argc, char** argv)
 
   mrmlScene->Clear(true);
   mrmlScene->Delete();
+
   std::cout << "DONE" << std::endl;
 
   return success ? EXIT_SUCCESS : EXIT_FAILURE;

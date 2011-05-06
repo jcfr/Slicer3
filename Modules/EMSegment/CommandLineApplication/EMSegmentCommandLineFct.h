@@ -1,4 +1,3 @@
-#include "../../../Applications/GUI/Slicer3Helper.cxx"
 #include "vtkMRMLEMSAtlasNode.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
@@ -9,6 +8,7 @@
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
 #include "vtkImageAccumulate.h"
+#include "vtkSlicerCommonInterface.h"
 
 // -------------------------------------------------------------------------------------------
 class ProgressReporter
@@ -489,7 +489,7 @@ int DefineFinalOutput(  int useDefaultOutput, std::string resultVolumeFileName, 
 }
 
 // -------------------------------------------------------------------------------------------
-int RunPreprocessing(vtkEMSegmentLogic* EMSLogic, std::string EMSLogicTcl, std::string emMRMLManagerTcl, vtkSlicerApplication* app, vtkEMSegmentMRMLManager* emMRMLManager, int verbose)
+int RunPreprocessing(vtkEMSegmentLogic* EMSLogic, std::string EMSLogicTcl, std::string emMRMLManagerTcl, vtkSlicerCommonInterface* slicerCommon, vtkEMSegmentMRMLManager* emMRMLManager, int verbose)
 {
    try
        {
@@ -506,12 +506,12 @@ int RunPreprocessing(vtkEMSegmentLogic* EMSLogic, std::string EMSLogicTcl, std::
 
         // Have to init variables again bc first time EMLogic was not fully set up
         std::string CMD = "::EMSegmenterPreProcessingTcl::InitVariables " + EMSLogicTcl + " " + emMRMLManagerTcl + " NULL";
-        if (atoi(app->Script(CMD.c_str())))
+        if (atoi(slicerCommon->EvaluateTcl(CMD.c_str())))
         {
            throw std::runtime_error("ERROR: could not init files. ");
         }
 
-         if (atoi(app->Script("::EMSegmenterPreProcessingTcl::Run")))
+         if (atoi(slicerCommon->EvaluateTcl("::EMSegmenterPreProcessingTcl::Run")))
            {
              throw std::runtime_error("ERROR: Pre-processing did not execute correctly");
            }

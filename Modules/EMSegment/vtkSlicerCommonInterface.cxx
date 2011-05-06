@@ -34,6 +34,19 @@ vtkSlicerCommonInterface::~vtkSlicerCommonInterface() {
 }
 
 //----------------------------------------------------------------------------
+Tcl_Interp* vtkSlicerCommonInterface::GetTclInterpeter(int argc, char *argv[], ostream *err)
+{
+#ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  return vtkSlicerApplication::InitializeTcl(argc, argv, err);
+
+#endif
+
+  return 0;
+}
+
+//----------------------------------------------------------------------------
 
 int vtkSlicerCommonInterface::SourceTclFile(const char *tclFile)
 {
@@ -89,6 +102,18 @@ const char* vtkSlicerCommonInterface::GetTclNameFromPointer(vtkObject *obj)
 }
 
 //-----------------------------------------------------------------------------
+const char* vtkSlicerCommonInterface::GetApplicationTclName()
+{
+#ifdef Slicer3_USE_KWWIDGETS
+
+  return this->GetTclNameFromPointer(vtkSlicerApplication::GetInstance());
+
+#endif
+
+  return 0;
+}
+
+//-----------------------------------------------------------------------------
 const char* vtkSlicerCommonInterface::GetTemporaryDirectory()
 {
 
@@ -127,6 +152,16 @@ const char* vtkSlicerCommonInterface::GetRepositoryRevision()
 }
 
 //-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::SetApplicationBinDir(const char* bindir)
+{
+#ifdef Slicer3_USE_KWWIDGETS
+
+  vtkSlicerApplication::GetInstance()->SetBinDir(bindir);
+
+#endif
+}
+
+//-----------------------------------------------------------------------------
 vtkHTTPHandler* vtkSlicerCommonInterface::GetHTTPHandler(vtkMRMLScene* scene)
 {
 
@@ -144,6 +179,37 @@ vtkHTTPHandler* vtkSlicerCommonInterface::GetHTTPHandler(vtkMRMLScene* scene)
 #endif
 
   return 0;
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::PromptBeforeExitOff()
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+  vtkSlicerApplication::GetInstance()->PromptBeforeExitOff();
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::DestroySlicerApplication()
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+  vtkSlicerApplication* app = vtkSlicerApplication::GetInstance();
+
+  if (app)
+    {
+      app->Exit();
+      app->Delete();
+      app = NULL;
+    }
+
+#endif
 
 }
 

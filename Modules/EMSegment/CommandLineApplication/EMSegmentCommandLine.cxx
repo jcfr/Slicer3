@@ -1,6 +1,7 @@
 #include "EMSegmentCommandLineCLP.h"
 #include "EMSegmentAPIHelper.h"
 #include "EMSegmentCommandLineFct.h"
+#include "vtkSlicerCommonInterface.h"
 
 // =======================================================================
 //  MAIN
@@ -119,21 +120,25 @@ int main(int argc, char** argv)
   //
   // =======================================================================
 
+  // SLICER COMMON INTERFACE
+  vtkSlicerCommonInterface *slicerCommon = vtkSlicerCommonInterface::New();
+
   // ================== Tcl  ==================
-  Tcl_Interp *interp =CreateTclInterp(argc,argv);
+  Tcl_Interp *interp =CreateTclInterp(argc,argv,slicerCommon);
   if (!interp)
     {
       return EXIT_FAILURE;
     }
 
+
   // ================== Application  ==================
-  vtkSlicerApplication* app = vtkSlicerApplication::GetInstance();
-  vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,app,argc,argv);
+  vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,slicerCommon,argc,argv);
   if (!appLogic)
     {
-      CleanUp(appLogic);
+      CleanUp(appLogic,slicerCommon);
       return EXIT_FAILURE;
     }
+
 
   // ================== MRMLScene  ==================
 
@@ -154,7 +159,7 @@ int main(int argc, char** argv)
   EMSLogic->SetModuleName("EMSegment");
   EMSLogic->SetAndObserveMRMLScene(mrmlScene);
   EMSLogic->RegisterMRMLNodesWithScene();
-  std::string EMSLogicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,EMSLogic));
+  std::string EMSLogicTcl = vtksys::SystemTools::DuplicateString(slicerCommon->GetTclNameFromPointer(EMSLogic));
 
   vtkIntArray *emsEvents                 = vtkIntArray::New();
   emsEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
@@ -166,12 +171,13 @@ int main(int argc, char** argv)
   // MRML scene is delegated to the EMSegment MRML manager.  Get a
   // shortcut to the manager.
   vtkEMSegmentMRMLManager* emMRMLManager = EMSLogic->GetMRMLManager();
-  std::string emMRMLManagerTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,emMRMLManager));
+  std::string emMRMLManagerTcl = vtksys::SystemTools::DuplicateString(slicerCommon->GetTclNameFromPointer(emMRMLManager));
   emMRMLManager->SetMRMLScene( mrmlScene );
 
   // ================== Data IO  ==================
   vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
-  Slicer3Helper::AddDataIOToScene(mrmlScene,app,appLogic,dataIOManagerLogic);
+
+  slicerCommon->AddDataIOToScene(mrmlScene,appLogic,dataIOManagerLogic);
 
   //
   // global try block makes sure data is cleaned up if anything goes  wrong
@@ -339,7 +345,7 @@ int main(int argc, char** argv)
       try
         {
           // ================== Preprocessing ==================
-          if (RunPreprocessing( EMSLogic, EMSLogicTcl,  emMRMLManagerTcl, app, emMRMLManager, verbose) ) {
+          if (RunPreprocessing( EMSLogic, EMSLogicTcl,  emMRMLManagerTcl, slicerCommon, emMRMLManager, verbose) ) {
             throw std::runtime_error("");
           }
 
@@ -412,7 +418,8 @@ int main(int argc, char** argv)
   if (verbose) std::cout << "Cleaning up...";
 
 
-  Slicer3Helper::RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
+  slicerCommon->RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
+
   dataIOManagerLogic->Delete();
   dataIOManagerLogic = NULL;
 
@@ -424,7 +431,7 @@ int main(int argc, char** argv)
   mrmlScene->Clear(true);
   mrmlScene->Delete();
 
-  CleanUp(appLogic);
+  CleanUp(appLogic,slicerCommon);
 
   if (verbose) std::cout << "DONE" << std::endl;
 

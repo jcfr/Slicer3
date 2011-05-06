@@ -1,7 +1,9 @@
-#include "vtkSlicerApplication.h"
-#include "vtkKWTkUtilities.h"
+#include "vtkSlicerCommonInterface.h"
+#include <sstream>
 
+#ifdef Slicer3_USE_KWWIDGETS
 extern "C" int Slicerbasegui_Init(Tcl_Interp *interp);
+#endif
 extern "C" int Emsegment_Init(Tcl_Interp *interp);
 extern "C" int Vtkteem_Init(Tcl_Interp *interp);
 extern "C" int Vtkitk_Init(Tcl_Interp *interp);
@@ -9,17 +11,19 @@ extern "C" int Slicerbaselogic_Init(Tcl_Interp *interp);
 extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Mrmlcli_Init(Tcl_Interp *interp); 
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
-extern "C" int Kwwidgets_Init(Tcl_Interp *interp);
-
+#ifdef Slicer3_USE_KWWIDGETS
+//extern "C" int Kwwidgets_Init(Tcl_Interp *interp);
+#endif
+/*
 #define tgVtkCreateMacro(name,type)                                     \
   name  = type::New();                                                  \
-  name##Tcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp, name)); 
+  name##Tcl = vtksys::SystemTools::DuplicateString(slicerCommon->GetTclNameFromPointer(name));
 
 #define tgVtkDefineMacro(name,type)             \
   type *name;                                   \
   std::string name##Tcl;                        \
   tgVtkCreateMacro(name,type); 
-
+*/
 #define tgSetDataMacro(name,matrix)                             \
   virtual int Set##name(const char *fileName) {                 \
     if (strcmp(fileName,"None")) {                              \
@@ -69,9 +73,17 @@ int tgSetSLICER_HOME(char** argv)
   return 0;
 }
 
-Tcl_Interp* CreateTclInterp(int argc, char** argv) 
+Tcl_Interp* CreateTclInterp(int argc, char** argv, vtkSlicerCommonInterface *slicerCommon)
 {
-  Tcl_Interp *interp = vtkKWApplication::InitializeTcl(argc, argv, &cout);
+
+  if (!slicerCommon)
+    {
+    cout << "Error: Could not get Slicer common interface." << endl;
+    return NULL;
+    }
+
+  Tcl_Interp *interp = slicerCommon->GetTclInterpeter(argc,argv,&cout);
+
   if (!interp)
     {
       cout << "Error: InitializeTcl failed" << endl;
@@ -80,14 +92,19 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv)
 
   // This is necessary to load in EMSEgmenter package in TCL interp.
   Emsegment_Init(interp);
+
+#ifdef Slicer3_USE_KWWIDGETS
   Slicerbasegui_Init(interp);
+#endif
   Slicerbaselogic_Init(interp);
   Mrml_Init(interp);
   Mrmlcli_Init(interp); 
   Vtkteem_Init(interp);
   Vtkitk_Init(interp);
   Commandlinemodule_Init(interp);
-  Kwwidgets_Init(interp);
+#ifdef Slicer3_USE_KWWIDGETS
+  //Kwwidgets_Init(interp);
+#endif
   // Atlascreatorcxxmodule_Init(interp);
   return interp;
 }
@@ -111,7 +128,7 @@ std::string StripBackslashes(const std::string& s)
 }
 #endif
 
-vtkSlicerApplicationLogic* InitializeApplication(Tcl_Interp *interp, vtkSlicerApplication *app, int argc, char** argv) 
+vtkSlicerApplicationLogic* InitializeApplication(Tcl_Interp *interp, vtkSlicerCommonInterface *slicerCommon, int argc, char** argv)
 {
   // SLICER_HOME
   cout << "Setting SLICER home: " << endl;
@@ -123,49 +140,53 @@ vtkSlicerApplicationLogic* InitializeApplication(Tcl_Interp *interp, vtkSlicerAp
     }
   cout << "Slicer home is " << slicerHome << endl;
 
-  app->PromptBeforeExitOff();
-  std::string appTcl;
-  appTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp, app));;
+  slicerCommon->PromptBeforeExitOff();
 
-  app->Script ("namespace eval slicer3 set Application %s", appTcl.c_str());
+  std::string appTcl = std::string(slicerCommon->GetApplicationTclName());
+  std::ostringstream os;
+  os << "namespace eval slicer3 set Application ";
+  os << appTcl;
+  slicerCommon->EvaluateTcl(os.str().c_str());
 
-  tgVtkDefineMacro(appLogic,vtkSlicerApplicationLogic);
 
-  app->Script ("namespace eval slicer3 set ApplicationLogic %s", appLogicTcl.c_str());
+  vtkSlicerApplicationLogic* appLogic = vtkSlicerApplicationLogic::New();
+  std::string appLogicTcl = std::string(slicerCommon->GetTclNameFromPointer(appLogic));
+  std::ostringstream os2;
+  os2 << "namespace eval slicer3 set ApplicationLogic ";
+  os2 << appLogicTcl;
+  slicerCommon->EvaluateTcl(os2.str().c_str());
 
   // set BinDir to make functionality like GetSvnRevision available
   std::string slicerBinDir = slicerHome + "/bin";
   slicerBinDir = vtksys::SystemTools::CollapseFullPath(slicerBinDir.c_str());
-  app->SetBinDir(slicerBinDir.c_str());
+  slicerCommon->SetApplicationBinDir(slicerBinDir.c_str());
 
   // Make generic later 
-  app->Script("set ::env(KILIS_MODULE) KilisSandbox");
+  slicerCommon->EvaluateTcl("set ::env(KILIS_MODULE) KilisSandbox");
   std::string CMD = std::string("set ::env(SLICER_HOME) ") + slicerHome + "/..";
-  app->Script(CMD.c_str());
+  slicerCommon->EvaluateTcl(CMD.c_str());
 
   CMD = "set argv { "; 
   for (int i = 2 ; i < argc ; i++) CMD += std::string(argv[i]) + " ";
   CMD += " }  "; 
-  app->Script(CMD.c_str());
+  slicerCommon->EvaluateTcl(CMD.c_str());
   return  appLogic;
 }
 
 
-void CleanUp(vtkSlicerApplicationLogic* appLogic  )
+void CleanUp(vtkSlicerApplicationLogic* appLogic, vtkSlicerCommonInterface *slicerCommon)
 {
   if (appLogic)
     {
       appLogic->Delete();
-      appLogic = NULL;  
+      appLogic = 0;
     }
 
-
-  vtkSlicerApplication* app = vtkSlicerApplication::GetInstance();
-
-  if (app)
+  if (slicerCommon)
     {
-      app->Exit();
-      app->Delete();
-      app = NULL;
+    slicerCommon->DestroySlicerApplication();
+    slicerCommon->Delete();
+    slicerCommon = 0;
     }
+
 }

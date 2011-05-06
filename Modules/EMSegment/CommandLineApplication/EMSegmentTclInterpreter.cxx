@@ -17,18 +17,20 @@ int main(int argc, char** argv)
   //  Initialize TCL
   // =======================================================================
 
+  // SLICER COMMON INTERFACE
+  vtkSlicerCommonInterface *slicerCommon = vtkSlicerCommonInterface::New();
+
   // interp has to be set to initialize vtkSlicer
-  Tcl_Interp *interp = CreateTclInterp(argc,argv);
+  Tcl_Interp *interp = CreateTclInterp(argc,argv,slicerCommon);
   if (!interp)
     {
       return EXIT_FAILURE;
     }
 
-  vtkSlicerApplication* app = vtkSlicerApplication::GetInstance();
-  vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,app,argc,argv);
+  vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,slicerCommon,argc,argv);
   if (!appLogic)
     {
-      CleanUp(appLogic);
+      CleanUp(appLogic,slicerCommon);
       return EXIT_FAILURE;
     }
 
@@ -40,7 +42,7 @@ int main(int argc, char** argv)
   try
     {
       std::string CMD = std::string("source ") + argv[1] ;
-      app->Script(CMD.c_str());
+      slicerCommon->EvaluateTcl(CMD.c_str());
     }
   catch (...)
     {
@@ -50,6 +52,6 @@ int main(int argc, char** argv)
   // =======================================================================
   //  Clean up
   // =======================================================================
-  CleanUp(appLogic);
+  CleanUp(appLogic,slicerCommon);
   return exitFlag;
 }

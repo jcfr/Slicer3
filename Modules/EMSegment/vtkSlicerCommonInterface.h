@@ -30,13 +30,19 @@ public:
   vtkTypeMacro(vtkSlicerCommonInterface, vtkObject);
 
 //BTX
+  Tcl_Interp* GetTclInterpeter(int argc, char *argv[], ostream *err = 0);
+
   int SourceTclFile(const char *tclFile);
   const char* EvaluateTcl(const char* command);
   const char* GetTclNameFromPointer(vtkObject *obj);
+  const char* GetApplicationTclName();
 
   const char* GetTemporaryDirectory();
   const char* GetRepositoryRevision();
+  void SetApplicationBinDir(const char*);
   vtkHTTPHandler* GetHTTPHandler(vtkMRMLScene* mrmlScene);
+  void PromptBeforeExitOff();
+  void DestroySlicerApplication();
 
   void AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplicationLogic *appLogic, vtkDataIOManagerLogic *dataIOManagerLogic);
   void RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOManagerLogic *dataIOManagerLogic);
