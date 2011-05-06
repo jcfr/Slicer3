@@ -1912,8 +1912,10 @@ void vtkEMSegmentLogic::CreateOutputVolumeNode()
   this->GetMRMLScene()->AddNode(displayNode);
   displayNode->SetAndObserveColorNodeID(this->MRMLManager->GetColorNodeID());
   outputNode->SetAndObserveDisplayNodeID(displayNode->GetID());
+  displayNode->Delete();
 
   this->MRMLManager->SetOutputVolumeMRMLID(outputNode->GetID());
+  outputNode->Delete();
 }
 
 //----------------------------------------------------------------------------
