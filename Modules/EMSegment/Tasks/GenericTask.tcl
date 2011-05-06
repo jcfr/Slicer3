@@ -1331,40 +1331,38 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         $alignedAtlasNode RemoveAllNodes
 
-        ##debug
-
         # loop through the $outputdir directory and add volume nodes to the scene
         # for each leaf in the tree set/replace the atlasnode by the ac atlas node
         # how to find the right atlas volume?
 
         # Read a volume for each label
-        foreach ID [GetAllLeafNodeIDsInTree] {
+        foreach leafVTKID [GetAllLeafNodeIDsInTree] {
 
-            set tmpIntensityLabel [$mrmlManager GetTreeNodeIntensityLabel $ID]
-            set tmpName [$mrmlManager GetTreeNodeName $ID]
-            set tmpNode [$mrmlManager GetTreeNode $ID]
+            set tmpIntensityLabel [$mrmlManager GetTreeNodeIntensityLabel $leafVTKID]
+            set tmpName [$mrmlManager GetTreeNodeName $leafVTKID]
+            set tmpNode [$mrmlManager GetTreeNode $leafVTKID]
 
-            $LOGIC PrintText "TCL: $tmpName ($ID) has label $tmpIntensityLabel"
+            $LOGIC PrintText "TCL: $tmpName ($leafVTKID) has label $tmpIntensityLabel"
 
             # Check if node is defined - if not create a place holder
-            set tmpSpatialPriorID [$mrmlManager GetTreeNodeSpatialPriorVolumeID $ID]
-            $LOGIC PrintText "TCL: tmpSpatialPriorID: $tmpSpatialPriorID"
-            if { $tmpSpatialPriorID == $ERROR_NODE_VTKID } {
+            set tmpSpatialPriorVTKID [$mrmlManager GetTreeNodeSpatialPriorVolumeID $leafVTKID]
+            $LOGIC PrintText "TCL: tmpSpatialPriorVTKID: $tmpSpatialPriorVTKID"
+            if { $tmpSpatialPriorVTKID == $ERROR_NODE_VTKID } {
                 $LOGIC PrintText "TCL: Prior doesn't exists, create a place holder..."
-                set tmpSpatialPriorID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_Place Holder"]
-                $mrmlManager SetTreeNodeSpatialPriorVolumeID $ID $tmpSpatialPriorID
+                set tmpSpatialPriorVTKID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_Place Holder"]
+                $mrmlManager SetTreeNodeSpatialPriorVolumeID $leafVTKID $tmpSpatialPriorVTKID
                 $LOGIC PrintText "TCL: ...DONE"
             }
 
             # Always create atlas node
             $LOGIC PrintText "TCL: CreateVolumeScalarNodeVolumeID $targetVolumeNode atlas${tmpName}_AC"
-            set alignedAtlasVolumeID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_AC"]
+            set alignedAtlasVolumeVTKID [$mrmlManager CreateVolumeScalarNodeVolumeID $targetVolumeNode "atlas${tmpName}_AC"]
 
-            $LOGIC PrintText "TCL: SetAlignedSpatialPrior $ID $alignedAtlasVolumeID"
-            $mrmlManager SetAlignedSpatialPrior $ID $alignedAtlasVolumeID
+            $LOGIC PrintText "TCL: SetAlignedSpatialPrior $leafVTKID $alignedAtlasVolumeVTKID"
+            $mrmlManager SetAlignedSpatialPrior $leafVTKID $alignedAtlasVolumeVTKID
 
-            $LOGIC PrintText "TCL: GetAlignedSpatialPriorFromTreeNodeID $alignedAtlasVolumeID"
-            set alignedAtlasVolumeNode [$mrmlManager GetAlignedSpatialPriorFromTreeNodeID $alignedAtlasVolumeID]
+            $LOGIC PrintText "TCL: GetAlignedSpatialPriorFromTreeNodeID $leafVTKID"
+            set alignedAtlasVolumeNode [$mrmlManager GetAlignedSpatialPriorFromTreeNodeID $leafVTKID]
 
             # for this particular label search for the corressponding atlas file
             $LOGIC PrintText "TCL: read in atlas file $outputDir/atlas$tmpIntensityLabel.nrrd"
@@ -1372,7 +1370,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             ReadDataFromDisk $alignedAtlasVolumeNode $alignedAtlasVolumeFileName Volume
             #file delete -force $alignedAtlasVolumeFileName
 
-            $LOGIC PrintText "TCL: leaf id: $ID, atlasvolumeID [$alignedAtlasVolumeNode GetID], atID $alignedAtlasVolumeID"
+            $LOGIC PrintText "TCL: leafVTKID: $leafVTKID, atlasVolumeNodeID [$alignedAtlasVolumeNode GetID], atlasVolumeVTKID $alignedAtlasVolumeVTKID"
         }
         $LOGIC PrintText "DEBUG: $alignedAtlasNode [$SCENE GetNodeByID [$alignedAtlasNode GetID]] [$alignedAtlasNode GetID]"
         $LOGIC PrintText "TCL: GetInputTargetNode:  [[$mrmlManager GetWorkingDataNode] GetInputTargetNode]"
