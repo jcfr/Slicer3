@@ -779,7 +779,7 @@ if(NOT DISABLE_CXX_TESTING)
       -1
       )
     set_tests_properties(
-      EMSegCL_Task_HumanEye_${registrationpackage}_${size}
+      EMSegCL_Task_HumanEye_LogMean_${registrationpackage}_${size}
       PROPERTIES
       FAIL_REGULAR_EXPRESSION
       "ERROR"
