@@ -11,8 +11,9 @@ extern "C" int Slicerbaselogic_Init(Tcl_Interp *interp);
 extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Mrmlcli_Init(Tcl_Interp *interp); 
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
+
 #ifdef Slicer3_USE_KWWIDGETS
-//extern "C" int Kwwidgets_Init(Tcl_Interp *interp);
+extern "C" int Atlascreatorcxxmodule_Init(Tcl_Interp *interp);
 #endif
 /*
 #define tgVtkCreateMacro(name,type)                                     \
@@ -103,9 +104,9 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv, vtkSlicerCommonInterface *sli
   Vtkitk_Init(interp);
   Commandlinemodule_Init(interp);
 #ifdef Slicer3_USE_KWWIDGETS
-  //Kwwidgets_Init(interp);
+  Atlascreatorcxxmodule_Init(interp);
 #endif
-  // Atlascreatorcxxmodule_Init(interp);
+
   return interp;
 }
 

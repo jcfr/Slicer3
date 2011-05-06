@@ -50,6 +50,7 @@ target_link_libraries(
   ${CLP_MODULE}
   EMSegment
   vtkCommon
+  AtlasCreatorCxxModule   
   )
 
 slicer3_install_plugins(${CLP_MODULE})
@@ -68,7 +69,7 @@ target_link_libraries(
   ${CLP_MODULE}
   EMSegment
   vtkCommon
-  AtlasCreatorCxxModule
+  AtlasCreatorCxxModule 
   )
 
 set(CLP_MODULE EMSegmentTransformToNewFormat)
@@ -80,6 +81,7 @@ target_link_libraries(
   ${CLP_MODULE}
   EMSegment
   vtkCommon
+  AtlasCreatorCxxModule   
   )
 
 # --------------------------------------------------------------------------
