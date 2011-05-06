@@ -865,54 +865,54 @@ UpdateIntensityDistributionFromSample(vtkIdType nodeID)
 
   if (numPoints > 0)
     {
-    //
-    // get all the intensities and compute the means
-    //
-    vtkstd::vector<vtkstd::vector<double> > 
-      logSamples(numTargetImages, vtkstd::vector<double>(numPoints, 0));
+      //
+      // get all the intensities and compute the means
+      //
+      vtkstd::vector<vtkstd::vector<double> > 
+    logSamples(numTargetImages, vtkstd::vector<double>(numPoints, 0));
     
-    for (unsigned int imageIndex = 0; imageIndex < numTargetImages; 
-         ++imageIndex)
-      {
+      for (unsigned int imageIndex = 0; imageIndex < numTargetImages; 
+       ++imageIndex)
+    {
       vtkstd::string mrmlID = workingTarget->GetNthVolumeNodeID(imageIndex);
       vtkIdType volumeID = this->MapMRMLNodeIDToVTKNodeID(mrmlID.c_str());
       
       for (unsigned int sampleIndex = 0; sampleIndex < numPoints; 
            ++sampleIndex)
         {
-        // we are interested in stats of log of intensities
-        // copy Kilian, use log(i + 1)
-        double logIntensity = 
-          log(this->
-              GetTreeNodeDistributionSampleIntensityValue(nodeID,
-                                                          sampleIndex,
-                                                          volumeID) + 1.0);
+          // we are interested in stats of log of intensities
+          // copy Kilian, use log(i + 1)
+          double logIntensity = 
+        log(this->
+            GetTreeNodeDistributionSampleIntensityValue(nodeID,
+                                sampleIndex,
+                                volumeID) + 1.0);
 
-        logSamples[imageIndex][sampleIndex] = logIntensity;
-        logMean[imageIndex] += logIntensity;
+          logSamples[imageIndex][sampleIndex] = logIntensity;
+          logMean[imageIndex] += logIntensity;
         }
       logMean[imageIndex] /= numPoints;
-      }
+    }
 
-    //
-    // compute covariance
-    //
-    for (r = 0; r < numTargetImages; ++r)
-      {
+      //
+      // compute covariance
+      //
+      for (r = 0; r < numTargetImages; ++r)
+    {
       for (c = 0; c < numTargetImages; ++c)
         {
-        for (p = 0; p < numPoints; ++p)
-          {
+          for (p = 0; p < numPoints; ++p)
+        {
           // I don't want to change indentation for kwstyle---it is
           // easier to catch problems with this lined up vertically
           logCov[r][c] += 
             (logSamples[r][p] - logMean[r]) * 
             (logSamples[c][p] - logMean[c]);
-          }
-        // unbiased covariance
-        logCov[r][c] /= numPoints - 1;
         }
-      }
+          // unbiased covariance
+          logCov[r][c] /= numPoints - 1;
+        }
+    }
     }
 
   //
@@ -928,12 +928,12 @@ UpdateIntensityDistributionFromSample(vtkIdType nodeID)
     }
   for (r = 0; r < numTargetImages; ++r)
     {
-    leafNode->SetLogMean(r, logMean[r]);
+      leafNode->SetLogMean(r, logMean[r]);
     
-    for (c = 0; c < numTargetImages; ++c)
-      {
+      for (c = 0; c < numTargetImages; ++c)
+    {
       leafNode->SetLogCovariance(r, c, logCov[r][c]);
-      }
+    }
     }
 }
 
@@ -946,8 +946,8 @@ GetTreeNodePrintWeight(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return 0;
     }
 
   return n->GetPrintWeights();  
@@ -961,8 +961,8 @@ SetTreeNodePrintWeight(vtkIdType nodeID, int shouldPrint)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return;
     }
   n->SetPrintWeights(shouldPrint);  
 }
@@ -975,8 +975,8 @@ GetTreeNodePrintQuality(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL  || !n->GetLeafParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a leaf node!");
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a leaf node!");
+      return 0;
     }
 
   return n->GetLeafParametersNode()->GetPrintQuality();
@@ -990,8 +990,8 @@ SetTreeNodePrintQuality(vtkIdType nodeID, int shouldPrint)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetLeafParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a leaf node!");
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a leaf node!");
+      return;
     }
   n->GetLeafParametersNode()->
     SetPrintQuality(shouldPrint);  
@@ -1005,8 +1005,8 @@ GetTreeNodeIntensityLabel(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetLeafParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a leaf node!");
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a leaf node!");
+      return 0;
     }
 
   return n->GetLeafParametersNode()->
@@ -1021,8 +1021,8 @@ SetTreeNodeIntensityLabel(vtkIdType nodeID, int label)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL  || !n->GetLeafParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a leaf node!");
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a leaf node!");
+      return;
     }
   n->GetLeafParametersNode()->SetIntensityLabel(label);
 }
@@ -1036,7 +1036,7 @@ GetTreeNodePrintFrequency(vtkIdType nodeID)
   if (n == NULL || !n->GetParentParametersNode())
     {
       vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      return 0;
     }
 
   return n->GetParentParametersNode()->
@@ -1051,8 +1051,8 @@ SetTreeNodePrintFrequency(vtkIdType nodeID, int shouldPrint)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetPrintFrequency(shouldPrint);  
@@ -1066,8 +1066,8 @@ GetTreeNodePrintLabelMap(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
 
   return n->GetParentParametersNode()->
@@ -1082,8 +1082,8 @@ SetTreeNodePrintLabelMap(vtkIdType nodeID, int shouldPrint)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetPrintLabelMap(shouldPrint);  
@@ -1097,8 +1097,8 @@ GetTreeNodePrintEMLabelMapConvergence(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
 
   return n->GetParentParametersNode()->
@@ -1113,8 +1113,8 @@ SetTreeNodePrintEMLabelMapConvergence(vtkIdType nodeID, int shouldPrint)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetPrintEMLabelMapConvergence(shouldPrint);  
@@ -1128,8 +1128,8 @@ GetTreeNodePrintEMWeightsConvergence(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
 
   return n->GetParentParametersNode()->
@@ -1144,8 +1144,8 @@ SetTreeNodePrintEMWeightsConvergence(vtkIdType nodeID, int shouldPrint)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetPrintEMWeightsConvergence(shouldPrint);  
@@ -1159,8 +1159,8 @@ GetTreeNodePrintMFALabelMapConvergence(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
 
   return n->GetParentParametersNode()->
@@ -1175,8 +1175,8 @@ SetTreeNodePrintMFALabelMapConvergence(vtkIdType nodeID, int shouldPrint)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetPrintMFALabelMapConvergence(shouldPrint);  
@@ -1190,8 +1190,8 @@ GetTreeNodePrintMFAWeightsConvergence(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
 
   return n->GetParentParametersNode()->
@@ -1206,8 +1206,8 @@ SetTreeNodePrintMFAWeightsConvergence(vtkIdType nodeID, int shouldPrint)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetPrintMFAWeightsConvergence(shouldPrint);  
@@ -1221,8 +1221,8 @@ GetTreeNodeGenerateBackgroundProbability(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return 0;
     }
 
   return n->GetParentParametersNode()->
@@ -1237,8 +1237,8 @@ SetTreeNodeGenerateBackgroundProbability(vtkIdType nodeID, int value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetGenerateBackgroundProbability(value);  
@@ -1253,8 +1253,8 @@ GetTreeNodeExcludeFromIncompleteEStep(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL  )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID  );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID  );
+      return 0;
     }
 
   return n->GetExcludeFromIncompleteEStep();
@@ -1268,8 +1268,8 @@ SetTreeNodeExcludeFromIncompleteEStep(vtkIdType nodeID, int shouldExclude)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return;
     }
   n->SetExcludeFromIncompleteEStep(shouldExclude);  
 }
@@ -1282,8 +1282,8 @@ GetTreeNodeAlpha(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return 0;
     }
   return n->GetParentParametersNode()->GetAlpha();  
 }
@@ -1296,8 +1296,8 @@ SetTreeNodeAlpha(vtkIdType nodeID, double value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return; 
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return; 
     }
 
   n->GetParentParametersNode()->SetAlpha(value);  
@@ -1311,8 +1311,8 @@ GetTreeNodePrintBias(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return 0;
     }
   return n->GetParentParametersNode()->GetPrintBias();  
 }
@@ -1326,7 +1326,7 @@ SetTreeNodePrintBias(vtkIdType nodeID, int shouldPrint)
   if (n == NULL || !n->GetParentParametersNode())
     {
       vtkErrorMacro("Tree node is null for nodeID: " << nodeID <<  " or not a parent node");
-    return;
+      return;
     }
 
   n->GetParentParametersNode()->SetPrintBias(shouldPrint);
@@ -1340,8 +1340,8 @@ GetTreeNodeBiasCalculationMaxIterations(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
   return n->GetParentParametersNode()->
     GetBiasCalculationMaxIterations();  
@@ -1355,8 +1355,8 @@ SetTreeNodeBiasCalculationMaxIterations(vtkIdType nodeID, int value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return;
     }
 
   n->GetParentParametersNode()->
@@ -1371,8 +1371,8 @@ GetTreeNodeSmoothingKernelWidth(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return 0;
     }
   return n->GetParentParametersNode()->
     GetSmoothingKernelWidth();  
@@ -1386,8 +1386,8 @@ SetTreeNodeSmoothingKernelWidth(vtkIdType nodeID, int value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return;
     }
 
   n->GetParentParametersNode()->
@@ -1402,8 +1402,8 @@ GetTreeNodeSmoothingKernelSigma(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode() )
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
   return n->GetParentParametersNode()->
     GetSmoothingKernelSigma();  
@@ -1417,8 +1417,8 @@ SetTreeNodeSmoothingKernelSigma(vtkIdType nodeID, double value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return;
     }
 
   n->GetParentParametersNode()->
@@ -1434,8 +1434,8 @@ GetTreeNodeClassProbability(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID );
+      return 0;
     }
   return n->GetClassProbability();  
 }
@@ -1448,8 +1448,8 @@ SetTreeNodeClassProbability(vtkIdType nodeID, double value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return;
     }
   n->SetClassProbability(value);  
 }
@@ -1462,15 +1462,15 @@ GetTreeNodeChildrenSumClassProbability(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return 0;
     }
   double sumOfProbabilities = 0;
   int numChildren = this->GetTreeNodeNumberOfChildren(nodeID);
   for (int childIndex = 0; childIndex < numChildren; ++childIndex)
     {
-    vtkIdType childID = this->GetTreeNodeChildNodeID(nodeID, childIndex);
-    sumOfProbabilities += this->GetTreeNodeClassProbability(childID);
+      vtkIdType childID = this->GetTreeNodeChildNodeID(nodeID, childIndex);
+      sumOfProbabilities += this->GetTreeNodeClassProbability(childID);
     }
   return sumOfProbabilities;
 }
@@ -1487,11 +1487,11 @@ GetTreeNodeFirstIDWithChildProbabilityError()
   this->GetListOfTreeNodeIDs(this->GetTreeRootNodeID(), nodeIDList);
   for (NodeIDListIterator i = nodeIDList.begin(); i != nodeIDList.end(); ++i)
     {
-    if (!this->GetTreeNodeIsLeaf(*i) && 
-        (fabs(1- this->GetTreeNodeChildrenSumClassProbability(*i) ) > 0.0005))
-      {
+      if (!this->GetTreeNodeIsLeaf(*i) && 
+      (fabs(1- this->GetTreeNodeChildrenSumClassProbability(*i) ) > 0.0005))
+    {
       return *i;
-      }
+    }
     }
   return -1;
 }
@@ -1504,8 +1504,8 @@ GetTreeNodeSpatialPriorWeight(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return 0;
     }
   return n->GetSpatialPriorWeight();
 }
@@ -1518,8 +1518,8 @@ SetTreeNodeSpatialPriorWeight(vtkIdType nodeID, double value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return;
     }
   n->SetSpatialPriorWeight(value);
 }
@@ -1533,8 +1533,8 @@ GetTreeNodeInputChannelWeight(vtkIdType nodeID, int volumeNumber)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return 0;
     }
   return n->GetInputChannelWeight(volumeNumber);
 }
@@ -1548,8 +1548,8 @@ SetTreeNodeInputChannelWeight(vtkIdType nodeID, int volumeNumber,
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return;
     }
   n->SetInputChannelWeight(volumeNumber, value);
 }
@@ -1563,7 +1563,7 @@ GetTreeNodeStoppingConditionEMType(vtkIdType nodeID)
   if (n == NULL || !n->GetParentParametersNode())
     {
       vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return -1;
+      return -1;
     }
   return n->GetParentParametersNode()->GetStopEMType();
 }
@@ -1577,8 +1577,8 @@ SetTreeNodeStoppingConditionEMType(vtkIdType nodeID,
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetStopEMType(conditionType);
@@ -1592,8 +1592,8 @@ GetTreeNodeStoppingConditionEMValue(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
   return n->GetParentParametersNode()->GetStopEMValue();
 }
@@ -1606,8 +1606,8 @@ SetTreeNodeStoppingConditionEMValue(vtkIdType nodeID, double value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->SetStopEMValue(value);
 }
@@ -1620,8 +1620,8 @@ GetTreeNodeStoppingConditionEMIterations(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
     }
   return n->GetParentParametersNode()->
     GetStopEMMaxIterations();
@@ -1636,8 +1636,8 @@ SetTreeNodeStoppingConditionEMIterations(vtkIdType nodeID,
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetStopEMMaxIterations(iterations);
@@ -1651,8 +1651,8 @@ GetTreeNodeStoppingConditionMFAType(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode()) 
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return -1;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return -1;
     }
   return n->GetParentParametersNode()->GetStopMFAType();
 }
@@ -1666,8 +1666,8 @@ SetTreeNodeStoppingConditionMFAType(vtkIdType nodeID,
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode()) 
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return;
     }
   n->GetParentParametersNode()->
     SetStopMFAType(conditionType);
@@ -1681,8 +1681,8 @@ GetTreeNodeStoppingConditionMFAValue(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode()) 
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return 0;
     }
   return n->GetParentParametersNode()->GetStopMFAValue();
 }
@@ -1695,8 +1695,8 @@ SetTreeNodeStoppingConditionMFAValue(vtkIdType nodeID, double value)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode()) 
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return;
     }
   n->GetParentParametersNode()->SetStopMFAValue(value);
 }
@@ -1709,8 +1709,8 @@ GetTreeNodeStoppingConditionMFAIterations(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode()) 
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return 0;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return 0;
     }
   return n->GetParentParametersNode()->
     GetStopMFAMaxIterations();
@@ -1725,8 +1725,8 @@ SetTreeNodeStoppingConditionMFAIterations(vtkIdType nodeID,
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL || !n->GetParentParametersNode())
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return;
     }
   n->GetParentParametersNode()->
     SetStopMFAMaxIterations(iterations);  
@@ -1754,18 +1754,18 @@ GetVolumeNthID(int n)
 
   if (node == NULL)
     {
-    vtkErrorMacro("Did not find nth volume in scene: " << n);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Did not find nth volume in scene: " << n);
+      return ERROR_NODE_VTKID;
     }
 
   if (this->IDMapContainsMRMLNodeID(node->GetID()))
     {
-    return this->MapMRMLNodeIDToVTKNodeID(node->GetID());
+      return this->MapMRMLNodeIDToVTKNodeID(node->GetID());
     }
   else
     {
-    vtkErrorMacro("Volume MRML ID was not in map!" << node->GetID());
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Volume MRML ID was not in map!" << node->GetID());
+      return ERROR_NODE_VTKID;
     }
 }
 
@@ -1777,7 +1777,7 @@ GetVolumeName(vtkIdType volumeID)
   vtkMRMLVolumeNode* volumeNode = this->GetVolumeNode(volumeID);
   if (volumeNode == NULL)
     {
-    return NULL;
+      return NULL;
     }
   return volumeNode->GetName();
 }
@@ -1790,15 +1790,15 @@ GetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID)
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return ERROR_NODE_VTKID;
     }
 
   // get name of atlas volume from tree node
   char* atlasVolumeName = n->GetSpatialPriorVolumeName();
   if (atlasVolumeName == NULL || strlen(atlasVolumeName) == 0)
     {
-    return ERROR_NODE_VTKID;
+      return ERROR_NODE_VTKID;
     }
 
   // get MRML volume ID from atas node
@@ -1807,19 +1807,19 @@ GetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID)
   
   if (mrmlVolumeNodeID == NULL || strlen(atlasVolumeName) == 0)
     {
-    vtkErrorMacro("MRMLID for prior volume is null; nodeID=" << nodeID);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("MRMLID for prior volume is null; nodeID=" << nodeID);
+      return ERROR_NODE_VTKID;
     }
   else if (this->IDMapContainsMRMLNodeID(mrmlVolumeNodeID))
     {
-    // convert mrml id to vtk id
-    return this->MapMRMLNodeIDToVTKNodeID(mrmlVolumeNodeID);
+      // convert mrml id to vtk id
+      return this->MapMRMLNodeIDToVTKNodeID(mrmlVolumeNodeID);
     }
   else
     {
-    vtkErrorMacro("Volume MRML ID was not in map! atlasVolumeName = " 
-                  << atlasVolumeName << " mrmlID = " << mrmlVolumeNodeID);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Volume MRML ID was not in map! atlasVolumeName = " 
+            << atlasVolumeName << " mrmlID = " << mrmlVolumeNodeID);
+      return ERROR_NODE_VTKID;
     }
 }
 
@@ -1832,47 +1832,47 @@ SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID,
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
-    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
-    return;
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+      return;
     }
 
-    if (volumeID == -1)
+  if (volumeID == -1)
     {
       if (n->GetSpatialPriorVolumeName())
-      {
+    {
           n->SetSpatialPriorVolumeName(NULL);
-      }
+    }
       else 
-      {
-        // Did not change anything
-        return;
+    {
+      // Did not change anything
+      return;
     }
     }
   else
     {
-    // map volume id to MRML ID
-    const char* volumeMRMLID = MapVTKNodeIDToMRMLNodeID(volumeID);
-    if (volumeMRMLID == NULL || strlen(volumeMRMLID) == 0)
-      {
+      // map volume id to MRML ID
+      const char* volumeMRMLID = MapVTKNodeIDToMRMLNodeID(volumeID);
+      if (volumeMRMLID == NULL || strlen(volumeMRMLID) == 0)
+    {
       vtkErrorMacro("Could not map volume ID: " << volumeID);
       return;
-      }
+    }
     
-    // use tree node label (or mrml id if label is not specified)
-    vtksys_stl::string priorVolumeName;
-    priorVolumeName = n->GetID();
+      // use tree node label (or mrml id if label is not specified)
+      vtksys_stl::string priorVolumeName;
+      priorVolumeName = n->GetID();
     
-    // add key value pair to atlas
-    int modifiedFlag = this->GetAtlasInputNode()->AddVolume(priorVolumeName.c_str(), volumeMRMLID);
+      // add key value pair to atlas
+      int modifiedFlag = this->GetAtlasInputNode()->AddVolume(priorVolumeName.c_str(), volumeMRMLID);
 
-    if (!n->GetSpatialPriorVolumeName() || strcmp(n->GetSpatialPriorVolumeName(),priorVolumeName.c_str()))
-      {
-    // set name of atlas volume in tree node
-    n->SetSpatialPriorVolumeName(priorVolumeName.c_str());
-    modifiedFlag = 1;
-      }
-    // Nothing has changed so do not change status of ValidFlag 
-    if (!modifiedFlag) {return;} 
+      if (!n->GetSpatialPriorVolumeName() || strcmp(n->GetSpatialPriorVolumeName(),priorVolumeName.c_str()))
+    {
+      // set name of atlas volume in tree node
+      n->SetSpatialPriorVolumeName(priorVolumeName.c_str());
+      modifiedFlag = 1;
+    }
+      // Nothing has changed so do not change status of ValidFlag 
+      if (!modifiedFlag) {return;} 
     }
 
   // aligned atlas is no longer valid
@@ -1889,15 +1889,15 @@ GetTreeNodeSubParcellationVolumeID(vtkIdType nodeID)
   vtkMRMLEMSTreeParametersLeafNode* n = this->GetTreeParametersLeafNode(nodeID) ;
   if (n == NULL)
     {
-    vtkErrorMacro("Leaf node  is null for nodeID: " << nodeID);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Leaf node  is null for nodeID: " << nodeID);
+      return ERROR_NODE_VTKID;
     }
 
   // get name of subParcellation volume from tree node
   char* subParcellationVolumeName = n->GetSubParcellationVolumeName();
   if (subParcellationVolumeName == NULL || strlen(subParcellationVolumeName) == 0)
     {
-    return ERROR_NODE_VTKID;
+      return ERROR_NODE_VTKID;
     }
 
   // get MRML volume ID from atas node
@@ -1906,19 +1906,19 @@ GetTreeNodeSubParcellationVolumeID(vtkIdType nodeID)
   
   if (mrmlVolumeNodeID == NULL || strlen(subParcellationVolumeName) == 0)
     {
-    vtkErrorMacro("MRMLID for subparcellation volume is null; nodeID=" << nodeID);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("MRMLID for subparcellation volume is null; nodeID=" << nodeID);
+      return ERROR_NODE_VTKID;
     }
   else if (this->IDMapContainsMRMLNodeID(mrmlVolumeNodeID))
     {
-    // convert mrml id to vtk id
-    return this->MapMRMLNodeIDToVTKNodeID(mrmlVolumeNodeID);
+      // convert mrml id to vtk id
+      return this->MapMRMLNodeIDToVTKNodeID(mrmlVolumeNodeID);
     }
   else
     {
-    vtkErrorMacro("Volume MRML ID was not in map! subParcellationVolumeName = " 
-                  << subParcellationVolumeName << " mrmlID = " << mrmlVolumeNodeID);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Volume MRML ID was not in map! subParcellationVolumeName = " 
+            << subParcellationVolumeName << " mrmlID = " << mrmlVolumeNodeID);
+      return ERROR_NODE_VTKID;
     }
 }
 
@@ -1926,13 +1926,13 @@ GetTreeNodeSubParcellationVolumeID(vtkIdType nodeID)
 void
 vtkEMSegmentMRMLManager::
 SetTreeNodeSubParcellationVolumeID(vtkIdType nodeID, 
-                                vtkIdType volumeID)
+                   vtkIdType volumeID)
 {
   vtkMRMLEMSTreeParametersLeafNode* n = this->GetTreeParametersLeafNode(nodeID) ;
   if (n == NULL)
     {
-    vtkErrorMacro("Parameter Leaf node is null for nodeID: " << nodeID);
-    return;
+      vtkErrorMacro("Parameter Leaf node is null for nodeID: " << nodeID);
+      return;
     }
 
   if (volumeID == -1)
@@ -1949,34 +1949,34 @@ SetTreeNodeSubParcellationVolumeID(vtkIdType nodeID,
     }
   else
     {
-    // map volume id to MRML ID
-    const char* volumeMRMLID = MapVTKNodeIDToMRMLNodeID(volumeID);
-    if (volumeMRMLID == NULL || strlen(volumeMRMLID) == 0)
-      {
+      // map volume id to MRML ID
+      const char* volumeMRMLID = MapVTKNodeIDToMRMLNodeID(volumeID);
+      if (volumeMRMLID == NULL || strlen(volumeMRMLID) == 0)
+    {
       vtkErrorMacro("Could not map volume ID: " << volumeID);
       return;
-      }
+    }
     
-    // use tree node label (or mrml id if label is not specified)
-    vtksys_stl::string priorVolumeName;
-    priorVolumeName = n->GetID();
+      // use tree node label (or mrml id if label is not specified)
+      vtksys_stl::string priorVolumeName;
+      priorVolumeName = n->GetID();
     
-    // add key value pair to subParcellation
-    int modifiedFlag = this->GetSubParcellationInputNode()->AddVolume(priorVolumeName.c_str(), volumeMRMLID);
+      // add key value pair to subParcellation
+      int modifiedFlag = this->GetSubParcellationInputNode()->AddVolume(priorVolumeName.c_str(), volumeMRMLID);
 
-    if (!n->GetSubParcellationVolumeName() || strcmp(n->GetSubParcellationVolumeName(),priorVolumeName.c_str()))
-      {
-    // set name of subParcellation volume in tree node
-    n->SetSubParcellationVolumeName(priorVolumeName.c_str());
-    modifiedFlag = 1;
-      }
-    // Nothing has changed so do not change status of ValidFlag 
-    if (!modifiedFlag) {return;} 
+      if (!n->GetSubParcellationVolumeName() || strcmp(n->GetSubParcellationVolumeName(),priorVolumeName.c_str()))
+    {
+      // set name of subParcellation volume in tree node
+      n->SetSubParcellationVolumeName(priorVolumeName.c_str());
+      modifiedFlag = 1;
+    }
+      // Nothing has changed so do not change status of ValidFlag 
+      if (!modifiedFlag) {return;} 
     }
 
   // aligned subParcellation is no longer valid
   // 
- this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
+  this->GetWorkingDataNode()->SetAlignedAtlasNodeIsValid(0);
 }
 
 //----------------------------------------------------------------------------
@@ -1993,13 +1993,13 @@ vtkMRMLVolumeNode*  vtkEMSegmentMRMLManager::GetAlignedSubParcellationFromTreeNo
       return NULL;
     }
 
-   std::string parcellationVolumeKey = this->GetTreeParametersLeafNode(nodeID)->GetSubParcellationVolumeName() ? this->GetTreeParametersLeafNode(nodeID)->GetSubParcellationVolumeName() : "";
-   int parcellationVolumeIndex       = workingParcellation->GetIndexByKey(parcellationVolumeKey.c_str());
-    if (parcellationVolumeIndex >= 0 )
+  std::string parcellationVolumeKey = this->GetTreeParametersLeafNode(nodeID)->GetSubParcellationVolumeName() ? this->GetTreeParametersLeafNode(nodeID)->GetSubParcellationVolumeName() : "";
+  int parcellationVolumeIndex       = workingParcellation->GetIndexByKey(parcellationVolumeKey.c_str());
+  if (parcellationVolumeIndex >= 0 )
     {
       return workingParcellation->GetNthVolumeNode(parcellationVolumeIndex);   
     }
-    return NULL;
+  return NULL;
 }
 
 
@@ -2015,7 +2015,7 @@ vtkEMSegmentMRMLManager::SetEnableSubParcellation(int enable)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetEnableSubParcellation(enable);
+      this->GetGlobalParametersNode()->SetEnableSubParcellation(enable);
     }
 }
 
@@ -2032,7 +2032,7 @@ vtkEMSegmentMRMLManager::SetMinimumIslandSize(int value)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetMinimumIslandSize(value);
+      this->GetGlobalParametersNode()->SetMinimumIslandSize(value);
     }
 }
 
@@ -2045,16 +2045,16 @@ GetTargetNumberOfSelectedVolumes()
 {
   if (this->GetTargetInputNode())
     {
-    return this->GetTargetInputNode()->GetNumberOfVolumes();
+      return this->GetTargetInputNode()->GetNumberOfVolumes();
     }
   else
     {
-    if (this->Node != NULL)
-      {
+      if (this->Node != NULL)
+    {
       vtkWarningMacro("Can't get number of target volumes but " \
-                      "Template Node is nonnull");
-      }
-    return 0;
+              "Template Node is nonnull");
+    }
+      return 0;
     }
 }
 
@@ -2067,18 +2067,18 @@ GetTargetSelectedVolumeNthID(int n)
     this->GetTargetInputNode()->GetNthVolumeNodeID(n);
   if (mrmlID == NULL || strlen(mrmlID) == 0)
     {
-    vtkErrorMacro("Did not find nth target volume; n = " << n);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Did not find nth target volume; n = " << n);
+      return ERROR_NODE_VTKID;
     }
   else if (!this->IDMapContainsMRMLNodeID(mrmlID))
     {
-    vtkErrorMacro("Volume MRML ID was not in map!" << mrmlID);
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Volume MRML ID was not in map!" << mrmlID);
+      return ERROR_NODE_VTKID;
     }
   else
     {
-    // convert mrml id to vtk id
-    return this->MapMRMLNodeIDToVTKNodeID(mrmlID);
+      // convert mrml id to vtk id
+      return this->MapMRMLNodeIDToVTKNodeID(mrmlID);
     }
 }
  
@@ -2088,10 +2088,10 @@ vtkEMSegmentMRMLManager::
 GetTargetSelectedVolumeNthMRMLID(int n)
 {
   if (!this->GetTargetInputNode())
-  {
-    vtkWarningMacro("Can't access target node.");
-    return NULL;
-  }
+    {
+      vtkWarningMacro("Can't access target node.");
+      return NULL;
+    }
   return
     this->GetTargetInputNode()->GetNthVolumeNodeID(n);
 }
@@ -2108,19 +2108,19 @@ ResetTargetSelectedVolumes(const std::vector<vtkIdType>& volumeIDs)
   this->GetTargetInputNode()->RemoveAllVolumes();
   for (unsigned int i = 0; i < volumeIDs.size(); ++i)
     {
-    vtkMRMLVolumeNode* volumeNode = this->GetVolumeNode(volumeIDs[i]);
-    if (volumeNode == NULL)
-      {
+      vtkMRMLVolumeNode* volumeNode = this->GetVolumeNode(volumeIDs[i]);
+      if (volumeNode == NULL)
+    {
       vtkErrorMacro("Invalid volume ID: " << volumeIDs[i]);
       return;
-      }
+    }
 
-    vtkstd::string name = volumeNode->GetName();
-    if (name.empty())
-      {
+      vtkstd::string name = volumeNode->GetName();
+      if (name.empty())
+    {
       name = volumeNode->GetID();
-      }
-    this->GetTargetInputNode()->AddVolume(name.c_str(), volumeNode->GetID());
+    }
+      this->GetTargetInputNode()->AddVolume(name.c_str(), volumeNode->GetID());
     }
 
   //
@@ -2132,21 +2132,21 @@ ResetTargetSelectedVolumes(const std::vector<vtkIdType>& volumeIDs)
 
   if (targetNewNumImages > targetOldNumImages)
     {
-    int numAddedImages = targetNewNumImages - targetOldNumImages;
-    for (int i = 0; i < numAddedImages; ++i)
-      {
+      int numAddedImages = targetNewNumImages - targetOldNumImages;
+      for (int i = 0; i < numAddedImages; ++i)
+    {
       this->PropogateAdditionOfSelectedTargetImage();
-      }
+    }
     }
   else if (targetNewNumImages < targetOldNumImages)
     {
-    int numRemovedImages = targetOldNumImages - targetNewNumImages;
-    for (int i = 0; i < numRemovedImages; ++i)
-      {
+      int numRemovedImages = targetOldNumImages - targetNewNumImages;
+      for (int i = 0; i < numRemovedImages; ++i)
+    {
       std::cout << "removing an image: " << targetOldNumImages-1-i 
-                << std::endl;
+            << std::endl;
       this->PropogateRemovalOfSelectedTargetImage(targetOldNumImages-1-i);
-      }
+    }
     }
 
   // aligned targets are no longer valid
@@ -2165,40 +2165,40 @@ AddTargetSelectedVolume(vtkIdType volumeID)
   vtkMRMLVolumeNode* volumeNode = this->GetVolumeNode(volumeID);
   if (volumeNode == NULL)
     {
-    vtkErrorMacro("Invalid volume ID: " << volumeID);
-    return;
+      vtkErrorMacro("Invalid volume ID: " << volumeID);
+      return;
     }
 
   // map to MRML ID
   const char* mrmlID = this->MapVTKNodeIDToMRMLNodeID(volumeID);
   if (mrmlID == NULL || strlen(mrmlID) == 0)
     {
-    vtkErrorMacro("Could not map volume ID: " << volumeID);
-    return;
+      vtkErrorMacro("Could not map volume ID: " << volumeID);
+      return;
     }
 
   // get volume name
   vtkstd::string name = volumeNode->GetName() ? volumeNode->GetName() : "";
   if (name.empty())
     {
-    name = volumeNode->GetID();
+      name = volumeNode->GetID();
     }
 
   // set volume name and ID in map
- if (!this->GetTargetInputNode()) 
+  if (!this->GetTargetInputNode()) 
     {
-       vtkErrorMacro("No TargetInputNode defined "); 
-       return; 
+      vtkErrorMacro("No TargetInputNode defined "); 
+      return; 
     }
   this->GetTargetInputNode()->AddVolume(name.c_str(), mrmlID);
 
   // aligned targets are no longer valid
   if (!this->GetWorkingDataNode()) 
     {
-       vtkErrorMacro("No WorkingDataNode defined "); 
-       return; 
+      vtkErrorMacro("No WorkingDataNode defined "); 
+      return; 
     }
-   this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
+  this->GetWorkingDataNode()->SetAlignedTargetNodeIsValid(0);
 
   // propogate change to parameters nodes
   this->PropogateAdditionOfSelectedTargetImage();
@@ -2224,8 +2224,8 @@ RemoveTargetSelectedVolume(vtkIdType volumeID)
   int imageIndex = this->GetTargetVolumeIndex(volumeID);
   if (imageIndex < 0)
     {
-    vtkErrorMacro("Volume not present in target: " << volumeID);
-    return;
+      vtkErrorMacro("Volume not present in target: " << volumeID);
+      return;
     }
   this->RemoveTargetSelectedVolumeIndex(vtkIdType(imageIndex));
 }
@@ -2251,13 +2251,13 @@ MoveNthTargetSelectedVolume(int fromIndex, int toIndex)
   // make sure the indices make sense
   if (fromIndex < 0 || fromIndex >= this->GetTargetNumberOfSelectedVolumes())
     {
-    vtkErrorMacro("invalid target from index " << fromIndex);
-    return;
+      vtkErrorMacro("invalid target from index " << fromIndex);
+      return;
     }
   if (toIndex < 0 || toIndex >= this->GetTargetNumberOfSelectedVolumes())
     {
-    vtkErrorMacro("invalid target to index " << toIndex);
-    return;
+      vtkErrorMacro("invalid target to index " << toIndex);
+      return;
     }
 
   // move inside target node
@@ -2279,8 +2279,8 @@ MoveTargetSelectedVolume(vtkIdType volumeID, int toIndex)
   int imageIndex = this->GetTargetVolumeIndex(volumeID);
   if (imageIndex < 0)
     {
-    vtkErrorMacro("Volume not present in target: " << volumeID);
-    return;
+      vtkErrorMacro("Volume not present in target: " << volumeID);
+      return;
     }
   this->MoveNthTargetSelectedVolume(imageIndex, toIndex);
 }
@@ -2292,20 +2292,20 @@ DoTargetAndAtlasDataTypesMatch(vtkMRMLEMSVolumeCollectionNode* targetNode, vtkMR
 {
   if (targetNode == NULL)
     {
-    std::cout << "WARNING: Target node is null!" << std::endl;
-    return false;
+      std::cout << "WARNING: Target node is null!" << std::endl;
+      return false;
     }
 
   if (atlasNode == NULL)
     {
-    std::cout << "WARNING: Atlas node is null!" << std::endl;
-    return false;
+      std::cout << "WARNING: Atlas node is null!" << std::endl;
+      return false;
     }
 
   if (targetNode->GetNumberOfVolumes() == 0)
     {
-    std::cout << "Target node is empty!" << std::endl;
-    return (atlasNode->GetNumberOfVolumes() == 0);
+      std::cout << "Target node is empty!" << std::endl;
+      return (atlasNode->GetNumberOfVolumes() == 0);
     }
 
   int standardScalarDataType = 
@@ -2313,26 +2313,26 @@ DoTargetAndAtlasDataTypesMatch(vtkMRMLEMSVolumeCollectionNode* targetNode, vtkMR
 
   for (int i = 1; i < targetNode->GetNumberOfVolumes(); ++i)
     {
-    int currentScalarDataType =
-      targetNode->GetNthVolumeNode(i)->GetImageData()->GetScalarType();      
-    if (currentScalarDataType != standardScalarDataType)
-      {
+      int currentScalarDataType =
+    targetNode->GetNthVolumeNode(i)->GetImageData()->GetScalarType();      
+      if (currentScalarDataType != standardScalarDataType)
+    {
       std::cout << "Target volume " << i << ": scalar type does not match!" 
-                << std::endl;
+            << std::endl;
       return false;
-      }
+    }
     }
 
   for (int i = 0; i < atlasNode->GetNumberOfVolumes(); ++i)
     {
-    int currentScalarDataType =
-      atlasNode->GetNthVolumeNode(i)->GetImageData()->GetScalarType();      
-    if (currentScalarDataType != standardScalarDataType)
-      {
+      int currentScalarDataType =
+    atlasNode->GetNthVolumeNode(i)->GetImageData()->GetScalarType();      
+      if (currentScalarDataType != standardScalarDataType)
+    {
       std::cout << "Atlas volume " << i << ": scalar type does not match!" 
-                << std::endl;
+            << std::endl;
       return false;
-      }
+    }
     }
 
   return true;
@@ -2345,8 +2345,8 @@ GetRegistrationAtlasVolumeID()
 {
   if (!this->GetGlobalParametersNode())
     {
-    vtkErrorMacro("GlobalParametersNode is NULL.");
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("GlobalParametersNode is NULL.");
+      return ERROR_NODE_VTKID;
     }
 
   // the the name of the atlas image from the global parameters
@@ -2354,8 +2354,8 @@ GetRegistrationAtlasVolumeID()
 
   if (volumeName == NULL || strlen(volumeName) == 0)
     {
-    vtkWarningMacro("AtlasVolumeName is NULL/blank.");
-    return ERROR_NODE_VTKID;
+      vtkWarningMacro("AtlasVolumeName is NULL/blank.");
+      return ERROR_NODE_VTKID;
     }
 
   // get MRML ID of atlas from it's name
@@ -2363,8 +2363,8 @@ GetRegistrationAtlasVolumeID()
     GetVolumeNodeIDByKey(volumeName);
   if (mrmlID == NULL || strlen(mrmlID) == 0)
     {
-    vtkErrorMacro("Could not find mrml ID for registration atlas volume.");
-    return ERROR_NODE_VTKID;
+      vtkErrorMacro("Could not find mrml ID for registration atlas volume.");
+      return ERROR_NODE_VTKID;
     }
   
   // convert mrml id to vtk id
@@ -2385,8 +2385,8 @@ SetRegistrationAtlasVolumeID(vtkIdType volumeID)
   const char* mrmlID = this->MapVTKNodeIDToMRMLNodeID(volumeID);
   if (mrmlID == NULL || strlen(mrmlID) == 0)
     {
-    vtkErrorMacro("Could not map volume ID: " << volumeID);
-    return;
+      vtkErrorMacro("Could not map volume ID: " << volumeID);
+      return;
     }
 
   // set volume name and ID in map
@@ -2412,7 +2412,7 @@ SetRegistrationAffineType(int affineType)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetRegistrationAffineType(affineType);
+      this->GetGlobalParametersNode()->SetRegistrationAffineType(affineType);
     }
 }
 
@@ -2433,8 +2433,8 @@ SetRegistrationDeformableType(int deformableType)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->
-      SetRegistrationDeformableType(deformableType);
+      this->GetGlobalParametersNode()->
+    SetRegistrationDeformableType(deformableType);
     }
 }
 
@@ -2454,8 +2454,8 @@ SetRegistrationInterpolationType(int interpolationType)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->
-      SetRegistrationInterpolationType(interpolationType);  
+      this->GetGlobalParametersNode()->
+    SetRegistrationInterpolationType(interpolationType);  
     }
 }
 
@@ -2475,8 +2475,8 @@ SetRegistrationPackageType(int packageType)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->
-      SetRegistrationPackageType(packageType);
+      this->GetGlobalParametersNode()->
+    SetRegistrationPackageType(packageType);
     }
 }
 
@@ -2496,8 +2496,8 @@ SetEnableTargetToTargetRegistration(int enable)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->
-      SetEnableTargetToTargetRegistration(enable);
+      this->GetGlobalParametersNode()->
+    SetEnableTargetToTargetRegistration(enable);
     }
 }
 
@@ -2515,20 +2515,16 @@ GetColorNodeID()
   if (colorID)
     {
       if (this->MRMLScene->GetNodeByID(colorID))
-      { 
-        return colorID;
-      }
+    { 
+      return colorID;
     }
-   
-  vtkSlicerColorLogic* colLogic = vtkSlicerColorLogic::SafeDownCast(this->GetMRMLScene()->GetNthNodeByClass(0,"vtkSlicerColorLogic")); 
-   if (!colLogic)
-    {
-        vtkWarningMacro("No vtkSlicerColorLogic defined in scene");
-        return NULL;
     }
-    // It is important that the color node exists otherwise we get wired errors - I learned the hard way!
-    this->GetGlobalParametersNode()->SetColormap(colLogic->GetDefaultLabelMapColorNodeID());    
-    return this->GetGlobalParametersNode()->GetColormap();  
+
+  vtkSlicerColorLogic *colLogic = vtkSlicerColorLogic::New();
+  // It is important that the color node exists otherwise we get wired errors - I learned the hard way!
+  this->GetGlobalParametersNode()->SetColormap(colLogic->GetDefaultLabelMapColorNodeID());    
+  colLogic->Delete();
+  return this->GetGlobalParametersNode()->GetColormap();  
 }
  
 //----------------------------------------------------------------------------
@@ -2538,7 +2534,7 @@ SetColorNodeID(const char* colormap)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetColormap(colormap);  
+      this->GetGlobalParametersNode()->SetColormap(colormap);  
     }
 }
 
@@ -2558,7 +2554,7 @@ SetSaveWorkingDirectory(const char* directory)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetWorkingDirectory(directory);  
+      this->GetGlobalParametersNode()->SetWorkingDirectory(directory);  
     }
 }
 
@@ -2571,7 +2567,7 @@ GetSaveTemplateFilename()
 
   if (!this->Node || !this->GetGlobalParametersNode() )
     {
-    return NULL;
+      return NULL;
     }
   return this->GetGlobalParametersNode()->GetTemplateFileName();
 }
@@ -2583,11 +2579,11 @@ SetSaveTemplateFilename(const char* file)
 {
   if (this->Node && this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetTemplateFileName(file);
+      this->GetGlobalParametersNode()->SetTemplateFileName(file);
     }
   else
     {
-    vtkErrorMacro("Attempt to access null EM node or GlobalParametersNode.");
+      vtkErrorMacro("Attempt to access null EM node or GlobalParametersNode.");
     }
 }
 
@@ -2598,11 +2594,11 @@ GetSaveTemplateAfterSegmentation()
 {
   if (this->Node  && this->GetGlobalParametersNode())
     {
-    return this->GetGlobalParametersNode()->GetTemplateSaveAfterSegmentation();
+      return this->GetGlobalParametersNode()->GetTemplateSaveAfterSegmentation();
     }
   else
     {
-    return 0;
+      return 0;
     }
 }
 
@@ -2617,7 +2613,7 @@ SetSaveTemplateAfterSegmentation(int shouldSave)
     }
   else
     {
-    vtkErrorMacro("Attempt to access null EM node.");
+      vtkErrorMacro("Attempt to access null EM node.");
     }
 }
 
@@ -2628,11 +2624,11 @@ GetSaveIntermediateResults()
 {
   if (this->GetGlobalParametersNode())
     {
-    return this->GetGlobalParametersNode()->GetSaveIntermediateResults();
+      return this->GetGlobalParametersNode()->GetSaveIntermediateResults();
     }
   else
     {
-    return 0;
+      return 0;
     }
 }
 
@@ -2643,13 +2639,13 @@ SetSaveIntermediateResults(int shouldSaveResults)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->
-      SetSaveIntermediateResults(shouldSaveResults);
+      this->GetGlobalParametersNode()->
+    SetSaveIntermediateResults(shouldSaveResults);
     }
   else
-  {
-    vtkErrorMacro("Attempt to access null global parameter node.");
-  }
+    {
+      vtkErrorMacro("Attempt to access null global parameter node.");
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -2659,11 +2655,11 @@ GetSaveSurfaceModels()
 {
   if (this->GetGlobalParametersNode())
     {
-    return this->GetGlobalParametersNode()->GetSaveSurfaceModels();  
+      return this->GetGlobalParametersNode()->GetSaveSurfaceModels();  
     }
   else
     {
-    return 0;
+      return 0;
     }
 }
 
@@ -2674,11 +2670,11 @@ SetSaveSurfaceModels(int shouldSaveModels)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetSaveSurfaceModels(shouldSaveModels);  
+      this->GetGlobalParametersNode()->SetSaveSurfaceModels(shouldSaveModels);  
     }
   else
     {
-    vtkErrorMacro("Attempt to access null global parameter node.");
+      vtkErrorMacro("Attempt to access null global parameter node.");
     }
 }
 
@@ -2689,11 +2685,11 @@ GetOutputVolumeMRMLID()
 {
   if (!this->GetWorkingDataNode())
     {
-    if (this->Node)
-      {
+      if (this->Node)
+    {
       vtkWarningMacro("Can't get WorkingData and EMSTemplateNode is nonnull.");
-      }
-    return NULL;
+    }
+      return NULL;
     }
   return this->GetWorkingDataNode()->GetOutputSegmentationNodeID();
 }
@@ -2705,15 +2701,15 @@ SetOutputVolumeMRMLID(const char* mrmlID)
 {
   if (!this->GetWorkingDataNode())
     {
-    if (this->Node)
-      {
+      if (this->Node)
+    {
       vtkWarningMacro("Can't get WorkingData and EMSTemplateNode is nonnull.");
-      }
-    return;
+    }
+      return;
     }
   else
     {
-    this->GetWorkingDataNode()->SetOutputSegmentationNodeID(mrmlID);
+      this->GetWorkingDataNode()->SetOutputSegmentationNodeID(mrmlID);
     }
 }
 
@@ -2725,16 +2721,16 @@ SetOutputVolumeID(vtkIdType volumeID)
   vtkMRMLVolumeNode* volumeNode = this->GetVolumeNode(volumeID);
   if (volumeNode == NULL)
     {
-    vtkErrorMacro("Invalid volume ID: " << volumeID);
-    return;
+      vtkErrorMacro("Invalid volume ID: " << volumeID);
+      return;
     }
 
   // map to MRML ID
   const char* mrmlID = this->MapVTKNodeIDToMRMLNodeID(volumeID);
   if (mrmlID == NULL || strlen(mrmlID) == 0)
     {
-    vtkErrorMacro("Could not map volume ID: " << volumeID);
-    return;
+      vtkErrorMacro("Could not map volume ID: " << volumeID);
+      return;
     }
 
   this->SetOutputVolumeMRMLID(mrmlID);
@@ -2747,11 +2743,11 @@ GetEnableMultithreading()
 {
   if (this->GetGlobalParametersNode())
     {
-    return this->GetGlobalParametersNode()->GetMultithreadingEnabled();
+      return this->GetGlobalParametersNode()->GetMultithreadingEnabled();
     }
   else
     {
-    return 0;
+      return 0;
     }
 }
 
@@ -2762,11 +2758,11 @@ SetEnableMultithreading(int isEnabled)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetMultithreadingEnabled(isEnabled);
+      this->GetGlobalParametersNode()->SetMultithreadingEnabled(isEnabled);
     }
   else
     {
-    vtkErrorMacro("Attempt to access null global parameter node.");
+      vtkErrorMacro("Attempt to access null global parameter node.");
     }
 }
 
@@ -2777,11 +2773,11 @@ GetUpdateIntermediateData()
 {
   if (this->GetGlobalParametersNode())
     {
-    return this->GetGlobalParametersNode()->GetUpdateIntermediateData();
+      return this->GetGlobalParametersNode()->GetUpdateIntermediateData();
     }
   else
     {
-    return 0;
+      return 0;
     }
 }
 
@@ -2792,11 +2788,11 @@ SetUpdateIntermediateData(int shouldUpdate)
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetUpdateIntermediateData(shouldUpdate);
+      this->GetGlobalParametersNode()->SetUpdateIntermediateData(shouldUpdate);
     }
   else
     {
-    vtkErrorMacro("Attempt to access null global parameter node.");
+      vtkErrorMacro("Attempt to access null global parameter node.");
     }
 }
 
@@ -2807,7 +2803,7 @@ GetSegmentationBoundaryMin(int minPoint[3])
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->GetSegmentationBoundaryMin(minPoint);
+      this->GetGlobalParametersNode()->GetSegmentationBoundaryMin(minPoint);
     }
 }
 
@@ -2818,11 +2814,11 @@ SetSegmentationBoundaryMin(int minPoint[3])
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetSegmentationBoundaryMin(minPoint);
+      this->GetGlobalParametersNode()->SetSegmentationBoundaryMin(minPoint);
     }
   else
     {
-    vtkErrorMacro("Attempt to access null global parameter node.");
+      vtkErrorMacro("Attempt to access null global parameter node.");
     }
 }
 
@@ -2833,7 +2829,7 @@ GetSegmentationBoundaryMax(int maxPoint[3])
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->GetSegmentationBoundaryMax(maxPoint);
+      this->GetGlobalParametersNode()->GetSegmentationBoundaryMax(maxPoint);
     }
 }
 
@@ -2844,11 +2840,11 @@ SetSegmentationBoundaryMax(int maxPoint[3])
 {
   if (this->GetGlobalParametersNode())
     {
-    this->GetGlobalParametersNode()->SetSegmentationBoundaryMax(maxPoint);
+      this->GetGlobalParametersNode()->SetSegmentationBoundaryMax(maxPoint);
     }
   else
     {
-    vtkErrorMacro("Attempt to access null global parameter node.");
+      vtkErrorMacro("Attempt to access null global parameter node.");
     }
 }
 
@@ -2859,11 +2855,11 @@ GetAtlasNumberOfTrainingSamples()
 {
   if (this->GetAtlasInputNode())
     {
-    return this->GetAtlasInputNode()->GetNumberOfTrainingSamples();
+      return this->GetAtlasInputNode()->GetNumberOfTrainingSamples();
     }
   else
     {
-    return 0;
+      return 0;
     }
 }
 
@@ -2875,10 +2871,10 @@ ComputeAtlasNumberOfTrainingSamples()
 {
   cout << "vtkEMSegmentMRMLManager::ComputeAtlasNumberOfTrainingSamples: Start" << endl;
 
- vtkMRMLEMSAtlasNode *atlasInputNode = this->GetAtlasInputNode();
+  vtkMRMLEMSAtlasNode *atlasInputNode = this->GetAtlasInputNode();
   if (atlasInputNode == NULL)
     {
-    return;
+      return;
     }
 
   if (!this->GetWorkingDataNode()->GetAlignedTargetNode() || !this->GetWorkingDataNode()->GetAlignedTargetNodeIsValid())
@@ -2899,24 +2895,24 @@ ComputeAtlasNumberOfTrainingSamples()
     {
       if (this->GetTreeNodeIsLeaf(*i)) 
         {  
-           std::string atlasVolumeKey =  this->GetTreeNode(*i)->GetSpatialPriorVolumeName() ? this->GetTreeNode(*i)->GetSpatialPriorVolumeName() : "";
-           int atlasVolumeIndex       = atlasInputNode->GetIndexByKey(atlasVolumeKey.c_str());
-           if (atlasVolumeIndex >= 0)
-              {
-                 vtkImageData* imageData = atlasInputNode->GetNthVolumeNode(atlasVolumeIndex)->GetImageData();
-         if (imageData)
-           {
-                    double range[2];
-                       imageData->GetScalarRange(range);
-                       cout << "Max of " << atlasInputNode->GetNthVolumeNode(atlasVolumeIndex)->GetName() << ": " << range[1] << endl;
-                   if (!setFlag ||  int(range[1]) > maxNum) 
-                     {
-                             maxNum = int(range[1]);
-                 setFlag = 1;
-                     }
-           }
-          }
-    }
+      std::string atlasVolumeKey =  this->GetTreeNode(*i)->GetSpatialPriorVolumeName() ? this->GetTreeNode(*i)->GetSpatialPriorVolumeName() : "";
+      int atlasVolumeIndex       = atlasInputNode->GetIndexByKey(atlasVolumeKey.c_str());
+      if (atlasVolumeIndex >= 0)
+        {
+          vtkImageData* imageData = atlasInputNode->GetNthVolumeNode(atlasVolumeIndex)->GetImageData();
+          if (imageData)
+        {
+          double range[2];
+          imageData->GetScalarRange(range);
+          cout << "Max of " << atlasInputNode->GetNthVolumeNode(atlasVolumeIndex)->GetName() << ": " << range[1] << endl;
+          if (!setFlag ||  int(range[1]) > maxNum) 
+            {
+              maxNum = int(range[1]);
+              setFlag = 1;
+            }
+        }
+        }
+       }
     }
   if (!setFlag) 
     {
