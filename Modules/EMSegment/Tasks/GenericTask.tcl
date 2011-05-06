@@ -1174,6 +1174,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable workingDN
         variable ERROR_NODE_VTKID
 
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == AtlasCreator"
+        $LOGIC PrintText "TCL: =========================================="
+
         #variable SCENE
         #set SCENE [$::slicer3::Application GetMRMLScene]
 
@@ -1305,12 +1309,15 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         $node SetOutputCast $outputCast
 
+        $LOGIC PrintText "TCL: == AtlasCreator Launch"
+
         # add the new node to the MRML scene
         $SCENE AddNode $node
         $node Launch
         #the terminal will contain stdout output
         $node Print
         $node Delete
+        $LOGIC PrintText "TCL: == AtlasCreator Finished"
 
         # Atlas creator returns a directory ($outputdir) with priors
         # create a empty atlasNode
