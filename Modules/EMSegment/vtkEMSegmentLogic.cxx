@@ -110,9 +110,9 @@ vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* v
   vtkSlicerVolumesLogic* volLogic  = vtkSlicerVolumesLogic::New();
   volLogic->SetMRMLScene(mrmlScene);
   volLogic->SetApplicationLogic(appLogic);
-  vtkMRMLScalarVolumeNode* volNode = volLogic->AddArchetypeScalarVolume(filename, volname,2);
+  vtkMRMLScalarVolumeNode* volNode = volLogic->AddArchetypeScalarVolume(filename, volname, 0);
   volLogic->Delete();
-  return  volNode;
+  return volNode;
 }
 
 
