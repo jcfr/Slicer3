@@ -12,7 +12,8 @@
 vtkMRMLPharmacokineticsCurveAnalysisNode* vtkMRMLPharmacokineticsCurveAnalysisNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLPharmacokineticsCurveAnalysisNode"); if(ret)
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLPharmacokineticsCurveAnalysisNode");
+  if(ret)
     {
       return (vtkMRMLPharmacokineticsCurveAnalysisNode*)ret;
     }
@@ -51,6 +52,18 @@ vtkMRMLPharmacokineticsCurveAnalysisNode::vtkMRMLPharmacokineticsCurveAnalysisNo
 vtkMRMLPharmacokineticsCurveAnalysisNode::~vtkMRMLPharmacokineticsCurveAnalysisNode()
 {
 }
+
+//----------------------------------------------------------------------------
+void vtkMRMLPharmacokineticsCurveAnalysisNode::SetErrorMessage( const char *message)
+{
+  this->ErrorMessage.clear();
+  this->ErrorMessage = message;
+}
+
+
+
+
+
 
 
 //----------------------------------------------------------------------------
@@ -228,6 +241,7 @@ void vtkMRMLPharmacokineticsCurveAnalysisNode::SetConstant(const char *name, con
 {
   this->Constants[name] = value;
 }
+
 
 
 //----------------------------------------------------------------------------

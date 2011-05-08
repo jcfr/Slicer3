@@ -110,6 +110,7 @@ vtkPharmacokineticsGUI::vtkPharmacokineticsGUI ( )
   this->CurveFittingEndIndexSpinBox   = NULL;
   this->InitialParameterList          = NULL;
   this->PlotSelectPopUpMenu           = NULL;
+  this->CurveAnalysisNode = NULL;
 
   // -----------------------------------------
   // Curve Fitting
@@ -384,6 +385,12 @@ vtkPharmacokineticsGUI::~vtkPharmacokineticsGUI ( )
     this->PlotManagerNode->Delete();
     }
 
+  //--- Let go of MRML
+  if ( this->CurveAnalysisNode )
+    {
+    vtkSetAndObserveMRMLNodeMacro ( this->CurveAnalysisNode, NULL );
+    }
+
   //----------------------------------------------------------------
   // Unregister Logic class
 
@@ -429,8 +436,14 @@ void vtkPharmacokineticsGUI::Init()
       this->PlotManagerNode->Refresh();
       }
 
-    this->IntensityPlot->SetAndObservePlotManagerNode(this->PlotManagerNode);
-    this->PlotManagerNode->Refresh();
+    if ( this->IntensityPlot )
+      {
+      this->IntensityPlot->SetAndObservePlotManagerNode(this->PlotManagerNode);
+      }
+    if ( this->PlotManagerNode )
+      {
+      this->PlotManagerNode->Refresh();
+      }
 
     }
 
@@ -953,7 +966,11 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
   else if (this->MaskNodeSelector == vtkSlicerNodeSelectorWidget::SafeDownCast(caller)
            && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent ) 
     {
+    vtkMRMLScalarVolumeNode* maskNode =
+      vtkMRMLScalarVolumeNode::SafeDownCast(this->MaskNodeSelector->GetSelected());
+    this->IntensityCurves->SetMaskNode(maskNode);
     }
+
   else if (this->GenerateCurveButton == vtkKWPushButton::SafeDownCast(caller)
            && event == vtkKWPushButton::InvokedEvent)
     {
@@ -963,12 +980,22 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
       vtkMRMLScalarVolumeNode::SafeDownCast(this->MaskNodeSelector->GetSelected());
     if (bundleNode && maskNode)
       {
-      this->IntensityCurves->SetBundleNode(bundleNode);
-      this->IntensityCurves->SetMaskNode(maskNode);
+      //--- make sure everybody is current.
+      if ( this->IntensityCurves->GetBundleNode() != bundleNode )
+        {
+        this->IntensityCurves->SetBundleNode(bundleNode);
+        }
+      if ( this->IntensityCurves->GetMaskNode() != maskNode )
+        {
+        this->IntensityCurves->SetMaskNode(maskNode);
+        }
+      }
+    else
+      {
+      this->PostMessage ( "Please make sure an image Time-Series and a VOI mask are selected first." );
       }
 
     // check the value type for curve
-    
     if (this->ValueTypeButtonSet->GetWidget()->GetWidget(0)->GetSelectedState())
       {
       this->IntensityCurves->SetValueType(vtkPharmacokineticsIntensityCurves::TYPE_MEAN);
@@ -981,11 +1008,13 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
       {
       this->IntensityCurves->SetValueType(vtkPharmacokineticsIntensityCurves::TYPE_MIN);
       }
-      
-    GeneratePlotNodes();
-    UpdatePlotList();
+    if ( this->GeneratePlotNodes() )
+      {
+      this->UpdatePlotList();
+      }
 
     }
+
   else if (this->ErrorBarCheckButton->GetWidget() == vtkKWCheckButton::SafeDownCast(caller)
            && event == vtkKWCheckButton::SelectedStateChangedEvent)
     {
@@ -1049,18 +1078,26 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
       }
     fbrowse->Delete();
     }
-
   else if (this->ModelSelectButton->GetMenu() == vtkKWMenu::SafeDownCast ( caller ) &&
            event == vtkKWMenu::MenuItemInvokedEvent )
     {
+    //--- for the selected model, populate the interface with appropriate initial parameters.
+    this->UpdateInitialParameterList ( );
     }
+
+
 #ifdef Pharmacokinetics_USE_SCIPY  
   else if (this->CurveScriptSelectButton->GetWidget()->GetLoadSaveDialog()
            == vtkKWLoadSaveDialog::SafeDownCast(caller)
            && event == vtkKWLoadSaveDialog::FileNameChangedEvent)
     {
-    vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode = vtkMRMLPharmacokineticsCurveAnalysisNode::New();
-    this->GetMRMLScene()->AddNode(curveNode);
+    if ( this->CurveAnalysisNode == NULL )
+      {
+      this->CurveAnalysisNode = vtkMRMLPharmacokineticsCurveAnalysisNode::New();
+      //--- TODO: SetAndObserve
+      }
+
+    this->GetMRMLScene()->AddNode(this->CurveAnalysisNode);
 
     //const char* script = this->CurveScriptSelectButton->GetWidget()->GetFileName();
     if (this->CurveAnalysisScript)
@@ -1069,21 +1106,22 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
       }
     this->CurveAnalysisScript = vtkPharmacokineticsCurveAnalysisPythonInterface::New();
     this->CurveAnalysisScript->SetScript(this->CurveScriptSelectButton->GetWidget()->GetFileName());
-    //this->GetLogic()->GetCurveAnalysisInfo(script, curveNode);
-    this->CurveAnalysisScript->SetPharmacokineticsCurveAnalysisNode(curveNode);
+    //this->GetLogic()->GetCurveAnalysisInfo(script, this->CurveAnalysisNode);
+    this->CurveAnalysisScript->SetPharmacokineticsCurveAnalysisNode(this->CurveAnalysisNode);
     this->CurveAnalysisScript->GetInfo();
 
     // Update method's name field
     if (this->CurveScriptMethodName)
       {
-      this->CurveScriptMethodName->GetWidget()->SetValue(curveNode->GetMethodName());
+      this->CurveScriptMethodName->GetWidget()->SetValue(this->CurveAnalysisNode->GetMethodName());
       }
 
-    UpdateInitialParameterList(curveNode);
+    this->UpdateInitialParameterList( );
 
-    this->GetMRMLScene()->RemoveNode(curveNode);
-    curveNode->Delete();
+    this->GetMRMLScene()->RemoveNode(this->CurveAnalysisNode);
+    this->CurveAnalysisNode->Delete();
     }
+
   else if (this->RunFittingButton == vtkKWPushButton::SafeDownCast(caller)
            && event == vtkKWPushButton::InvokedEvent)
     {
@@ -1111,9 +1149,14 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
       if (curve)
         {
         // Add a new vtkMRMLPharmacokineticsCurveAnalysisNode to the MRML scene
-        vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode = vtkMRMLPharmacokineticsCurveAnalysisNode::New();
-        this->GetMRMLScene()->AddNode(curveNode);
-        this->CurveAnalysisScript->SetPharmacokineticsCurveAnalysisNode(curveNode);
+        if ( this->CurveAnalysisNode == NULL )
+          {
+          this->CurveAnalysisNode= vtkMRMLPharmacokineticsCurveAnalysisNode::New();
+          //--- TODO SetAndObserve...
+          }
+
+        this->GetMRMLScene()->AddNode(this->CurveAnalysisNode);
+        this->CurveAnalysisScript->SetPharmacokineticsCurveAnalysisNode(this->CurveAnalysisNode);
         this->CurveAnalysisScript->GetInfo();
         
         // Prepare vtkDoubleArray to pass the source cueve data
@@ -1134,7 +1177,7 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
           }
         
         // Get initial parameters for the curve fitting
-        GetInitialParametersAndInputCurves(curveNode, start, end);
+        GetInitialParametersAndInputCurves(this->CurveAnalysisNode, start, end);
         
         // Prepare vtkDoubleArray to receive a fitted curve from the script
         // (The size of the fitted curve should be the same as original
@@ -1148,17 +1191,17 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
           }
         
         // Set source and fitted curve arrays to the curve analysis node.
-        curveNode->SetTargetCurve(srcCurve);
-        curveNode->SetFittedCurve(fittedCurve);
+        this->CurveAnalysisNode->SetTargetCurve(srcCurve);
+        this->CurveAnalysisNode->SetFittedCurve(fittedCurve);
         
         // Call Logic to excecute the curve fitting script
-        //this->GetLogic()->RunCurveFitting(script, curveNode);
+        //this->GetLogic()->RunCurveFitting(script, this->CurveAnalysisNode);
         this->CurveAnalysisScript->Run();
         
         // Display result parameters
-        UpdateOutputParameterList(curveNode);
+        UpdateOutputParameterList(this->CurveAnalysisNode);
         
-        vtkDoubleArray* resultCurve = curveNode->GetFittedCurve();
+        vtkDoubleArray* resultCurve = this->CurveAnalysisNode->GetFittedCurve();
         vtkMRMLDoubleArrayNode* resultCurveNode = vtkMRMLDoubleArrayNode::New();
         this->GetMRMLScene()->AddNode(resultCurveNode);
         resultCurveNode->SetArray(resultCurve);
@@ -1229,16 +1272,20 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
         }
       else
         {
-        vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode = vtkMRMLPharmacokineticsCurveAnalysisNode::New();
-        this->GetMRMLScene()->AddNode(curveNode);
-        this->CurveAnalysisScript->SetPharmacokineticsCurveAnalysisNode(curveNode);
+        if ( this->CurveAnalysisNode == NULL )
+          {
+          this->CurveAnalysisNode =vtkMRMLPharmacokineticsCurveAnalysisNode::New();
+          //TODO SetAndObserve
+          }
+        this->GetMRMLScene()->AddNode(this->CurveAnalysisNode);
+        this->CurveAnalysisScript->SetPharmacokineticsCurveAnalysisNode(this->CurveAnalysisNode);
         this->CurveAnalysisScript->GetInfo();
 
         const char* prefix   = this->MapOutputVolumePrefixEntry->GetWidget()->GetValue();
         int start = (int)this->CurveFittingStartIndexSpinBox->GetValue();
         int end   = (int)this->CurveFittingEndIndexSpinBox->GetValue();
 
-        GetInitialParametersAndInputCurves(curveNode, start, end);
+        GetInitialParametersAndInputCurves(this->CurveAnalysisNode, start, end);
         vtkMRMLTimeSeriesBundleNode *bundleNode = 
           vtkMRMLTimeSeriesBundleNode::SafeDownCast(this->Active4DBundleSelectorWidget->GetSelected());
 
@@ -1246,7 +1293,7 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
           {
           this->GetLogic()->AddObserver(vtkPharmacokineticsLogic::ProgressDialogEvent,  this->LogicCallbackCommand);
           this->GetLogic()->GenerateParameterMapInMask(this->CurveAnalysisScript,
-                                                       curveNode, bundleNode, prefix,
+                                                       this->CurveAnalysisNode, bundleNode, prefix,
                                                        start, end, volumeNode, label);
           this->GetLogic()->RemoveObservers(vtkPharmacokineticsLogic::ProgressDialogEvent,  this->LogicCallbackCommand);
           }
@@ -1254,22 +1301,26 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
           {
           // TODO print out error message
           }
-        //curveNode->Delete();
+        //this->CurveAnalysisNode->Delete();
         }
       }
     else
       {
       // The region is specified by indices
       // Add a new vtkMRMLPharmacokineticsCurveAnalysisNode to the MRML scene
-      vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode = vtkMRMLPharmacokineticsCurveAnalysisNode::New();
-      this->GetMRMLScene()->AddNode(curveNode);
-      this->CurveAnalysisScript->SetPharmacokineticsCurveAnalysisNode(curveNode);
+      if ( this->CurveAnalysisNode == NULL )
+        {
+        this->CurveAnalysisNode = vtkMRMLPharmacokineticsCurveAnalysisNode::New();
+        // TODO SetAndObserve
+        }
+      this->GetMRMLScene()->AddNode(this->CurveAnalysisNode);
+      this->CurveAnalysisScript->SetPharmacokineticsCurveAnalysisNode(this->CurveAnalysisNode);
       this->CurveAnalysisScript->GetInfo();
       
       int start = (int)this->CurveFittingStartIndexSpinBox->GetValue();
       int end   = (int)this->CurveFittingEndIndexSpinBox->GetValue();
       
-      GetInitialParametersAndInputCurves(curveNode, start, end);
+      GetInitialParametersAndInputCurves(this->CurveAnalysisNode, start, end);
       
       const char* prefix   = this->MapOutputVolumePrefixEntry->GetWidget()->GetValue();
       
@@ -1287,7 +1338,7 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
         this->GetLogic()->AddObserver(vtkPharmacokineticsLogic::ProgressDialogEvent,  this->LogicCallbackCommand);
         
         this->GetLogic()->GenerateParameterMap(this->CurveAnalysisScript,
-                                               curveNode,
+                                               this->CurveAnalysisNode,
                                                bundleNode,
                                                prefix,
                                                start, end,
@@ -1298,7 +1349,7 @@ void vtkPharmacokineticsGUI::ProcessGUIEvents(vtkObject *caller,
         {
         // TODO: show error message here ..
         }
-      //curveNode->Delete();
+      //this->CurveAnalysisNode->Delete();
       }
     }
 #endif // Pharmacokinetics_USE_SCIPY
@@ -1425,7 +1476,10 @@ void vtkPharmacokineticsGUI::BuildGUI ( )
   BuildGUIForCurveFitting(0);
   BuildGUIForMapGenerator(0);
 
-
+  //---
+  //--- Initialize according to state in node
+  //---
+//  this->ModelSelectButton->SetParent ( modelframe );
 }
 
 
@@ -1481,7 +1535,7 @@ void vtkPharmacokineticsGUI::BuildGUIForFrameControlFrame(int show)
 
   conBrowsFrame->SetParent(page);
   conBrowsFrame->Create();
-  conBrowsFrame->SetLabelText("Frame Selection & Display");
+  conBrowsFrame->SetLabelText("Time-Point Selection & Display");
   if (!show)
     {
     conBrowsFrame->CollapseFrame();
@@ -1648,7 +1702,7 @@ void vtkPharmacokineticsGUI::BuildGUIForFunctionViewer(int show)
 
   conBrowsFrame->SetParent(page);
   conBrowsFrame->Create();
-  conBrowsFrame->SetLabelText("Intensity Plot");
+  conBrowsFrame->SetLabelText("Intensity Plotting");
   if (!show)
     {
     conBrowsFrame->CollapseFrame();
@@ -1891,7 +1945,7 @@ void vtkPharmacokineticsGUI::BuildGUIForMethodSetting(int show)
 
   conBrowsFrame->SetParent(page);
   conBrowsFrame->Create();
-  conBrowsFrame->SetLabelText("Model / Parameters");
+  conBrowsFrame->SetLabelText("Pharmacokinetic Models & Parameters");
   if (!show)
     {
     conBrowsFrame->CollapseFrame();
@@ -1915,110 +1969,137 @@ void vtkPharmacokineticsGUI::BuildGUIForMethodSetting(int show)
   this->Script ("pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 2",
                 modelframe->GetWidgetName() );
 
-  vtkKWLabel *modelLabel = vtkKWLabel::New();
-  modelLabel->SetParent(modelframe);
-  modelLabel->Create();
-  modelLabel->SetText("Select Model:");
-  this->Script("pack %s -side right -anchor w -padx 2 -pady 2", 
-               modelLabel->GetWidgetName());
+  if ( this->Logic )
+    {
+    //--- Make sure all known models are available.
+    this->Logic->AddKnownPharmacokineticModels();
+  
+    vtkKWLabel *modelLabel = vtkKWLabel::New();
+    modelLabel->SetParent(modelframe);
+    modelLabel->Create();
+    modelLabel->SetWidth (21);
+    modelLabel->SetText("Select Model: ");
+    this->Script("pack %s -side left -anchor e -padx 2 -pady 2", 
+                 modelLabel->GetWidgetName());
 
-  this->ModelSelectButton = vtkKWMenuButton::New();
-  this->ModelSelectButton->SetParent ( modelframe );
-  this->ModelSelectButton->Create();
-  this->ModelSelectButton->GetMenu()->AddRadioButton ( "Tofts Kinetic Model" );
-  this->Script("pack %s -side right -fill x -expand y -padx 2 -pady 2", 
-               this->ModelSelectButton->GetWidgetName());  
-
+    this->ModelSelectButton = vtkKWMenuButton::New();
+    this->ModelSelectButton->SetParent ( modelframe );
+    this->ModelSelectButton->Create();
+    vtkKWMenu *msmenu = this->ModelSelectButton->GetMenu();
+    //--- populate menu
+    int numModels = this->Logic->GetNumberOfPharmacokineticModels();
+    std::string modName;
+    for ( int zz = 0; zz < numModels; zz++ )
+      {
+      modName.clear();
+      modName = this->Logic->GetNthPharmacokineticModelName ( zz );
+      if ( !modName.empty() )
+        {
+        msmenu->AddRadioButton (modName.c_str() );
+        //--- for now, since some of these python models are not integrated... disable in menu
+        if ( zz!=0)
+          {
+          msmenu->SetItemStateToDisabled ( msmenu->GetIndexOfItem ( modName.c_str()) );
+          }
+        }
+      }
+    //--- select default.
+    msmenu->SelectItem ( 0 );
+    msmenu->AddSeparator();
+    msmenu->AddCommand ("close");
+    this->Script("pack %s -side left -fill x -expand y -padx 2 -pady 2", 
+                 this->ModelSelectButton->GetWidgetName());  
 
 #ifdef Pharmacokinetics_USE_SCIPY  
-  this->CurveScriptSelectButton = vtkKWLoadSaveButtonWithLabel::New();
-  this->CurveScriptSelectButton->SetParent(modelframe);
-  this->CurveScriptSelectButton->Create();
-  this->CurveScriptSelectButton->GetWidget()->SetText ("Script Path");
-  this->CurveScriptSelectButton->GetWidget()->GetLoadSaveDialog()->SaveDialogOff();
-  this->Script("pack %s -side right -fill x -expand y -padx 2 -pady 2", 
-               this->CurveScriptSelectButton->GetWidgetName());
-  this->CurveScriptMethodName = vtkKWEntryWithLabel::New();
-  this->CurveScriptMethodName->SetParent(cframe->GetFrame());
-  this->CurveScriptMethodName->Create();
-  //this->CurveScriptMethodName->SetWidth(20);
-  this->CurveScriptMethodName->SetLabelText("Method: ");
-  this->CurveScriptMethodName->GetWidget()->ReadOnlyOn();
-  this->CurveScriptMethodName->GetWidget()->SetValue("----");
-  this->Script ( "pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 2",
-                 this->CurveScriptMethodName->GetWidgetName() );
+    this->CurveScriptSelectButton = vtkKWLoadSaveButtonWithLabel::New();
+    this->CurveScriptSelectButton->SetParent(modelframe);
+    this->CurveScriptSelectButton->Create();
+    this->CurveScriptSelectButton->GetWidget()->SetText ("Script Path");
+    this->CurveScriptSelectButton->GetWidget()->GetLoadSaveDialog()->SaveDialogOff();
+    this->Script("pack %s -side right -fill x -expand y -padx 2 -pady 2", 
+                 this->CurveScriptSelectButton->GetWidgetName());
+    this->CurveScriptMethodName = vtkKWEntryWithLabel::New();
+    this->CurveScriptMethodName->SetParent(cframe->GetFrame());
+    this->CurveScriptMethodName->Create();
+    //this->CurveScriptMethodName->SetWidth(20);
+    this->CurveScriptMethodName->SetLabelText("Method: ");
+    this->CurveScriptMethodName->GetWidget()->ReadOnlyOn();
+    this->CurveScriptMethodName->GetWidget()->SetValue("----");
+    this->Script ( "pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 2",
+                   this->CurveScriptMethodName->GetWidgetName() );
 #endif
 
 
-  vtkKWFrame *rangeframe = vtkKWFrame::New();
-  rangeframe->SetParent(cframe->GetFrame());
-  rangeframe->Create();
-  this->Script ("pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 2",
-                rangeframe->GetWidgetName() );
+    vtkKWFrame *rangeframe = vtkKWFrame::New();
+    rangeframe->SetParent(cframe->GetFrame());
+    rangeframe->Create();
+    this->Script ("pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 2",
+                  rangeframe->GetWidgetName() );
 
-  vtkKWLabel *startLabel = vtkKWLabel::New();
-  startLabel->SetParent(rangeframe);
-  startLabel->Create();
-  startLabel->SetText("Fitting range: from ");
+    vtkKWLabel *startLabel = vtkKWLabel::New();
+    startLabel->SetParent(rangeframe);
+    startLabel->Create();
+    startLabel->SetWidth (21);
+    startLabel->SetText("Analyze frames from: ");
   
-  this->CurveFittingStartIndexSpinBox = vtkKWSpinBox::New();
-  this->CurveFittingStartIndexSpinBox->SetParent(rangeframe);
-  this->CurveFittingStartIndexSpinBox->Create();
-  this->CurveFittingStartIndexSpinBox->SetWidth(3);
+    this->CurveFittingStartIndexSpinBox = vtkKWSpinBox::New();
+    this->CurveFittingStartIndexSpinBox->SetParent(rangeframe);
+    this->CurveFittingStartIndexSpinBox->Create();
+    this->CurveFittingStartIndexSpinBox->SetWidth(3);
 
-  vtkKWLabel *endLabel = vtkKWLabel::New();
-  endLabel->SetParent(rangeframe);
-  endLabel->Create();
-  endLabel->SetText("to ");
+    vtkKWLabel *endLabel = vtkKWLabel::New();
+    endLabel->SetParent(rangeframe);
+    endLabel->Create();
+    endLabel->SetText("to: ");
 
-  this->CurveFittingEndIndexSpinBox = vtkKWSpinBox::New();
-  this->CurveFittingEndIndexSpinBox->SetParent(rangeframe);
-  this->CurveFittingEndIndexSpinBox->Create();
-  this->CurveFittingEndIndexSpinBox->SetWidth(3);
+    this->CurveFittingEndIndexSpinBox = vtkKWSpinBox::New();
+    this->CurveFittingEndIndexSpinBox->SetParent(rangeframe);
+    this->CurveFittingEndIndexSpinBox->Create();
+    this->CurveFittingEndIndexSpinBox->SetWidth(3);
 
-  this->Script("pack %s %s %s %s -side left -anchor w -anchor w -padx 2 -pady 2",
-               startLabel->GetWidgetName(),
-               this->CurveFittingStartIndexSpinBox->GetWidgetName(),
-               endLabel->GetWidgetName(),
-               this->CurveFittingEndIndexSpinBox->GetWidgetName());
+    this->Script("pack %s %s %s %s -side left -anchor w -anchor w -padx 2 -pady 2",
+                 startLabel->GetWidgetName(),
+                 this->CurveFittingStartIndexSpinBox->GetWidgetName(),
+                 endLabel->GetWidgetName(),
+                 this->CurveFittingEndIndexSpinBox->GetWidgetName());
 
-  this->InitialParameterList = vtkKWMultiColumnListWithScrollbars::New();
-  this->InitialParameterList->SetParent(cframe->GetFrame());
-  this->InitialParameterList->Create();
-  this->InitialParameterList->GetWidget()->SetHeight(10);
-  this->InitialParameterList->GetWidget()->SetSelectionTypeToRow();
-  this->InitialParameterList->GetWidget()->SetSelectionModeToSingle();
-  this->InitialParameterList->GetWidget()->MovableRowsOff();
-  this->InitialParameterList->GetWidget()->MovableColumnsOff();
-  this->InitialParameterList->GetWidget()->AddColumn("Parameter name");
-  this->InitialParameterList->GetWidget()->AddColumn("Initial value / curves");
-  this->InitialParameterList->GetWidget()->SetColumnWidth(0, 16);
-  this->InitialParameterList->GetWidget()->SetColumnWidth(1, 20);
-  this->InitialParameterList->GetWidget()->SetColumnAlignmentToLeft(1);
-  this->InitialParameterList->GetWidget()->ColumnEditableOff(0);
-  this->InitialParameterList->GetWidget()->ColumnEditableOn(1);
-  this->InitialParameterList->GetWidget()->SetSelectionTypeToCell();
-  this->InitialParameterListInputType.clear();
-  this->InitialParameterListNodeNames.clear();
+    this->InitialParameterList = vtkKWMultiColumnListWithScrollbars::New();
+    this->InitialParameterList->SetParent(cframe->GetFrame());
+    this->InitialParameterList->Create();
+    this->InitialParameterList->GetWidget()->SetHeight(10);
+    this->InitialParameterList->GetWidget()->SetSelectionTypeToRow();
+    this->InitialParameterList->GetWidget()->SetSelectionModeToSingle();
+    this->InitialParameterList->GetWidget()->MovableRowsOff();
+    this->InitialParameterList->GetWidget()->MovableColumnsOff();
+    this->InitialParameterList->GetWidget()->AddColumn("Parameter name");
+    this->InitialParameterList->GetWidget()->AddColumn("Initial value / curves");
+    this->InitialParameterList->GetWidget()->SetColumnWidth(0, 16);
+    this->InitialParameterList->GetWidget()->SetColumnWidth(1, 20);
+    this->InitialParameterList->GetWidget()->SetColumnAlignmentToLeft(1);
+    this->InitialParameterList->GetWidget()->ColumnEditableOff(0);
+    this->InitialParameterList->GetWidget()->ColumnEditableOn(1);
+    this->InitialParameterList->GetWidget()->SetSelectionTypeToCell();
+    this->InitialParameterListInputType.clear();
+    this->InitialParameterListNodeNames.clear();
 
-  this->Script ( "pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 2",
-                 this->InitialParameterList->GetWidgetName() );
+    this->Script ( "pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 2",
+                   this->InitialParameterList->GetWidgetName() );
 
-  this->InitialParameterList->GetWidget()->SetSelectionCommand(this, "OnInitialParameterListSelected");
+    this->InitialParameterList->GetWidget()->SetSelectionCommand(this, "OnInitialParameterListSelected");
 
-  this->PlotSelectPopUpMenu = vtkKWMenu::New();
-  this->PlotSelectPopUpMenu->SetParent(this->GetApplicationGUI()->GetMainSlicerWindow());
-  this->PlotSelectPopUpMenu->Create();
+    this->PlotSelectPopUpMenu = vtkKWMenu::New();
+    this->PlotSelectPopUpMenu->SetParent(this->GetApplicationGUI()->GetMainSlicerWindow());
+    this->PlotSelectPopUpMenu->Create();
 
-  cframe->Delete();
+    rangeframe->Delete();
+    startLabel->Delete();
+    endLabel->Delete();
+    modelLabel->Delete();
+    }
+
   modelframe->Delete();
-  modelLabel->Delete();
-  rangeframe->Delete();
-  startLabel->Delete();
-  endLabel->Delete();
+  cframe->Delete();
   conBrowsFrame->Delete();
-
-
 }
 
 
@@ -2120,7 +2201,7 @@ void vtkPharmacokineticsGUI::BuildGUIForMapGenerator(int show)
 
   conBrowsFrame->SetParent(page);
   conBrowsFrame->Create();
-  conBrowsFrame->SetLabelText("Parameter Map");
+  conBrowsFrame->SetLabelText("Parameter Maps");
   if (!show)
     {
     conBrowsFrame->CollapseFrame();
@@ -2139,7 +2220,7 @@ void vtkPharmacokineticsGUI::BuildGUIForMapGenerator(int show)
   this->ParameterMapRegionButtonSet->GetWidget()->AddWidget(0);
   this->ParameterMapRegionButtonSet->GetWidget()->GetWidget(0)->SetText("by mask");
   this->ParameterMapRegionButtonSet->GetWidget()->AddWidget(1);
-  this->ParameterMapRegionButtonSet->GetWidget()->GetWidget(1)->SetText("by indext");
+  this->ParameterMapRegionButtonSet->GetWidget()->GetWidget(1)->SetText("by index");
   this->ParameterMapRegionButtonSet->GetWidget()->GetWidget(0)->SelectedStateOn();
   
   app->Script("pack %s -side top -anchor w -fill x -padx 2 -pady 2", 
@@ -2582,79 +2663,86 @@ void vtkPharmacokineticsGUI::SetWindowLevelForCurrentFrame()
 void vtkPharmacokineticsGUI::UpdatePlotList()
 {
   std::cerr << "void vtkPharmacokineticsGUI::UpdatePlotList() begin" << std::endl;
+
   if (this->PlotList && this->PlotManagerNode && this->GetMRMLScene())
     {
     std::cerr << "void vtkPharmacokineticsGUI::UpdatePlotList()" << std::endl;
 
-    // Obtain a list of plot nodes
+    //---
+    //--- Obtain a list of plot nodes
+    //---
     std::vector<vtkMRMLNode*> nodes;
     this->GetMRMLScene()->GetNodesByClass("vtkMRMLArrayPlotNode", nodes);
 
-    // Save selected nodes before delete all rows
-    int nRow = this->PlotList->GetWidget()->GetNumberOfRows();
-    std::map<std::string, int> selected;
-    for (int i = 0; i < nRow; i ++)
+    //---
+    //--- Save selected nodes before delete all rows
+    //---
+    if ( this->PlotList && this->PlotList->IsCreated() && this->PlotList->GetWidget() )
       {
-      int v = this->PlotList->GetWidget()->GetCellTextAsInt(i, COLUMN_SELECT);
-      const char* nodeID = this->PlotList->GetWidget()->GetCellText(i, COLUMN_MRML_ID);
-      if (v)
+      int nRow = this->PlotList->GetWidget()->GetNumberOfRows();
+      std::map<std::string, int> selected;
+      for (int i = 0; i < nRow; i ++)
         {
-        selected[nodeID] = 1;
+        int v = this->PlotList->GetWidget()->GetCellTextAsInt(i, COLUMN_SELECT);
+        const char* nodeID = this->PlotList->GetWidget()->GetCellText(i, COLUMN_MRML_ID);
+        if (v)
+          {
+          selected[nodeID] = 1;
+          }
+        else
+          {
+          selected[nodeID] = 0;
+          }
         }
-      else
-        {
-        selected[nodeID] = 0;
-        }
-      }
 
-    this->PlotList->GetWidget()->DeleteAllRows();
-    this->PlotList->GetWidget()->AddRows(nodes.size());
+      this->PlotList->GetWidget()->DeleteAllRows();
+      this->PlotList->GetWidget()->AddRows(nodes.size());
     
-    for (unsigned int i = 0; i < nodes.size(); i ++)
-      {
-      vtkMRMLPlotNode* node = vtkMRMLPlotNode::SafeDownCast(nodes[i]);
-      if (node)
+      for (unsigned int i = 0; i < nodes.size(); i ++)
         {
-        double r, g, b;
-        node->GetColor(r, g, b);
-
-        // Selection
-        std::map<std::string, int>::iterator iter;
-        iter = selected.find(node->GetID());
-        if (iter != selected.end() && iter->second == 1)
+        vtkMRMLPlotNode* node = vtkMRMLPlotNode::SafeDownCast(nodes[i]);
+        if (node)
           {
-          this->PlotList->GetWidget()->SetCellTextAsInt(i, COLUMN_SELECT, 1);
-          this->PlotList->GetWidget()->SetCellWindowCommandToCheckButton(i, COLUMN_SELECT);
-          }
-        else
-          {
-          this->PlotList->GetWidget()->SetCellTextAsInt(i, COLUMN_SELECT, 0);
-          this->PlotList->GetWidget()->SetCellWindowCommandToCheckButton(i, COLUMN_SELECT);
-          }
+          double r, g, b;
+          node->GetColor(r, g, b);
 
-        // Visibility
-        int v = node->GetVisible();
-        if (v > 0)
-          {
-          this->PlotList->GetWidget()->SetCellTextAsInt(i, COLUMN_VISIBLE, 1);
-          this->PlotList->GetWidget()->SetCellWindowCommandToCheckButton(i, COLUMN_VISIBLE);
+          // Selection
+          std::map<std::string, int>::iterator iter;
+          iter = selected.find(node->GetID());
+          if (iter != selected.end() && iter->second == 1)
+            {
+            this->PlotList->GetWidget()->SetCellTextAsInt(i, COLUMN_SELECT, 1);
+            this->PlotList->GetWidget()->SetCellWindowCommandToCheckButton(i, COLUMN_SELECT);
+            }
+          else
+            {
+            this->PlotList->GetWidget()->SetCellTextAsInt(i, COLUMN_SELECT, 0);
+            this->PlotList->GetWidget()->SetCellWindowCommandToCheckButton(i, COLUMN_SELECT);
+            }
+
+          // Visibility
+          int v = node->GetVisible();
+          if (v > 0)
+            {
+            this->PlotList->GetWidget()->SetCellTextAsInt(i, COLUMN_VISIBLE, 1);
+            this->PlotList->GetWidget()->SetCellWindowCommandToCheckButton(i, COLUMN_VISIBLE);
+            }
+          else
+            {
+            this->PlotList->GetWidget()->SetCellTextAsInt(i, COLUMN_VISIBLE, 0);
+            this->PlotList->GetWidget()->SetCellWindowCommandToCheckButton(i, COLUMN_VISIBLE);
+            }
+
+          // Color panel
+          this->PlotList->GetWidget()->SetCellSelectionBackgroundColor(i, COLUMN_COLOR, r, g, b);
+          this->PlotList->GetWidget()->SetCellBackgroundColor(i, COLUMN_COLOR, r, g, b);
+
+          // Curve name entry
+          this->PlotList->GetWidget()->SetCellText(i, COLUMN_NODE_NAME, node->GetName());
+
+          // MRML node ID
+          this->PlotList->GetWidget()->SetCellText(i, COLUMN_MRML_ID, node->GetID());
           }
-        else
-          {
-          this->PlotList->GetWidget()->SetCellTextAsInt(i, COLUMN_VISIBLE, 0);
-          this->PlotList->GetWidget()->SetCellWindowCommandToCheckButton(i, COLUMN_VISIBLE);
-          }
-
-        // Color panel
-        this->PlotList->GetWidget()->SetCellSelectionBackgroundColor(i, COLUMN_COLOR, r, g, b);
-        this->PlotList->GetWidget()->SetCellBackgroundColor(i, COLUMN_COLOR, r, g, b);
-
-        // Curve name entry
-        //this->PlotList->GetWidget()->SetCellEditWindowToEntry(i, 2);
-        this->PlotList->GetWidget()->SetCellText(i, COLUMN_NODE_NAME, node->GetName());
-
-        // MRML node ID
-        this->PlotList->GetWidget()->SetCellText(i, COLUMN_MRML_ID, node->GetID());
         }
       }
     }
@@ -2714,20 +2802,15 @@ void vtkPharmacokineticsGUI::DeleteSelectedPlots()
         }
       }
 
-    if (list.size() > 0) // if there is at least one selected node
+    //---
+    //--- Is at least one plot is selected for deletion?
+    //---
+    if (list.size() > 0) 
       {
-      // Ask the user to confirm
-      vtkKWMessageDialog* dialog = vtkKWMessageDialog::New();
-      dialog->SetMasterWindow(this->GetApplicationGUI()->GetMainSlicerWindow());
-      dialog->SetParent(this->GetApplicationGUI()->GetMainSlicerWindow());
-      //dialog->SetTitle("Deletinmg Plot Nodes");
-      //dialog->SetSize(200, 400);
-      dialog->SetStyleToOkCancel();
-      dialog->Create();
-      dialog->SetText("Are you deleting plot nodes?");
-      if (dialog->Invoke())
+      int answer = this->PostQuestion ( "Are you sure you want to delete the selected plots?");
+        if (answer)
         {
-        // Delete nodes
+        // go ahead and delete nodes
         std::vector< std::string >::iterator iter;
         for (iter = list.begin(); iter != list.end(); iter ++)
           {
@@ -2746,7 +2829,6 @@ void vtkPharmacokineticsGUI::DeleteSelectedPlots()
           }
         UpdatePlotList();
         }
-      dialog->Delete();
       }
     }
 }
@@ -2781,20 +2863,85 @@ void vtkPharmacokineticsGUI::DeselectAllPlots()
 }
 
 
+
+
 //----------------------------------------------------------------------------
-void vtkPharmacokineticsGUI::UpdateInitialParameterList(vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode)
+void vtkPharmacokineticsGUI::UpdateInitialParameterList( )
 {
   if (this->InitialParameterList == NULL)
     {
     return;
     }
 
+  //---
+  //--- check to see if node is null . if so, create and set up.
+  //---
+  vtkMRMLPharmacokineticsCurveAnalysisNode *curveNode = this->GetCurveAnalysisNode();
+  if ( curveNode == NULL )
+    {
+    curveNode = vtkMRMLPharmacokineticsCurveAnalysisNode::New();
+    vtkIntArray *events = vtkIntArray::New();
+    events->InsertNextValue ( vtkMRMLPharmacokineticsCurveAnalysisNode::ErrorEvent );
+    events->InsertNextValue ( vtkMRMLPharmacokineticsCurveAnalysisNode::PlotReadyEvent );
+    events->InsertNextValue ( vtkMRMLPharmacokineticsCurveAnalysisNode::ModelChangedEvent );
+    vtkSetAndObserveMRMLNodeEventsMacro ( this->CurveAnalysisNode, curveNode, events );
+    curveNode->Delete();
+    if ( this->Logic->GetCurveAnalysisNode() != NULL)
+      {
+      this->Logic->SetCurveAnalysisNode ( NULL );
+      }
+    this->Logic->SetCurveAnalysisNode ( this->GetCurveAnalysisNode() );
+    events->Delete();
+    }
+  
+  //---
+  //--- propagate the node's model to the GUI if changes are new.
+  //---
+  if ( this->GetCurveAnalysisNode() == NULL)
+    {
+    vtkErrorMacro ( "Got NULL Curve Analysis Node." );
+    return;
+    }
+
+  //---
+  //--- Update curve fitting model and initial parameters!
+  //---
+  const char *model = this->GetCurveAnalysisNode()->GetMethodName();
+  if ( model && *model )
+    {
+
+    if (this->ModelSelectButton->GetMenu()->GetIndexOfItem ( model ) >= 0)
+      {
+      if ( strcmp(this->ModelSelectButton->GetValue(), model ))
+        {
+        this->ModelSelectButton->GetMenu()->SelectItem ( model );
+        }
+      }
+    }
+  else
+    {
+    //--- set the default if we need to.
+    if (this->ModelSelectButton->GetMenu()->GetIndexOfItem ( "Tofts Kinetic Model" ) >= 0)
+      {
+      if ( strcmp(this->ModelSelectButton->GetValue(), "Tofts Kinetic Model" ))
+        {
+        this->ModelSelectButton->GetMenu()->SelectItem ( "Tofts Kinetic Model" );
+        }
+      }
+    else
+      {
+      vtkErrorMacro ( "Requested model not available." );
+      }
+    }
+
+  //--- WJP You are here! Make all update methods go thru node!!!
+
   // Adjust number of rows
   //int numRows = this->InitialParameterList->GetWidget()->GetNumberOfRows();
 
-  vtkStringArray* paramNames      = curveNode->GetInitialParameterNameArray();
-  vtkStringArray* inputParamNames = curveNode->GetConstantNameArray();
-  vtkStringArray* inputDataNames  = curveNode->GetInputArrayNameArray();
+  vtkStringArray* paramNames      = this->CurveAnalysisNode->GetInitialParameterNameArray();
+  vtkStringArray* inputParamNames = this->CurveAnalysisNode->GetConstantNameArray();
+  vtkStringArray* inputDataNames  = this->CurveAnalysisNode->GetInputArrayNameArray();
   int numParameters      = paramNames->GetNumberOfTuples();
   int numInputParameters = inputParamNames->GetNumberOfTuples();
   int numInputCurves     = inputDataNames->GetNumberOfTuples();
@@ -2812,7 +2959,7 @@ void vtkPharmacokineticsGUI::UpdateInitialParameterList(vtkMRMLPharmacokineticsC
   for (int i = 0; i < numParameters; i ++)
     {
     const char* name = paramNames->GetValue(i);
-    double value     = curveNode->GetInitialParameter(name);
+    double value     = this->CurveAnalysisNode->GetInitialParameter(name);
     sprintf(label, "[P] %s", name);
     this->InitialParameterList->GetWidget()->SetCellText(i, 0, label);
     this->InitialParameterList->GetWidget()->SetCellEditWindowToEntry(i, 1);
@@ -2825,7 +2972,7 @@ void vtkPharmacokineticsGUI::UpdateInitialParameterList(vtkMRMLPharmacokineticsC
     {
     int row = i + numParameters;
     const char* name = inputParamNames->GetValue(i);
-    double value     = curveNode->GetConstant(name);
+    double value     = this->CurveAnalysisNode->GetConstant(name);
     sprintf(label, "[I] %s", name);
     this->InitialParameterList->GetWidget()->SetCellText(row, 0, label);
     this->InitialParameterList->GetWidget()->SetCellEditWindowToEntry(row, 1);
@@ -2850,26 +2997,35 @@ void vtkPharmacokineticsGUI::UpdateInitialParameterList(vtkMRMLPharmacokineticsC
 }
 
 //----------------------------------------------------------------------------
-void vtkPharmacokineticsGUI::GetInitialParametersAndInputCurves(vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode,
-                                                             int start, int end)
+void vtkPharmacokineticsGUI::GetInitialParametersAndInputCurves( int start, int end)
 {
+  //--- check the multicolumn list
   if (this->InitialParameterList == NULL)
     {
     return;
     }
 
-  vtkStringArray* paramNames      = curveNode->GetInitialParameterNameArray();
-  vtkStringArray* inputParamNames = curveNode->GetConstantNameArray();
-  vtkStringArray* inputDataNames  = curveNode->GetInputArrayNameArray();
+  vtkStringArray* paramNames      = this->CurveAnalysisNode->GetInitialParameterNameArray();
+  //---
+  //--- get list of constant names and input array names.
+  //---
+  vtkStringArray* inputParamNames = this->CurveAnalysisNode->GetConstantNameArray();
+  vtkStringArray* inputDataNames  = this->CurveAnalysisNode->GetInputArrayNameArray();
+  //---
+  //--- get numbers of parameters and curves.
+  //---
   int numParameters      = paramNames->GetNumberOfTuples();
   int numInputParameters = inputParamNames->GetNumberOfTuples();
   int numInputCurves     = inputDataNames->GetNumberOfTuples();
 
+  //---
+  //--- Set Initial Parameters on the Node from GUI
+  //---
   for (int i = 0; i < numParameters; i ++)
     {
     const char* name = paramNames->GetValue(i);
     double value = this->InitialParameterList->GetWidget()->GetCellTextAsDouble(i, 1);
-    curveNode->SetInitialParameter(name, value);
+    this->CurveAnalysisNode->SetInitialParameter(name, value);
     std::cerr << name << " = " << value << std::endl;
     }
 
@@ -2878,7 +3034,7 @@ void vtkPharmacokineticsGUI::GetInitialParametersAndInputCurves(vtkMRMLPharmacok
     int row = i + numParameters;
     const char* name = inputParamNames->GetValue(i);
     double value = this->InitialParameterList->GetWidget()->GetCellTextAsDouble(row, 1);
-    curveNode->SetConstant(name, value);
+    this->CurveAnalysisNode->SetConstant(name, value);
     std::cerr << name << " = " << value << std::endl;
     }
 
@@ -2911,7 +3067,7 @@ void vtkPharmacokineticsGUI::GetInitialParametersAndInputCurves(vtkMRMLPharmacok
           double* xy = curve->GetTuple(i);
           inputCurve->InsertNextTuple(xy);
           }
-        curveNode->SetInputArray(name, inputCurve);
+        this->CurveAnalysisNode->SetInputArray(name, inputCurve);
         }
       }
     }
@@ -3014,7 +3170,7 @@ void vtkPharmacokineticsGUI::UpdatePlotSelectPopUpMenu(const char* command)
 }
 
 //----------------------------------------------------------------------------
-void vtkPharmacokineticsGUI::UpdateOutputParameterList(vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode)
+void vtkPharmacokineticsGUI::UpdateOutputParameterList( )
 {
   if (this->ResultParameterList == NULL)
     {
@@ -3024,7 +3180,7 @@ void vtkPharmacokineticsGUI::UpdateOutputParameterList(vtkMRMLPharmacokineticsCu
   // Adjust number of rows
   //int numRows = this->ResultParameterList->GetWidget()->GetNumberOfRows();
 
-  vtkStringArray* paramNames = curveNode->GetOutputValueNameArray();
+  vtkStringArray* paramNames = this->CurveAnalysisNode->GetOutputValueNameArray();
   int numParameters  = paramNames->GetNumberOfTuples();
 
   this->ResultParameterList->GetWidget()->DeleteAllRows();
@@ -3033,7 +3189,7 @@ void vtkPharmacokineticsGUI::UpdateOutputParameterList(vtkMRMLPharmacokineticsCu
   for (int i = 0; i < numParameters; i ++)
     {
     const char* name = paramNames->GetValue(i);
-    double value     = curveNode->GetOutputValue(name);
+    double value     = this->CurveAnalysisNode->GetOutputValue(name);
     this->ResultParameterList->GetWidget()->SetCellText(i, 0, name);
     this->ResultParameterList->GetWidget()->SetCellTextAsDouble(i, 1, value);
     }
@@ -3042,31 +3198,50 @@ void vtkPharmacokineticsGUI::UpdateOutputParameterList(vtkMRMLPharmacokineticsCu
 
 
 //----------------------------------------------------------------------------
-void vtkPharmacokineticsGUI::GeneratePlotNodes()
+int vtkPharmacokineticsGUI::GeneratePlotNodes()
 {
   
-  this->IntensityCurves->Update();
+  //---
+  //--- return 0 for failure, 1 for success.
+  //---
+  if ( this->IntensityCurves->Update() == 0 )
+    {
+    this->PostMessage ( "Please select both an image Time-Series and a VOI mask." );
+    return 0;
+    }
+
   vtkMRMLScalarVolumeNode* node = this->IntensityCurves->GetMaskNode();
   if (node == NULL || !node->GetLabelMap())
     {
-    return;
+    vtkErrorMacro ( "GeneratePlotNodes: Could not find valid MaskNode or label map" );
+    return 0;
     }
   vtkMRMLVolumeDisplayNode* dnode = node->GetVolumeDisplayNode();
   if (dnode == NULL)
     {
-    return;
+    vtkErrorMacro ( "GeneratePlotNodes: Could not find valid DisplayNode for MaskNode." );
+    return 0;
     }
   vtkMRMLColorNode* cnode = dnode->GetColorNode();
   if (cnode == NULL)
     {
-    return;
+    vtkErrorMacro ( "GeneratePlotNodes: Could not find valid ColorNode for MaskNode's DisplayNode." );
+    return 0;
     }
+
+  //---
+  //--- should have intensity curves for VOIs now.
+  //---
   vtkLookupTable* lt = cnode->GetLookupTable();
 
   vtkIntArray* labels = this->IntensityCurves->GetLabelList();
   int n = labels->GetNumberOfTuples();
 
   //this->IntensityPlot->ClearPlot();
+
+  //---
+  //--- Create and populate a PlotNode with a curve for each label in VOI mask
+  //---
   for (int i = 0; i < n; i ++)
     {
     int label = labels->GetValue(i);
@@ -3076,21 +3251,31 @@ void vtkPharmacokineticsGUI::GeneratePlotNodes()
     this->GetMRMLScene()->AddNode(cnode);
     cnode->SetAndObserveArray(anode);
     cnode->SetErrorBar(1);
-    //int id = this->PlotManagerNode->AddPlotNode(cnode);
-    this->PlotManagerNode->AddPlotNode(cnode);
+    //---
+    //--- Make sure we don't exceed the maximum number of timepoints.
+    //---
+    if ( this->PlotManagerNode->AddPlotNode(cnode) <0 )
+      {
+      //--- oops abort this and return.
+      this->PostMessage ( "This module supports a maximum of 10000 timepoints. The selected dataset appears to have exceeded this limit." );
+      cnode->SetAndObserveArray ( NULL );
+      this->GetMRMLScene()->RemoveNode ( cnode );
+      cnode->Delete();
+      return 0;
+      }
 
     double color[3];
     lt->GetColor(label, color);
     if (color[0] > 0.99 && color[1] > 0.99  && color[2] > 0.99)
       {
       // if the line color is white, change the color to black
+      this->PostMessage ( "Note: The plot line for the white label has been drawn in black, so it displays on a white background..." );
       color[0] = 0.0;
       color[1] = 0.0;
       color[2] = 0.0;
       }
     cnode->SetColor(color[0], color[1], color[2]);
-    //cnode->Delete();
-    //anode->Delete();
+    cnode->Delete();
     }
 
   this->PlotManagerNode->SetAutoXRange(1);
@@ -3114,6 +3299,7 @@ void vtkPharmacokineticsGUI::GeneratePlotNodes()
   //  }
 
   labels->Delete();
+  return 1;
 }
 
 
@@ -3246,4 +3432,49 @@ void  vtkPharmacokineticsGUI::UpdateFittingTargetMenu()
   //    }
   //  }
 
+}
+
+
+//----------------------------------------------------------------------------
+int vtkPharmacokineticsGUI::PostQuestion ( const char *question )
+{
+  if ( question == NULL)
+    {
+    vtkErrorMacro (" Got NULL dialog message. Cannot post a dialog." );
+    return 0;
+    }
+
+  // Ask the user to confirm
+  vtkKWMessageDialog* dialog = vtkKWMessageDialog::New();
+  dialog->SetMasterWindow(this->GetApplicationGUI()->GetMainSlicerWindow());
+  dialog->SetParent(this->GetApplicationGUI()->GetMainSlicerWindow());
+  dialog->SetTitle("Pharmacokinetics Module");
+  dialog->SetStyleToOkCancel();
+  dialog->Create();
+  dialog->SetText(question);
+  int response = dialog->Invoke();
+  dialog->Delete();
+  return (response);
+
+}
+
+
+//----------------------------------------------------------------------------
+void vtkPharmacokineticsGUI::PostMessage ( const char *message )
+{
+  if ( message == NULL)
+    {
+    vtkErrorMacro (" Got NULL dialog message. Cannot post a dialog." );
+    return;
+    }
+
+  vtkKWMessageDialog* dialog = vtkKWMessageDialog::New();
+  dialog->SetMasterWindow(this->GetApplicationGUI()->GetMainSlicerWindow());
+  dialog->SetParent(this->GetApplicationGUI()->GetMainSlicerWindow());
+  dialog->SetTitle("Pharmacokinetics Module");
+  dialog->SetStyleToOkCancel();
+  dialog->Create();
+  dialog->SetText(message);
+  dialog->Invoke();
+  dialog->Delete();
 }

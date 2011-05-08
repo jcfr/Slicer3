@@ -67,9 +67,11 @@ vtkPharmacokineticsLogic::vtkPharmacokineticsLogic()
   this->FrameNodeVector.clear();
 
   this->CurveCache.clear();
+  this->CurveAnalysisNode = NULL;
 
   this->VolumeBundleID = "";
   this->RegisteredVolumeBundleID = "";
+
 
 }
 
@@ -78,6 +80,7 @@ vtkPharmacokineticsLogic::vtkPharmacokineticsLogic()
 vtkPharmacokineticsLogic::~vtkPharmacokineticsLogic()
 {
 
+  this->SetCurveAnalysisNode ( NULL );
   if (this->DataCallbackCommand)
     {
     this->DataCallbackCommand->Delete();
@@ -113,6 +116,102 @@ void vtkPharmacokineticsLogic::DataCallback(vtkObject *caller,
   vtkDebugWithObjectMacro(self, "In vtkPharmacokineticsLogic DataCallback");
   self->UpdateAll();
 }
+
+
+
+//----------------------------------------------------------------------------
+void vtkPharmacokineticsLogic::AddKnownPharmacokineticModels()
+{
+  this->AddNewPharmacokineticModel ( "Tofts Kinetic Model" );
+  this->AddNewPharmacokineticModel ( "Tofts Kinetic Model (python)" );
+  this->AddNewPharmacokineticModel ( "Simple Tofts Kinetic Model (python)" );
+  this->AddNewPharmacokineticModel ( "Tofts Kinetic Model Step Input (python)");
+  this->AddNewPharmacokineticModel ( "Kety Model (python)");
+  this->AddNewPharmacokineticModel ( "Tofts Kinetic Model Biexponential Input (python)" );
+  //--- set up default selection in node.
+  if ( this->CurveAnalysisNode )
+    {
+    this->CurveAnalysisNode->SetMethodName ( "Tofts Kinetic Model" );
+    }
+}
+
+//----------------------------------------------------------------------------
+int vtkPharmacokineticsLogic::GetNumberOfPharmacokineticModels ()
+{
+  return ( this->ModelNamesArray.size() );
+}
+
+//----------------------------------------------------------------------------
+const char *vtkPharmacokineticsLogic::GetNthPharmacokineticModelName ( int n )
+{
+  if ( n <= this->ModelNamesArray.size() )
+    {
+    return (this->ModelNamesArray[n].c_str() );
+    }
+  else
+    {
+    return ( NULL );
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkPharmacokineticsLogic::AddNewPharmacokineticModel( const char *modelName)
+{
+  this->ModelNamesArray.push_back ( modelName );
+}
+
+
+//----------------------------------------------------------------------------
+void vtkPharmacokineticsLogic::SetPharmacokineticModel (const char *modelName )
+{
+
+  if ( this->CurveAnalysisNode == NULL )
+    {
+    vtkErrorMacro ("SetPharmacokineticModel: Got NULL Curve Analysis Node.");
+    return;
+    }
+
+  //--- make sure model is included in the
+  //--- module's suite.
+  std::vector<std::string>::iterator citer;
+  std::string modelToPick = modelName;
+  bool found = false;
+
+  for (citer = this->ModelNamesArray.begin();
+       citer != this->ModelNamesArray.end();
+       citer ++ )
+    {
+    if ( *citer == modelToPick )
+      {
+      this->CurveAnalysisNode->SetMethodName (modelName);
+      //--- found and set.
+      found = true;
+      break;
+      }
+    }
+  if ( !found )
+    {
+    //--- not found and create appropriate error message.
+    this->CurveAnalysisNode->SetErrorMessage ( "Requested model is not available. Please choose a different model." );
+    }
+}
+
+
+
+//----------------------------------------------------------------------------
+const char * vtkPharmacokineticsLogic::GetCurrentPharmacokineticModel ()
+{
+  if ( this->CurveAnalysisNode != NULL )
+    {
+    return ( this->CurveAnalysisNode->GetMethodName() );
+    }
+  else
+    {
+    return NULL;
+    }
+
+}
+
 
 
 //---------------------------------------------------------------------------

@@ -16,6 +16,7 @@
 
 #include "vtkKWMultiColumnListWithScrollbars.h"
 #include "vtkKWLoadSaveButtonWithLabel.h"
+#include "vtkMRMLPharmacokineticsCurveAnalysisNode.h"
 
 #include <map>
 
@@ -36,6 +37,7 @@ class vtkSlicerNodeSelectorWidget;
 class vtkKWMenu;
 class vtkKWRadioButtonSetWithLabel;
 class vtkPharmacokineticsCurveAnalysisITKInterface;
+
 //TODO Adapt python SCIPY solvers
 
 #ifdef Pharmacokinetics_USE_SCIPY
@@ -65,6 +67,9 @@ class VTK_Pharmacokinetics_EXPORT vtkPharmacokineticsGUI : public vtkSlicerModul
   {
     this->SetModuleLogic (reinterpret_cast<vtkPharmacokineticsLogic*> (logic));
   }
+
+  vtkGetObjectMacro ( CurveAnalysisNode, vtkMRMLPharmacokineticsCurveAnalysisNode );
+  vtkSetObjectMacro ( CurveAnalysisNode, vtkMRMLPharmacokineticsCurveAnalysisNode );
   
 
  protected:
@@ -156,22 +161,27 @@ class VTK_Pharmacokinetics_EXPORT vtkPharmacokineticsGUI : public vtkSlicerModul
 
   // Description:
   // GeneratePlotNodes() calculates time-intensity curves in the regions specified by the label data.
-  void GeneratePlotNodes();
+  int GeneratePlotNodes();
   void ImportPlotNode(const char* path);
   void SaveMarkedPlotNode(const char* path);
 
   // -----------------------------------------
   // Initial parameter list
-  void UpdateInitialParameterList(vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode);
-  void GetInitialParametersAndInputCurves(vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode, int start, int end);
+  void UpdateInitialParameterList( );
+  void GetInitialParametersAndInputCurves(int start, int end);
   void OnInitialParameterListSelected();
   void ProcPlotSelectPopUpMenu(int row, int col, const char* nodeID);
   void UpdatePlotSelectPopUpMenu(const char* command);
 
   // -----------------------------------------
   // Output parameter list
-  void UpdateOutputParameterList(vtkMRMLPharmacokineticsCurveAnalysisNode* curveNode);
+  void UpdateOutputParameterList( );
   void UpdateFittingTargetMenu();
+
+  //----------------------------------------------------------------
+  // Send user a message.
+  void PostMessage( const char *message);
+  int PostQuestion ( const char *question );
 
  protected:
   //----------------------------------------------------------------
@@ -266,8 +276,8 @@ class VTK_Pharmacokinetics_EXPORT vtkPharmacokineticsGUI : public vtkSlicerModul
   // Curve / plot data
   vtkPharmacokineticsIntensityCurves*              IntensityCurves;
   vtkMRMLXYPlotManagerNode*        PlotManagerNode;
-
-
+  vtkMRMLPharmacokineticsCurveAnalysisNode *CurveAnalysisNode;
+  
   // -----------------------------------------
   // List management
   //BTX

@@ -31,7 +31,7 @@ class vtkMutexLock;
 class VTK_Pharmacokinetics_EXPORT vtkPharmacokineticsLogic : public vtkSlicerModuleLogic 
 {
  public:
-  //BTX
+//BTX
   enum {
     // Events
     StatusUpdateEvent       = 50003,
@@ -86,7 +86,7 @@ class VTK_Pharmacokinetics_EXPORT vtkPharmacokineticsLogic : public vtkSlicerMod
     int rangej[2];
     int rangek[2];
   } ThreadInfo;
-  //ETX
+//ETX
 
  public:
   
@@ -100,12 +100,15 @@ class VTK_Pharmacokinetics_EXPORT vtkPharmacokineticsLogic : public vtkSlicerMod
   // specified by 'path' argument.
   // Returns number of volumes in the series.
 
-  //BTX
+//BTX
   //const int SpaceDim = 3;
   typedef short PixelValueType;
   typedef itk::OrientedImage< PixelValueType, 3 > VolumeType;
   typedef itk::ImageSeriesReader< VolumeType > ReaderType;
-  //ETX
+//ETX
+
+  vtkGetObjectMacro ( CurveAnalysisNode, vtkMRMLPharmacokineticsCurveAnalysisNode);
+  vtkSetObjectMacro ( CurveAnalysisNode, vtkMRMLPharmacokineticsCurveAnalysisNode );  
 
   vtkMRMLScalarVolumeNode* AddMapVolumeNode(vtkMRMLTimeSeriesBundleNode* bundleNode,
                                             const char* nodeName);
@@ -134,6 +137,14 @@ class VTK_Pharmacokinetics_EXPORT vtkPharmacokineticsLogic : public vtkSlicerMod
                                   int start, int end,
                                   vtkMRMLScalarVolumeNode* mask, int label);
 
+  // Description:
+  // Use this method to extend the suite of models by name.
+  void AddKnownPharmacokineticModels( );
+  void AddNewPharmacokineticModel( const char *modelName);
+  int GetNumberOfPharmacokineticModels ();
+  const char *GetNthPharmacokineticModelName ( int n );
+
+  
  protected:
   
   vtkPharmacokineticsLogic();
@@ -152,17 +163,27 @@ class VTK_Pharmacokinetics_EXPORT vtkPharmacokineticsLogic : public vtkSlicerMod
   vtkSlicerApplication *Application;
   vtkCallbackCommand *DataCallbackCommand;
 
+  
+  // Description:
+  // Get/Set the current pk model from node.
+  void SetPharmacokineticModel (const char *modelName );
+  const char *GetCurrentPharmacokineticModel ();
+  
+//BTX
+  std::vector<std::string> ModelNamesArray;
+//ETX
  private:
 
   vtkMRMLScene* MRMLScene;
+  vtkMRMLPharmacokineticsCurveAnalysisNode *CurveAnalysisNode;
 
-  //BTX
+//BTX
   FrameNodeVectorType FrameNodeVector;
   FrameNodeVectorType RegisteredFrameNodeVector;
   std::string VolumeBundleID;
   std::string RegisteredVolumeBundleID;
   CurveCacheType CurveCache;  // CurveCache[<4d bundle name>][<label number>].<member of CurveDataType>
-  //ETX
+//ETX
 
 };
 
