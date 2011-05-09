@@ -132,6 +132,27 @@ const char* vtkSlicerCommonInterface::GetTemporaryDirectory()
 }
 
 //-----------------------------------------------------------------------------
+const char* vtkSlicerCommonInterface::GetBinDirectory()
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  return vtkSlicerApplication::GetInstance()->GetBinDir();
+
+//#else
+
+  // Slicer4
+  //return qSlicerApplication::application()->temporaryPath().toLatin1();
+
+#endif
+
+  return 0;
+
+}
+
+
+//-----------------------------------------------------------------------------
 const char* vtkSlicerCommonInterface::GetRepositoryRevision()
 {
 

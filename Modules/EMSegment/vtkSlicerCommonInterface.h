@@ -38,6 +38,7 @@ public:
   const char* GetApplicationTclName();
 
   const char* GetTemporaryDirectory();
+  const char* GetBinDirectory();
   const char* GetRepositoryRevision();
   void SetApplicationBinDir(const char*);
   vtkHTTPHandler* GetHTTPHandler(vtkMRMLScene* mrmlScene);

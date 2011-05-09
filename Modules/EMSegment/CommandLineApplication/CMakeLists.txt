@@ -16,6 +16,21 @@ if(NOT Slicer3_SOURCE_DIR)
   slicer3_set_default_install_prefix_for_external_projects()
 endif(NOT Slicer3_SOURCE_DIR)
 
+#-----------------------------------------------------------------------------
+## Python
+if(Slicer3_USE_PYTHON)
+  find_package(PythonLibs)
+endif(Slicer3_USE_PYTHON)
+
+if(Slicer3_USE_PYTHON AND PYTHON_INCLUDE_PATH)
+  set(dir_list ${dir_list} ${PYTHON_INCLUDE_PATH})
+  if(WIN32)
+    set(dir_list ${dir_list} ${PYTHON_INCLUDE_PATH}/../PC)
+  endif(WIN32)
+endif(Slicer3_USE_PYTHON AND PYTHON_INCLUDE_PATH)
+
+include_directories(${dir_list})
+
 # --------------------------------------------------------------------------
 # Include dirs
 
@@ -29,6 +44,7 @@ include_directories(
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
   )
+
 
 # --------------------------------------------------------------------------
 # Sources
@@ -51,6 +67,7 @@ target_link_libraries(
   EMSegment
   vtkCommon
   AtlasCreatorCxxModule   
+  SlicerBaseGUIPython
   )
 
 slicer3_install_plugins(${CLP_MODULE})
@@ -70,6 +87,7 @@ target_link_libraries(
   EMSegment
   vtkCommon
   AtlasCreatorCxxModule 
+  SlicerBaseGUIPython
   )
 
 set(CLP_MODULE EMSegmentTransformToNewFormat)
@@ -81,7 +99,8 @@ target_link_libraries(
   ${CLP_MODULE}
   EMSegment
   vtkCommon
-  AtlasCreatorCxxModule   
+  AtlasCreatorCxxModule
+  SlicerBaseGUIPython   
   )
 
 # --------------------------------------------------------------------------

@@ -3,6 +3,20 @@
 #include "EMSegmentCommandLineFct.h"
 #include "vtkSlicerCommonInterface.h"
 
+//---------------------------------------------------------------------------
+// Slicer3_USE_PYTHON
+//
+#ifdef Slicer3_USE_PYTHON
+#include "slicerPython.h"
+
+extern "C" {
+  void init_mytkinter( Tcl_Interp* );
+  void init_slicer(void );
+}
+#include "vtkTclUtil.h"
+
+#endif
+
 // =======================================================================
 //  MAIN
 // =======================================================================
@@ -44,6 +58,12 @@ int main(int argc, char** argv)
   //
   // strip backslashes from parameter node name (present if spaces were used)
   parametersMRMLNodeName = StripBackslashes(parametersMRMLNodeName);
+#endif
+
+#if WIN32
+#define PathSep ";"
+#else
+#define PathSep ":"
 #endif
 
   if (verbose) std::cout << "Setting taskPreProcessingSetting: " << taskPreProcessingSetting << std::endl;
@@ -123,13 +143,19 @@ int main(int argc, char** argv)
   // SLICER COMMON INTERFACE
   vtkSlicerCommonInterface *slicerCommon = vtkSlicerCommonInterface::New();
 
+  vtksys_stl::string slicerHome;
+  if ( !vtksys::SystemTools::GetEnv("Slicer3_HOME", slicerHome) )
+    {
+    slicerHome = std::string(slicerCommon->GetBinDirectory()) + "/..";
+    slicerHome = vtksys::SystemTools::CollapseFullPath(slicerHome.c_str());
+    }
+
   // ================== Tcl  ==================
   Tcl_Interp *interp =CreateTclInterp(argc,argv,slicerCommon);
   if (!interp)
     {
       return EXIT_FAILURE;
     }
-
 
   // ================== Application  ==================
   vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,slicerCommon,argc,argv);
@@ -151,6 +177,161 @@ int main(int argc, char** argv)
   colorLogic->AddDefaultColorNodes();
   colorLogic->SetMRMLScene(NULL);
   colorLogic->Delete();
+
+
+  // PYTHON
+#ifdef Slicer3_USE_PYTHON
+  // Initialize Python
+
+  // Set up the search path
+  std::string pythonEnv = "PYTHONPATH=";
+
+  const char* existingPythonEnv = vtksys::SystemTools::GetEnv("PYTHONPATH");
+  if ( existingPythonEnv )
+    {
+    pythonEnv += std::string ( existingPythonEnv ) + PathSep;
+    }
+
+  pythonEnv += slicerHome + "/" + Slicer3_INSTALL_LIB_DIR + "/SlicerBaseGUI/Python" + PathSep;
+  pythonEnv += slicerHome + "/" + Slicer3_INSTALL_PLUGINS_BIN_DIR + PathSep;
+  vtkKWApplication::PutEnv(const_cast <char *> (pythonEnv.c_str()));
+
+  Py_Initialize();
+  PySys_SetArgv(argc, argv);
+  PyObject* PythonModule = PyImport_AddModule("__main__");
+  if (PythonModule == NULL)
+    {
+    std::cout << "Warning: Failed to initialize python" << std::endl;
+    }
+  PyObject* PythonDictionary = PyModule_GetDict(PythonModule);
+
+  // Intercept _tkinter, and use ours...
+  init_mytkinter(interp);
+  init_slicer();
+  PyObject* v;
+
+  std::vector<std::string> pythonInitStrings;
+
+  pythonInitStrings.push_back(std::string("import _tkinter;"));
+  pythonInitStrings.push_back(std::string("import Tkinter;"));
+  pythonInitStrings.push_back(std::string("import sys;"));
+  pythonInitStrings.push_back(std::string("from os.path import join as j;"));
+  pythonInitStrings.push_back(std::string("tk = Tkinter.Tk();"));
+  pythonInitStrings.push_back(std::string("sys.path.append ( j('" + slicerHome + "','" + Slicer3_INSTALL_LIB_DIR + "', 'SlicerBaseGUI', 'Python')" + " );"));
+  pythonInitStrings.push_back(std::string("sys.path.append ( j('" + slicerHome + "','" + Slicer3_INSTALL_PLUGINS_BIN_DIR + "') );"));
+
+  /*
+  std::string TkinitString = "import Tkinter, sys;"
+    "from os.path import join as j;"
+    "tk = Tkinter.Tk();"
+    "sys.path.append ( j('"
+    + slicerHome + "','" + Slicer3_INSTALL_LIB_DIR + "', 'SlicerBaseGUI', 'Python')"
+    + " );\n"
+    "sys.path.append ( j('"
+    + slicerHome + "','" + Slicer3_INSTALL_PLUGINS_BIN_DIR
+    + "') );\n";
+    */
+
+  std::vector<std::string>::iterator strIt;
+  strIt = pythonInitStrings.begin();
+  for (; strIt != pythonInitStrings.end(); strIt++)
+    {
+    v = PyRun_String( (*strIt).c_str(),
+                      Py_file_input,
+                      PythonDictionary,
+                      PythonDictionary );
+    if (v == NULL)
+      {
+      PyObject *exception, *v, *tb;
+      PyObject *exception_s, *v_s, *tb_s;
+
+      PyErr_Fetch(&exception, &v, &tb);
+      if (exception != NULL)
+        {
+        PyErr_NormalizeException(&exception, &v, &tb);
+        if (exception != NULL)
+          {
+          exception_s = PyObject_Str(exception);
+          v_s = PyObject_Str(v);
+          tb_s = PyObject_Str(tb);
+          const char *e_string, *v_string, *tb_string;
+          cout << "Running: " << (*strIt).c_str() << endl;
+          e_string = PyString_AS_STRING(exception_s);
+          cout << "Exception: " << e_string << endl;
+          v_string = PyString_AS_STRING(v_s);
+          cout << "V: " << v_string << endl;
+          tb_string = PyString_AS_STRING(PyObject_Str(tb_s));
+          cout << "TB: " << tb_string << endl;
+          Py_DECREF ( exception_s );
+          Py_DECREF ( v_s );
+          Py_DECREF ( tb_s );
+          Py_DECREF ( exception );
+          Py_DECREF ( v );
+          if ( tb )
+            {
+            Py_DECREF ( tb );
+            }
+          }
+        }
+
+      PyErr_Print();
+      }
+    else
+      {
+      if (Py_FlushLine())
+        {
+        PyErr_Clear();
+        }
+      }
+    }
+
+  // now load the atlascreator module
+  vtkSlicerApplication::GetInstance()->InitializePython(
+    (void*)PythonModule, (void*)PythonDictionary);
+
+  std::string pythonCommand = "";
+
+  pythonCommand += "import sys\n";
+  pythonCommand += "import os\n";
+  pythonCommand += "packageNames = []\n";
+
+/*
+  module_paths_it = modulePathsList.begin();
+  for (; module_paths_it != module_paths_end; module_paths_it++)
+    {
+*/
+
+
+    vtksys_stl::string module_path("/Users/daniel/SLICER/TRUNK/Slicer3-build/lib/Slicer3/Modules/AtlasCreator/");
+    vtksys::SystemTools::ConvertToUnixSlashes(module_path);
+    if (*module_path.c_str() &&
+        vtksys::SystemTools::FileExists(module_path.c_str()))
+      {
+      pythonCommand += "modulePath = '" + module_path + "'\n";
+      pythonCommand += "sys.path.append(modulePath)\n";
+      pythonCommand += "for packageName in os.listdir(modulePath):\n";
+      pythonCommand += "    if os.path.isfile(os.path.join(modulePath,packageName,'__init__.py')):\n";
+      pythonCommand += "        packageNames.append(packageName)\n";
+      }
+
+
+//    }
+
+  pythonCommand += "import Slicer\n";
+  pythonCommand += "import SlicerScriptedModule\n";
+  pythonCommand += "SlicerScriptedModuleInfo = SlicerScriptedModule.SlicerScriptedModuleImporter(packageNames)\n";
+  pythonCommand += "SlicerScriptedModuleInfo.ScanAndInitModules()\n";
+  pythonCommand += "Slicer.ScriptedModuleInfo = SlicerScriptedModuleInfo\n";
+
+  v = PyRun_String( pythonCommand.c_str(),
+                    Py_file_input,
+                    PythonDictionary,PythonDictionary);
+  if (v == NULL)
+    {
+    PyErr_Print();
+    }
+
+#endif
 
   // ================== EMSegmenter  ==================
 
