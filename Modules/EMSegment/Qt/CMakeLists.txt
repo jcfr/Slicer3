@@ -16,9 +16,7 @@ SET(qt_module_include_directories
   ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
   ${CMAKE_CURRENT_BINARY_DIR}/Widgets
   ${CMAKE_CURRENT_SOURCE_DIR}/Workflow
-  ${CMAKE_CURRENT_BINARY_FIR}/Workflow
-  ${Slicer_SOURCE_DIR}/QTModules/Annotation/MRML
-  ${Slicer_BINARY_DIR}/QTModules/Annotation  
+  ${CMAKE_CURRENT_BINARY_DIR}/Workflow
   )
 
 # Widget source files
@@ -132,19 +130,19 @@ SET(qt_module_UI_SRCS
   Resources/UI/qSlicerEMSegmentEditRegistrationParametersStep.ui     # Step 5
   Resources/UI/qSlicerEMSegmentSpecifyIntensityDistributionStep.ui   # Step 7
   Resources/UI/qSlicerEMSegmentRunSegmentationStep.ui                # Step 9
-)
+  )
 
 # Additional Target libraries
 SET(qt_module_target_libraries
   vtkSlicerEMSegmentModuleLogic
   vtkCharts
-  qSlicerAnnotationModule
+  vtkSlicerAnnotationModuleMRML
   )
 
 # Resources
 SET(qt_module_resources
   Resources/qSlicerEMSegmentModule.qrc
-)
+  )
 
 slicerMacroBuildQtModule(
   NAME ${qt_module_name}
@@ -167,4 +165,4 @@ if(BUILD_TESTING)
   SET(EMSegment_TESTING_DATA_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Testing/Data)
   ADD_SUBDIRECTORY(Widgets/Testing)
   #ADD_SUBDIRECTORY(Testing)
-endif(BUILD_TESTING)
+endif()

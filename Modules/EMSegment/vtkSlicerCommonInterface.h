@@ -16,7 +16,7 @@
 
 // Slicer4 includes
 #include "qSlicerApplication.h"
-
+  typedef void Tcl_Interp;
 #endif
 
 #include "vtkDataIOManagerLogic.h"
