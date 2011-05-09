@@ -302,7 +302,7 @@ int main(int argc, char** argv)
 */
 
 
-    vtksys_stl::string module_path("/Users/daniel/SLICER/TRUNK/Slicer3-build/lib/Slicer3/Modules/AtlasCreator/");
+    vtksys_stl::string module_path = slicerHome + std::string("/lib/Slicer3/Modules/AtlasCreator/");
     vtksys::SystemTools::ConvertToUnixSlashes(module_path);
     if (*module_path.c_str() &&
         vtksys::SystemTools::FileExists(module_path.c_str()))
