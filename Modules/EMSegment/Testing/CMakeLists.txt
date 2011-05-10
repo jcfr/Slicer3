@@ -904,6 +904,29 @@ if(NOT DISABLE_CXX_TESTING)
     endif(EMSEG_RUN_COMPARE_TESTS)
 
 
+    # Task Test-Atlas-Cluster
+    add_test( EMSegCL_Task_TestAtlasCluster_${registrationpackage}_${size}
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/Test-Atlas-Cluster.mrml
+      --targetVolumeFileNames
+      ${EMSegment_SOURCE_DIR}/../AtlasCreator/TestData/originals/case62.nrrd
+      --registrationPackage
+      ${registrationpackage}
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${size}_TestAtlasCluster.nrrd
+      --taskPreProcessingSetting
+      :C1:C0:E../Slicer3/Modules/AtlasCreator/TestData/originals/:E../Slicer3/Modules/AtlasCreator/TestData/segmentations/:E${EMSegment_BINARY_DIR}/ACEMS
+      )
+    set_tests_properties(
+      EMSegCL_Task_TestAtlasCluster_${registrationpackage}_${size}
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
+
+
     # Task Non-Human-Primate
     add_test(
       EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}
@@ -1017,6 +1040,38 @@ if( EMSEG_RUN_LOCAL_TESTS )
     http://slicer.org/EMSegmentUpdates/
     ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegmenterUpdates
     )
+
+    
+    # Compare results
+    # Task MRI-Human-Brain_compare
+
+    set (registrationpackage BRAINS)
+    set (size small)
+    add_test(
+      EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_compare
+      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+      --no-error-popup
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
+      --targetVolumeFileNames
+      ${EMSegment_TESTDATA_DIR}/MRI-Human-Brain/${size}_MRIHumanBrain_T1_aligned.nrrd
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
+      --resultStandardVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned_compare.nrrd
+      --taskPreProcessingSetting
+      ":C1:C0"
+      --registrationAffineType
+      0
+      --registrationDeformableType
+      0
+      )
+    set_tests_properties(
+      EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_compare
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
 
 endif( EMSEG_RUN_LOCAL_TESTS )
 
