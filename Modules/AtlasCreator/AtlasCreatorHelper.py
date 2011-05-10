@@ -465,6 +465,8 @@ class AtlasCreatorHelper(object):
         
         self.debug("Found the following labels: " + str(nonZeroLabels))        
         
+        accum = None
+        
         return nonZeroLabels
     
     
@@ -724,7 +726,12 @@ class AtlasCreatorHelper(object):
         filePath = os.path.normpath(filePath)
         
         # load the file using Slicer's mechanism
-        volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath, "tmpAtlasCreatorNode")
+        try:
+            volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath, "tmpAtlasCreatorNode")
+        except Exception:        
+            # special case, if the AC is called from the EMSegment commandline tool
+            volumeNode = self.__emlogic.AddArchetypeScalarVolume(filePath, "tmpAtlasCreatorNode", slicer.ApplicationLogic, slicer.MRMLScene)
+        
         
         return volumeNode
 
@@ -750,7 +757,10 @@ class AtlasCreatorHelper(object):
 
         filePath = os.path.normpath(filePath)
         
-        success = slicer.VolumesGUI.GetLogic().SaveArchetypeVolume(filePath, volumeNode)
+        try:
+            success = slicer.VolumesGUI.GetLogic().SaveArchetypeVolume(filePath, volumeNode)
+        except Exception:
+            success = False
         
         return success
     

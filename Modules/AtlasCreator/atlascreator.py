@@ -258,7 +258,7 @@ def main(argv):
     
     info("AtlasCreator for 3D Slicer")
     info("Version v0.41")
-    info(socket.gethostbyaddr(socket.gethostname()))
+    info("Hostname: " + str(socket.gethostbyaddr(socket.gethostname())[0]))
     info("")
     
     if len(argv) == 0:
