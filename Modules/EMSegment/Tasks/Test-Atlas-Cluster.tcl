@@ -4,7 +4,7 @@ package require Itcl
 #
 if {0} { ;# comment
 
-    This is function is executed by EMSegmenter
+    This function is executed by EMSegmenter
 
     # TODO :
 
@@ -27,7 +27,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable TextLabelSize 1
     variable CheckButtonSize 2
     variable VolumeMenuButtonSize 0
-    variable TextEntrySize 3
+    variable TextEntrySize 4
 
     # Check Button
     variable atlasAlignedFlagID 0
@@ -35,6 +35,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable ac_imagesDirTextID 0
     variable ac_segmentationsDirTextID 1
     variable ac_outputDirTextID 2
+    variable ac_labelsTextID 3
 
     # Text Entry
     # not defined for this task
@@ -54,6 +55,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable ac_imagesDirTextID
         variable ac_segmentationsDirTextID
         variable ac_outputDirTextID
+        variable ac_labelsTextID
         variable LOGIC
 
         # Always has to be done initially so that variables are correctly defined
@@ -69,6 +71,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $preGUI DefineTextEntry "Enter path to images"             "../../" $ac_imagesDirTextID          40
         $preGUI DefineTextEntry "Enter path to segmentations"      "../../" $ac_segmentationsDirTextID   40
         $preGUI DefineTextEntry "Enter path to output directory"   "../../" $ac_outputDirTextID          40
+        $preGUI DefineTextEntry "Enter labels"                     "../../" $ac_labelsTextID             40
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $preGUI SetButtonsFromMRML
@@ -91,6 +94,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable ac_imagesDirTextID
         variable ac_segmentationsDirTextID
         variable ac_outputDirTextID
+        variable ac_labelsTextID
 
         $LOGIC PrintText "TCLMRI: =========================================="
         $LOGIC PrintText "TCLMRI: == Preprocress Data"
@@ -101,6 +105,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         set imagesDir                    [ GetTextEntryValueFromMRML   $ac_imagesDirTextID ]
         set segmentationsDir             [ GetTextEntryValueFromMRML   $ac_segmentationsDirTextID ]
         set outputDir                    [ GetTextEntryValueFromMRML   $ac_outputDirTextID ]
+        set labels                       [ GetTextEntryValueFromMRML   $ac_labelsTextID ]
+
 
         # ---------------------------------------
         # Step 1 : Initialize/Check Input
@@ -133,7 +139,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # Step 5: Atlas Alignment - you will also have to include the masks
         # Defines $workingDN GetAlignedAtlasNode
         set Slicer3_HOME $::env(Slicer3_HOME)
-        if { [AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $alignedTargetNode] } {
+        if { [AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $labels $alignedTargetNode] } {
             PrintError "Run: atlas creation failed !"
             return 1
         }

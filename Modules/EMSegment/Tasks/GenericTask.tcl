@@ -1166,7 +1166,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     # comment: This function is using the fixed mode, is the dynamic mode possible?
     # Input:  target, directories(manual segmentation + original volumes)
     # Output: new probability atlas for each label already registered on template=target in outputDir
-    proc AtlasCreator { _segmentationsDir _imagesDir _outputDir targetNode } {
+    proc AtlasCreator { _segmentationsDir _imagesDir _outputDir _labels targetNode } {
         variable SCENE
         variable LOGIC
         variable outputAtlasNode
@@ -1190,6 +1190,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set outputDir        $_outputDir
         set segmentationsDir $_segmentationsDir
         set imagesDir        $_imagesDir
+        set labels           $_labels
 
 
         set skipRegistration 0
@@ -1207,7 +1208,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         set useCMTK 1
         set fixed 1
         set nonRigid 0
-        set labels "0 3 4 5 6 7 8 9"
 
         set writeTransforms 0
         set keepAligned 0
@@ -1215,9 +1215,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         set normalizeTo 100
         set pca 0
 
-        # TODO, like targetNode(fixedTemplate)
-        set outputCast short
-
+        set referenceVolume [$targetVolumeNode GetImageData]
+        set scalarType [$referenceVolume GetScalarTypeAsString]
+        set outputCast $scalarType
 
         # we create a new vtkMRMLAtlasCreatorNode and configure it..
         set node [vtkMRMLAtlasCreatorNode New]
