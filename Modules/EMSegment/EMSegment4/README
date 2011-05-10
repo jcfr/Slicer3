@@ -1,0 +1,15 @@
+The EMSegment extension for Slicer4.
+
+To install, do the following outside the Slicer4 build tree, until the extensions are available through the wizard in Slicer4:
+
+git clone https://haehn@github.com/haehn/EMSegment4.git
+mkdir EMSegment4-build
+cd EMSegment4-build
+ccmake -DSlicer_DIR:PATH=/path/to/Slicer4-Superbuild/Slicer-build ../EMSegment4
+make -j 4
+/path/to/Slicer4-Superbuild/Slicer-build/Slicer --add-loadable-extension-path EMSegment4 "/path/to/EMSegment4-build"
+
+
+
+Cheers :)
+
