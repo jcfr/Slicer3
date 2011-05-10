@@ -3,6 +3,11 @@
 #include "EMSegmentCommandLineFct.h"
 #include "vtkSlicerCommonInterface.h"
 
+#ifdef Slicer3_USE_KWWIDGETS
+extern "C" int Atlascreatorcxxmodule_Init(Tcl_Interp *interp);
+extern "C" int Slicerbasegui_Init(Tcl_Interp *interp);
+#endif
+
 // =======================================================================
 //  MAIN
 // =======================================================================
@@ -129,6 +134,11 @@ int main(int argc, char** argv)
     {
       return EXIT_FAILURE;
     }
+   
+#ifdef Slicer3_USE_KWWIDGETS
+  Atlascreatorcxxmodule_Init(interp);
+  Slicerbasegui_Init(interp);
+#endif
 
   // ================== Application  ==================
   vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,slicerCommon,argc,argv);

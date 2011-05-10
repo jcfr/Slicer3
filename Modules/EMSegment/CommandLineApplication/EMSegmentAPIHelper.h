@@ -1,9 +1,6 @@
 #include "vtkSlicerCommonInterface.h"
 #include <sstream>
 
-#ifdef Slicer3_USE_KWWIDGETS
-extern "C" int Slicerbasegui_Init(Tcl_Interp *interp);
-#endif
 extern "C" int Emsegment_Init(Tcl_Interp *interp);
 extern "C" int Vtkteem_Init(Tcl_Interp *interp);
 extern "C" int Vtkitk_Init(Tcl_Interp *interp);
@@ -12,9 +9,6 @@ extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Mrmlcli_Init(Tcl_Interp *interp); 
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
 
-#ifdef Slicer3_USE_KWWIDGETS
-extern "C" int Atlascreatorcxxmodule_Init(Tcl_Interp *interp);
-#endif
 /*
 #define tgVtkCreateMacro(name,type)                                     \
   name  = type::New();                                                  \
@@ -93,20 +87,12 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv, vtkSlicerCommonInterface *sli
 
   // This is necessary to load in EMSEgmenter package in TCL interp.
   Emsegment_Init(interp);
-
-#ifdef Slicer3_USE_KWWIDGETS
-  Slicerbasegui_Init(interp);
-#endif
   Slicerbaselogic_Init(interp);
   Mrml_Init(interp);
   Mrmlcli_Init(interp); 
   Vtkteem_Init(interp);
   Vtkitk_Init(interp);
   Commandlinemodule_Init(interp);
-#ifdef Slicer3_USE_KWWIDGETS
-  Atlascreatorcxxmodule_Init(interp);
-#endif
-
   return interp;
 }
 
