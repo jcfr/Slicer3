@@ -12,6 +12,20 @@
 // Slicer3 includes
 #include  "vtkSlicerApplication.h"
 
+  // Slicer3 python
+  #ifdef Slicer3_USE_PYTHON
+
+  #include "slicerPython.h"
+
+  extern "C" {
+    void init_mytkinter( Tcl_Interp* );
+    void init_slicer(void );
+  }
+
+  #include "vtkTclUtil.h"
+
+  #endif // Check for Slicer3 Python
+
 #else
 
 // Slicer4 includes
@@ -31,11 +45,14 @@ public:
 
 //BTX
   Tcl_Interp* GetTclInterpeter(int argc, char *argv[], ostream *err = 0);
-
   int SourceTclFile(const char *tclFile);
   const char* EvaluateTcl(const char* command);
   const char* GetTclNameFromPointer(vtkObject *obj);
+  void RegisterObjectWithTcl(vtkObject *obj, const char* name);
   const char* GetApplicationTclName();
+
+  void InitializePythonViaTcl(Tcl_Interp* interp, int argc, char **argv);
+  void EvaluatePython(const char* command);
 
   const char* GetTemporaryDirectory();
   const char* GetBinDirectory();
@@ -54,6 +71,7 @@ private:
   ~vtkSlicerCommonInterface();
   vtkSlicerCommonInterface(const vtkSlicerCommonInterface&);
   void operator=(const vtkSlicerCommonInterface&);
+
 
 };
 

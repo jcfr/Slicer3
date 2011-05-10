@@ -29,6 +29,7 @@
 #include "vtkImageTranslateExtent.h"
 #include "vtkITKImageWriter.h" 
 #include "vtkImageEllipsoidSource.h"
+
 // A helper class to compare two maps
 template <class T>
 class MapCompare
@@ -114,7 +115,6 @@ vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* v
   volLogic->Delete();
   return volNode;
 }
-
 
 //----------------------------------------------------------------------------
 bool
@@ -2885,6 +2885,117 @@ void vtkEMSegmentLogic::CreateDefaultTasksList(std::vector<std::string> & Defaul
 
   this->AddDefaultTasksToList(this->GetTclTaskDirectory().c_str(), DefaultTasksName,DefaultTasksFile, DefinePreprocessingTasksName, DefinePreprocessingTasksFile);
   this->AddDefaultTasksToList(this->GetTemporaryTaskDirectory().c_str(), DefaultTasksName,DefaultTasksFile, DefinePreprocessingTasksName, DefinePreprocessingTasksFile);
+}
+
+//-----------------------------------------------------------------------------
+void vtkEMSegmentLogic::RunAtlasCreator(vtkMRMLAtlasCreatorNode *node)
+{
+
+  std::string pythonCommand = "";
+
+  vtksys_stl::string module_path = std::string(this->GetSlicerCommonInterface()->GetBinDirectory());
+  module_path += std::string("/../lib/Slicer3/Modules/AtlasCreator/");
+
+  pythonCommand += "from Slicer import slicer\n";
+  pythonCommand += "import sys\n";
+  pythonCommand += "sys.path.append('";
+  pythonCommand += vtksys::SystemTools::CollapseFullPath(module_path.c_str());
+  pythonCommand += "')\n";
+
+  pythonCommand += "from AtlasCreatorLogic import *\n";
+  pythonCommand += "logic = AtlasCreatorLogic(0)\n";
+  pythonCommand += "node = slicer.vtkMRMLAtlasCreatorNode()\n";
+
+  pythonCommand += "node.SetOriginalImagesFilePathList('" + std::string(node->GetOriginalImagesFilePathList()) + "')\n";
+  pythonCommand += "node.SetSegmentationsFilePathList('" + std::string(node->GetSegmentationsFilePathList()) + "')\n";
+  pythonCommand += "node.SetOutputDirectory('" + std::string(node->GetOutputDirectory()) + "')\n";
+
+  pythonCommand += "node.SetToolkit('" + std::string(node->GetToolkit()) + "')\n";
+
+  pythonCommand += "node.SetTemplateType('" + std::string(node->GetTemplateType()) + "')\n";
+
+  std::stringstream convert;
+  convert << node->GetDynamicTemplateIterations();
+  pythonCommand += "node.SetDynamicTemplateIterations(" + convert.str() + ")\n";
+  pythonCommand += "node.SetFixedTemplateDefaultCaseFilePath('" + std::string(node->GetFixedTemplateDefaultCaseFilePath()) + "')\n";
+
+  convert.str("");
+  convert << node->GetIgnoreTemplateSegmentation();
+  pythonCommand += "node.SetIgnoreTemplateSegmentation(" + convert.str() + ")\n";
+
+  pythonCommand += "node.SetLabelsList('" + std::string(node->GetLabelsList()) + "')\n";
+
+  pythonCommand += "node.SetRegistrationType('" + std::string(node->GetRegistrationType()) + "')\n";
+
+  convert.str("");
+  convert << node->GetSaveTransforms();
+  pythonCommand += "node.SetSaveTransforms(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetDeleteAlignedImages();
+  pythonCommand += "node.SetDeleteAlignedImages(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetDeleteAlignedSegmentations();
+  pythonCommand += "node.SetDeleteAlignedSegmentations(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetNormalizeAtlases();
+  pythonCommand += "node.SetNormalizeAtlases(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetNormalizeTo();
+  pythonCommand += "node.SetNormalizeTo(" + convert.str() + ")\n";
+
+  pythonCommand += "node.SetOutputCast('" + std::string(node->GetOutputCast()) + "')\n";
+
+  convert.str("");
+  convert << node->GetPCAAnalysis();
+  pythonCommand += "node.SetPCAAnalysis(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetPCAMaxEigenVectors();
+  pythonCommand += "node.SetPCAMaxEigenVectors(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetPCACombine();
+  pythonCommand += "node.SetPCACombine(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetUseCluster();
+  pythonCommand += "node.SetUseCluster(" + convert.str() + ")\n";
+  pythonCommand += "node.SetSchedulerCommand('" + std::string(node->GetSchedulerCommand()) + "')\n";
+
+  convert.str("");
+  convert << node->GetNumberOfThreads();
+  pythonCommand += "node.SetNumberOfThreads(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetSkipRegistration();
+  pythonCommand += "node.SetSkipRegistration(" + convert.str() + ")\n";
+  pythonCommand += "node.SetExistingTemplate('" + std::string(node->GetExistingTemplate()) + "')\n";
+  pythonCommand += "node.SetTransformsDirectory('" + std::string(node->GetTransformsDirectory()) + "')\n";
+
+  convert.str("");
+  convert << node->GetDebugMode();
+  pythonCommand += "node.SetDebugMode(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetDryrunMode();
+  pythonCommand += "node.SetDryrunMode(" + convert.str() + ")\n";
+
+  convert.str("");
+  convert << node->GetTestMode();
+  pythonCommand += "node.SetTestMode(" + convert.str() + ")\n";
+
+
+  pythonCommand += "logic.Start(node)\n";
+  pythonCommand += "node = None\n";
+  pythonCommand += "logic = None\n";
+
+
+  this->GetSlicerCommonInterface()->EvaluatePython(pythonCommand.c_str());
+
 }
 
 //-----------------------------------------------------------------------------

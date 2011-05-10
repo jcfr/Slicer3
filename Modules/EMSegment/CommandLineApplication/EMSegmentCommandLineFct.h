@@ -5,6 +5,7 @@
 #include "vtkEMSegmentMRMLManager.h"
 #include "vtkEMSegmentLogic.h"
 #include "vtkSlicerColorLogic.h"
+#include "vtkSlicerVolumesLogic.h"
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
 #include "vtkImageAccumulate.h"

@@ -15,6 +15,7 @@
 #include <vtkMRMLVolumeArchetypeStorageNode.h>
 #include <vtkMRMLScalarVolumeNode.h>
 #include <vtkMRMLVolumeNode.h>
+#include <vtkMRMLAtlasCreatorNode.h>
 
 // needed to get the CMake variables
 #include <vtkSlicerConfigure.h>
@@ -130,7 +131,6 @@ public:
 
   vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene);
 
-
   //BTX
   std::string GetErrorMessage() {return this->ErrorMsg;}
   //ETX 
@@ -199,6 +199,8 @@ public:
 //ETX
 
   void UpdateIntensityDistributionAuto(vtkIdType nodeID);
+
+  void RunAtlasCreator(vtkMRMLAtlasCreatorNode *node);
 
 protected: 
   // the mrml manager is created in the constructor

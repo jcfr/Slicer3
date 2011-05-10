@@ -8,6 +8,8 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/Graph
   )
 
+#-----------------------------------------------------------------------------
+
 file(GLOB headers 
   "${EMSegment_SOURCE_DIR}/*.h"
   "${EMSegment_SOURCE_DIR}/MRML/*.h"
@@ -97,6 +99,8 @@ set_source_files_properties(
       ${ITK_LIBRARIES}
       vtkSlicerVolumesModuleLogic
       Volumes
+      SlicerBaseGUIPython
+      AtlasCreatorCxxModule
       )
 
   # Apply user-defined properties to the library target.

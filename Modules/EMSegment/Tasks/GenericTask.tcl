@@ -1221,6 +1221,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # we create a new vtkMRMLAtlasCreatorNode and configure it..
         set node [vtkMRMLAtlasCreatorNode New]
+        $node InitializeByDefault
 
         #for more options look into Modules/AtlasCreator/Cxx/vtkMRMLAtlasCreatorNode.h
 
@@ -1312,8 +1313,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: == AtlasCreator Launch"
 
         # add the new node to the MRML scene
-        $SCENE AddNode $node
-        $node Launch
+        #$SCENE AddNode $node
+        #$node Launch
+        $LOGIC RunAtlasCreator $node
         #the terminal will contain stdout output
         $node Print
         $node Delete
