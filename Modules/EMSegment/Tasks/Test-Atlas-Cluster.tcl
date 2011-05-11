@@ -114,6 +114,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
+        $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
 
         # -------------------------------------
         # Step 4: Perform Intensity Correction
@@ -130,9 +131,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         } else {
             $LOGIC PrintText "TCLMRI: Skipping intensity correction"
         }
-
-
-        $LOGIC PrintText "TCLMRI: ==> Preprocessing Setting: $atlasAlignedFlag $inhomogeneityCorrectionFlag"
 
 
         # -------------------------------------
