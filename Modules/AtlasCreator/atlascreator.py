@@ -162,16 +162,16 @@ def usage():
     info("")
     info("--outputCast INT")
     info("        Output cast for the atlases. Possible values:")
-    info("        0: Char")
-    info("        1: Unsigned Char")
-    info("        2: Double")
-    info("        3: Float")
-    info("        4: Int")
-    info("        5: Unsigned Int")
-    info("        6: Long")
-    info("        7: Unsigned Long")
-    info("        8: Short")
-    info("        9: Unsigned Short")        
+    info("        0: char")
+    info("        1: unsigned char")
+    info("        2: double")
+    info("        3: float")
+    info("        4: int")
+    info("        5: unsigned int")
+    info("        6: long")
+    info("        7: unsigned long")
+    info("        8: short")
+    info("        9: unsigned short")        
     info("        DEFAULT: 8")
     info("")
     info("-c, --cluster")
@@ -586,25 +586,25 @@ def main(argv):
         
         # valid outputCast integer, convert to string
         if int(outputCast) == 0:
-            outputCast = "Char"
+            outputCast = "char"
         elif int(outputCast) == 1:
-            outputCast = "Unsigned Char"
+            outputCast = "unsigned char"
         elif int(outputCast) == 2:
-            outputCast = "Double"
+            outputCast = "double"
         elif int(outputCast) == 3:
-            outputCast = "Float"
+            outputCast = "float"
         elif int(outputCast) == 4:
-            outputCast = "Int"
+            outputCast = "int"
         elif int(outputCast) == 5:
-            outputCast = "Unsigned Int"
+            outputCast = "unsigned int"
         elif int(outputCast) == 6:
-            outputCast = "Long"
+            outputCast = "long"
         elif int(outputCast) == 7:
-            outputCast = "Unsigned Long"
+            outputCast = "unsigned long"
         elif int(outputCast) == 8:
-            outputCast = "Short"
+            outputCast = "short"
         elif int(outputCast) == 9:
-            outputCast = "Unsigned Short"
+            outputCast = "unsigned short"
         
     elif outputCast:
         info("Error: The specified output cast is invalid - only values from 0-9 accepted.")

@@ -140,16 +140,16 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
 
 
   // Description: The Output Cast
-  //   "Char"
-  //   "Unsigned Char"
-  //   "Double"
-  //   "Float"
-  //   "Int"
-  //   "Unsigned Int"
-  //   "Long"
-  //   "Unsigned Long"
-  //   "Short"
-  //   "Unsigned Short"
+  //   "char"
+  //   "unsigned char"
+  //   "double"
+  //   "float"
+  //   "int"
+  //   "unsigned int"
+  //   "long"
+  //   "unsigned long"
+  //   "short"
+  //   "unsigned short"
   vtkGetStringMacro (OutputCast);
   vtkSetStringMacro (OutputCast);
 

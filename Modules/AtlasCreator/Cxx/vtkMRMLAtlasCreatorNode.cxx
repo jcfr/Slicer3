@@ -650,7 +650,7 @@ void vtkMRMLAtlasCreatorNode::InitializeByDefault()
   this->NormalizeAtlases = 0;
   this->NormalizeTo = 1;
 
-  this->SetOutputCast("Short");
+  this->SetOutputCast("short");
 
   this->PCAAnalysis = 0;
   this->PCAMaxEigenVectors = 10;

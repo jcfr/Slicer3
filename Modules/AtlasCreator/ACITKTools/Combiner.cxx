@@ -90,22 +90,22 @@ int main(int argc, char ** argv)
         << std::endl;
     std::cerr << "Example: " << std::endl;
     std::cerr << argv[0]
-        << " 6 \"case01.nrrd case02.nrrd case03.nrrd\" /tmp/acout/ \"Double\" 100"
+        << " 6 \"case01.nrrd case02.nrrd case03.nrrd\" /tmp/acout/ \"double\" 100"
         << std::endl;
     return EXIT_FAILURE;
     }
 
   // let's define some hardcoded cast strings
-  std::string charString = "Char";
-  std::string unsignedCharString = "Unsigned Char";
-  std::string doubleString = "Double";
-  std::string floatString = "Float";
-  std::string intString = "Int";
-  std::string unsignedIntString = "Unsigned Int";
-  std::string longString = "Long";
-  std::string unsignedLongString = "Unsigned Long";
-  std::string shortString = "Short";
-  std::string unsignedShortString = "Unsigned Short";
+  std::string charString = "char";
+  std::string unsignedCharString = "unsigned char";
+  std::string doubleString = "double";
+  std::string floatString = "float";
+  std::string intString = "int";
+  std::string unsignedIntString = "unsigned int";
+  std::string longString = "long";
+  std::string unsignedLongString = "unsigned long";
+  std::string shortString = "short";
+  std::string unsignedShortString = "unsigned short";
 
   // now we parse the arguments
   int label;

@@ -1463,17 +1463,17 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
         self._outputCastCombo.SetBalloonHelpString("The output cast for the Atlases.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._outputCastCombo.GetWidgetName())
 
-        self._outputCastCombo.GetWidget().AddValue("'Char'")              
-        self._outputCastCombo.GetWidget().AddValue("'Unsigned Char'")
-        self._outputCastCombo.GetWidget().AddValue("'Double'")
-        self._outputCastCombo.GetWidget().AddValue("'Float'")
-        self._outputCastCombo.GetWidget().AddValue("'Int'")
-        self._outputCastCombo.GetWidget().AddValue("'Unsigned Int'")                          
-        self._outputCastCombo.GetWidget().AddValue("'Long'")
-        self._outputCastCombo.GetWidget().AddValue("'Unsigned Long'") 
-        self._outputCastCombo.GetWidget().AddValue("'Short'")
-        self._outputCastCombo.GetWidget().AddValue("'Unsigned Short'")
-        self._outputCastCombo.GetWidget().SetValue("'Short'")
+        self._outputCastCombo.GetWidget().AddValue("'char'")              
+        self._outputCastCombo.GetWidget().AddValue("'unsigned char'")
+        self._outputCastCombo.GetWidget().AddValue("'double'")
+        self._outputCastCombo.GetWidget().AddValue("'float'")
+        self._outputCastCombo.GetWidget().AddValue("'int'")
+        self._outputCastCombo.GetWidget().AddValue("'unsigned int'")                          
+        self._outputCastCombo.GetWidget().AddValue("'long'")
+        self._outputCastCombo.GetWidget().AddValue("'unsigned long'") 
+        self._outputCastCombo.GetWidget().AddValue("'short'")
+        self._outputCastCombo.GetWidget().AddValue("'unsigned short'")
+        self._outputCastCombo.GetWidget().SetValue("'short'")
 
         self._outputCastCombo.GetWidget().SetCommand(self.vtkScriptedModuleGUI, "Invoke UpdateMRMLFromCallback")
 
@@ -1627,7 +1627,7 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
             # by default, normalize to 1
             self._normalizeValueEntry.GetWidget().SetValue(1)
             # by default, Short
-            self._outputCastCombo.GetWidget().SetValue("'Short'")
+            self._outputCastCombo.GetWidget().SetValue("'short'")
             self._deleteAlignedImagesCheckBox.GetWidget().SetSelectedState(1)
             self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(1)
             self._numberOfThreadsEntry.GetWidget().SetValue(-1)
