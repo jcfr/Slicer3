@@ -1166,7 +1166,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     # comment: This function is using the fixed mode, is the dynamic mode possible?
     # Input:  target, directories(manual segmentation + original volumes)
     # Output: new probability atlas for each label already registered on template=target in outputDir
-    proc AtlasCreator { _segmentationsDir _imagesDir _outputDir _labels targetNode } {
+    proc AtlasCreator { _segmentationsDir _imagesDir _outputDir _labels _schedulerCommand targetNode } {
         variable SCENE
         variable LOGIC
         variable outputAtlasNode
@@ -1191,13 +1191,13 @@ namespace eval EMSegmenterPreProcessingTcl {
         set segmentationsDir $_segmentationsDir
         set imagesDir        $_imagesDir
         set labels           $_labels
+        set schedulerCommand $_schedulerCommand
 
 
         set skipRegistration 0
         set debug 0
         set dryrun 0
 
-        set schedulerCommand ""
         if { $schedulerCommand == ""  } {
             set cluster 0
         } else {
@@ -1224,6 +1224,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         $node InitializeByDefault
 
         #for more options look into Modules/AtlasCreator/Cxx/vtkMRMLAtlasCreatorNode.h
+
+        # ignore the template per default
+        $node SetIgnoreTemplateSegmentation 1
 
         if { $debug || $dryrun } {
             $node SetDebugMode 1

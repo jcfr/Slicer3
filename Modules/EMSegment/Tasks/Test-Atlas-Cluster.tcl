@@ -27,7 +27,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable TextLabelSize 1
     variable CheckButtonSize 2
     variable VolumeMenuButtonSize 0
-    variable TextEntrySize 4
+    variable TextEntrySize 5
 
     # Check Button
     variable atlasAlignedFlagID 0
@@ -36,6 +36,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     variable ac_segmentationsDirTextID 1
     variable ac_outputDirTextID 2
     variable ac_labelsTextID 3
+    variable ac_schedulercommandTextID 4
 
     # Text Entry
     # not defined for this task
@@ -56,6 +57,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable ac_segmentationsDirTextID
         variable ac_outputDirTextID
         variable ac_labelsTextID
+        variable ac_schedulercommandTextID
         variable LOGIC
 
         # Always has to be done initially so that variables are correctly defined
@@ -72,6 +74,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         $preGUI DefineTextEntry "Enter path to segmentations"      "../../" $ac_segmentationsDirTextID   40
         $preGUI DefineTextEntry "Enter path to output directory"   "../../" $ac_outputDirTextID          40
         $preGUI DefineTextEntry "Enter labels"                     "../../" $ac_labelsTextID             40
+        $preGUI DefineTextEntry "Enter scheduler command"          "../../" $ac_schedulercommandTextID   40
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $preGUI SetButtonsFromMRML
@@ -95,6 +98,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable ac_segmentationsDirTextID
         variable ac_outputDirTextID
         variable ac_labelsTextID
+        variable ac_schedulercommandTextID
 
         $LOGIC PrintText "TCLMRI: =========================================="
         $LOGIC PrintText "TCLMRI: == Preprocress Data"
@@ -106,6 +110,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set segmentationsDir             [ GetTextEntryValueFromMRML   $ac_segmentationsDirTextID ]
         set outputDir                    [ GetTextEntryValueFromMRML   $ac_outputDirTextID ]
         set labels                       [ GetTextEntryValueFromMRML   $ac_labelsTextID ]
+        set schedulerCommand             [ GetTextEntryValueFromMRML   $ac_schedulercommandTextID ]
 
 
         # ---------------------------------------
@@ -137,7 +142,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # Step 5: Atlas Alignment - you will also have to include the masks
         # Defines $workingDN GetAlignedAtlasNode
         set Slicer3_HOME $::env(Slicer3_HOME)
-        if { [AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $labels $alignedTargetNode] } {
+        if { [AtlasCreator $Slicer3_HOME/$segmentationsDir $Slicer3_HOME/$imagesDir $outputDir $labels $schedulerCommand $alignedTargetNode] } {
             PrintError "Run: atlas creation failed !"
             return 1
         }
@@ -201,6 +206,7 @@ namespace eval EMSegmenterSimpleTcl {
         $inputChannelGUI DefineTextEntry "Enter path to images"             "../../" $EMSegmenterPreProcessingTcl::ac_imagesDirTextID          40
         $inputChannelGUI DefineTextEntry "Enter path to segmentations"      "../../" $EMSegmenterPreProcessingTcl::ac_segmentationsDirTextID   40
         $inputChannelGUI DefineTextEntry "Enter path to output directory"   "../../" $EMSegmenterPreProcessingTcl::ac_outputDirTextID          40
+        $inputChannelGUI DefineTextEntry "Enter Enter scheduler command"    "../../" $EMSegmenterPreProcessingTcl::ac_schedulercommandTextID   40
 
         # Define this at the end of the function so that values are set by corresponding MRML node
         $inputChannelGUI SetButtonsFromMRML
