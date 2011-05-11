@@ -202,6 +202,10 @@ public:
 
   void RunAtlasCreator(vtkMRMLAtlasCreatorNode *node);
 
+  void WriteImage(vtkImageData* file , const char* filename);
+
+
+
 protected: 
   // the mrml manager is created in the constructor
   vtkSetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager);
@@ -283,8 +287,6 @@ private:
   void operator=(const vtkEMSegmentLogic&);
 
   vtkSlicerCommonInterface *SlicerCommonInterface;
-
-  void WriteImage(vtkImageData* file , const char* filename);
 
 };
 
