@@ -126,15 +126,17 @@ protected:
   void getRobustStatistics(std::vector<double>& samples, std::vector<double>& robustStat);
   void inputLableImageToSeeds();
   void seedToMask();
-  void dialteSeeds();
+  //void dialteSeeds();
   void getFeatureAroundSeeds();
-  void estimateFeatureStdDevs();
+  //  void estimateFeatureStdDevs();
 
 
-  TPixel m_inputImageIntensityMin;
-  TPixel m_inputImageIntensityMax;
-  void computeMinMax();
+//   TPixel m_inputImageIntensityMin;
+//   TPixel m_inputImageIntensityMax;
+//   void computeMinMax();
 
+
+  std::size_t m_num_pdf_samples;
   std::vector< std::vector<double> > m_PDFlearnedFromSeeds; // each feature corresponds to a inner std::vector<double>
   void estimatePDFs();
 
@@ -144,8 +146,8 @@ protected:
 
 
   // kernel 
-  std::vector<double> m_kernelStddev;
-  double kernelEvaluation(const std::vector<double>& newFeature);
+//   std::vector<double> m_kernelStddev;
+//   double kernelEvaluation(const std::vector<double>& newFeature);
   double kernelEvaluationUsingPDF(const std::vector<double>& newFeature);
 
 };

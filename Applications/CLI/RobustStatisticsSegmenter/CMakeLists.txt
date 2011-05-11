@@ -65,6 +65,7 @@ endif (Slicer3_SOURCE_DIR)
 add_executable( SFLSRobustStat3DTestConsole SFLSRobustStat3DTestConsole.cxx)
 target_link_libraries( SFLSRobustStat3DTestConsole ITKCommon ITKBasicFilters ITKIO itkvnl)
 
+
 enable_testing()
 set(Slicer3_EXE ${Slicer3_BINARY_DIR}/Slicer3 )
 # message (STATUS "cmake current source dir = '${CMAKE_CURRENT_SOURCE_DIR}'")

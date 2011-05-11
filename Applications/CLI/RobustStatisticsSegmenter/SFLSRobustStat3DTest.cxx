@@ -82,7 +82,7 @@ int main(int argc, char** argv)
   seg.setMaxRunningTime(maxRunningTime);
 
 
-  seg.setIntensityHomogeneity(intensityHomogeneity);
+  //seg.setIntensityHomogeneity(intensityHomogeneity);
   seg.setCurvatureWeight(curvatureWeight/1.5);
 
   seg.doSegmenation();

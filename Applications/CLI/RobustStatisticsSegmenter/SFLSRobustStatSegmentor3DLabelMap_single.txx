@@ -23,6 +23,11 @@
 #include "itkImageFileWriter.h"
 
 
+
+#include "kde_via_diffusion.h"
+
+
+
 /* ============================================================   */
 template< typename TPixel >
 void
@@ -39,10 +44,13 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
   m_kernelWidthFactor = 10.0;
 
 
-  m_inputImageIntensityMin = 0;
-  m_inputImageIntensityMax = 0;
+//   m_inputImageIntensityMin = 0;
+//   m_inputImageIntensityMax = 0;
 
   m_debug_file.open("/tmp/rss_debug_info.log");
+
+
+  m_num_pdf_samples = std::numeric_limits<UshortImage_t::PixelType>::max() + 1;
 
 
   return;
@@ -292,7 +300,7 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
 
   //computeFeature();
   getFeatureAroundSeeds();
-  estimateFeatureStdDevs();
+  //estimateFeatureStdDevs();
 
   estimatePDFs();
 
@@ -665,73 +673,73 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
 }
 
 
-/* ============================================================ */
-template< typename TPixel >
-void
-CSFLSRobustStatSegmentor3DLabelMap< TPixel >
-::dialteSeeds()
-{
-  /* For each seed, add its 26 neighbors into the seed list. */
+// /* ============================================================ */
+// template< typename TPixel >
+// void
+// CSFLSRobustStatSegmentor3DLabelMap< TPixel >
+// ::dialteSeeds()
+// {
+//   /* For each seed, add its 26 neighbors into the seed list. */
 
-  if (!(this->mp_img))
-    {
-      std::cerr<<"Error: set input image first.\n";
-      raise(SIGABRT);
-    }
-
-
-  long n = m_seeds.size();
-  std::vector<std::vector<long> > newSeeds;
-
-  if (n == 0)
-    {
-      std::cerr << "Error: No seeds specified." << std::endl;
-      raise(SIGABRT);
-    }
+//   if (!(this->mp_img))
+//     {
+//       std::cerr<<"Error: set input image first.\n";
+//       raise(SIGABRT);
+//     }
 
 
-  for (long i = 0; i < n; ++i)
-    {
-      if (3 != m_seeds[i].size())
-        {
-          std::cerr<<"Error: 3 != m_seeds[i].size()\n";
-          raise(SIGABRT);
-        }
+//   long n = m_seeds.size();
+//   std::vector<std::vector<long> > newSeeds;
 
-      long ix = m_seeds[i][0];
-      long iy = m_seeds[i][1];
-      long iz = m_seeds[i][2];
+//   if (n == 0)
+//     {
+//       std::cerr << "Error: No seeds specified." << std::endl;
+//       raise(SIGABRT);
+//     }
 
-      for (long iiz = iz - 1; iiz <= iz + 1; ++iiz)
-        {
-          for (long iiy = iy - 1; iiy <= iy + 1; ++iiy)
-            {
-              for (long iix = ix - 1; iix <= ix + 1; ++iix)
-                {
-                  if (0 <= iix && iix < this->m_nx    \
-                      && 0 <= iiy && iiy < this->m_ny    \
-                      && 0 <= iiz && iiz < this->m_nz)
-                    {
-                      /* Some locations may be added multiple times,
-                         if the original seeds are close. But I think
-                         this is fine */
 
-                      std::vector<long> s(3);
-                      s[0] = iix;
-                      s[1] = iiy;
-                      s[2] = iiz;
+//   for (long i = 0; i < n; ++i)
+//     {
+//       if (3 != m_seeds[i].size())
+//         {
+//           std::cerr<<"Error: 3 != m_seeds[i].size()\n";
+//           raise(SIGABRT);
+//         }
 
-                      newSeeds.push_back(s);
-                    }
-                }
-            }
-        }
-    }
+//       long ix = m_seeds[i][0];
+//       long iy = m_seeds[i][1];
+//       long iz = m_seeds[i][2];
+
+//       for (long iiz = iz - 1; iiz <= iz + 1; ++iiz)
+//         {
+//           for (long iiy = iy - 1; iiy <= iy + 1; ++iiy)
+//             {
+//               for (long iix = ix - 1; iix <= ix + 1; ++iix)
+//                 {
+//                   if (0 <= iix && iix < this->m_nx    \
+//                       && 0 <= iiy && iiy < this->m_ny    \
+//                       && 0 <= iiz && iiz < this->m_nz)
+//                     {
+//                       /* Some locations may be added multiple times,
+//                          if the original seeds are close. But I think
+//                          this is fine */
+
+//                       std::vector<long> s(3);
+//                       s[0] = iix;
+//                       s[1] = iiy;
+//                       s[2] = iiz;
+
+//                       newSeeds.push_back(s);
+//                     }
+//                 }
+//             }
+//         }
+//     }
   
-  m_seeds.assign(newSeeds.begin(), newSeeds.end() );
+//   m_seeds.assign(newSeeds.begin(), newSeeds.end() );
 
-  return;
-}
+//   return;
+// }
 
 
 /* ============================================================  */
@@ -807,45 +815,45 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
   return;
 }
 
-/* ============================================================ */
-template< typename TPixel >
-void
-CSFLSRobustStatSegmentor3DLabelMap< TPixel >
-::estimateFeatureStdDevs()
-{
-  m_kernelStddev.assign(m_numberOfFeature, 0.0);
+// /* ============================================================ */
+// template< typename TPixel >
+// void
+// CSFLSRobustStatSegmentor3DLabelMap< TPixel >
+// ::estimateFeatureStdDevs()
+// {
+//   m_kernelStddev.assign(m_numberOfFeature, 0.0);
   
-  long n = m_seeds.size(); // == m_featureAtTheSeeds.size()
+//   long n = m_seeds.size(); // == m_featureAtTheSeeds.size()
 
-  for (long i = 0; i < m_numberOfFeature; ++i)
-    {
-      double m = 0;
-      for (long ii = 0; ii < n; ++ii)
-        {
-          m += m_featureAtTheSeeds[ii][i];
-        }
-      m /= n;
-
-      for (long ii = 0; ii < n; ++ii)
-        {
-          m_kernelStddev[i] += (m_featureAtTheSeeds[ii][i] - m)*(m_featureAtTheSeeds[ii][i] - m);
-        }
-
-      m_kernelStddev[i] /= (n-1);
-      m_kernelStddev[i] = sqrt(m_kernelStddev[i]);
-    }
-
-// // #ifndef NDEBUG
-// //   std::ofstream dbgf("/tmp/dbgo.txt", std::ios_base::app);
 //   for (long i = 0; i < m_numberOfFeature; ++i)
 //     {
-//       //dbgf<<"Feature "<<i<<" has var = "<<m_kernelStddev[i]<<std::endl;
-//       std::cout<<"Feature "<<i<<" has var = "<<m_kernelStddev[i]<<std::endl;
-//     }
-// // #endif
+//       double m = 0;
+//       for (long ii = 0; ii < n; ++ii)
+//         {
+//           m += m_featureAtTheSeeds[ii][i];
+//         }
+//       m /= n;
 
-  return;
-}
+//       for (long ii = 0; ii < n; ++ii)
+//         {
+//           m_kernelStddev[i] += (m_featureAtTheSeeds[ii][i] - m)*(m_featureAtTheSeeds[ii][i] - m);
+//         }
+
+//       m_kernelStddev[i] /= (n-1);
+//       m_kernelStddev[i] = sqrt(m_kernelStddev[i]);
+//     }
+
+// // // #ifndef NDEBUG
+// // //   std::ofstream dbgf("/tmp/dbgo.txt", std::ios_base::app);
+// //   for (long i = 0; i < m_numberOfFeature; ++i)
+// //     {
+// //       //dbgf<<"Feature "<<i<<" has var = "<<m_kernelStddev[i]<<std::endl;
+// //       std::cout<<"Feature "<<i<<" has var = "<<m_kernelStddev[i]<<std::endl;
+// //     }
+// // // #endif
+
+//   return;
+// }
 
 template< typename TPixel >
 double
@@ -856,7 +864,8 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
 
   for (long i = 0; i < m_numberOfFeature; ++i)
     {
-      long idx = static_cast<long>(newFeature[i] - m_inputImageIntensityMin);
+      //long idx = static_cast<long>(newFeature[i] - m_inputImageIntensityMin);
+      std::size_t idx = static_cast<std::size_t>(newFeature[i]);
 
       double probOfThisFeature = m_PDFlearnedFromSeeds[i][idx];
 
@@ -866,40 +875,40 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
   return p;
 }
 
-/* ============================================================  */
-template< typename TPixel >
-double
-CSFLSRobustStatSegmentor3DLabelMap< TPixel >
-::kernelEvaluation(const std::vector<double>& newFeature)
-{
-  long n = m_seeds.size(); // == m_featureAtTheSeeds.size()
+// /* ============================================================  */
+// template< typename TPixel >
+// double
+// CSFLSRobustStatSegmentor3DLabelMap< TPixel >
+// ::kernelEvaluation(const std::vector<double>& newFeature)
+// {
+//   long n = m_seeds.size(); // == m_featureAtTheSeeds.size()
 
-  double p = 1;
-  //double p = 0;
+//   double p = 1;
+//   //double p = 0;
 
-  for (long i = 0; i < m_numberOfFeature; ++i)
-    {
-      double pp = 0.0;
+//   for (long i = 0; i < m_numberOfFeature; ++i)
+//     {
+//       double pp = 0.0;
 
-      double stdDev = m_kernelStddev[i]/m_kernelWidthFactor; // /10 as in Eric's appendix
+//       double stdDev = m_kernelStddev[i]/m_kernelWidthFactor; // /10 as in Eric's appendix
 
-      double var2 = -1.0/(2*stdDev*stdDev);
-      double c = 1.0/sqrt(2*(vnl_math::pi))/stdDev;
+//       double var2 = -1.0/(2*stdDev*stdDev);
+//       double c = 1.0/sqrt(2*(vnl_math::pi))/stdDev;
 
-      for (long ii = 0; ii < n; ++ii)
-        {
-          pp += exp(var2*(newFeature[i] - m_featureAtTheSeeds[ii][i])*(newFeature[i] - m_featureAtTheSeeds[ii][i]));
-        }
+//       for (long ii = 0; ii < n; ++ii)
+//         {
+//           pp += exp(var2*(newFeature[i] - m_featureAtTheSeeds[ii][i])*(newFeature[i] - m_featureAtTheSeeds[ii][i]));
+//         }
       
-      pp *= c;
-      pp /= n;
+//       pp *= c;
+//       pp /= n;
 
-      p *= pp;
-      //p = p>pp?p:pp;
-    }
+//       p *= pp;
+//       //p = p>pp?p:pp;
+//     }
 
-  return p;
-}
+//   return p;
+// }
 
 
 /* ============================================================  */
@@ -956,100 +965,94 @@ CSFLSRobustStatSegmentor3DLabelMap< TPixel >
 {
   m_PDFlearnedFromSeeds.clear();
   
-  computeMinMax(); // so we have the range of all pdfs
 
-// #ifndef NDEBUG
-//   std::cout<<"m_inputImageIntensityMin = "<<m_inputImageIntensityMin<<std::endl;
-//   std::cout<<"m_inputImageIntensityMax = "<<m_inputImageIntensityMax<<std::endl;
-// #endif
+  long num_seeds = m_seeds.size();
 
-
-  long n = m_seeds.size();
-
+  double* pdfx = new double[m_num_pdf_samples];
+  double* feature = new double[num_seeds];
 
   for (long ifeature = 0; ifeature < m_numberOfFeature; ++ifeature)
     {
-      std::vector<double> thisPDF(m_inputImageIntensityMax - m_inputImageIntensityMin + 1); 
-      // assumption: TPixel are of integer types.
+      std::vector<double> thisPDF(m_num_pdf_samples); // should be 65536
 
-      double stdDev = m_kernelStddev[ifeature]/m_kernelWidthFactor; // /10 as in Eric's appendix
-
-      //std::cout<<"kernel sigma of "<<ifeature<<"-th feature is "<<stdDev<<std::endl;
-
-
-// #ifndef NDEBUG
-//       std::cout<<"stdDev of "<<ifeature<<"-th feature = "<<stdDev<<std::endl;
-// #endif
-
-
-//       //#ifndef NDEBUG
-//       std::ofstream df("/tmp/detail.txt");
-//       //#endif
-
-
-      double var2 = -1.0/(2*stdDev*stdDev);
-      double c = 1.0/sqrt(2*(vnl_math::pi))/stdDev;
-
-      for (TPixel a = m_inputImageIntensityMin; a <= m_inputImageIntensityMax; ++a)
+      double* pdf = &thisPDF[0];
+      
+      // put this feature at all seed to an 1D array.
+      for (long ii = 0; ii < num_seeds; ++ii)
         {
-          long ia = static_cast<long>(a - m_inputImageIntensityMin);
+          feature[ii] = m_featureAtTheSeeds[ii][ifeature];
 
-          double pp = 0.0;
-          for (long ii = 0; ii < n; ++ii)
-            {
-              pp += exp(var2*(a - m_featureAtTheSeeds[ii][ifeature])*(a - m_featureAtTheSeeds[ii][ifeature]));
-
-            }
-
-     
-          pp *= c;
-          pp /= n;
-
-
-          thisPDF[ia] = pp;
         }
+
+      // estimate pdf
+      douher::kde_via_diffusion<double>(feature, num_seeds, 0, m_num_pdf_samples - 1.0, m_num_pdf_samples, pdfx, pdf);
+
+
+//       double var2 = -1.0/(2*stdDev*stdDev);
+//       double c = 1.0/sqrt(2*(vnl_math::pi))/stdDev;
+
+//       for (TPixel a = m_inputImageIntensityMin; a <= m_inputImageIntensityMax; ++a)
+//         {
+//           long ia = static_cast<long>(a - m_inputImageIntensityMin);
+
+//           double pp = 0.0;
+//           for (long ii = 0; ii < n; ++ii)
+//             {
+//               pp += exp(var2*(a - m_featureAtTheSeeds[ii][ifeature])*(a - m_featureAtTheSeeds[ii][ifeature]));
+
+//             }
+
+//           pp *= c;
+//           pp /= n;
+
+//           thisPDF[ia] = pp;
+//         }
 
       m_PDFlearnedFromSeeds.push_back(thisPDF);
     }
 
 
+  delete[] pdfx;
+  delete[] feature;
+
+
   return;
 }
 
 
-/* ============================================================  */
-template< typename TPixel >
-void
-CSFLSRobustStatSegmentor3DLabelMap< TPixel >
-::computeMinMax()
-{
-  if (!(this->m_input_image_in_ushort))
-    {
-      std::cerr<<"Error: set input image first.\n";
-      raise(SIGABRT);
-    }
+// /* ============================================================  */
+// template< typename TPixel >
+// void
+// CSFLSRobustStatSegmentor3DLabelMap< TPixel >
+// ::computeMinMax()
+// {
+//   if (!(this->m_input_image_in_ushort))
+//     {
+//       std::cerr<<"Error: set input image first.\n";
+//       raise(SIGABRT);
+//     }
 
-  typedef itk::Image<TPixel, 3> itkImage_t;
+//   typedef itk::Image<TPixel, 3> itkImage_t;
 
-  typedef itk::ImageRegionConstIterator<UshortImage_t> itkImageRegionConstIterator_t;
+//   typedef itk::ImageRegionConstIterator<UshortImage_t> itkImageRegionConstIterator_t;
 
-  itkImageRegionConstIterator_t it((this->m_input_image_in_ushort), \
-                                   (this->m_input_image_in_ushort)->GetLargestPossibleRegion() );
-  it.GoToBegin();
+//   itkImageRegionConstIterator_t it((this->m_input_image_in_ushort), \
+//                                    (this->m_input_image_in_ushort)->GetLargestPossibleRegion() );
+//   it.GoToBegin();
 
-  m_inputImageIntensityMin = std::numeric_limits<unsigned>::max(); // yes, it's twisted so easity to compute.
-  m_inputImageIntensityMax = std::numeric_limits<unsigned>::min();
+//   m_inputImageIntensityMin = std::numeric_limits<unsigned>::max(); // yes, it's twisted so easity to compute.
+//   m_inputImageIntensityMax = std::numeric_limits<unsigned>::min();
 
-  for (; !it.IsAtEnd(); ++it)
-    {
-      TPixel v = it.Get();
+//   for (; !it.IsAtEnd(); ++it)
+//     {
+//       TPixel v = it.Get();
       
-      m_inputImageIntensityMin = m_inputImageIntensityMin<v?m_inputImageIntensityMin:v;
-      m_inputImageIntensityMax = m_inputImageIntensityMax>v?m_inputImageIntensityMax:v;
-    }
+//       m_inputImageIntensityMin = m_inputImageIntensityMin<v?m_inputImageIntensityMin:v;
+//       m_inputImageIntensityMax = m_inputImageIntensityMax>v?m_inputImageIntensityMax:v;
+//     }
 
-  return;
-}
+//   return;
+// }
 
 
 #endif
