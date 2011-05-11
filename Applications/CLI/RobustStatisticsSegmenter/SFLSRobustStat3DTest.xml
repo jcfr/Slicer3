@@ -49,7 +49,7 @@
       <longflag>intensityHomogeneity</longflag>
       <description>What is the homogeneity of intensity within the object? Given constant intensity at 1.0 score and extreme fluctuating intensity at 0.</description>
       <label>Intensity Homogeneity[0-1.0]</label>
-      <default>0.0</default>
+      <default>0.3</default>
       <constraints>
         <minimum>0.0</minimum>
         <maximum>1.0</maximum>
@@ -65,7 +65,7 @@
       <label>Boundary Smoothness[0-1.0]</label>
       <default>0</default>
       <constraints>
-        <minimum>0.0</minimum>
+        <minimum>0.3</minimum>
         <maximum>1.0</maximum>
         <step>0.1</step>
       </constraints>
@@ -98,18 +98,18 @@
       </constraints>
     </double>
 
-    <double>
-      <name>levelSetThreshold</name>
-      <longflag>levelSetThreshold</longflag>
-      <description>The threshold for outputing final binary mask from level set function. Larger value will give larger binary object region for the same level set function.</description>
-      <label>Threshold for level set</label>
-      <default>2</default>
-      <constraints>
-        <minimum>-2.9</minimum>
-        <maximum>2.9</maximum>
-        <step>0.1</step>
-      </constraints>
-    </double>
+<!--     <double> -->
+<!--       <name>levelSetThreshold</name> -->
+<!--       <longflag>levelSetThreshold</longflag> -->
+<!--       <description>The threshold for outputing final binary mask from level set function. Larger value will give larger binary object region for the same level set function.</description> -->
+<!--       <label>Threshold for level set</label> -->
+<!--       <default>2</default> -->
+<!--       <constraints> -->
+<!--         <minimum>-2.9</minimum> -->
+<!--         <maximum>2.9</maximum> -->
+<!--         <step>0.1</step> -->
+<!--       </constraints> -->
+<!--     </double> -->
 
 <!--     <integer> -->
 <!--       <name>numOfIteration</name> -->
