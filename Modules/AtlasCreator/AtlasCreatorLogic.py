@@ -647,7 +647,7 @@ class AtlasCreatorLogic(object):
             f.write(script)
         
         # set executable permissions
-        os.chmod(scriptFilePath, 0700)
+        os.chmod(scriptFilePath, 0777)
         
         self.Helper().debug("Executing generated ComputeMeanImage Script: " + scriptFilePath)
         
@@ -894,7 +894,7 @@ class AtlasCreatorLogic(object):
                 f.write(script)
             
             # set executable permissions
-            os.chmod(scriptFilePath, 0700)
+            os.chmod(scriptFilePath, 0777)
             
             self.Helper().debug("Executing generated Registration Script: " + scriptFilePath)
             
@@ -1110,7 +1110,7 @@ class AtlasCreatorLogic(object):
                 f.write(script)
             
             # set executable permissions
-            os.chmod(scriptFilePath, 0700)    
+            os.chmod(scriptFilePath, 0777)    
             
             self.Helper().debug("Executing generated Resample Script: " + scriptFilePath)
             
@@ -1317,7 +1317,7 @@ class AtlasCreatorLogic(object):
                 f.write(script)
             
             # set executable permissions
-            os.chmod(scriptFilePath, 0700)    
+            os.chmod(scriptFilePath, 0777)    
             
             self.Helper().debug("Executing generated CombineToAtlas Script: " + scriptFilePath)
             
