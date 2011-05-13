@@ -208,16 +208,15 @@ install(DIRECTORY
     PATTERN ".svn" EXCLUDE
     )
 
+endif(EM_Slicer3_FOUND)
 
 # --------------------------------------------------------------------------
 # Command line application
-  ADD_SUBDIRECTORY(CommandLineApplication)
 
-endif(EM_Slicer3_FOUND)
+ADD_SUBDIRECTORY(CommandLineApplication)
 
-
-#
-# Slicer3/Slicer4
+# --------------------------------------------------------------------------
+# Slicer3/Slicer4 GUI classes
 #
 if(EM_Slicer3_FOUND)
   ADD_SUBDIRECTORY(KWWidgets)
