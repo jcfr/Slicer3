@@ -129,7 +129,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             set NAME .txt
         }
 
-        if { $NAME != ""} {
+        if { $NAME != "" } {
             set filename $basefilename$NAME
             $LOGIC PrintText "TCL: Create file: $filename"
             set CMD "touch \"$filename\""
@@ -155,6 +155,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         if { $type == "xform" } {
             set NAME .xform
+        } elseif { $type == "tmp" } {
+            set NAME .tmp
         } else {
             PrintError "CreateDirName: Unknown type"
         }
@@ -1198,7 +1200,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set debug 0
         set dryrun 0
 
-        if { $schedulerCommand == ""  } {
+        if { $schedulerCommand == "" } {
             set cluster 0
         } else {
             set cluster 1
@@ -1210,7 +1212,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         set nonRigid 0
 
         set writeTransforms 0
-        set keepAligned 0
+        set keepAligned 1
         set normalize 0
         set normalizeTo 100
         set pca 0
@@ -1346,6 +1348,20 @@ namespace eval EMSegmenterPreProcessingTcl {
         # loop through the $outputdir directory and add volume nodes to the scene
         # for each leaf in the tree set/replace the atlasnode by the ac atlas node
         # how to find the right atlas volume?
+        return 0
+    }
+
+
+    proc UpdateAtlas { outputDir targetNode postfix } {
+        variable SCENE
+        variable LOGIC
+        variable outputAtlasNode
+        variable mrmlManager
+        variable workingDN
+        variable ERROR_NODE_VTKID
+
+        set targetVolumeNode [$targetNode GetNthVolumeNode 0]
+        set alignedAtlasNode [$mrmlManager GetAtlasAlignedNode]
 
         # Read a volume for each label
         foreach leafVTKID [GetAllLeafNodeIDsInTree] {
@@ -1378,7 +1394,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
             # for this particular label search for the corressponding atlas file
             $LOGIC PrintText "TCL: read in atlas file $outputDir/atlas$tmpIntensityLabel.nrrd"
-            set alignedAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel.nrrd
+            set alignedAtlasVolumeFileName $outputDir/atlas$tmpIntensityLabel$postfix.nrrd
             ReadDataFromDisk $alignedAtlasVolumeNode $alignedAtlasVolumeFileName Volume
             #file delete -force $alignedAtlasVolumeFileName
 
