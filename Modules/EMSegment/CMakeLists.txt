@@ -22,6 +22,17 @@ if(NOT EM_Slicer4_FOUND)
   set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
 
 else(NOT EM_Slicer4_FOUND)
+  
+  #-----------------------------------------------------------------------------
+  cmake_minimum_required(VERSION 2.8.2)
+  #-----------------------------------------------------------------------------
+  if(POLICY CMP0016)
+    CMAKE_POLICY(SET CMP0016 NEW)
+  endif()
+  if(POLICY CMP0017)
+    CMAKE_POLICY(SET CMP0017 OLD)
+  endif()
+
 
   IF(NOT Slicer_SOURCE_DIR)
     FIND_PACKAGE(Slicer REQUIRED)
