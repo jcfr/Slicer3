@@ -51,7 +51,7 @@ include_directories(
 # Sources
 
 
-set(LINK_LIBRARIES
+set(COMMANDLINE_LINK_LIBRARIES
   EMSegment
   vtkCommon
   AtlasCreatorCxxModule
@@ -73,7 +73,7 @@ add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
 slicer3_set_plugins_output_path(${CLP_MODULE})
 target_link_libraries(
   ${CLP_MODULE}
-  ${LINK_LIBRARIES}
+  ${COMMANDLINE_LINK_LIBRARIES}
   )
 
 slicer3_install_plugins(${CLP_MODULE})
@@ -82,7 +82,7 @@ else(NOT EM_Slicer4_FOUND)
 
 slicerMacroBuildCLI(
   NAME ${CLP_MODULE}
-  TARGET_LIBRARIES ${LINK_LIBRARIES}
+  TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
   )
 
 endif(NOT EM_Slicer4_FOUND)
@@ -103,7 +103,7 @@ add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
 slicer3_set_plugins_output_path(${CLP_MODULE})
 target_link_libraries(
   ${CLP_MODULE}
-  ${LINK_LIBRARIES}
+  ${COMMANDLINE_LINK_LIBRARIES}
   )
 
 slicer3_install_plugins(${CLP_MODULE})
@@ -112,7 +112,7 @@ else(NOT EM_Slicer4_FOUND)
 
 slicerMacroBuildCLI(
   NAME ${CLP_MODULE}
-  TARGET_LIBRARIES ${LINK_LIBRARIES}
+  TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
   )
 
 endif(NOT EM_Slicer4_FOUND)
@@ -133,7 +133,7 @@ add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
 slicer3_set_plugins_output_path(${CLP_MODULE})
 target_link_libraries(
   ${CLP_MODULE}
-  ${LINK_LIBRARIES}
+  ${COMMANDLINE_LINK_LIBRARIES}
   )
 
 slicer3_install_plugins(${CLP_MODULE})
@@ -142,7 +142,7 @@ else(NOT EM_Slicer4_FOUND)
 
 slicerMacroBuildCLI(
   NAME ${CLP_MODULE}
-  TARGET_LIBRARIES ${LINK_LIBRARIES}
+  TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
   )
 
 endif(NOT EM_Slicer4_FOUND)
