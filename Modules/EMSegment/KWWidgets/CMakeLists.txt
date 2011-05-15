@@ -91,6 +91,9 @@ set_source_files_properties(
     )
   slicer3_set_modules_output_path(${lib_name})
 
+if(Slicer3_USE_PYTHON)
+ set(EM_PYTHON_LIBRARIES SlicerBaseGUIPython)
+endif(Slicer3_USE_PYTHON)
 
   target_link_libraries(${lib_name}
       ${Slicer3_Libs_LIBRARIES}
@@ -99,7 +102,7 @@ set_source_files_properties(
       ${ITK_LIBRARIES}
       vtkSlicerVolumesModuleLogic
       Volumes
-      SlicerBaseGUIPython
+      ${EM_PYTHON_LIBRARIES}
       AtlasCreatorCxxModule
       )
 
