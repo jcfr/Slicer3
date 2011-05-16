@@ -139,8 +139,14 @@ def usage():
     info("        --ignoreTemplateSegmentation")
     info("                If activated, the template's segmentation will not be added to the atlases.")
     info("")
+    info("--affine")
+    info("        Use 9 DOF affine registration additionally.")    
+    info("")
+    info("--affine12")
+    info("        Use 12 DOF affine registration additionally. This includes --affine automatically.")
+    info("")
     info("-n, --non-rigid")
-    info("        Use Non-Rigid registration additionally.")
+    info("        Use Non-Rigid registration additionally. This includes --affine and --affine12 automatically.")
     info("")
     info("-w, --writeTransforms")
     info("        Write transforms to output directory.")
@@ -231,19 +237,29 @@ def examples():
     info("2. Run fixed registration with the testdata and use CMTK instead of BRAINSFit and label auto-detection:")
     info("")
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w --cmtk')
+    info("")
+    info("-----------------------------------------------------------------------------------------------")
+    info("3. Run fixed registration with the testdata and use CMTK, label auto-detection and 12 DOF affine registration:")
+    info("")
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w --cmtk --affine12')
     info("")    
     info("-----------------------------------------------------------------------------------------------")
-    info("3. Run dynamic registration with the testdata and normalize the atlases to 0..100:")
+    info("4. Run fixed registration with the testdata and use CMTK, label auto-detection and non-rigid registration:")
+    info("")
+    info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --fixed --template TestData/originals/case62.nrrd -w --cmtk --non-rigid')
+    info("")        
+    info("-----------------------------------------------------------------------------------------------")
+    info("5. Run dynamic registration with the testdata and normalize the atlases to 0..100:")
     info("")
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize --normalizeTo 100')
     info("")
     info("-----------------------------------------------------------------------------------------------")
-    info("4. Run dynamic registration with the testdata on a cluster (scheduler command \"qsub -l centos5\"):")
+    info("6. Run dynamic registration with the testdata on a cluster (scheduler command \"qsub -l centos5\"):")
     info("")
     info('        python atlascreator.py -i TestData/originals/ -s TestData/segmentations/ -o /tmp/acout --dynamic --meanIterations 5 -w -l "3 4 5 6 7 8 9" --normalize --cluster --schedulerCommand \"qsub -l centos5\"')
     info("")
     info("-----------------------------------------------------------------------------------------------")
-    info("5. Use existing registrations and just re-sample")
+    info("7. Use existing registrations and just re-sample")
     info("")
     info('        python atlascreator.py --skipRegistration --transforms /tmp/acout --existingTemplate TestData/segmentations/case62.nrrd -s TestData/segmentations/ -o /tmp/acout -l "3 4 5 6 7 8 9" --normalize --outputCast 3')
     info("")
@@ -257,7 +273,7 @@ def main(argv):
     '''
     
     info("AtlasCreator for 3D Slicer")
-    info("Version v0.41")
+    info("Version v0.42")
     info("Hostname: " + str(socket.gethostbyaddr(socket.gethostname())[0]))
     info("")
     
@@ -281,6 +297,8 @@ def main(argv):
                                                         "fixed",
                                                         "template=",
                                                         "ignoreTemplateSegmentation",
+                                                        "affine",
+                                                        "affine12",
                                                         "non-rigid",
                                                         "writeTransforms",
                                                         "keepAligned",
@@ -325,6 +343,8 @@ def main(argv):
     template = None
     ignoreTemplateSegmentation = False
     
+    affine = False
+    affine12 = False
     nonRigid = False
     
     writeTransforms = False
@@ -382,6 +402,10 @@ def main(argv):
             template = arg
         elif opt in ("--ignoreTemplateSegmentation"):
             ignoreTemplateSegmentation = True
+        elif opt in ("--affine"):
+            affine = True            
+        elif opt in ("--affine12"):
+            affine12 = True            
         elif opt in ("-n", "--non-rigid"):
             nonRigid = True
         elif opt in ("-w", "--writeTransforms"):
@@ -689,8 +713,12 @@ def main(argv):
             
     if nonRigid:
         evalpythonCommand += "n.SetRegistrationType('Non-Rigid');"
-    else:
+    elif affine12:
+        evalpythonCommand += "n.SetRegistrationType('Affine12');"
+    elif affine:
         evalpythonCommand += "n.SetRegistrationType('Affine');"
+    else:
+        evalpythonCommand += "n.SetRegistrationType('Rigid');"
             
     if writeTransforms:
         evalpythonCommand += "n.SetSaveTransforms(1);"

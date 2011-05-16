@@ -101,6 +101,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._saveTransformsCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._deleteAlignedImagesCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._deleteAlignedSegmentationsCheckBox = slicer.vtkKWCheckButtonWithLabel()
+        self._ignoreTemplateSegmentationCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._numberOfThreadsEntry = slicer.vtkKWEntryWithLabel()
         self._debugCheckBox = slicer.vtkKWCheckButtonWithLabel()
         self._dryrunCheckBox = slicer.vtkKWCheckButtonWithLabel() 
@@ -167,7 +168,9 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         # parameters panel
         self._toolkitComboTag = self.AddObserverByNumber(self._toolkitCombo.GetWidget(),vtkKWComboBox_EntryValueChangedEvent)
+        self._rigidRadioTag = self.AddObserverByNumber(self._rigidRadio,vtkKWRadioButton_SelectedStateChangedEvent)
         self._affineRadioTag = self.AddObserverByNumber(self._affineRadio,vtkKWRadioButton_SelectedStateChangedEvent)
+        self._affine12RadioTag = self.AddObserverByNumber(self._affine12Radio,vtkKWRadioButton_SelectedStateChangedEvent)
         self._nonRigidRadioTag = self.AddObserverByNumber(self._nonRigidRadio,vtkKWRadioButton_SelectedStateChangedEvent)
         self._meanIterationsSpinBoxTag = self.AddObserverByNumber(self._meanIterationsSpinBox.GetWidget(),vtkKWSpinBox_SpinBoxValueChangedEvent)
         self._defaultCaseComboTag = self.AddObserverByNumber(self._defaultCaseCombo.GetWidget(),vtkKWComboBox_EntryValueChangedEvent)
@@ -196,6 +199,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self._outputCastComboTag = self.AddObserverByNumber(self._outputCastCombo.GetWidget(),vtkKWComboBox_EntryValueChangedEvent)
         self._deleteAlignedImagesCheckBoxTag = self.AddObserverByNumber(self._deleteAlignedImagesCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
         self._deleteAlignedSegmentationsCheckBoxTag = self.AddObserverByNumber(self._deleteAlignedSegmentationsCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
+        self._ignoreTemplateSegmentationCheckBoxTag = self.AddObserverByNumber(self._ignoreTemplateSegmentationCheckBox.GetWidget(), vtkKWCheckButton_SelectedStateChangedEvent)
         self._numberOfThreadsEntryTag = self.AddObserverByNumber(self._numberOfThreadsEntry.GetWidget(),vtkKWEntry_EntryValueChangedEvent)
         self._debugCheckBoxTag = self.AddObserverByNumber(self._debugCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
         self._dryrunCheckBoxTag = self.AddObserverByNumber(self._dryrunCheckBox.GetWidget(),vtkKWCheckButton_SelectedStateChangedEvent)
@@ -227,7 +231,9 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
         # parameters panel
         self.RemoveObserver(self._toolkitComboTag)
+        self.RemoveObserver(self._rigidRadioTag)
         self.RemoveObserver(self._affineRadioTag)
+        self.RemoveObserver(self._affine12RadioTag)
         self.RemoveObserver(self._nonRigidRadioTag)
         self.RemoveObserver(self._meanIterationsSpinBoxTag)
         self.RemoveObserver(self._defaultCaseComboTag)
@@ -256,6 +262,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         self.RemoveObserver(self._outputCastComboTag)
         self.RemoveObserver(self._deleteAlignedImagesCheckBoxTag)
         self.RemoveObserver(self._deleteAlignedSegmentationsCheckBoxTag)
+        self.RemoveObserver(self._ignoreTemplateSegmentationCheckBoxTag)
         self.RemoveObserver(self._numberOfThreadsEntryTag)
         self.RemoveObserver(self._debugCheckBoxTag)
         self.RemoveObserver(self._dryrunCheckBoxTag)
@@ -386,6 +393,9 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         elif caller == self._deleteAlignedSegmentationsCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
             self.UpdateMRML()
             
+        elif caller == self._ignoreTemplateSegmentationCheckBox.GetWidget() and event == vtkKWCheckButton_SelectedStateChangedEvent:
+            self.UpdateMRML()
+            
         elif caller == self._numberOfThreadsEntry.GetWidget() and event == vtkKWEntry_EntryValueChangedEvent:
             self.UpdateMRML()
             
@@ -434,7 +444,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self._normalizeValueEntry.SetEnabled(0)
                 
             self._updating = 0
-                    
+            
                 
                 
     '''=========================================================================================='''                
@@ -720,9 +730,16 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             if toolkit:
                 self._associatedMRMLNode.SetToolkit(str(toolkit).strip("'"))
                 
-            if self._nonRigidRadio.GetSelectedState():
+            if self._rigidRadio.GetSelectedState():
+                self._associatedMRMLNode.SetRegistrationType("Rigid")
+            elif self._affineRadio.GetSelectedState():
+                self._associatedMRMLNode.SetRegistrationType("Affine")
+            elif self._affine12Radio.GetSelectedState():
+                self._associatedMRMLNode.SetRegistrationType("Affine12")
+            elif self._nonRigidRadio.GetSelectedState():
                 self._associatedMRMLNode.SetRegistrationType("Non-Rigid")
             else:
+                # affine is default
                 self._associatedMRMLNode.SetRegistrationType("Affine")
 
             meanIterations = self._meanIterationsSpinBox.GetWidget().GetValue()
@@ -813,6 +830,11 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self._associatedMRMLNode.SetDeleteAlignedSegmentations(1)
             else:
                 self._associatedMRMLNode.SetDeleteAlignedSegmentations(0)
+                
+            if self._ignoreTemplateSegmentationCheckBox.GetWidget().GetSelectedState():
+                self._associatedMRMLNode.SetIgnoreTemplateSegmentation(1)
+            else:
+                self._associatedMRMLNode.SetIgnoreTemplateSegmentation(0)
                 
             numberOfThreads = self._numberOfThreadsEntry.GetWidget().GetValue()
             if numberOfThreads:
@@ -948,9 +970,26 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
                 self._toolkitCombo.GetWidget().SetValue("'CMTK'")
                 
             registrationTypeString = n.GetRegistrationType()
-            if registrationTypeString == "Non-Rigid":
-                self._nonRigidRadio.SetSelectedState(1)
+            if registrationTypeString == "Rigid":
+                self._rigidRadio.SetSelectedState(1)
                 self._affineRadio.SetSelectedState(0)
+                self._affine12Radio.SetSelectedState(0)
+                self._nonRigidRadio.SetSelectedState(0)
+            elif registrationTypeString == "Affine":
+                self._rigidRadio.SetSelectedState(0)
+                self._affineRadio.SetSelectedState(1)
+                self._affine12Radio.SetSelectedState(0)
+                self._nonRigidRadio.SetSelectedState(0)
+            elif registrationTypeString == "Affine12":
+                self._rigidRadio.SetSelectedState(0)
+                self._affineRadio.SetSelectedState(0)
+                self._affine12Radio.SetSelectedState(1)
+                self._nonRigidRadio.SetSelectedState(0)
+            elif registrationTypeString == "Non-Rigid":
+                self._rigidRadio.SetSelectedState(0)
+                self._affineRadio.SetSelectedState(0)
+                self._affine12Radio.SetSelectedState(0)
+                self._nonRigidRadio.SetSelectedState(1)
                 
             meanIterationsInt = int(n.GetDynamicTemplateIterations())
             if meanIterationsInt > -1:
@@ -1057,6 +1096,10 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
             if not deleteAlignedSegmentations:
                 self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(0)
             
+            ignoreTemplateSegmentation = n.GetIgnoreTemplateSegmentation()
+            if ignoreTemplateSegmentation:
+                self._ignoreTemplateSegmentationCheckBox.GetWidget().SetSelectedState(1)
+            
             numberOfThreads = n.GetNumberOfThreads()
             if numberOfThreads:
                 self._numberOfThreadsEntry.GetWidget().SetValue(str(numberOfThreads))
@@ -1144,7 +1187,7 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
 
         self.GetUIPanel().AddPage("AtlasCreator","AtlasCreator","")
         self._atlascreatorPage = self.GetUIPanel().GetPageWidget("AtlasCreator")
-        helpText = """**Atlas Creator v0.41**
+        helpText = """**Atlas Creator v0.42**
         
 More Information available at <a>http://www.slicer.org/slicerWiki/index.php/Modules:AtlasCreator</a>
 
@@ -1286,11 +1329,19 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
         self._deformationTypeRadios.SetLabelWidth(20)
         self._deformationTypeRadios.SetLabelText("Deformation:")
 
-        self._affineRadio = self._deformationTypeRadios.GetWidget().AddWidget(0)
-        self._affineRadio.SetText("Affine")
-        self._affineRadio.SetBalloonHelpString("Use affine deformation.")
+        self._rigidRadio = self._deformationTypeRadios.GetWidget().AddWidget(0)
+        self._rigidRadio.SetText("Rigid")
+        self._rigidRadio.SetBalloonHelpString("Use rigid deformation.")
 
-        self._nonRigidRadio = self._deformationTypeRadios.GetWidget().AddWidget(1)
+        self._affineRadio = self._deformationTypeRadios.GetWidget().AddWidget(1)
+        self._affineRadio.SetText("Affine (9 DOF)")
+        self._affineRadio.SetBalloonHelpString("Use affine deformation with 9 DOF.")
+
+        self._affine12Radio = self._deformationTypeRadios.GetWidget().AddWidget(2)
+        self._affine12Radio.SetText("Affine (12 DOF)")
+        self._affine12Radio.SetBalloonHelpString("Use affine deformation with 12 DOF.")
+
+        self._nonRigidRadio = self._deformationTypeRadios.GetWidget().AddWidget(3)
         self._nonRigidRadio.SetText("Non-Rigid")
         self._nonRigidRadio.SetBalloonHelpString("Use non-rigid deformation.")
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deformationTypeRadios.GetWidgetName())
@@ -1492,7 +1543,15 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
         self._deleteAlignedSegmentationsCheckBox.SetLabelWidth(20)
         self._deleteAlignedSegmentationsCheckBox.SetBalloonHelpString("If selected, all aligned segmentations will be deleted after use.")        
         slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._deleteAlignedSegmentationsCheckBox.GetWidgetName())        
-        
+
+        self._ignoreTemplateSegmentationCheckBox.SetParent(self._miscFrame.GetFrame())
+        self._ignoreTemplateSegmentationCheckBox.Create()
+        self._ignoreTemplateSegmentationCheckBox.SetLabelText("Ignore Template Seg.:")
+        self._ignoreTemplateSegmentationCheckBox.GetWidget().SetSelectedState(0)
+        self._ignoreTemplateSegmentationCheckBox.SetLabelWidth(20)
+        self._ignoreTemplateSegmentationCheckBox.SetBalloonHelpString("If selected, the actual template segmentation will not be included in the atlas generation or other computed images.")        
+        slicer.TkCall("pack %s -side top -anchor nw -fill x -padx 2 -pady 2" % self._ignoreTemplateSegmentationCheckBox.GetWidgetName())        
+
         self._numberOfThreadsEntry.SetParent(self._miscFrame.GetFrame())
         self._numberOfThreadsEntry.Create()
         self._numberOfThreadsEntry.SetLabelText("Number of Threads:")
@@ -1596,7 +1655,9 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
             # by default, use BRAINSFit
             self._toolkitCombo.GetWidget().SetValue("'BRAINSFit'")
             # by default use affine registration
+            self._rigidRadio.SetSelectedState(0)
             self._affineRadio.SetSelectedState(1)
+            self._affine12Radio.SetSelectedState(0)
             self._nonRigidRadio.SetSelectedState(0) 
             self._meanIterationsSpinBox.GetWidget().SetValue(5)  
             self._defaultCaseCombo.GetWidget().SetValue("")
@@ -1630,6 +1691,7 @@ Note: This will perform a Pair Fixed Registration against an automatic chosen te
             self._outputCastCombo.GetWidget().SetValue("'short'")
             self._deleteAlignedImagesCheckBox.GetWidget().SetSelectedState(1)
             self._deleteAlignedSegmentationsCheckBox.GetWidget().SetSelectedState(1)
+            self._ignoreTemplateSegmentationCheckBox.GetWidget().SetSelectedState(0)
             self._numberOfThreadsEntry.GetWidget().SetValue(-1)
             self._debugCheckBox.GetWidget().SetSelectedState(0)
             self._dryrunCheckBox.GetWidget().SetSelectedState(0)

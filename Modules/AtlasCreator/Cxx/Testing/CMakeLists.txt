@@ -37,8 +37,13 @@ configure_file(
   ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest3.py
   COPYONLY)
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest3.py
+  ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest4.py
+  COPYONLY)
+
 install(
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest1.py ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest2.py ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest3.py
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest1.py ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest2.py ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest3.py ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLAtlasCreatorNodeLaunchTest4.py
   DESTINATION ${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}
   )
 
@@ -52,4 +57,5 @@ IF(NOT WIN32)
 ADD_TEST(AtlasCreatorLaunchFixedTest ${Slicer3_BINARY_DIR}/Slicer3 --test-mode -p ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest1.py)
 ADD_TEST(AtlasCreatorLaunchFixedFailProofTest ${Slicer3_BINARY_DIR}/Slicer3 --test-mode -p ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest2.py)
 ADD_TEST(AtlasCreatorLaunchDynamicTest ${Slicer3_BINARY_DIR}/Slicer3 --test-mode -p ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest3.py)
+ADD_TEST(AtlasCreatorLaunchAffine12DOFTest ${Slicer3_BINARY_DIR}/Slicer3 --test-mode -p ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_MODULES_LIB_DIR}/${PROJECT_NAME}/vtkMRMLAtlasCreatorNodeLaunchTest4.py)
 ENDIF()

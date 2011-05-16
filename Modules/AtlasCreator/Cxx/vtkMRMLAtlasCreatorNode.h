@@ -113,7 +113,8 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkSetStringMacro (LabelsList);
 
 
-  // Description: The Registration Type: "Affine" or "Non-Rigid"
+  // Description: The Registration Type: "Rigid","Affine","Affine12" or "Non-Rigid"
+  // Affine12 means 12 DOF
   vtkGetStringMacro (RegistrationType);
   vtkSetStringMacro (RegistrationType);
 

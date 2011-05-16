@@ -151,9 +151,9 @@ class AtlasCreatorLogic(object):
                 self.Helper().info("Found CMTK at: " + cmtkDir)
                 useCMTK = True
             else:
-                self.Helper().info("ERROR! CMTK extensions not found!")
-                self.Helper().info("ERROR! Falling back to BRAINSFit...")
-                self.Helper().info("ERROR! Please install CMTK4Slicer in order to use CMTK!")
+                self.Helper().info("WARNING: CMTK extensions not found!")
+                self.Helper().info("WARNING: Falling back to BRAINSFit...")
+                self.Helper().info("WARNING: Please install CMTK4Slicer in order to use CMTK!")
                 useCMTK = False
     
         #
@@ -319,7 +319,7 @@ class AtlasCreatorLogic(object):
             #
             #
             self.Helper().info("Entering Registration Stage..")
-                    
+            self.Helper().info("Using " + str(node.GetRegistrationType()) + " registration.")
             
             #
             # FIXED REGISTRATION
@@ -412,7 +412,7 @@ class AtlasCreatorLogic(object):
             # for both registration modes:
             
             if not alignedImages:
-                self.Helper().info("The Registration failed.. ABORTING..")
+                self.Helper().info("ERROR: The Registration failed.. ABORTING..")
                 return False
             
             # now use the alignedImages to return as output as well the normalized intensity maps of aligned cases
@@ -757,7 +757,7 @@ class AtlasCreatorLogic(object):
             outputNotifyDirectory
                 directory to use for notification files
             registrationType
-                type of registration as String, could be "affine" and "non-rigid"
+                type of registration as String, could be "rigid", "affine", "affine12" and "non-rigid"
                 if the value is invalid, affine registration is assumed
             numberOfThreads
                 if -1, use the maximal number of threads else use the specified number
@@ -795,13 +795,29 @@ class AtlasCreatorLogic(object):
             self.Helper().info("Empty outputNotifyDirectory for Register() command. Aborting..")
             return None   
         
-        if registrationType == "Affine":
-            onlyAffineReg = 1
+        rigid = False
+        affine = False
+        affine12 = False
+        nonrigid = False
+        
+        if registrationType == "Rigid":
+            rigid = True
+        elif registrationType == "Affine":
+            rigid = True
+            affine = True
+        elif registrationType == "Affine12":
+            rigid = True
+            affine = True
+            affine12 = True
         elif registrationType == "Non-Rigid":
-            onlyAffineReg = 0
+            rigid = True
+            affine = True
+            affine12 = True
+            nonrigid = True
         else:
-            # assume only affine registration if wrong value
-            onlyAffineReg = 1
+            # assume affine registration with 9 DOF if wrong value
+            rigid = True
+            affine = True
             
         outputAlignedImages = []
             
@@ -857,9 +873,11 @@ class AtlasCreatorLogic(object):
                                                                                                     outputTransformFilePath,
                                                                                                     outputAlignedImageFilePath,
                                                                                                     backgroundGuess,
-                                                                                                    backgroundGuessTemplate)
+                                                                                                    backgroundGuessTemplate,
+                                                                                                    affine,
+                                                                                                    affine12)
                 
-                if not onlyAffineReg:
+                if nonrigid:
                     # for non-rigid, we include the second CMTK command
                     command += "\n"
                     command += str(launchCommandPrefix) + self.Helper().GetCMTKNonRigidRegistrationCommand(templateFilePath,
@@ -875,9 +893,11 @@ class AtlasCreatorLogic(object):
                                                                                                    movingImageFilePath,
                                                                                                    outputTransformFilePath,
                                                                                                    outputAlignedImageFilePath,
-                                                                                                   onlyAffineReg,
                                                                                                    numberOfThreads,
-                                                                                                   backgroundGuess)
+                                                                                                   backgroundGuess,
+                                                                                                   affine,
+                                                                                                   affine12,
+                                                                                                   nonrigid)
             
             self.Helper().debug("Register command(s): " + str(command))
             
