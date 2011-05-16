@@ -2235,18 +2235,17 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     # -------------------------------------
     # Perform intensity correction
-    # if succesfull returns a list of intensity corrected target volume nodes
+    # if succesfull returns a list of intensity corrected volume nodes
     # otherwise returns nothing
     #     ./Slicer3 --launch N4ITKBiasFieldCorrection --inputimage ../Slicer3/Testing/Data/Input/MRMeningioma0.nrrd --maskimage /projects/birn/fedorov/Meningioma_anonymized/Cases/Case02/Case02_Scan1ICC.nrrd corrected_image.nrrd recovered_bias_field.nrrd
     # -------------------------------------
-    proc PerformIntensityCorrection { targetICCMaskNode } {
+    proc PerformIntensityCorrection { inputNode targetICCMaskNode } {
         variable LOGIC
-        variable alignedTargetNode
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Intensity Correction "
         $LOGIC PrintText "TCL: =========================================="
 
-        return [N4ITKBiasFieldCorrectionCLI $alignedTargetNode $targetICCMaskNode]
+        return [N4ITKBiasFieldCorrectionCLI $inputNode $targetICCMaskNode]
     }
 
     # inputICCMaskNode will be ignored

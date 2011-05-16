@@ -105,7 +105,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         # Step 4: Perform Intensity Correction
         if { $inhomogeneityCorrectionFlag == 1 } {
             set subjectICCMaskNode -1
-            set subjectIntensityCorrectedNodeList [PerformIntensityCorrection $subjectICCMaskNode]
+            set subjectIntensityCorrectedNodeList [PerformIntensityCorrection $alignedTargetNode $subjectICCMaskNode]
             if { $subjectIntensityCorrectedNodeList == "" } {
                 PrintError "Run: Intensity Correction failed !"
                 return 1
