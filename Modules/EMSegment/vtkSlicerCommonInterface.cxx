@@ -67,6 +67,25 @@ int vtkSlicerCommonInterface::SourceTclFile(const char *tclFile)
 
 #endif
 
+#ifdef Slicer_USE_PYTHONQT_WITH_TCL
+
+  // Slicer4 and Tcl through Python activated
+  bool disablePython = qSlicerCoreApplication::testAttribute(qSlicerCoreApplication::AA_DisablePython);
+
+  if (!disablePython)
+    {
+    qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
+
+    QString import = QString("from __main__ import tcl\n");
+    QString tclCall = import + QString("tcl('source %1')\n");
+
+    py->executeString(tclCall.arg(tclFile));
+
+    return 1;
+    }
+
+#endif
+
   return 0;
 
 }
@@ -81,7 +100,28 @@ const char* vtkSlicerCommonInterface::EvaluateTcl(const char* command)
   return vtkSlicerApplication::GetInstance()->Script(command);
   //#else
 
-  // TODO Slicer4
+#endif
+
+#ifdef Slicer_USE_PYTHONQT_WITH_TCL
+
+  // Slicer4 and Tcl through Python activated
+  bool disablePython = qSlicerCoreApplication::testAttribute(qSlicerCoreApplication::AA_DisablePython);
+
+  if (!disablePython)
+    {
+    qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
+
+    QString import = QString("from __main__ import tcl\n");
+    QString tclCall = import + QString("tcl('%1')\n");
+
+    QVariant returnValue = py->executeString(tclCall.arg(command));
+
+    // convert returnValue to const char*
+    QByteArray byteArray = returnValue.toString().toUtf8();
+    const char* cString = byteArray.constData();
+
+    return cString;
+    }
 
 #endif
 

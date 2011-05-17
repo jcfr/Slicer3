@@ -30,6 +30,10 @@
 
 // Slicer4 includes
 #include "qSlicerApplication.h"
+#include "qSlicerPythonManager.h"
+#include <QString>
+#include <QVariant>
+
   typedef void Tcl_Interp;
 #endif
 
