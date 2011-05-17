@@ -476,29 +476,36 @@ class AtlasCreatorHelper(object):
     
 
     '''=========================================================================================='''
-    def ReadLabelsFromImage(self, path):
+    def ReadLabelsFromImage(self, pathsList):
         '''
         Read labels from an image.
         
-        path - the filePath to an existing Image
+        pathsList - a list of filePaths to existing Images
         
         Returns a list of labels
         '''
-        if not path:
+        if not pathsList:
             return None
         
-        node = self.LoadVolume(os.path.normpath(path))
+        labels = []
         
-        # by default, do not include 0 in the list of labels
-        bg = self.GuessBackgroundValue(os.path.normpath(path))
-        includeZero = False
-        
-        # if the background of the labelmap is 0, include it in the labelList
-        if bg == 0:
-            includeZero = True
-        
-        labels = self.GetLabels(node.GetImageData(),includeZero)
-        slicer.MRMLScene.RemoveNode(node)
+        for f in pathsList:
+            
+            node = self.LoadVolume(os.path.normpath(f))
+            
+            # by default, do not include 0 in the list of labels
+            bg = self.GuessBackgroundValue(os.path.normpath(f))
+            includeZero = False
+            
+            # if the background of the labelmap is 0, include it in the labelList
+            if bg == 0:
+                includeZero = True
+            
+            newLabels = self.GetLabels(node.GetImageData(),includeZero)
+            slicer.MRMLScene.RemoveNode(node)
+            
+            # now sync newLabels with labels
+            labels = list(set(sorted(newLabels+labels)))
         
         return labels
     

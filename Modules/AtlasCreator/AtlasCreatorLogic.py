@@ -198,11 +198,9 @@ class AtlasCreatorLogic(object):
             # let's read them from the first segmentation
             if len(segmentationsFilePathList) > 1:
                 
-                labelsReadFromFilePath = segmentationsFilePathList[0]
-        
                 self.Helper().info("Labels were not specified correctly..")
-                self.Helper().info("Reading labels from file: "+str(labelsReadFromFilePath))
-                labelsList = self.Helper().ReadLabelsFromImage(labelsReadFromFilePath)
+                self.Helper().info("Reading labels from the segmentations..")
+                labelsList = self.Helper().ReadLabelsFromImage(segmentationsFilePathList)
                 
                 # now we save the labelList back to the node
                 node.SetLabelsList(self.Helper().ConvertListToString(labelsList))
