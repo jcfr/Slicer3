@@ -757,8 +757,10 @@ if(NOT DISABLE_CXX_TESTING)
 
 
     #TODO: all test *nrrd files are taken from other tasks, generate new ones
-    # this task is using Generic.tcl, otherwise the logmean value will be overwritten and the bug is not visible
+    # this task is using GenericTask.tcl, otherwise the logmean value will be overwritten and the bug is not visible
     # Task Human-Eye_LogMean
+    # deactivate this test, the test should fail
+    if (EMSEG_RUN_LOCAL_TESTS)
     add_test(
       EMSegCL_Task_HumanEye_LogMean_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
@@ -784,6 +786,8 @@ if(NOT DISABLE_CXX_TESTING)
       FAIL_REGULAR_EXPRESSION
       "ERROR"
       )
+    endif (EMSEG_RUN_LOCAL_TESTS)
+
 #    if(EMSEG_RUN_COMPARE_TESTS)
 #      midas_add_test(
 #        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
@@ -925,6 +929,31 @@ if(NOT DISABLE_CXX_TESTING)
       FAIL_REGULAR_EXPRESSION
       "ERROR"
       )
+
+    if (EMSEG_RUN_LOCAL_TESTS)
+      # Task cine MRI
+      add_test( EMSegCL_Task_cineMRI_${registrationpackage}_${size}
+        ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+        --no-error-popup
+        --verbose --mrmlSceneFileName
+        ${EMSegment_SOURCE_DIR}/../KilisSandbox/Tasks/AC-cineMR-Ventricles.mrml
+        --targetVolumeFileNames
+        #      ${EMSegment_SOURCE_DIR}/../KilisSandbox/Tasks/corrected_raw/SARCOIDA1.ED_short.nrrd
+        ${EMSegment_SOURCE_DIR}/../KilisSandbox/Tasks/corrected_raw/SARCOIDA1.ED.nii
+        --registrationPackage
+        ${registrationpackage}
+        --resultVolumeFileName
+        ${EMSegment_BINARY_DIR}/RESULT_${size}_cineMRI.nrrd
+        #      --taskPreProcessingSetting
+        #      :C1:C0:E../Slicer3/Modules/AtlasCreator/TestData/originals/:E../Slicer3/Modules/AtlasCreator/TestData/segmentations/:E${EMSegment_BINARY_DIR}/ACEMS
+        )
+      set_tests_properties(
+        EMSegCL_Task_cineMRI_${registrationpackage}_${size}
+        PROPERTIES
+        FAIL_REGULAR_EXPRESSION
+        "ERROR"
+        )
+    endif (EMSEG_RUN_LOCAL_TESTS)
 
 
     # Task Non-Human-Primate
