@@ -236,7 +236,7 @@ int main(int argc, char** argv)
       progressReporter.ReportProgress("Loading Data...", currentStep / totalSteps,0.6f);
 
       // ================== Target Images ================
-      if (DefineTargetVolume( useDefaultTarget, targetVolumeFileNames, EMSLogic , mrmlScene, appLogic, verbose))
+      if (DefineTargetVolume( useDefaultTarget, targetVolumeFileNames, EMSLogic , mrmlScene, appLogic, verbose, loadTargetCentered))
         {
           throw std::runtime_error("ERROR: failed to define target image ");
         }
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
       // =================== Atlas ====================
       if (!useDefaultAtlas)
         {
-          if (LoadUserDefinedAtlas (atlasVolumeFileNames, EMSLogic, mrmlScene, appLogic, verbose))
+          if (LoadUserDefinedAtlas (atlasVolumeFileNames, EMSLogic, mrmlScene, appLogic, verbose, !loadAtlasNonCentered))
             {
               throw std::runtime_error("ERROR: failed to load user specified atlas ");
             }

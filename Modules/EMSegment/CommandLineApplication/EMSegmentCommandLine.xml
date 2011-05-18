@@ -92,7 +92,21 @@
       <label>Verbose Output</label>
       <default>false</default>
     </boolean>
-    
+
+    <boolean>
+      <name>loadTargetCentered</name>
+      <longflag>loadTargetCentered</longflag>
+      <description>Read target files centered.</description>
+      <label>Read target centered.</label>
+    </boolean>
+
+    <boolean>
+      <name>loadAtlasNonCentered</name>
+      <longflag>loadAtlasNonCentered</longflag>
+      <description>Read atlas files non-centered.</description>
+      <label>Read atlas non-centered.</label>
+    </boolean>
+
     <string>
       <name>taskPreProcessingSetting</name>
       <longflag>taskPreProcessingSetting</longflag>
@@ -114,7 +128,7 @@
 
       <label>Result Standard Image</label>
       <channel>input</channel>
-    </file>    
+    </file>
 
     <boolean>
       <name>dontWriteResults</name>

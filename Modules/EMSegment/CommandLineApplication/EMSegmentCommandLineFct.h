@@ -214,77 +214,77 @@ int LoadMRMLScene ( vtkEMSegmentMRMLManager* emMRMLManager, vtkMRMLScene* mrmlSc
 }
 
 // -------------------------------------------------------------------------------------------
-int DefineTargetVolume ( int useDefaultTarget,  std::vector<std::string>  targetVolumeFileNames,vtkEMSegmentLogic* EMSLogic, vtkMRMLScene* mrmlScene,  vtkSlicerApplicationLogic* appLogic, int verbose)  {
+int DefineTargetVolume ( int useDefaultTarget,  std::vector<std::string>  targetVolumeFileNames,vtkEMSegmentLogic* EMSLogic, vtkMRMLScene* mrmlScene,  vtkSlicerApplicationLogic* appLogic, int verbose, bool centered)  {
 
-   vtkEMSegmentMRMLManager* emMRMLManager = EMSLogic->GetMRMLManager();
+  vtkEMSegmentMRMLManager* emMRMLManager = EMSLogic->GetMRMLManager();
 
-   if (!useDefaultTarget)
-      {
+  if (!useDefaultTarget)
+    {
       if (verbose) std::cout << "Adding a target node...";
 
-     // create target node
-    vtkMRMLEMSVolumeCollectionNode* targetNode = vtkMRMLEMSVolumeCollectionNode::New();
-    mrmlScene->AddNodeNoNotify(targetNode);
+      // create target node
+      vtkMRMLEMSVolumeCollectionNode* targetNode = vtkMRMLEMSVolumeCollectionNode::New();
+      mrmlScene->AddNodeNoNotify(targetNode);
 
-   // remove default target node
-   mrmlScene->RemoveNode(emMRMLManager->GetTargetInputNode());
+      // remove default target node
+      mrmlScene->RemoveNode(emMRMLManager->GetTargetInputNode());
    
-   // connect target node to segmenter
-   emMRMLManager->GetWorkingDataNode()->SetInputTargetNodeID(targetNode->GetID());
+      // connect target node to segmenter
+      emMRMLManager->GetWorkingDataNode()->SetInputTargetNodeID(targetNode->GetID());
    
-   if (verbose) std::cout << targetNode->GetID() << " DONE" << std::endl;
+      if (verbose) std::cout << targetNode->GetID() << " DONE" << std::endl;
    
-   targetNode->Delete();
+      targetNode->Delete();
    
-   if (verbose) 
-     {
-             std::cout << "Segmenter's target node is now: " << emMRMLManager->GetTargetInputNode()->GetID() << std::endl;
-             std::cout << "Adding " << targetVolumeFileNames.size()  << " target images..." << std::endl;
-     }
-
-    for (unsigned int imageIndex = 0; imageIndex < targetVolumeFileNames.size(); ++imageIndex)
+      if (verbose) 
         {
-        if (verbose) std::cout << "Loading target image " << imageIndex << "..." << std::endl;
-        try
-          {
-          // load image into scene
-            vtkMRMLVolumeNode* volumeNode = EMSLogic->AddArchetypeScalarVolume(targetVolumeFileNames[imageIndex].c_str(),targetVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene);
+          std::cout << "Segmenter's target node is now: " << emMRMLManager->GetTargetInputNode()->GetID() << std::endl;
+          std::cout << "Adding " << targetVolumeFileNames.size()  << " target images..." << std::endl;
+        }
 
-          if (!volumeNode)
+      for (unsigned int imageIndex = 0; imageIndex < targetVolumeFileNames.size(); ++imageIndex)
+        {
+          if (verbose) std::cout << "Loading target image " << imageIndex << "..." << std::endl;
+          try
             {
-            throw std::runtime_error("failed to load image.");
+              // load image into scene
+              vtkMRMLVolumeNode* volumeNode = EMSLogic->AddArchetypeScalarVolume(targetVolumeFileNames[imageIndex].c_str(),targetVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene, centered);
+
+              if (!volumeNode)
+                {
+                  throw std::runtime_error("failed to load image.");
+                }
+
+              // set volume name and ID in map
+              emMRMLManager->GetTargetInputNode()->AddVolume(volumeNode->GetID(), volumeNode->GetID());
             }
-
-           // set volume name and ID in map
-           emMRMLManager->GetTargetInputNode()->AddVolume(volumeNode->GetID(), volumeNode->GetID());
-          }
-        catch(...)
-          {
-        std::cerr << "ERROR: failed to load target image " << targetVolumeFileNames[imageIndex] << endl;
-        return 1;
-          }
+          catch(...)
+            {
+              std::cerr << "ERROR: failed to load target image " << targetVolumeFileNames[imageIndex] << endl;
+              return 1;
+            }
+        }
     }
-      }
 
-     // CHECK: make sure the number of input channels matches the expected value in the parameters
-    if (emMRMLManager->GetGlobalParametersNode()->GetNumberOfTargetInputChannels() != emMRMLManager->GetTargetInputNode()->GetNumberOfVolumes())
-      {
-          std::cerr << "ERROR: Number of input channels (" << emMRMLManager->GetTargetInputNode()->GetNumberOfVolumes()
-           << ") does not match expected value from parameters (" << emMRMLManager->GetGlobalParametersNode()-> GetNumberOfTargetInputChannels()
-            << ")" <<endl;
-          return 1;
-      }
-    else
-      {
-          if (verbose)
+  // CHECK: make sure the number of input channels matches the expected value in the parameters
+  if (emMRMLManager->GetGlobalParametersNode()->GetNumberOfTargetInputChannels() != emMRMLManager->GetTargetInputNode()->GetNumberOfVolumes())
+    {
+      std::cerr << "ERROR: Number of input channels (" << emMRMLManager->GetTargetInputNode()->GetNumberOfVolumes()
+                << ") does not match expected value from parameters (" << emMRMLManager->GetGlobalParametersNode()-> GetNumberOfTargetInputChannels()
+                << ")" <<endl;
+      return 1;
+    }
+  else
+    {
+      if (verbose)
         std::cout << "Number of input channels (" << emMRMLManager->GetTargetInputNode()->GetNumberOfVolumes() << ") matches expected value from parameters (" 
-                       << emMRMLManager->GetGlobalParametersNode()->GetNumberOfTargetInputChannels() << ")" << std::endl;
-      }
-    return 0;
+                  << emMRMLManager->GetGlobalParametersNode()->GetNumberOfTargetInputChannels() << ")" << std::endl;
+    }
+  return 0;
 }
 
 // -------------------------------------------------------------------------------------------
-int LoadUserDefinedAtlas (std::vector<std::string> atlasVolumeFileNames,  vtkEMSegmentLogic* EMSLogic, vtkMRMLScene* mrmlScene, vtkSlicerApplicationLogic* appLogic, int verbose ) {
+int LoadUserDefinedAtlas (std::vector<std::string> atlasVolumeFileNames,  vtkEMSegmentLogic* EMSLogic, vtkMRMLScene* mrmlScene, vtkSlicerApplicationLogic* appLogic, int verbose, bool centered) {
 
   vtkEMSegmentMRMLManager* emMRMLManager = EMSLogic->GetMRMLManager();
         vtkMRMLEMSAtlasNode* atlasNode = emMRMLManager->GetAtlasInputNode();
@@ -312,7 +312,7 @@ int LoadUserDefinedAtlas (std::vector<std::string> atlasVolumeFileNames,  vtkEMS
             try
               {
                 // load image into scene
-                vtkMRMLVolumeNode* volumeNode = EMSLogic->AddArchetypeScalarVolume( atlasVolumeFileNames[imageIndex].c_str(), atlasVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene);
+                vtkMRMLVolumeNode* volumeNode = EMSLogic->AddArchetypeScalarVolume( atlasVolumeFileNames[imageIndex].c_str(), atlasVolumeFileNames[imageIndex].c_str(), appLogic, mrmlScene, centered);
                 if (!volumeNode)
                   {
                     std::cerr << "ERROR: failed to load image." << endl;

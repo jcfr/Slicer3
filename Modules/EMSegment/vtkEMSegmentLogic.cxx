@@ -106,12 +106,20 @@ vtkSlicerCommonInterface* vtkEMSegmentLogic::GetSlicerCommonInterface()
 
 //----------------------------------------------------------------------------
 vtkMRMLScalarVolumeNode* 
-vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene)
+vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene, bool centered)
 {
   vtkSlicerVolumesLogic* volLogic  = vtkSlicerVolumesLogic::New();
   volLogic->SetMRMLScene(mrmlScene);
   volLogic->SetApplicationLogic(appLogic);
-  vtkMRMLScalarVolumeNode* volNode = volLogic->AddArchetypeScalarVolume(filename, volname, 0);
+  vtkMRMLScalarVolumeNode* volNode = NULL;
+  if (centered)
+    {
+      volNode = volLogic->AddArchetypeScalarVolume(filename, volname, 2);
+    }
+  else
+    {
+      volNode = volLogic->AddArchetypeScalarVolume(filename, volname, 0);
+    }
   volLogic->Delete();
   return volNode;
 }

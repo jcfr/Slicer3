@@ -119,7 +119,7 @@ public:
                                  vtkMRMLVolumeNode* outputVolumeNode,
                                  vtkMRMLVolumeNode* outputVolumeGeometryNode,
                                  vtkTransform* outputRASToInputRASTransform,
-                                  int iterpolationType,
+                                 int iterpolationType,
                                  double backgroundLevel);
 
   // Helper Classes for tcl 
@@ -129,13 +129,13 @@ public:
   void DefineValidSegmentationBoundary(); 
   void AutoCorrectSpatialPriorWeight(vtkIdType nodeID);
 
-  vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene);
+  vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic, vtkMRMLScene* mrmlScene, bool centered);
 
   //BTX
   std::string GetErrorMessage() {return this->ErrorMsg;}
   //ETX 
 
-  virtual void                              CreateOutputVolumeNode();
+  virtual void CreateOutputVolumeNode();
 
   void SubParcelateSegmentation(vtkImageData* segmentation, vtkIdType nodeID);
 
