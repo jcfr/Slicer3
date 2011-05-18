@@ -105,8 +105,16 @@ vtkSlicerCommonInterface* vtkEMSegmentLogic::GetSlicerCommonInterface()
 }
 
 //----------------------------------------------------------------------------
+// This function is part of the EMSegmenter's stable API
+vtkMRMLScalarVolumeNode*
+vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic, vtkMRMLScene* mrmlScene)
+{
+  return this->AddArchetypeScalarVolume(filename, volname, appLogic, mrmlScene, false);
+}
+
+//----------------------------------------------------------------------------
 vtkMRMLScalarVolumeNode* 
-vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic,  vtkMRMLScene* mrmlScene, bool centered)
+vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic, vtkMRMLScene* mrmlScene, bool centered)
 {
   vtkSlicerVolumesLogic* volLogic  = vtkSlicerVolumesLogic::New();
   volLogic->SetMRMLScene(mrmlScene);

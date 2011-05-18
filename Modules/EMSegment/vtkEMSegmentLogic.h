@@ -129,6 +129,9 @@ public:
   void DefineValidSegmentationBoundary(); 
   void AutoCorrectSpatialPriorWeight(vtkIdType nodeID);
 
+  // This function is part of the EMSegmenter's stable API
+  vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic, vtkMRMLScene* mrmlScene);
+
   vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char* filename, const char* volname, vtkSlicerApplicationLogic* appLogic, vtkMRMLScene* mrmlScene, bool centered);
 
   //BTX
