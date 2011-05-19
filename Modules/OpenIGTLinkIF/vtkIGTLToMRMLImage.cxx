@@ -23,6 +23,8 @@
 #include "vtkMRMLScalarVolumeNode.h"
 #include "igtlImageMessage.h"
 
+#include "igtl_util.h"
+
 #ifdef OpenIGTLinkIF_USE_VERSION_2
   #include "vtkMRMLIGTLQueryNode.h"
 #endif //OpenIGTLinkIF_USE_VERSION_2
@@ -147,6 +149,45 @@ vtkIntArray* vtkIGTLToMRMLImage::GetNodeEvents()
 
 
 //---------------------------------------------------------------------------
+// Stream copy + byte swap
+//---------------------------------------------------------------------------
+int swapCopy16(igtlUint16 * dst, igtlUint16 * src, int n)
+{
+  igtlUint16 * esrc = src + n;
+  while (src < esrc)
+    {
+    *dst = BYTE_SWAP_INT16(*src);
+    dst ++;
+    src ++;
+    }
+  return 1;
+}
+
+int swapCopy32(igtlUint32 * dst, igtlUint32 * src, int n)
+{
+  igtlUint32 * esrc = src + n;
+  while (src < esrc)
+    {
+    *dst = BYTE_SWAP_INT32(*src);
+    dst ++;
+    src ++;
+    }
+  return 1;
+}
+
+int swapCopy64(igtlUint64 * dst, igtlUint64 * src, int n)
+{
+  igtlUint64 * esrc = src + n;
+  while (src < esrc)
+    {
+    *dst = BYTE_SWAP_INT64(*src);
+    dst ++;
+    src ++;
+    }
+  return 1;
+}
+
+//---------------------------------------------------------------------------
 int vtkIGTLToMRMLImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLNode* node)
 {
   if (strcmp(node->GetNodeTagName(), "Volume") != 0)
@@ -181,9 +222,11 @@ int vtkIGTLToMRMLImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLNod
   int   svsize[3];        // sub-volume size
   int   svoffset[3];      // sub-volume offset
   int   scalarType;       // scalar type
+  int   endian;
   igtl::Matrix4x4 matrix; // Image origin and orientation matrix
 
   scalarType = imgMsg->GetScalarType();
+  endian = imgMsg->GetEndian();
   imgMsg->GetDimensions(size);
   imgMsg->GetSpacing(spacing);
   imgMsg->GetSubVolume(svsize, svoffset);
@@ -263,6 +306,20 @@ int vtkIGTLToMRMLImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLNod
 
   imageData = volumeNode->GetImageData();
 
+
+  // Check scalar size
+  int scalarSize = imgMsg->GetScalarSize();
+  
+  int fByteSwap = 0;
+  // Check if bytes-swap is required
+  if (scalarSize > 1 && 
+      ((igtl_is_little_endian() && endian == igtl::ImageMessage::ENDIAN_BIG) ||
+       (!igtl_is_little_endian() && endian == igtl::ImageMessage::ENDIAN_LITTLE)))
+    {
+    // Needs byte swap
+    fByteSwap = 1;
+    }
+
   // TODO:
   // It should be checked here if the dimension of vtkImageData
   // and arrived data is same.
@@ -273,18 +330,40 @@ int vtkIGTLToMRMLImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLNod
     // In case that volume size == sub-volume size,
     // image is read directly to the memory area of vtkImageData
     // for better performance. 
-    memcpy(imageData->GetScalarPointer(),
-           imgMsg->GetScalarPointer(), imgMsg->GetSubVolumeImageSize());
+    if (fByteSwap)
+      {
+      switch (scalarSize)
+        {
+        case 2:
+          swapCopy16((igtlUint16 *)imageData->GetScalarPointer(),
+                     (igtlUint16 *)imgMsg->GetScalarPointer(),
+                     imgMsg->GetSubVolumeImageSize() / 2);
+          break;
+        case 4:
+          swapCopy32((igtlUint32 *)imageData->GetScalarPointer(),
+                     (igtlUint32 *)imgMsg->GetScalarPointer(),
+                     imgMsg->GetSubVolumeImageSize() / 4);
+          break;
+        case 8:
+          swapCopy64((igtlUint64 *)imageData->GetScalarPointer(),
+                     (igtlUint64 *)imgMsg->GetScalarPointer(),
+                     imgMsg->GetSubVolumeImageSize() / 8);
+          break;
+        default:
+          break;
+        }
+      }
+    else
+      {
+      memcpy(imageData->GetScalarPointer(),
+             imgMsg->GetScalarPointer(), imgMsg->GetSubVolumeImageSize());
+      }
     }
   else
     {
     // In case of volume size != sub-volume size,
     // image is loaded into ImageReadBuffer, then copied to
     // the memory area of vtkImageData.
-    
-    // Check scalar size
-    int scalarSize = imgMsg->GetScalarSize();
-    
     char* imgPtr = (char*) imageData->GetScalarPointer();
     char* bufPtr = (char*) imgMsg->GetScalarPointer();
     int sizei = size[0];
@@ -298,16 +377,64 @@ int vtkIGTLToMRMLImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLNod
     int ed_j = bg_j + svsize[1];
     int bg_k = svoffset[2];
     int ed_k = bg_k + svsize[2];
-    
-    for (int k = bg_k; k < ed_k; k ++)
+
+    if (fByteSwap)
       {
-      for (int j = bg_j; j < ed_j; j ++)
+      switch (scalarSize)
         {
-        memcpy(&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
-               bufPtr, subsizei*scalarSize);
-        bufPtr += subsizei*scalarSize;
+        case 2:
+          for (int k = bg_k; k < ed_k; k ++)
+            {
+            for (int j = bg_j; j < ed_j; j ++)
+              {
+              swapCopy16((igtlUint16 *)&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
+                         (igtlUint16 *)bufPtr,
+                         subsizei);
+              bufPtr += subsizei*scalarSize;
+              }
+            }
+          break;
+        case 4:
+          for (int k = bg_k; k < ed_k; k ++)
+            {
+            for (int j = bg_j; j < ed_j; j ++)
+              {
+              swapCopy32((igtlUint32 *)&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
+                         (igtlUint32 *)bufPtr,
+                         subsizei);
+              bufPtr += subsizei*scalarSize;
+              }
+            }
+          break;
+        case 8:
+          for (int k = bg_k; k < ed_k; k ++)
+            {
+            for (int j = bg_j; j < ed_j; j ++)
+              {
+              swapCopy64((igtlUint64 *)&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
+                         (igtlUint64 *)bufPtr,
+                         subsizei);
+              bufPtr += subsizei*scalarSize;
+              }
+            }
+          break;
+        default:
+          break;
         }
       }
+    else
+      {
+      for (int k = bg_k; k < ed_k; k ++)
+        {
+        for (int j = bg_j; j < ed_j; j ++)
+          {
+          memcpy(&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
+                 bufPtr, subsizei*scalarSize);
+          bufPtr += subsizei*scalarSize;
+          }
+        }
+      }
+
     }
   
   // normalize
