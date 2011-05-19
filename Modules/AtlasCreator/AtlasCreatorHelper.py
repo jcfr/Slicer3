@@ -32,8 +32,8 @@ class AtlasCreatorHelper(object):
         self.__debugMode = 0
         self.__guidebugMode = 0
         
-        # create one instance of the EMSegment logic
-        self.__emlogic = slicer.vtkEMSegmentLogic()
+        # create one instance of the AtlasCreatorCxx logic
+        self.__cxxlogic = slicer.vtkAtlasCreatorCxxModuleLogic()
 
         self.__pcaDistanceSourced = 0
         
@@ -50,7 +50,7 @@ class AtlasCreatorHelper(object):
                 n/a
         '''
         
-        self.__emlogic = None
+        self.__cxxlogic = None
         self.__parentClass = None
         self.__debugMode = None
         self.__guidebugMode = None
@@ -776,7 +776,7 @@ class AtlasCreatorHelper(object):
             volumeNode = slicer.VolumesGUI.GetLogic().AddArchetypeScalarVolume(filePath, "tmpAtlasCreatorNode")
         except Exception:        
             # special case, if the AC is called from the EMSegment commandline tool
-            volumeNode = self.__emlogic.AddArchetypeScalarVolume(filePath, "tmpAtlasCreatorNode", slicer.ApplicationLogic, slicer.MRMLScene)
+            volumeNode = self.__cxxlogic.AddArchetypeScalarVolume(filePath, "tmpAtlasCreatorNode", slicer.ApplicationLogic, slicer.MRMLScene)
         
         
         return volumeNode
@@ -989,7 +989,7 @@ class AtlasCreatorHelper(object):
         node = self.LoadVolume(filePath)
         
         # guess the bg value
-        guess = self.__emlogic.GuessRegistrationBackgroundLevel(node)
+        guess = self.__cxxlogic.GuessRegistrationBackgroundLevel(node)
         
         # remove the node from the scene
         slicer.MRMLScene.RemoveNode(node)
