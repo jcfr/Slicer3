@@ -6,7 +6,7 @@
 
 # scm is source code manager (i.e. svn)
 scm       svn
-svnpath   http://svn.na-mic.org/NAMICSandBox/trunk/IGTLoadableModules/OsteoPlan
+svnpath   http://svn.na-mic.org/NAMICSandBox/trunk/IGTLoadableModules/OsteoPlan/Module/OsteoPlan
 svnusername lchauvin
 #svnpassword slicer
 
