@@ -1328,6 +1328,16 @@ template <class T> void EMLocalAlgorithm<T>::E_Step_Weight_Calculation_Threaded(
 // M-Step Functions 
 //------------------------------------------------------------
 
+
+//------------------------------------------------------------
+// EstimateImageInhomegeneity3steps
+//------------------------------------------------------------
+template <class T>
+void EMLocalAlgorithm<T>::EstimateImageInhomegeneity3steps(float *skern, EMTriVolume& iv_m, EMVolume *r_m)
+{
+}
+
+
 //------------------------------------------------------------
 // Compute Image Inhomogeneity
 // compute weighted residuals 
@@ -1344,30 +1354,33 @@ void EMLocalAlgorithm<T>::EstimateImageInhomegeneity(float *skern, EMTriVolume& 
   float temp;
 
   float **w_m        = new float*[this->NumTotalTypeCLASS];
-  for (int i=0; i< this->NumTotalTypeCLASS; i++) w_m[i] = this->w_mPtr[i];
+  for (int i = 0; i < this->NumTotalTypeCLASS; i++)
+    w_m[i] = this->w_mPtr[i];
 
-  for (int i = 0; i< BoundaryMaxZ;i++){
-  for (int k = 0; k<BoundaryMaxY;k++){
-  for (int j = 0; j<BoundaryMaxX;j++){
-  // If coordinate is not in Region of interest just do not update bias 
-  // Just use the outcome of the last hierarchical level 
+  for (int i = 0; i < BoundaryMaxZ; i++){
+  for (int k = 0; k < BoundaryMaxY; k++){
+  for (int j = 0; j < BoundaryMaxX; j++){
+  // If coordinate is not in Region of interest just do not update bias
+  // Just use the outcome of the last hierarchical level
   if (*OutputVector < EMSEGMENT_NOTROI)
     {
     for (int m=0; m<NumInputImages; m++)
       {
       r_m[m](i,k,j) = 0.0;
-      for (int n=0; n<=m; n++) iv_m(m,n,i,k,j) = 0.0;
-      } 
-        
-    for (int l=0; l< NumTotalTypeCLASS; l++)
+      for (int n=0; n<=m; n++)
+        iv_m(m,n,i,k,j) = 0.0;
+      }
+
+    for (int l = 0; l < NumTotalTypeCLASS; l++)
       {
-      for (int m=0; m<NumInputImages; m++)
+      for (int m = 0; m < NumInputImages; m++)
         {  
-        for (int n=0; n<NumInputImages; n++)
+        for (int n = 0; n < NumInputImages; n++)
           {
-          temp =  *w_m[l] * float(InverseWeightedLogCov[l][m][n]);
-          r_m[m](i,k,j)     += temp * ((*InputVector)[n] - float(LogMu[l][n]));
-          if (n <= m) iv_m(m,n,i,k,j) += temp;
+          temp = *w_m[l] * float(InverseWeightedLogCov[l][m][n]);
+          r_m[m](i,k,j) += temp * ((*InputVector)[n] - float(LogMu[l][n]));
+          if (n <= m)
+            iv_m(m,n,i,k,j) += temp;
           }
         }
   
@@ -1390,7 +1403,7 @@ void EMLocalAlgorithm<T>::EstimateImageInhomegeneity(float *skern, EMTriVolume& 
 
   delete[] w_m;
 
-  
+
   //------------------------------------------------------------
   // Finalize Bias Parameters  
   // smooth residuals and inv covariances - 3D
@@ -1405,7 +1418,15 @@ void EMLocalAlgorithm<T>::EstimateImageInhomegeneity(float *skern, EMTriVolume& 
   // what should we do ? 
   //------------------------------------------------------------
   iv_m.Conv(skern,SmoothingWidth);
-  for (int i=0; i< this->NumInputImages; i++) r_m[i].Conv(skern,SmoothingWidth); 
+  for (int i=0; i< this->NumInputImages; i++)
+    r_m[i].Conv(skern,SmoothingWidth); 
+}
+
+// -----------------------------------------------------------
+// Intensity Correction 3steps
+// -----------------------------------------------------------
+template <class T> void EMLocalAlgorithm<T>::IntensityCorrection3steps(int printIntermediateFlag, int iter, EMTriVolume &iv_m, EMVolume *r_m, float *cY_M)
+{
 }
 
 // -----------------------------------------------------------
@@ -1417,23 +1438,23 @@ void EMLocalAlgorithm<T>::EstimateImageInhomegeneity(float *skern, EMTriVolume& 
 
 template <class T> void EMLocalAlgorithm<T>::IntensityCorrection(int printIntermediateFlag, int iter, EMTriVolume &iv_m, EMVolume *r_m, float *cY_M)
 {
-  // If needed the bias can also be printed out if ROI != NULL - just have to do slight modifications 
+  // If needed the bias can also be printed out if ROI != NULL - just have to do slight modifications
 
   unsigned char* OutputVector = this->OutputVectorPtr;
   float** InputVector         = this->InputVectorPtr;
 
   double **iv_mat     = new double*[VirtualOveralInputChannelNum];
   double **inv_iv_mat = new double*[VirtualOveralInputChannelNum];
-  for (int i=0; i < VirtualOveralInputChannelNum; i++)
+  for (int i = 0; i < VirtualOveralInputChannelNum; i++)
     {
     iv_mat[i]     = new double[VirtualOveralInputChannelNum];
     inv_iv_mat[i] = new double[VirtualOveralInputChannelNum];
     }
 
-  int mindex, lindex; 
-  char** BiasFileName       = NULL;
+  int mindex, lindex;
+  char** BiasFileName      = NULL;
 
-  bool PrintBiasFlag        = bool(printIntermediateFlag && this->BiasPrint && (!this->ROIPtr));  
+  bool PrintBiasFlag       = bool(printIntermediateFlag && this->BiasPrint && (!this->ROIPtr));
   float* BiasSlice         = NULL;
   float* BiasSlicePtr      = NULL;
   float Bias;
@@ -1444,15 +1465,20 @@ template <class T> void EMLocalAlgorithm<T>::IntensityCorrection(int printInterm
     memset(BiasSlice, 0, sizeof(float)*ImageProd*NumInputImages);
  
     BiasFileName = new char*[this->NumInputImages];
-    for (int i = 0 ; i < this->NumInputImages; i++)  BiasFileName[i] = new char[100];  
+    for (int i = 0 ; i < this->NumInputImages; i++)
+      BiasFileName[i] = new char[100];
 
-    for (int l=0; l< this->NumInputImages; l++)
+    for (int l = 0; l < this->NumInputImages; l++)
       {
-      if (this->PrintDir) sprintf(BiasFileName[l],"%s/Bias/BiasL%sI%dCh%d",this->PrintDir,this->LevelName,iter,l);
-      else sprintf(BiasFileName[l],"Bias/BiasL%sI%dCh%d",this->LevelName,iter,l);
-      // If BoundaryMin and Max do not span full length we have to add empty slices 
-      for (int i = 1; i < SegmentationBoundaryMin[2]; i++) EMLocalAlgorithm_PrintDataToOutputExtension(this,BiasSlice,VTK_FLOAT,BiasFileName[l],i-SegmentationBoundaryMin[2],0,0);
-      for (int i = 1; i <= Extent[5]- Extent[4] + 1 - SegmentationBoundaryMax[2]; i++) EMLocalAlgorithm_PrintDataToOutputExtension(this,BiasSlice,VTK_FLOAT,BiasFileName[l],i-SegmentationBoundaryMin[2],0,0);
+      if (this->PrintDir)
+        sprintf(BiasFileName[l],"%s/Bias/BiasL%sI%dCh%d",this->PrintDir,this->LevelName,iter,l);
+      else
+        sprintf(BiasFileName[l],"Bias/BiasL%sI%dCh%d",this->LevelName,iter,l);
+      // If BoundaryMin and Max do not span full length we have to add empty slices
+      for (int i = 1; i < SegmentationBoundaryMin[2]; i++)
+        EMLocalAlgorithm_PrintDataToOutputExtension(this,BiasSlice,VTK_FLOAT,BiasFileName[l],i-SegmentationBoundaryMin[2],0,0);
+      for (int i = 1; i <= Extent[5]- Extent[4] + 1 - SegmentationBoundaryMax[2]; i++)
+        EMLocalAlgorithm_PrintDataToOutputExtension(this,BiasSlice,VTK_FLOAT,BiasFileName[l],i-SegmentationBoundaryMin[2],0,0);
       }
     }
 
@@ -1462,24 +1488,26 @@ template <class T> void EMLocalAlgorithm<T>::IntensityCorrection(int printInterm
   for (int k = 0; k<BoundaryMaxX;k++){
   if (*OutputVector++ < EMSEGMENT_NOTROI)
     {
-    lindex =0;
-    for (int l=0; l< this->VirtualOveralInputChannelNum ; l++)
+    lindex = 0;
+    for (int l = 0; l < this->VirtualOveralInputChannelNum ; l++)
       {
-      while (!this->VirtualOveralInputChannelFlag[lindex]) lindex ++; 
+      while (!this->VirtualOveralInputChannelFlag[lindex])
+        lindex ++;
       iv_mat[l][l] = iv_m(lindex,lindex,i,j,k);
       mindex = 0;
-      for (int m = 0; m<= l; m++)
+      for (int m = 0; m <= l; m++)
         {
-        while (!VirtualOveralInputChannelFlag[mindex]) mindex ++; 
+        while (!VirtualOveralInputChannelFlag[mindex])
+          mindex ++;
         iv_mat[m][l] = iv_mat[l][m] = iv_m(lindex,mindex,i,j,k);
         mindex ++;
         }
       lindex ++;
       }
-    if (vtkImageEMGeneral::InvertMatrix(iv_mat, inv_iv_mat,VirtualOveralInputChannelNum))
+    if (vtkImageEMGeneral::InvertMatrix(iv_mat, inv_iv_mat, VirtualOveralInputChannelNum))
       {
       lindex = 0;
-      for (int l=0; l< NumInputImages; l++)
+      for (int l = 0; l < NumInputImages; l++)
         {
         // Only update those values that are in the region of interest 
         Bias = 0.0;
@@ -1496,28 +1524,32 @@ template <class T> void EMLocalAlgorithm<T>::IntensityCorrection(int printInterm
             }
           lindex ++;
           (*cY_M ++) = fabs((*InputVector)[l] - double(Bias));
-          if (BiasSlice) (*BiasSlice ++) = Bias;
+          if (BiasSlice)
+            (*BiasSlice ++) = Bias;
           }
         else
           {
           cY_M ++;
-          if (BiasSlice) BiasSlice ++;
+          if (BiasSlice)
+            BiasSlice ++;
           }
         }
       }
     else
       { 
-      for (int l=0; l< NumInputImages; l++)
+      for (int l = 0; l < NumInputImages; l++)
         {
         (*cY_M ++) = fabs((*InputVector)[l]);
-        if (BiasSlice) (*BiasSlice ++) = 0.0;
+        if (BiasSlice)
+          (*BiasSlice ++) = 0.0;
         }
       }
     }
   else
     {
-    cY_M       += NumInputImages;
-    if (BiasSlice) BiasSlice  += NumInputImages;
+    cY_M += NumInputImages;
+    if (BiasSlice)
+      BiasSlice += NumInputImages;
     }
   InputVector++;
   }
@@ -1535,7 +1567,7 @@ template <class T> void EMLocalAlgorithm<T>::IntensityCorrection(int printInterm
         BiasSliceInput[m] = *BiasSlice;
         BiasSlice += NumInputImages;
         }
-      // Remember for windows always use - BiasFile = fopen(BiasFileName, "wb") - otherwise does not work for double or float    
+      // Remember for windows always use - BiasFile = fopen(BiasFileName, "wb") - otherwise does not work for double or float
       EMLocalAlgorithm_PrintDataToOutputExtension(this,BiasSliceInput,VTK_FLOAT,BiasFileName[l],i+1,0,0);
       }
     delete[] BiasSliceInput;
@@ -1549,7 +1581,8 @@ template <class T> void EMLocalAlgorithm<T>::IntensityCorrection(int printInterm
 
   if (BiasFileName)
     {
-    for (int i = 0; i < NumInputImages; i++)  delete[] BiasFileName[i];
+    for (int i = 0; i < NumInputImages; i++)
+      delete[] BiasFileName[i];
     delete[] BiasFileName;
     }
 
@@ -1561,6 +1594,7 @@ template <class T> void EMLocalAlgorithm<T>::IntensityCorrection(int printInterm
   delete[] iv_mat;
   delete[] inv_iv_mat;
 }
+
 
 // Initialize Intensities for EM-Algorithm 
 // If iter == 1 => Bias has been defined in the previous hierarchical level 
@@ -1787,8 +1821,17 @@ template  <class T> void EMLocalAlgorithm<T>::RunAlgorithm(EMTriVolume& iv_m, EM
       // Image Inhomogeneity
       if ((StopBiasCalculation < 0)  ||  (iter <= StopBiasCalculation))
         {
-        this->EstimateImageInhomegeneity(skern, iv_m, r_m);
-        this->IntensityCorrection(this->PrintIntermediateFlag, iter, iv_m, r_m, cY_MPtr);
+        bool twostepimplementation = true;
+        if (twostepimplementation)
+          {
+          this->EstimateImageInhomegeneity(skern, iv_m, r_m);
+          this->IntensityCorrection(this->PrintIntermediateFlag, iter, iv_m, r_m, cY_MPtr);
+          }
+        else
+          {
+          this->EstimateImageInhomegeneity3steps(skern, iv_m, r_m);
+          this->IntensityCorrection3steps(this->PrintIntermediateFlag, iter, iv_m, r_m, cY_MPtr);
+          }
         }
       else std::cerr << "Bias calculation disabled " << endl; 
      
