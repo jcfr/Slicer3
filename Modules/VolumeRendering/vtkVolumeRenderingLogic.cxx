@@ -1081,6 +1081,10 @@ int vtkVolumeRenderingLogic::SetupMapperFromParametersNode(vtkMRMLVolumeRenderin
       }
     else
       {
+      const char *gl_vendor=reinterpret_cast<const char *>(glGetString(GL_VENDOR));
+      const char *gl_version=reinterpret_cast<const char *>(glGetString(GL_VERSION));
+      vtkErrorMacro(
+        "The VTK mapper/renderer is not supported by your hardware (" << gl_vendor << ") or OpenGL implementation (" << gl_version << ")");
       return -1;
       }
     break;
