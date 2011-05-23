@@ -512,8 +512,8 @@ int vtkImageEMLocalSegmenter::HierarchicalSegmentation(vtkImageEMLocalSuperClass
         {
           if (ProbDataPtr[i]) 
             {
-              i = NumTotalTypeCLASS;
               vtkEMAddWarningMessage("Super Class segmented on Level " << LevelName  << " has ProbDataWeight == 0.0, but there are sub classes that have probability maps defined\n          => Probability Maps will be ignored!");
+              break;
             } 
         }
     }
