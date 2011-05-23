@@ -8,6 +8,7 @@
 #include "vtkSlicerVolumesLogic.h"
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
+#include "vtkImageMathematics.h"
 #include "vtkImageAccumulate.h"
 #include "vtkSlicerCommonInterface.h"
 

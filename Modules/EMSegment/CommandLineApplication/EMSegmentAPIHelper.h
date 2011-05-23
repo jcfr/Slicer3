@@ -1,6 +1,7 @@
 #include "vtkSlicerCommonInterface.h"
 #include <sstream>
 
+#ifdef Slicer3_USE_KWWIDGETS
 extern "C" int Emsegment_Init(Tcl_Interp *interp);
 extern "C" int Vtkteem_Init(Tcl_Interp *interp);
 extern "C" int Vtkitk_Init(Tcl_Interp *interp);
@@ -8,17 +9,8 @@ extern "C" int Slicerbaselogic_Init(Tcl_Interp *interp);
 extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Mrmlcli_Init(Tcl_Interp *interp); 
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
+#endif
 
-/*
-#define tgVtkCreateMacro(name,type)                                     \
-  name  = type::New();                                                  \
-  name##Tcl = vtksys::SystemTools::DuplicateString(slicerCommon->GetTclNameFromPointer(name));
-
-#define tgVtkDefineMacro(name,type)             \
-  type *name;                                   \
-  std::string name##Tcl;                        \
-  tgVtkCreateMacro(name,type); 
-*/
 #define tgSetDataMacro(name,matrix)                             \
   virtual int Set##name(const char *fileName) {                 \
     if (strcmp(fileName,"None")) {                              \
@@ -61,7 +53,7 @@ int tgSetSLICER_HOME(char** argv)
       homeEnv += vtksys::SystemTools::GetFilenamePath(programPath.c_str()) + "/../../../";
    
       cout << "Set environment: " << homeEnv.c_str() << endl;
-      vtkKWApplication::PutEnv(const_cast <char *> (homeEnv.c_str()));
+      vtksys::SystemTools::PutEnv(const_cast <char *> (homeEnv.c_str()));
     } else {
     cout << "Slicer3_HOME found: " << slicerHome << endl;
   }
@@ -85,6 +77,7 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv, vtkSlicerCommonInterface *sli
       return NULL; 
     }
 
+#ifdef Slicer3_USE_KWWIDGETS
   // This is necessary to load in EMSEgmenter package in TCL interp.
   Emsegment_Init(interp);
   Slicerbaselogic_Init(interp);
@@ -93,6 +86,7 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv, vtkSlicerCommonInterface *sli
   Vtkteem_Init(interp);
   Vtkitk_Init(interp);
   Commandlinemodule_Init(interp);
+#endif
   return interp;
 }
 

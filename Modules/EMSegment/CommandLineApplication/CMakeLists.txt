@@ -22,12 +22,24 @@ if(NOT EM_Slicer4_FOUND)
   
   set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
 
+  set(COMMANDLINE_LINK_LIBRARIES
+    EMSegment
+    vtkCommon
+    AtlasCreatorCxxModule
+    )
+
 else(NOT EM_Slicer4_FOUND)
 
   IF(NOT Slicer_SOURCE_DIR)
     FIND_PACKAGE(Slicer REQUIRED)
     INCLUDE(${Slicer_USE_FILE})
   ENDIF(NOT Slicer_SOURCE_DIR)
+
+  set(COMMANDLINE_LINK_LIBRARIES
+    vtkCommon
+    vtkSlicerAtlasCreatorModuleLogic
+    vtkSlicerEMSegmentModuleLogic
+    )
 
 endif(NOT EM_Slicer4_FOUND)
 
@@ -41,21 +53,15 @@ include_directories(
   ${EMSegment_SOURCE_DIR}
   ${EMSegment_SOURCE_DIR}/MRML
   ${EMSegment_SOURCE_DIR}/Algorithm
-  ${EMSegment_SOURCE_DIR}/CommandLineApplication
+  ${EMSegment_SOURCE_DIR}/CommandLineApplication  
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
+  ${Slicer_Libs_INCLUDE_DIRS}
+  ${Slicer_Base_INCLUDE_DIRS}
+  ${vtkSlicerAtlasCreatorModuleLogic_SOURCE_DIR}
+  ${vtkSlicerAtlasCreatorModuleLogic_BINARY_DIR}  
   )
 
-
-# --------------------------------------------------------------------------
-# Sources
-
-
-set(COMMANDLINE_LINK_LIBRARIES
-  EMSegment
-  vtkCommon
-  AtlasCreatorCxxModule
-  )
 
 # --------------------------------------------------------------------------
 #
@@ -83,6 +89,7 @@ else(NOT EM_Slicer4_FOUND)
 slicerMacroBuildCLI(
   NAME ${CLP_MODULE}
   TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
+  EXECUTABLE_ONLY
   )
 
 endif(NOT EM_Slicer4_FOUND)
@@ -113,6 +120,7 @@ else(NOT EM_Slicer4_FOUND)
 slicerMacroBuildCLI(
   NAME ${CLP_MODULE}
   TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
+  EXECUTABLE_ONLY  
   )
 
 endif(NOT EM_Slicer4_FOUND)
@@ -143,6 +151,7 @@ else(NOT EM_Slicer4_FOUND)
 slicerMacroBuildCLI(
   NAME ${CLP_MODULE}
   TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
+  EXECUTABLE_ONLY  
   )
 
 endif(NOT EM_Slicer4_FOUND)
