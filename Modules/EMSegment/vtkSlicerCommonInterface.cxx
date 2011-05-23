@@ -344,6 +344,23 @@ void vtkSlicerCommonInterface::EvaluatePython(const char* command)
 
 #endif
 
+#if defined(Slicer_USE_PYTHON)
+
+  // Slicer4 and Tcl through Python activated
+  bool disablePython = qSlicerCoreApplication::testAttribute(qSlicerCoreApplication::AA_DisablePython);
+
+  if (!disablePython)
+    {
+    qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
+
+    QString pCommand = QString(command);
+    pCommand += "\n";
+
+    py->executeString(pCommand);
+    }
+
+#endif
+
 }
 
 //-----------------------------------------------------------------------------
