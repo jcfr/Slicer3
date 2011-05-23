@@ -7,7 +7,7 @@
 #include "vtkMRMLEMSVolumeCollectionNode.h"
 #include <stdexcept>
 #include <stdlib.h>
-#include "vtkSlicerApplication.h"
+#include "vtkSlicerCommonInterface.h"
 #include "vtkSlicerApplicationLogic.h"
 
 int main(int vtkNotUsed(argc), char** argv)
@@ -245,9 +245,8 @@ int main(int vtkNotUsed(argc), char** argv)
 
     //
     // start actual segmentation
-    vtkSlicerApplication* app;
-    app = vtkSlicerApplication::GetInstance();
-    app->PromptBeforeExitOff();
+    vtkSlicerCommonInterface* common;
+    common->PromptBeforeExitOff();
   
     vtkSlicerApplicationLogic* appLogic = vtkSlicerApplicationLogic::New();
     std::cerr << ">>>>>>>>>>>>>>>> This test has to be updated " << std::endl;
@@ -256,8 +255,7 @@ int main(int vtkNotUsed(argc), char** argv)
     appLogic->Delete();
     appLogic = NULL;
 
-    app->Delete();
-    app = NULL;
+    common->DestroySlicerApplication();
  
 
     if (m->GetTargetNumberOfSelectedVolumes() != 2)

@@ -7,6 +7,10 @@ include_directories(
   ${VTK_INCLUDE_DIR}
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
+  ${Slicer_Libs_INCLUDE_DIRS}
+  ${Slicer_Base_INCLUDE_DIRS}
+  ${vtkSlicerAtlasCreatorModuleLogic_SOURCE_DIR}
+  ${vtkSlicerAtlasCreatorModuleLogic_BINARY_DIR}    
   ${EMSegment_BINARY_DIR}
   )
 
@@ -17,6 +21,28 @@ set(EMSegment_TUTORIAL2_DIR
   ${EMSegment_SOURCE_DIR}/Testing/TestData/TutorialTest2)
 set(EMSegment_TESTDATA_DIR
   ${EMSegment_SOURCE_DIR}/Testing/TestData)
+
+# target link libraries depend on the Slicer version
+
+if(NOT EM_Slicer4_FOUND)
+
+# Slicer3
+
+set(TEST_LINK_LIBRARIES
+    EMSegment
+    vtkCommon
+    )
+    
+else(NOT EM_Slicer4_FOUND)
+
+# Slicer4
+
+set(TEST_LINK_LIBRARIES
+    vtkCommon
+    vtkSlicerEMSegmentModuleLogic
+    )
+
+endif(NOT EM_Slicer4_FOUND)
 
 
 #### MIDAS
@@ -87,7 +113,7 @@ if(NOT DISABLE_CXX_TESTING)
   target_link_libraries(
     vtkEMSegmentRemoteIOTest
     RemoteIO
-    vtkCommon
+    ${TEST_LINK_LIBRARIES}
     )
 
 
@@ -98,8 +124,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
   target_link_libraries(
     vtkEMSegmentBlackBoxSegmentationTest
-    EMSegment
-    vtkCommon
+    ${TEST_LINK_LIBRARIES}
     )
 
 
@@ -110,8 +135,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
   target_link_libraries(
     vtkEMSegmentCompareTest
-    EMSegment
-    vtkCommon
+    ${TEST_LINK_LIBRARIES}
     )
 
   add_executable(
@@ -120,8 +144,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
   target_link_libraries(
     vtkEMSegmentReadWriteMRMLTest
-    EMSegment
-    vtkCommon
+    ${TEST_LINK_LIBRARIES}
     )
 
   add_executable(
@@ -131,8 +154,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
   target_link_libraries(
     vtkEMSegmentMRMLManagerTest
-    EMSegment
-    vtkCommon
+    ${TEST_LINK_LIBRARIES}
     )
 
   add_executable(
@@ -142,8 +164,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
   target_link_libraries(
     vtkEMSegmentPreprocessingManagerTest
-    EMSegment
-    vtkCommon
+    ${TEST_LINK_LIBRARIES}
     )
 
   ############################################################################

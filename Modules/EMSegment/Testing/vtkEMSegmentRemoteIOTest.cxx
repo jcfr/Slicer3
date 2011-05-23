@@ -1,6 +1,7 @@
 #include "vtkHTTPHandler.h"
 #include <iostream>
 #include <string>
+#include <vtksys/SystemTools.hxx>
 
 
 int main(int argc, char** argv)
