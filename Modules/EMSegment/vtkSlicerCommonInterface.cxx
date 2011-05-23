@@ -3,10 +3,9 @@
 
 #include <sstream>
 
-
 #ifdef Slicer3_USE_KWWIDGETS
 
-  // Slicer3
+// Slicer3
 #include "vtkKWTkUtilities.h"
 #include "../../Applications/GUI/Slicer3Helper.cxx"
 
@@ -16,24 +15,27 @@
 vtkSlicerCommonInterface* vtkSlicerCommonInterface::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret =
-    vtkObjectFactory::CreateInstance("vtkSlicerCommonInterface");
-  if(ret)
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkSlicerCommonInterface");
+  if (ret)
     {
-    return (vtkSlicerCommonInterface*)ret;
+    return (vtkSlicerCommonInterface*) ret;
     }
   // If the factory was unable to create the object, then create it here.
   return new vtkSlicerCommonInterface;
 }
 
-
 //----------------------------------------------------------------------------
-vtkSlicerCommonInterface::vtkSlicerCommonInterface() {
+vtkSlicerCommonInterface::vtkSlicerCommonInterface()
+{
+
+  // initialize random seed
+  srand(time(NULL));
 
 }
 
 //----------------------------------------------------------------------------
-vtkSlicerCommonInterface::~vtkSlicerCommonInterface() {
+vtkSlicerCommonInterface::~vtkSlicerCommonInterface()
+{
 
 }
 
@@ -62,7 +64,7 @@ int vtkSlicerCommonInterface::SourceTclFile(const char *tclFile)
   // Load Tcl File defining the setting
   if (!vtkSlicerApplication::GetInstance()->LoadScript(tclFile))
     {
-      return 1;
+    return 1;
     }
 
 #endif
@@ -135,10 +137,20 @@ const char* vtkSlicerCommonInterface::GetTclNameFromPointer(vtkObject *obj)
 #ifdef Slicer3_USE_KWWIDGETS
 
   // Slicer3
-  return vtkKWTkUtilities::GetTclNameFromPointer(vtkSlicerApplication::GetInstance()->GetMainInterp(),obj);
-  //#else
+  return vtkKWTkUtilities::GetTclNameFromPointer(
+      vtkSlicerApplication::GetInstance()->GetMainInterp(), obj);
 
-  // TODO Slicer4
+#else
+
+  // Slicer4
+  qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
+
+  // here we can choose our own tcl name
+  const char* name = this->randomStrGen(8).c_str();
+
+  py->addVTKObjectToPythonMain(name, obj);
+
+  return name;
 
 #endif
 
@@ -151,6 +163,7 @@ void vtkSlicerCommonInterface::RegisterObjectWithTcl(vtkObject* obj, const char*
 
 #ifdef Slicer3_USE_KWWIDGETS
 
+  // Slicer3
   const char* tclName = this->GetTclNameFromPointer(obj);
 
   std::stringstream cmd;
@@ -160,6 +173,11 @@ void vtkSlicerCommonInterface::RegisterObjectWithTcl(vtkObject* obj, const char*
 
   this->EvaluateTcl(cmd.str().c_str());
 
+#else
+
+  // Slicer4
+  qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
+  py->addVTKObjectToPythonMain(name, obj);
 
 #endif
 
@@ -168,18 +186,15 @@ void vtkSlicerCommonInterface::RegisterObjectWithTcl(vtkObject* obj, const char*
 //-----------------------------------------------------------------------------
 void vtkSlicerCommonInterface::InitializePythonViaTcl(Tcl_Interp* interp, int argc, char **argv)
 {
-
 #if defined(Slicer3_USE_KWWIDGETS) && defined(Slicer3_USE_PYTHON)
   // Initialize Python
-
-  #if defined(_WIN32) || defined(WIN32)
-  #define PathSep ";"
-  #else
-  #define PathSep ":"
-  #endif
-
+#if defined(_WIN32) || defined(WIN32)
+#define PathSep ";"
+#else
+#define PathSep ":"
+#endif
   vtksys_stl::string slicerHome;
-  if ( !vtksys::SystemTools::GetEnv("Slicer3_HOME", slicerHome) )
+  if (!vtksys::SystemTools::GetEnv("Slicer3_HOME", slicerHome))
     {
     slicerHome = std::string(this->GetBinDirectory()) + "/..";
     slicerHome = vtksys::SystemTools::CollapseFullPath(slicerHome.c_str());
@@ -189,14 +204,15 @@ void vtkSlicerCommonInterface::InitializePythonViaTcl(Tcl_Interp* interp, int ar
   std::string pythonEnv = "PYTHONPATH=";
 
   const char* existingPythonEnv = vtksys::SystemTools::GetEnv("PYTHONPATH");
-  if ( existingPythonEnv )
+  if (existingPythonEnv)
     {
-    pythonEnv += std::string ( existingPythonEnv ) + PathSep;
+    pythonEnv += std::string(existingPythonEnv) + PathSep;
     }
 
-  pythonEnv += slicerHome + "/" + Slicer3_INSTALL_LIB_DIR + "/SlicerBaseGUI/Python" + PathSep;
+  pythonEnv += slicerHome + "/" + Slicer3_INSTALL_LIB_DIR
+      + "/SlicerBaseGUI/Python" + PathSep;
   pythonEnv += slicerHome + "/" + Slicer3_INSTALL_PLUGINS_BIN_DIR + PathSep;
-  vtkKWApplication::PutEnv(const_cast <char *> (pythonEnv.c_str()));
+  vtkKWApplication::PutEnv(const_cast<char *> (pythonEnv.c_str()));
 
   Py_Initialize();
   PySys_SetArgv(argc, argv);
@@ -212,36 +228,39 @@ void vtkSlicerCommonInterface::InitializePythonViaTcl(Tcl_Interp* interp, int ar
   init_slicer();
   PyObject* v;
 
-  std::vector<std::string> pythonInitStrings;
+  std::vector < std::string > pythonInitStrings;
 
   pythonInitStrings.push_back(std::string("import _tkinter;"));
   pythonInitStrings.push_back(std::string("import Tkinter;"));
   pythonInitStrings.push_back(std::string("import sys;"));
   pythonInitStrings.push_back(std::string("from os.path import join as j;"));
   pythonInitStrings.push_back(std::string("tk = Tkinter.Tk();"));
-  pythonInitStrings.push_back(std::string("sys.path.append ( j('" + slicerHome + "','" + Slicer3_INSTALL_LIB_DIR + "', 'SlicerBaseGUI', 'Python')" + " );"));
-  pythonInitStrings.push_back(std::string("sys.path.append ( j('" + slicerHome + "','" + Slicer3_INSTALL_PLUGINS_BIN_DIR + "') );"));
+  pythonInitStrings.push_back(std::string("sys.path.append ( j('" + slicerHome
+      + "','" + Slicer3_INSTALL_LIB_DIR + "', 'SlicerBaseGUI', 'Python')"
+      + " );"));
+  pythonInitStrings.push_back(std::string("sys.path.append ( j('" + slicerHome
+      + "','" + Slicer3_INSTALL_PLUGINS_BIN_DIR + "') );"));
 
   /*
-  std::string TkinitString = "import Tkinter, sys;"
-    "from os.path import join as j;"
-    "tk = Tkinter.Tk();"
-    "sys.path.append ( j('"
-    + slicerHome + "','" + Slicer3_INSTALL_LIB_DIR + "', 'SlicerBaseGUI', 'Python')"
-    + " );\n"
-    "sys.path.append ( j('"
-    + slicerHome + "','" + Slicer3_INSTALL_PLUGINS_BIN_DIR
-    + "') );\n";
-    */
+   std::string TkinitString = "import Tkinter, sys;"
+   "from os.path import join as j;"
+   "tk = Tkinter.Tk();"
+   "sys.path.append ( j('"
+   + slicerHome + "','" + Slicer3_INSTALL_LIB_DIR + "', 'SlicerBaseGUI', 'Python')"
+   + " );\n"
+   "sys.path.append ( j('"
+   + slicerHome + "','" + Slicer3_INSTALL_PLUGINS_BIN_DIR
+   + "') );\n";
+   */
 
   std::vector<std::string>::iterator strIt;
   strIt = pythonInitStrings.begin();
   for (; strIt != pythonInitStrings.end(); strIt++)
     {
     v = PyRun_String( (*strIt).c_str(),
-                      Py_file_input,
-                      PythonDictionary,
-                      PythonDictionary );
+        Py_file_input,
+        PythonDictionary,
+        PythonDictionary );
     if (v == NULL)
       {
       PyObject *exception, *v, *tb;
@@ -264,14 +283,20 @@ void vtkSlicerCommonInterface::InitializePythonViaTcl(Tcl_Interp* interp, int ar
           cout << "V: " << v_string << endl;
           tb_string = PyString_AS_STRING(PyObject_Str(tb_s));
           cout << "TB: " << tb_string << endl;
-          Py_DECREF ( exception_s );
-          Py_DECREF ( v_s );
-          Py_DECREF ( tb_s );
-          Py_DECREF ( exception );
-          Py_DECREF ( v );
-          if ( tb )
+          Py_DECREF ( exception_s )
+            ;
+          Py_DECREF ( v_s )
+            ;
+          Py_DECREF ( tb_s )
+            ;
+          Py_DECREF ( exception )
+            ;
+          Py_DECREF ( v )
+            ;
+          if (tb)
             {
-            Py_DECREF ( tb );
+            Py_DECREF ( tb )
+              ;
             }
           }
         }
@@ -287,9 +312,8 @@ void vtkSlicerCommonInterface::InitializePythonViaTcl(Tcl_Interp* interp, int ar
       }
     }
 
-  vtkSlicerApplication::GetInstance()->InitializePython(
-    (void*)PythonModule, (void*)PythonDictionary);
-
+  vtkSlicerApplication::GetInstance()->InitializePython((void*) PythonModule,
+      (void*) PythonDictionary);
 
 #endif
 
@@ -311,8 +335,8 @@ void vtkSlicerCommonInterface::EvaluatePython(const char* command)
   //command = "from Slicer import slicer; print slicer.vtkSlicerVolumesLogic();";
 
   PyObject* v = PyRun_String( command,
-                    Py_file_input,
-                    PythonDictionary,PythonDictionary);
+      Py_file_input,
+      PythonDictionary,PythonDictionary);
   if (v == NULL)
     {
     PyErr_Print();
@@ -322,13 +346,25 @@ void vtkSlicerCommonInterface::EvaluatePython(const char* command)
 
 }
 
-
 //-----------------------------------------------------------------------------
 const char* vtkSlicerCommonInterface::GetApplicationTclName()
 {
 #ifdef Slicer3_USE_KWWIDGETS
 
+  // Slicer3
   return this->GetTclNameFromPointer(vtkSlicerApplication::GetInstance());
+
+#else
+
+  // Slicer4
+  qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
+
+  // here we can choose our own tcl name
+  const char* name = this->randomStrGen(8).c_str();
+
+  py->addObjectToPythonMain(name, qSlicerApplication::application());
+
+  return name;
 
 #endif
 
@@ -362,17 +398,18 @@ const char* vtkSlicerCommonInterface::GetBinDirectory()
   // Slicer3
   return vtkSlicerApplication::GetInstance()->GetBinDir();
 
-//#else
+#else
 
   // Slicer4
-  //return qSlicerApplication::application()->temporaryPath().toLatin1();
+  QString slicerDir = qSlicerApplication::application()->slicerHome();
+  slicerDir += "/bin/";
+  return slicerDir.toLatin1();
 
 #endif
 
   return 0;
 
 }
-
 
 //-----------------------------------------------------------------------------
 const char* vtkSlicerCommonInterface::GetRepositoryRevision()
@@ -411,7 +448,8 @@ vtkHTTPHandler* vtkSlicerCommonInterface::GetHTTPHandler(vtkMRMLScene* scene)
 #ifdef Slicer3_USE_KWWIDGETS
 
   // Slicer3
-  return vtkHTTPHandler::SafeDownCast(scene->FindURIHandlerByName("HTTPHandler"));
+  return vtkHTTPHandler::SafeDownCast(
+      scene->FindURIHandlerByName("HTTPHandler"));
 
 #else
 
@@ -447,9 +485,19 @@ void vtkSlicerCommonInterface::DestroySlicerApplication()
 
   if (app)
     {
-      app->Exit();
-      app->Delete();
-      app = NULL;
+    app->Exit();
+    app->Delete();
+    app = NULL;
+    }
+
+#else
+
+  qSlicerApplication* app = qSlicerApplication::application();
+
+  if (app)
+    {
+    delete app;
+    app = NULL;
     }
 
 #endif
@@ -463,7 +511,8 @@ void vtkSlicerCommonInterface::AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlic
 #ifdef Slicer3_USE_KWWIDGETS
 
   // Slicer3
-  Slicer3Helper::AddDataIOToScene(mrmlScene,vtkSlicerApplication::GetInstance(),appLogic,dataIOManagerLogic);
+  Slicer3Helper::AddDataIOToScene(mrmlScene,
+      vtkSlicerApplication::GetInstance(), appLogic, dataIOManagerLogic);
 
 #endif
 
@@ -476,8 +525,22 @@ void vtkSlicerCommonInterface::RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vt
 #ifdef Slicer3_USE_KWWIDGETS
 
   // Slicer3
-  Slicer3Helper::RemoveDataIOFromScene(mrmlScene,dataIOManagerLogic);
+  Slicer3Helper::RemoveDataIOFromScene(mrmlScene, dataIOManagerLogic);
 
 #endif
 
+}
+
+//-----------------------------------------------------------------------------
+std::string vtkSlicerCommonInterface::randomStrGen(int length)
+{
+  static std::string charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  std::string result;
+  result.resize(length);
+
+  for (int i = 0; i < length; i++)
+    result[i] = charset[rand() % charset.length()];
+
+  return result;
 }

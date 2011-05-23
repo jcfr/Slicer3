@@ -201,17 +201,6 @@ install(FILES
   DESTINATION ${Slicer3_INSTALL_MODULES_INCLUDE_DIR}/${PROJECT_NAME} COMPONENT Development
   )
 
-
-
-# --------------------------------------------------------------------------
-# Testing
-
-  if(BUILD_TESTING)
-      ADD_SUBDIRECTORY(Testing)
-  endif(BUILD_TESTING)
-
-
-
 # --------------------------------------------------------------------------
 # Install the testing data
 
@@ -222,6 +211,13 @@ install(DIRECTORY
     )
 
 endif(EM_Slicer3_FOUND)
+
+# --------------------------------------------------------------------------
+# Testing
+
+if(BUILD_TESTING)
+    ADD_SUBDIRECTORY(Testing)
+endif(BUILD_TESTING)
 
 # --------------------------------------------------------------------------
 # Command line application
