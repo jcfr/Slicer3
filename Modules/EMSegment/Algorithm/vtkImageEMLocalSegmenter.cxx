@@ -785,7 +785,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
   for (idx1 = 0; idx1 < this->NumInputImages ; idx1++){  
     if (this->CheckInputImage(inData[idx1],this->GetInput(0)->GetScalarType(), this->GetInput(0)->GetSpacing(), idx1+1)) return;
     switch (this->GetInput(idx1)->GetScalarType()) {
-      vtkTemplateMacro6(vtkImageEMLocalSegmenterReadInputChannel,this, inData[idx1], (VTK_TT *)(inData[idx1]->GetScalarPointerForExtent(this->Extent)),this->Extent,InputVector,idx1);
+      vtkTemplateMacro(vtkImageEMLocalSegmenterReadInputChannel(this, inData[idx1], (VTK_TT *)(inData[idx1]->GetScalarPointerForExtent(this->Extent)),this->Extent,InputVector,idx1));
     default:
       vtkEMAddErrorMessage( "Execute: Unknown ScalarType");
       return;
@@ -823,7 +823,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
   // -----------------------------------------------------
   outPtr = outData->GetScalarPointerForExtent(outData->GetExtent());
   switch (this->GetOutput()->GetScalarType()) {
-    vtkTemplateMacro5(vtkImageEMLocalSegmenterExecute, this, InputVector, outData, (VTK_TT*)outPtr,this->Extent);
+    vtkTemplateMacro(vtkImageEMLocalSegmenterExecute(this, InputVector, outData, (VTK_TT*)outPtr,this->Extent));
   default:
     vtkEMAddErrorMessage("Execute: Unknown ScalarType");
     return;
