@@ -120,8 +120,10 @@ protected:
   vtkKWFrame *TargetControlFrame;
   vtkKWMatrixWidgetWithLabel* NeedlePositionMatrix;
   vtkKWMatrixWidgetWithLabel* NeedleOrientationMatrix;
-  vtkKWPushButton *MoveButton;
-  vtkKWPushButton *StopButton;
+
+  //vtkKWPushButton *MoveButton;
+  //vtkKWPushButton *StopButton;
+  vtkKWPushButton *GenerateListButton;
 
   vtkKWText *Message;
 

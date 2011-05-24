@@ -122,8 +122,7 @@ vtkProstateNavStepTargetingTemplate::vtkProstateNavStepTargetingTemplate()
   this->TargetControlFrame=NULL;
   this->NeedlePositionMatrix=NULL;
   //this->NeedleOrientationMatrix=NULL;
-  this->MoveButton=NULL;
-  this->StopButton=NULL;
+  this->GenerateListButton=NULL;
 
   this->Message=NULL;
 
@@ -167,8 +166,7 @@ vtkProstateNavStepTargetingTemplate::~vtkProstateNavStepTargetingTemplate()
   DELETE_IF_NULL_WITH_SETPARENT_NULL(TargetControlFrame);
   DELETE_IF_NULL_WITH_SETPARENT_NULL(NeedlePositionMatrix);
   //DELETE_IF_NULL_WITH_SETPARENT_NULL(NeedleOrientationMatrix);
-  DELETE_IF_NULL_WITH_SETPARENT_NULL(MoveButton);
-  DELETE_IF_NULL_WITH_SETPARENT_NULL(StopButton);
+  DELETE_IF_NULL_WITH_SETPARENT_NULL(GenerateListButton);
 
   DELETE_IF_NULL_WITH_SETPARENT_NULL(Message);
 }
@@ -488,32 +486,22 @@ void vtkProstateNavStepTargetingTemplate::ShowTargetControlFrame()
     this->Message->SetReliefToGroove();
     this->Message->SetFont("times 12 bold");
     this->Message->SetForegroundColor(0.0, 0.0, 0.0);
-
     }
   this->Script("pack %s -side top -anchor nw -expand n -fill x -padx 2 -pady 6", 
                 this->Message->GetWidgetName());
 
-  if (!this->MoveButton)
+  if (!this->GenerateListButton)
     {
-    this->MoveButton = vtkKWPushButton::New();
-    this->MoveButton->SetParent (this->TargetControlFrame);
-    this->MoveButton->Create();
-    this->MoveButton->SetText("Move");
-    this->MoveButton->SetBalloonHelpString("Move the robot to the position");
+    this->GenerateListButton = vtkKWPushButton::New();
+    this->GenerateListButton->SetParent (this->TargetControlFrame);
+    this->GenerateListButton->Create();
+    this->GenerateListButton->SetText("Generate List");
+    this->GenerateListButton->SetBalloonHelpString("Generate a list of targets");
     }
 
-  if (!this->StopButton)
-    {
-    this->StopButton = vtkKWPushButton::New();
-    this->StopButton->SetParent (this->TargetControlFrame);
-    this->StopButton->Create();
-    this->StopButton->SetText("Stop");
-    this->StopButton->SetBalloonHelpString("Stop the robot");
-    }
+  this->Script("pack %s -side left -anchor nw -expand n -padx 2 -pady 2",
+               this->GenerateListButton->GetWidgetName());
 
-  this->Script("pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2",
-               this->MoveButton->GetWidgetName(),
-               this->StopButton->GetWidgetName());
 
 }
 
@@ -533,51 +521,10 @@ void vtkProstateNavStepTargetingTemplate::ProcessGUIEvents(vtkObject *caller,
   // -----------------------------------------------------------------
   // Move Button Pressed
 
-  if (this->MoveButton == vtkKWPushButton::SafeDownCast(caller)
+  if (this->GenerateListButton == vtkKWPushButton::SafeDownCast(caller)
       && event == vtkKWPushButton::InvokedEvent)
     {
-    if (this->Logic && this->NeedlePositionMatrix /*&& this->NeedleOrientationMatrix*/)
-      {
-      float position[3];   // position parameters
-
-      vtkKWMatrixWidget* matrix = this->NeedlePositionMatrix->GetWidget();
-      position[0] = (float) matrix->GetElementValueAsDouble(0, 0);
-      position[1] = (float) matrix->GetElementValueAsDouble(0, 1);
-      position[2] = (float) matrix->GetElementValueAsDouble(0, 2);
-
-      vtkMRMLNode* node = this->GetLogic()->GetApplicationLogic()->GetMRMLScene()->GetNodeByID(this->GetProstateNavManager()->GetRobotNode()->GetTargetTransformNodeID());
-      vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(node);
-
-      if (transformNode)
-        {
-        vtkMatrix4x4* matrix = transformNode->GetMatrixTransformToParent();
-        matrix->Identity();
-
-        matrix->SetElement(0, 3, position[0]);
-        matrix->SetElement(1, 3, position[1]);
-        matrix->SetElement(2, 3, position[2]);
-
-        vtkMatrix4x4* transformToParent = transformNode->GetMatrixTransformToParent();
-        transformToParent->DeepCopy(matrix);
-
-        // Send move to command 
-        this->GetProstateNavManager()->GetRobotNode()->MoveTo(transformNode->GetID());
-        this->UpdateGUI();
-
-        }
-      }
     }
-
-  // -----------------------------------------------------------------
-  // Stop Button Pressed
-
-  else if (this->StopButton == vtkKWPushButton::SafeDownCast(caller)
-      && event == vtkKWPushButton::InvokedEvent)
-    {
-
-    }
-
-  /////////
 
   vtkMRMLProstateNavManagerNode *mrmlNode = this->GetGUI()->GetProstateNavManagerNode();
 
@@ -672,6 +619,14 @@ void vtkProstateNavStepTargetingTemplate::ProcessGUIEvents(vtkObject *caller,
       this->AddTargetsOnClickButton->SetSelectedState(1);
     }
   }
+
+  if (this->TargetList->GetWidget() == vtkKWMultiColumnList::SafeDownCast(caller)
+      && event == vtkKWMultiColumnList::SelectionChangedEvent)
+    {
+      
+      
+    }
+
 }
 
 
@@ -881,6 +836,31 @@ void vtkProstateNavStepTargetingTemplate::OnMultiColumnListSelectionChanged()
     //matrix->SetElementValueAsDouble(0, 3, wxyz[3]);
           
     this->GetProstateNavManager()->SetCurrentTargetIndex(targetIndex);
+
+    if ( this->Logic )
+      {
+      vtkMRMLNode* node = this->GetLogic()->GetApplicationLogic()->GetMRMLScene()
+        ->GetNodeByID(this->GetProstateNavManager()->GetRobotNode()->GetTargetTransformNodeID());
+      vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::SafeDownCast(node);
+      
+      if (transformNode)
+        {
+        vtkMatrix4x4* matrix = transformNode->GetMatrixTransformToParent();
+        matrix->Identity();
+      
+        matrix->SetElement(0, 3, xyz[0]);
+        matrix->SetElement(1, 3, xyz[1]);
+        matrix->SetElement(2, 3, xyz[2]);
+      
+        vtkMatrix4x4* transformToParent = transformNode->GetMatrixTransformToParent();
+        transformToParent->DeepCopy(matrix);
+      
+        // Send move to command 
+        this->GetProstateNavManager()->GetRobotNode()->MoveTo(transformNode->GetID());
+        this->UpdateGUI();
+      
+        }
+      }
     }
 }
 
@@ -1034,13 +1014,9 @@ void vtkProstateNavStepTargetingTemplate::AddGUIObservers()
     {
     this->DeleteButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
     }
-  if (this->MoveButton)
+  if (this->GenerateListButton)
     {
-    this->MoveButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
-    }
-  if (this->StopButton)
-    {
-    this->StopButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+    this->GenerateListButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
     }
   if (this->TargetList)
     {
@@ -1087,13 +1063,9 @@ void vtkProstateNavStepTargetingTemplate::RemoveGUIObservers()
     {
     this->DeleteButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
-  if (this->MoveButton)
+  if (this->GenerateListButton)
     {
-    this->MoveButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
-    }
-  if (this->StopButton)
-    {
-    this->StopButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->GenerateListButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
   if (this->TargetList)
     {
