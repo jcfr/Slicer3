@@ -109,6 +109,7 @@ include_directories(
   ${EMSegment_BINARY_DIR}
   ${EMSegment_SOURCE_DIR}/MRML
   ${EMSegment_SOURCE_DIR}/Algorithm
+  ${EMSegment_SOURCE_DIR}/Algorithm/LLSBiasCorrector
   ${EMSegment_SOURCE_DIR}/ImageFilters
   ${EMSegment_SOURCE_DIR}/Registration
   ${EMSegment_SOURCE_DIR}/AMF
