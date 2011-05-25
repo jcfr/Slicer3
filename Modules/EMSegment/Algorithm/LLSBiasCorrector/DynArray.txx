@@ -4,7 +4,10 @@
 
 #include "DynArray.h"
 
-#include "muException.h"
+#define muExceptionMacro(x) \
+  { \
+    std::cerr << "ERROR: " x << std::endl; \
+  }
 
 template <class T>
 T*
