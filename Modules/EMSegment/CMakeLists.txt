@@ -6,6 +6,8 @@ IF(COMMAND CMAKE_POLICY)
 ENDIF(COMMAND CMAKE_POLICY)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
+#SET(EM_Slicer4_FOUND ON)
+
 # --------------------------------------------------------------------------
 # Find Slicer3 or Slicer4
 
@@ -20,6 +22,8 @@ if(NOT EM_Slicer4_FOUND)
   endif(NOT Slicer3_SOURCE_DIR)
   
   set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
+
+  SET(EM_SHARE_DIR ${Slicer3_INSTALL_MODULES_SHARE_DIR})
 
 else(NOT EM_Slicer4_FOUND)
   
@@ -38,6 +42,8 @@ else(NOT EM_Slicer4_FOUND)
     FIND_PACKAGE(Slicer REQUIRED)
     INCLUDE(${Slicer_USE_FILE})
   ENDIF(NOT Slicer_SOURCE_DIR)
+
+  SET(EM_SHARE_DIR ${Slicer_INSTALL_QTLOADABLEMODULES_SHARE_DIR})
 
 endif(NOT EM_Slicer4_FOUND)
 
@@ -126,8 +132,63 @@ include_directories(
   ${AtlasCreatorCxx_BINARY_DIR}  
   )
 
-if(EM_Slicer3_FOUND)
 
+
+ADD_CUSTOM_TARGET(copytasks ALL
+  ${CMAKE_COMMAND}
+  -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/Tasks
+  -DDST=${CMAKE_BINARY_DIR}/${EM_SHARE_DIR}/${PROJECT_NAME}/
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/copytasks.cmake
+)
+
+install(
+  DIRECTORY Tasks
+  DESTINATION ${EM_SHARE_DIR}/${PROJECT_NAME}/
+  FILES_MATCHING PATTERN "*"
+)
+
+
+file(GLOB TCLFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Tcl/*.tcl" )
+# MESSAGE(STATUS  "${TCLFILES} ${CMAKE_CURRENT_SOURCE_DIR}")
+foreach(file ${TCLFILES})
+ configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/${file}
+    ${CMAKE_BINARY_DIR}/${EM_SHARE_DIR}/${PROJECT_NAME}/${file}
+    COPYONLY)
+endforeach(file)
+# MESSAGE(STATUS  "${TCLFILES} ${CMAKE_CURRENT_SOURCE_DIR}")
+
+install(
+  FILES ${TCLFILES}
+  DESTINATION ${EM_SHARE_DIR}/${PROJECT_NAME}/Tcl
+)
+
+### this code will be replaced by the cmake command 'file(COPY ....)' below 
+file(GLOB TASKFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Tasks/*.tcl" "Tasks/*.mrml")
+foreach(file ${TASKFILES})
+ configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/${file}
+    ${CMAKE_BINARY_DIR}/${EM_SHARE_DIR}/${PROJECT_NAME}/${file}
+    COPYONLY)
+endforeach(file)
+#
+#install(
+#  FILES ${TASKFILES}
+#  DESTINATION ${EM_SHARE_DIR}/${PROJECT_NAME}/Tasks
+#)
+###
+
+# --------------------------------------------------------------------------
+# Install the testing data
+
+install(DIRECTORY
+    Testing/TestData
+    DESTINATION ${EM_SHARE_DIR}/${PROJECT_NAME}/Testing COMPONENT Development
+    PATTERN ".svn" EXCLUDE
+    )
+
+
+if(EM_Slicer3_FOUND)
 
 #-----------------------------------------------------------------------------
 ## Python, needed to access the AtlasCreator
@@ -145,71 +206,16 @@ endif(Slicer3_USE_PYTHON AND PYTHON_INCLUDE_PATH)
 include_directories(${dir_list})
 #-----------------------------------------------------------------------------
 
-
-
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentConfigure.h.in 
   ${CMAKE_CURRENT_BINARY_DIR}/vtkEMSegmentConfigure.h
   )
-
-ADD_CUSTOM_TARGET(copytasks ALL
-  ${CMAKE_COMMAND}
-  -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/Tasks
-  -DDST=${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/
-  -P ${CMAKE_CURRENT_SOURCE_DIR}/copytasks.cmake
-)
-
-install(
-  DIRECTORY Tasks
-  DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/
-  FILES_MATCHING PATTERN "*"
-)
-
-
-file(GLOB TCLFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Tcl/*.tcl" )
-# MESSAGE(STATUS  "${TCLFILES} ${CMAKE_CURRENT_SOURCE_DIR}")
-foreach(file ${TCLFILES})
- configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/${file}
-    ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/${file}
-    COPYONLY)
-endforeach(file)
-# MESSAGE(STATUS  "${TCLFILES} ${CMAKE_CURRENT_SOURCE_DIR}")
-
-install(
-  FILES ${TCLFILES}
-  DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/Tcl
-)
-
-### this code will be replaced by the cmake command 'file(COPY ....)' below 
-file(GLOB TASKFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Tasks/*.tcl" "Tasks/*.mrml")
-foreach(file ${TASKFILES})
- configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/${file}
-    ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/${file}
-    COPYONLY)
-endforeach(file)
-#
-#install(
-#  FILES ${TASKFILES}
-#  DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/Tasks
-#)
-###
 
 install(FILES 
   ${headers} 
   "${CMAKE_CURRENT_BINARY_DIR}/vtkEMSegmentConfigure.h"
   DESTINATION ${Slicer3_INSTALL_MODULES_INCLUDE_DIR}/${PROJECT_NAME} COMPONENT Development
   )
-
-# --------------------------------------------------------------------------
-# Install the testing data
-
-install(DIRECTORY
-    Testing/TestData
-    DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/Testing COMPONENT Development
-    PATTERN ".svn" EXCLUDE
-    )
 
 endif(EM_Slicer3_FOUND)
 

@@ -45,12 +45,8 @@ int main(int argc, char** argv)
 
   // interp has to be set to initialize vtkSlicer
   Tcl_Interp *interp =CreateTclInterp(argc,argv,slicerCommon);
-  if (!interp)
-    {
-      return EXIT_FAILURE;
-    }
 
-  vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,slicerCommon,argc,argv);
+  vtkSlicerApplicationLogic* appLogic = InitializeApplication(slicerCommon,argc,argv);
   if (!appLogic)
     {
       CleanUp(appLogic,slicerCommon);

@@ -69,13 +69,7 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv, vtkSlicerCommonInterface *sli
     return NULL;
     }
 
-  Tcl_Interp *interp = slicerCommon->GetTclInterpeter(argc,argv,&cout);
-
-  if (!interp)
-    {
-      cout << "Error: InitializeTcl failed" << endl;
-      return NULL; 
-    }
+  Tcl_Interp *interp = slicerCommon->Startup(argc,argv,&cout);
 
 #ifdef Slicer3_USE_KWWIDGETS
   // This is necessary to load in EMSEgmenter package in TCL interp.
@@ -109,7 +103,7 @@ std::string StripBackslashes(const std::string& s)
 }
 #endif
 
-vtkSlicerApplicationLogic* InitializeApplication(Tcl_Interp *interp, vtkSlicerCommonInterface *slicerCommon, int argc, char** argv)
+vtkSlicerApplicationLogic* InitializeApplication(vtkSlicerCommonInterface *slicerCommon, int argc, char** argv)
 {
   // SLICER_HOME
   cout << "Setting SLICER home: " << endl;

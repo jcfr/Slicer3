@@ -130,10 +130,12 @@ int main(int argc, char** argv)
 
   // ================== Tcl  ==================
   Tcl_Interp *interp =CreateTclInterp(argc,argv,slicerCommon);
+#ifdef Slicer3_USE_KWWIDGETS
   if (!interp)
     {
       return EXIT_FAILURE;
     }
+#endif
    
 #ifdef Slicer3_USE_KWWIDGETS
   Atlascreatorcxxmodule_Init(interp);
@@ -141,7 +143,7 @@ int main(int argc, char** argv)
 #endif
 
   // ================== Application  ==================
-  vtkSlicerApplicationLogic* appLogic = InitializeApplication(interp,slicerCommon,argc,argv);
+  vtkSlicerApplicationLogic* appLogic = InitializeApplication(slicerCommon,argc,argv);
   if (!appLogic)
     {
       CleanUp(appLogic,slicerCommon);

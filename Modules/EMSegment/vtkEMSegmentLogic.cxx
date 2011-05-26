@@ -2663,7 +2663,9 @@ vtkstd::string  vtkEMSegmentLogic::GetTclTaskDirectory()
 
   if (tmp_dir)
     {
-      vtkstd::string copied_task_dir(std::string(tmp_dir) + std::string("/EMSegmentTaskCopy"));
+      vtkstd::string copied_task_dir;
+      copied_task_dir += tmp_dir;
+      copied_task_dir += "/EMSegmentTaskCopy";
 
       /**
         * Copy content directory to another directory with all files and
@@ -2674,7 +2676,6 @@ vtkstd::string  vtkEMSegmentLogic::GetTclTaskDirectory()
        // copy not always, only new files
        // Later do automatically
       vtkstd::string orig_task_dir = vtkstd::string(this->GetModuleShareDirectory()) + vtkstd::string("/Tasks");
-
 
       if ( !vtksys::SystemTools::CopyADirectory(orig_task_dir.c_str(), copied_task_dir.c_str(), false) )
       {

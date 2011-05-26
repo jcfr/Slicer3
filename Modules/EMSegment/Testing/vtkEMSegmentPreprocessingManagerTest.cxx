@@ -245,7 +245,7 @@ int main(int vtkNotUsed(argc), char** argv)
 
     //
     // start actual segmentation
-    vtkSlicerCommonInterface* common;
+    vtkSlicerCommonInterface* common = vtkSlicerCommonInterface::New();
     common->PromptBeforeExitOff();
   
     vtkSlicerApplicationLogic* appLogic = vtkSlicerApplicationLogic::New();
@@ -257,6 +257,7 @@ int main(int vtkNotUsed(argc), char** argv)
 
     common->DestroySlicerApplication();
  
+    common->Delete();
 
     if (m->GetTargetNumberOfSelectedVolumes() != 2)
       {

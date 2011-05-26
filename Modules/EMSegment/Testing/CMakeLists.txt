@@ -176,13 +176,31 @@ if(NOT DISABLE_CXX_TESTING)
   # WRAPPED_EXE_PREFIX: path to command line utilities that install with
   # slicer
   ############################################################################
-  set(Slicer3_EXE ${Slicer3_BINARY_DIR}/Slicer3)
-  set(WRAPPED_TEST_EXE_PREFIX --launch ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-  set(WRAPPED_EXE_PREFIX --launch ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_PLUGINS_BIN_DIR})
-  if(WIN32)
-    set(WRAPPED_EXE_PREFIX ${WRAPPED_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
-    set(WRAPPED_TEST_EXE_PREFIX ${WRAPPED_TEST_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
-  endif(WIN32)
+  if(NOT EM_Slicer4_FOUND)
+
+    # Slicer3
+  
+    set(Slicer3_EXE ${Slicer3_BINARY_DIR}/Slicer3)
+    set(WRAPPED_TEST_EXE_PREFIX --launch ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    set(WRAPPED_EXE_PREFIX --launch ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_PLUGINS_BIN_DIR})
+    if(WIN32)
+      set(WRAPPED_EXE_PREFIX ${WRAPPED_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
+      set(WRAPPED_TEST_EXE_PREFIX ${WRAPPED_TEST_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
+    endif(WIN32)
+    
+  else(NOT EM_Slicer4_FOUND)
+  
+    # Slicer4
+  
+    set(Slicer3_EXE ${Slicer_BINARY_DIR}/Slicer4)
+    set(WRAPPED_TEST_EXE_PREFIX --launch ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    set(WRAPPED_EXE_PREFIX --launch ${Slicer_BINARY_DIR}/${Slicer_INSTALL_PLUGINS_BIN_DIR})
+    if(WIN32)
+      set(WRAPPED_EXE_PREFIX ${WRAPPED_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
+      set(WRAPPED_TEST_EXE_PREFIX ${WRAPPED_TEST_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
+    endif(WIN32)
+  
+  endif(NOT EM_Slicer4_FOUND)
 
   ############################################################################
   #

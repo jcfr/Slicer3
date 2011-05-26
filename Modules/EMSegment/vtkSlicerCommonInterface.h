@@ -48,7 +48,7 @@ public:
   vtkTypeMacro(vtkSlicerCommonInterface, vtkObject);
 
 //BTX
-  Tcl_Interp* GetTclInterpeter(int argc, char *argv[], ostream *err = 0);
+  Tcl_Interp* Startup(int argc, char *argv[], ostream *err = 0);
   int SourceTclFile(const char *tclFile);
   const char* EvaluateTcl(const char* command);
   const char* GetTclNameFromPointer(vtkObject *obj);
@@ -78,6 +78,9 @@ private:
   vtkSlicerCommonInterface(const vtkSlicerCommonInterface&);
   void operator=(const vtkSlicerCommonInterface&);
 
+  //BTX
+  std::string StringHolder;
+  //ETX
 
 };
 

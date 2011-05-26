@@ -31,21 +31,29 @@ vtkSlicerCommonInterface::vtkSlicerCommonInterface()
   // initialize random seed
   srand(time(NULL));
 
+  this->StringHolder = std::string("");
+
 }
 
 //----------------------------------------------------------------------------
 vtkSlicerCommonInterface::~vtkSlicerCommonInterface()
 {
 
+
 }
 
 //----------------------------------------------------------------------------
-Tcl_Interp* vtkSlicerCommonInterface::GetTclInterpeter(int argc, char *argv[], ostream *err)
+Tcl_Interp* vtkSlicerCommonInterface::Startup(int argc, char *argv[], ostream *err)
 {
 #ifdef Slicer3_USE_KWWIDGETS
 
   // Slicer3
   return vtkSlicerApplication::InitializeTcl(argc, argv, err);
+
+#else
+
+  // Slicer4
+  qSlicerApplication* app = new qSlicerApplication(argc,argv);
 
 #endif
 
@@ -83,6 +91,9 @@ int vtkSlicerCommonInterface::SourceTclFile(const char *tclFile)
 
     py->executeString(tclCall.arg(tclFile));
 
+    }
+  else
+    {
     return 1;
     }
 
@@ -395,12 +406,14 @@ const char* vtkSlicerCommonInterface::GetTemporaryDirectory()
 #ifdef Slicer3_USE_KWWIDGETS
 
   // Slicer3
-  return vtkSlicerApplication::GetInstance()->GetTemporaryDirectory();
+  this->StringHolder = std::string(vtkSlicerApplication::GetInstance()->GetTemporaryDirectory());
+  return this->StringHolder.c_str();
 
 #else
 
   // Slicer4
-  return qSlicerApplication::application()->temporaryPath().toLatin1();
+  this->StringHolder = std::string(qSlicerApplication::application()->temporaryPath().toLatin1());
+  return this->StringHolder.c_str();
 
 #endif
 
@@ -513,6 +526,7 @@ void vtkSlicerCommonInterface::DestroySlicerApplication()
 
   if (app)
     {
+    app->exit();
     delete app;
     app = NULL;
     }
