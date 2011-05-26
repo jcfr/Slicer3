@@ -238,15 +238,15 @@ static void vtkImageEMLocalSegmenterReadInputChannel(vtkImageEMLocalSegmenter *s
     + LengthOfYDim *(SegmentationBoundaryMin[2] - 1);
 
   int BoundaryDataIncY = LengthOfXDim - ImageMaxX;
-  int BoundaryDataIncZ = LengthOfYDim - ImageMaxY *LengthOfXDim;
+  int BoundaryDataIncZ = LengthOfYDim - ImageMaxY * LengthOfXDim;
 
   in1Ptr += jump;
 
   // std::cerr << "-- jump " << jump << "BoundaryDataIncY " << BoundaryDataIncY << " BoundaryDataIncZ " << BoundaryDataIncZ << endl;
-  for (idxZ = 0; idxZ < ImageMaxZ ; idxZ++) { 
-    for (idxY = 0; idxY <  ImageMaxY; idxY++) {
+  for (idxZ = 0; idxZ < ImageMaxZ; idxZ++) { 
+    for (idxY = 0; idxY < ImageMaxY; idxY++) {
       for (idxR = 0; idxR < ImageMaxX; idxR++) {
-        if (double(* in1Ptr) >  IntensityCorrection) {
+        if (double(* in1Ptr) > IntensityCorrection) {
           InputVector[index][InputIndex] = log(float(* in1Ptr) +1);
         } else {
           InputVector[index][InputIndex] = 0.0;
@@ -266,7 +266,7 @@ static void vtkImageEMLocalSegmenterReadInputChannel(vtkImageEMLocalSegmenter *s
 // --------------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------
-// Transferes the data wrom the working extent (that is only the area defined by the SegmentationBounday)
+// Transferes the data wrom the working extent (that is only the area defined by the SegmentationBoundary)
 // to the Extent of the output - if SliceNum > 0 then it will just print out one slice
 
 template <class TIn, class TOut>
