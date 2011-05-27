@@ -78,7 +78,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable LOGIC
 
         # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
-        set CMD "mktemp -u \"[$GUI GetTemporaryDirectory]/XXXXXX\""
+        set CMD "mktemp -u \"[$LOGIC GetTemporaryDirectory]/XXXXXX\""
         set basefilename [ eval exec $CMD ]
 
         set filename ""
@@ -113,7 +113,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable LOGIC
 
         # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
-        set CMD "mktemp -u \"[$GUI GetTemporaryDirectory]/XXXXXX\""
+        set CMD "mktemp -u \"[$LOGIC GetTemporaryDirectory]/XXXXXX\""
         set basefilename [ eval exec $CMD ]
 
         set filename ""
@@ -147,7 +147,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable LOGIC
 
         # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
-        set CMD "mktemp -u -d \"[$GUI GetTemporaryDirectory]/XXXXXX\""
+        set CMD "mktemp -u -d \"[$LOGIC GetTemporaryDirectory]/XXXXXX\""
         set basefilename [ eval exec $CMD ]
 
         set dirname ""
@@ -776,7 +776,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set deformationFieldFilename [ CreateTemporaryFileNameForNode $DFNode ]
 
-        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        set PLUGINS_DIR "[$LOGIC GetPluginsDirectory]"
         set CMDdeform "${PLUGINS_DIR}/BSplineToDeformationField"
         set CMDdeform "$CMDdeform --refImage \"$tmpReferenceVolumeFileName\""
         set CMDdeform "$CMDdeform --tfm \"$tmpTransformFileName\""
@@ -809,7 +810,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: == Resample Image CLI"
         $LOGIC PrintText "TCL: =========================================="
 
-        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        set PLUGINS_DIR "[$LOGIC GetPluginsDirectory]"
         set CMD "${PLUGINS_DIR}/BRAINSResample"
 
         set tmpInputVolumeFileName [WriteImageDataToTemporaryDir $inputVolumeNode ]
@@ -888,7 +890,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == SkullStripper"
 
-        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        
+        #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        set PLUGINS_DIR "[$LOGIC GetPluginsDirectory]"
 
         # initialize
         set alignedInputNode_SkullStripped ""
@@ -1659,7 +1663,8 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
 
-        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        set PLUGINS_DIR "[$LOGIC GetPluginsDirectory]"
 
         # First BRAINSFit call
 
@@ -2079,7 +2084,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Need to download file to temp directory
         # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
-        set CMD "mktemp -u \"[$GUI GetTemporaryDirectory]/XXXXXX\""
+        set CMD "mktemp -u \"[$LOGIC GetTemporaryDirectory]/XXXXXX\""
         catch { set basefilename [ eval exec $CMD ] } errmsg
         set NAME "_[file tail $URI]"
         set filename $basefilename$NAME
@@ -2164,7 +2169,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: == Generate ICC MASK (not yet implemented)"
         $LOGIC PrintText "TCL: =========================================="
         set EXE_DIR "$::env(Slicer3_HOME)/bin"
-        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        set PLUGINS_DIR "[$LOGIC GetPluginsDirectory]"
 
         # set CMD "$PLUGINS_DIR/DemonsRegistration --fixed_image $Scan2Image --moving_image $Scan1Image --output_image $Scan1ToScan2Image --output_field $Scan1ToScan2Deformation --num_levels 3 --num_iterations 20,20,20 --def_field_sigma 1 --use_histogram_matching --verbose"
 
@@ -2258,7 +2264,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: ==     N4ITKBiasFieldCorrectionCLI      =="
         $LOGIC PrintText "TCL: =========================================="
 
-        set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
+        set PLUGINS_DIR "[$LOGIC GetPluginsDirectory]"
         set CMD "${PLUGINS_DIR}/N4ITKBiasFieldCorrection"
 
         # initialize

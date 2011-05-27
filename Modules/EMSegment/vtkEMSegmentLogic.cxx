@@ -2656,6 +2656,18 @@ int vtkEMSegmentLogic::SourceTclFile(const char *tclFile)
 }
 
 //----------------------------------------------------------------------------
+const char* vtkEMSegmentLogic::GetTemporaryDirectory()
+{
+  return this->GetSlicerCommonInterface()->GetTemporaryDirectory();
+}
+
+//----------------------------------------------------------------------------
+const char* vtkEMSegmentLogic::GetPluginsDirectory()
+{
+  return this->GetSlicerCommonInterface()->GetPluginsDirectory();
+}
+
+//----------------------------------------------------------------------------
 vtkstd::string  vtkEMSegmentLogic::GetTclTaskDirectory()
 {
   //workaround for the mrml library, we need to have write access to this folder

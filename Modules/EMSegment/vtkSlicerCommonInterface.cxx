@@ -55,6 +55,10 @@ Tcl_Interp* vtkSlicerCommonInterface::Startup(int argc, char *argv[], ostream *e
   // Slicer4
   qSlicerApplication* app = new qSlicerApplication(argc,argv);
 
+
+  //bool exitWhenDone;
+  //app->initialize(exitWhenDone);
+
 #endif
 
   return 0;
@@ -80,7 +84,7 @@ int vtkSlicerCommonInterface::SourceTclFile(const char *tclFile)
 #ifdef Slicer_USE_PYTHONQT_WITH_TCL
 
   // Slicer4 and Tcl through Python activated
-  bool disablePython = qSlicerCoreApplication::testAttribute(qSlicerCoreApplication::AA_DisablePython);
+  bool disablePython = qSlicerApplication::testAttribute(qSlicerApplication::AA_DisablePython);
 
   if (!disablePython)
     {
@@ -118,7 +122,7 @@ const char* vtkSlicerCommonInterface::EvaluateTcl(const char* command)
 #ifdef Slicer_USE_PYTHONQT_WITH_TCL
 
   // Slicer4 and Tcl through Python activated
-  bool disablePython = qSlicerCoreApplication::testAttribute(qSlicerCoreApplication::AA_DisablePython);
+  bool disablePython = qSlicerApplication::testAttribute(qSlicerApplication::AA_DisablePython);
 
   if (!disablePython)
     {
@@ -151,17 +155,32 @@ const char* vtkSlicerCommonInterface::GetTclNameFromPointer(vtkObject *obj)
   return vtkKWTkUtilities::GetTclNameFromPointer(
       vtkSlicerApplication::GetInstance()->GetMainInterp(), obj);
 
-#else
+#endif
+
+#if defined(Slicer_USE_PYTHONQT)
 
   // Slicer4
-  qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
 
-  // here we can choose our own tcl name
-  const char* name = this->randomStrGen(8).c_str();
+  bool disablePython = qSlicerApplication::testAttribute(qSlicerApplication::AA_DisablePython);
 
-  py->addVTKObjectToPythonMain(name, obj);
+  if (!disablePython)
+    {
+    qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
 
-  return name;
+    // here we can choose our own tcl name
+    this->StringHolder = this->randomStrGen(8);
+
+    // Note: we can not register python variables on toplevel, so we use the namespace slicer
+    std::string pythonName = std::string("slicer." + this->StringHolder);
+
+    py->addVTKObjectToPythonMain(pythonName.c_str(), obj);
+
+    // register the python variable in Tcl
+    std::string registerCmd = "proc ::" + this->StringHolder + " {args} {::tpycl::methodCaller " + pythonName + " $args}";
+    this->EvaluateTcl(registerCmd.c_str());
+
+    return this->StringHolder.c_str();
+    }
 
 #endif
 
@@ -184,11 +203,18 @@ void vtkSlicerCommonInterface::RegisterObjectWithTcl(vtkObject* obj, const char*
 
   this->EvaluateTcl(cmd.str().c_str());
 
-#else
+#endif
+
+#if defined(Slicer_USE_PYTHONQT)
 
   // Slicer4
-  qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
-  py->addVTKObjectToPythonMain(name, obj);
+  bool disablePython = qSlicerApplication::testAttribute(qSlicerApplication::AA_DisablePython);
+
+  if (!disablePython)
+    {
+    qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
+    py->addVTKObjectToPythonMain(name, obj);
+    }
 
 #endif
 
@@ -355,10 +381,10 @@ void vtkSlicerCommonInterface::EvaluatePython(const char* command)
 
 #endif
 
-#if defined(Slicer_USE_PYTHON)
+#if defined(Slicer_USE_PYTHONQT)
 
   // Slicer4 and Tcl through Python activated
-  bool disablePython = qSlicerCoreApplication::testAttribute(qSlicerCoreApplication::AA_DisablePython);
+  bool disablePython = qSlicerApplication::testAttribute(qSlicerApplication::AA_DisablePython);
 
   if (!disablePython)
     {
@@ -382,17 +408,26 @@ const char* vtkSlicerCommonInterface::GetApplicationTclName()
   // Slicer3
   return this->GetTclNameFromPointer(vtkSlicerApplication::GetInstance());
 
-#else
+#endif
+
+#if defined(Slicer_USE_PYTHONQT)
 
   // Slicer4
-  qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
+  // Slicer4 and Tcl through Python activated
+  bool disablePython = qSlicerApplication::testAttribute(qSlicerApplication::AA_DisablePython);
 
-  // here we can choose our own tcl name
-  const char* name = this->randomStrGen(8).c_str();
+  if (!disablePython)
+    {
 
-  py->addObjectToPythonMain(name, qSlicerApplication::application());
+    qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
 
-  return name;
+    // here we can choose our own tcl name
+    this->StringHolder = this->randomStrGen(8);
+
+    py->addObjectToPythonMain(this->StringHolder.c_str(), qSlicerApplication::application());
+
+    return this->StringHolder.c_str();
+    }
 
 #endif
 
@@ -439,6 +474,26 @@ const char* vtkSlicerCommonInterface::GetBinDirectory()
 
   return 0;
 
+}
+
+//-----------------------------------------------------------------------------
+const char* vtkSlicerCommonInterface::GetPluginsDirectory()
+{
+#ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  return vtkSlicerApplication::GetInstance()->GetPluginsDir();
+
+#else
+
+  // Slicer4
+  QString slicerDir = qSlicerApplication::application()->slicerHome();
+  slicerDir += "/lib/Slicer3/Plugins/";
+  return slicerDir.toLatin1();
+
+#endif
+
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -511,6 +566,7 @@ void vtkSlicerCommonInterface::DestroySlicerApplication()
 
 #ifdef Slicer3_USE_KWWIDGETS
 
+  // Slicer3
   vtkSlicerApplication* app = vtkSlicerApplication::GetInstance();
 
   if (app)
@@ -522,13 +578,14 @@ void vtkSlicerCommonInterface::DestroySlicerApplication()
 
 #else
 
+  // Slicer4
   qSlicerApplication* app = qSlicerApplication::application();
 
   if (app)
     {
     app->exit();
     delete app;
-    app = NULL;
+    app = 0;
     }
 
 #endif

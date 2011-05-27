@@ -107,6 +107,15 @@ if(NOT DISABLE_CXX_TESTING)
   # add test executables
   ############################################################################
   add_executable(
+    vtkSlicerCommonInterfaceTest1
+    vtkSlicerCommonInterfaceTest1.cxx
+    )
+  target_link_libraries(
+    vtkSlicerCommonInterfaceTest1
+    ${TEST_LINK_LIBRARIES}
+    )
+  
+  add_executable(
     vtkEMSegmentRemoteIOTest
     vtkEMSegmentRemoteIOTest.cxx
     )
@@ -231,6 +240,11 @@ if(NOT DISABLE_CXX_TESTING)
     "EMSegment Tutorial Template"
     ${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult_small.mhd
     )
+    
+  add_test( vtkSlicerCommonInterfaceTest1
+    ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkSlicerCommonInterfaceTest1
+    )
+        
 
   # Build parameters from scratch and run the segmentation
   #add_test( vtkEMSegmentBuildAndRunNewSegmentationParameters001

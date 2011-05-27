@@ -34,5 +34,4 @@ SlicerMacroBuildModuleLogic(
   INCLUDE_DIRECTORIES ${module_logic_include_directories}
   SRCS ${module_logic_SRCS}
   TARGET_LIBRARIES ${module_logic_target_libraries}
-  DISABLE_WRAP_PYTHON
   )

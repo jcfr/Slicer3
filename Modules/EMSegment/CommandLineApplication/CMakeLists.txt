@@ -115,13 +115,14 @@ target_link_libraries(
 
 slicer3_install_plugins(${CLP_MODULE})
 
-else(NOT EM_Slicer4_FOUND)
+# TODO
+#else(NOT EM_Slicer4_FOUND)
 
-slicerMacroBuildCLI(
-  NAME ${CLP_MODULE}
-  TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
-  EXECUTABLE_ONLY  
-  )
+#slicerMacroBuildCLI(
+#  NAME ${CLP_MODULE}
+#  TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
+#  EXECUTABLE_ONLY  
+#  )
 
 endif(NOT EM_Slicer4_FOUND)
 

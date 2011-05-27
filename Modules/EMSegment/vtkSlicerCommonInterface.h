@@ -60,6 +60,7 @@ public:
 
   const char* GetTemporaryDirectory();
   const char* GetBinDirectory();
+  const char* GetPluginsDirectory();
   const char* GetRepositoryRevision();
   void SetApplicationBinDir(const char*);
   vtkHTTPHandler* GetHTTPHandler(vtkMRMLScene* mrmlScene);
