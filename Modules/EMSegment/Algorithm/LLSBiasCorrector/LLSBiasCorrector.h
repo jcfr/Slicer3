@@ -113,6 +113,10 @@ public:
   void SetMask(MaskImageType* mask);
   void SetProbabilities(DynArray<ProbabilityImagePointer> probs);
 
+  void SetEMSMeans(double** LogMu, int NumTotalTypeCLASS, int NumInputImages);
+  void SetEMSCovariances(double*** LogCovariance, int NumTotalTypeCLASS, int NumInputImages);
+  void SetEMSWeights(float** w_m, int NumTotalTypeCLASS, int NumInputImages);
+
   void SetMeans(const MatrixType& mu);
   void SetCovariances(const DynArray<MatrixType>& covars);
 
@@ -138,6 +142,7 @@ protected:
 
   void CheckInputs();
   void ComputeDistributions();
+  void CopyEMSDistributions();
 
 private:
 

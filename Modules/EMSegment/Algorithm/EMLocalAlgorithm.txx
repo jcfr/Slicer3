@@ -29,7 +29,7 @@ VTK_THREAD_RETURN_TYPE EMLocalAlgorithm_E_Step_Threader_Function(void *arg);
 
 #include "vtkTimeDef.h"
 #include "vtkDataDef.h"
-
+#include "vtkImageData.h"
 #include "vtkImageExport.h"
 #include "vtkImageImport.h"
 #include "vtkITKUtility.h"
@@ -1341,12 +1341,30 @@ template <class T> void EMLocalAlgorithm<T>::E_Step_Weight_Calculation_Threaded(
 //------------------------------------------------------------
 
 
+void WriteImage(vtkImageData* Volume , const char* FileName)
+{
+   std::string  name =  std::string (FileName) +  std::string(".nhdr");
+    std::cout << "Write to file " <<   name.c_str() << endl;
+   vtkITKImageWriter*  export_iwriter =  vtkITKImageWriter::New();
+   export_iwriter->SetInput(Volume);
+   export_iwriter->SetFileName(name.c_str());
+   vtkMatrix4x4* mat = vtkMatrix4x4::New();
+   export_iwriter->SetRasToIJKMatrix(mat);
+   export_iwriter->SetUseCompression(1);
+   export_iwriter->Write();
+   mat->Delete();
+   export_iwriter->Delete();
+}
+
 //------------------------------------------------------------
-// EstimateImageInhomegeneity3steps
+// LLSBiasCoorection
 //------------------------------------------------------------
 template <class T>
-void EMLocalAlgorithm<T>::EstimateImageInhomegeneity3steps(vtkImageData* inData, vtkImageData* outData)
+void EMLocalAlgorithm<T>::LLSBiasCoorection(int iter, float* cY)
 {
+  // collect input data
+  vtkImageData* inData = reconstructImage( this->InputVectorPtr, 0 );
+
   vtkImageExport* myVTKtoITKImageExporter  = vtkImageExport::New();
   myVTKtoITKImageExporter->SetInput(inData);
 
@@ -1359,6 +1377,11 @@ void EMLocalAlgorithm<T>::EstimateImageInhomegeneity3steps(vtkImageData* inData,
   FloatImageType::Pointer img1 = myVTKtoITKImageImporter->GetOutput();
   myVTKtoITKImageImporter->GetOutput()->Print(std::cout);
 
+  std::ostringstream s1;
+  s1 << "/tmp/biascorr" << iter;
+  std::cout << s1 << endl;
+  WriteImage(inData, s1.str().c_str());
+ 
 
   srand(39280694);
 
@@ -1390,13 +1413,40 @@ void EMLocalAlgorithm<T>::EstimateImageInhomegeneity3steps(vtkImageData* inData,
   }
   //////////////////////////////////////////////////////////////////////
 
+  //////////////////////////////////////////////////////////////////////
+  FloatImageType::IndexType idx;
+  DynArray<FloatImageType::Pointer> probs;
+
+  for (int i = 0; i < this->NumTotalTypeCLASS; i++)
+  {
+    FloatImageType::Pointer prob = FloatImageType::New();
+    prob->SetRegions(region);
+    prob->SetSpacing(spacing);
+    prob->Allocate();
+
+    int index = 0;
+    for (int idxZ = 0; idxZ < this->RealMaxZ; idxZ++) {
+      for (int idxY = 0; idxY < this->RealMaxY; idxY++) {
+        for (int idxX = 0; idxX < this->RealMaxX; idxX++) {
+          idx[0] = idxX;
+          idx[1] = idxY;
+          idx[2] = idxZ;
+          prob->SetPixel(idx, this->w_mPtr[i][index]);
+          index++;
+        }
+      }
+    }
+    probs.Append(prob);
+  }
+  //////////////////////////////////////////////////////////////////////
+
+
 
   BiasCorrectorType::MaskImageType::Pointer maskImg = BiasCorrectorType::MaskImageType::New();
   maskImg->SetRegions(region);
   maskImg->Allocate();
   maskImg->SetSpacing(spacing);
   maskImg->FillBuffer(1);
-
 
   unsigned int maxdegree = 4;
   //unsigned int numcoeffs = (maxdegree+1)*(maxdegree+2)*(maxdegree+3)/6;
@@ -1412,27 +1462,62 @@ void EMLocalAlgorithm<T>::EstimateImageInhomegeneity3steps(vtkImageData* inData,
   biascorr->SetSampleSpacing(2.0);
   biascorr->SetMask(maskImg);
   biascorr->SetMaxDegree(maxdegree);
-//  biascorr->SetMu(mu);
-//  biascorr->SetCovariance(covar);
-
+  biascorr->SetEMSMeans(this->LogMu, NumTotalTypeCLASS, NumInputImages);
+  biascorr->SetEMSCovariances(this->LogCovariance, NumTotalTypeCLASS, NumInputImages);
+  biascorr->SetProbabilities(probs);
   biascorr->CorrectImages(images, corrImages, true);
   ////////////////////////////////////////////////////////////////////////////
-
 
 
   vtkImageImport* myITKtoVTKImageImporter = vtkImageImport::New();
   typedef itk::VTKImageExport<FloatImageType> ImageExportType;
   typename ImageExportType::Pointer myITKtoVTKImageExporter = ImageExportType::New();
   ConnectPipelines(myITKtoVTKImageExporter, myITKtoVTKImageImporter);
-  myITKtoVTKImageExporter->SetInput(images[0]);//todo
+  myITKtoVTKImageExporter->SetInput(corrImages[0]);
   myITKtoVTKImageImporter->Update();
-  outData = myITKtoVTKImageImporter->GetOutput();
-  cout << outData << endl;
+  vtkImageData* outData = myITKtoVTKImageImporter->GetOutput();
+  outData->Print(std::cout);
 
-  myVTKtoITKImageImporter->Delete();
-  myVTKtoITKImageExporter->Delete();
-  myITKtoVTKImageImporter->Delete();
-  myITKtoVTKImageExporter->Delete();
+
+  std::ostringstream s2;
+  s2 << "/tmp/biascorrected" << iter;
+  std::cout << s2 << endl;
+  WriteImage(outData, s2.str().c_str());
+
+  // write result back
+  int index = 0;
+  for (int idxZ = 0; idxZ < this->RealMaxZ; idxZ++) { 
+    for (int idxY = 0; idxY < this->RealMaxY; idxY++) {
+      for (int idxX = 0; idxX < this->RealMaxX; idxX++) {
+        idx[0] = idxX;
+        idx[1] = idxY;
+        idx[2] = idxZ;
+        cY_MPtr[index] = corrImages[0]->GetPixel(idx);
+        index++; 
+      }
+    }
+  }
+
+
+return;
+//copy into cY_MPtr
+  inData->Delete();
+  maskImg->Delete();
+  biascorr->Delete();
+//  myVTKtoITKImageImporter->Delete();
+//  myVTKtoITKImageExporter->Delete();
+//  myITKtoVTKImageImporter->Delete();
+//  myITKtoVTKImageExporter->Delete();
+  for (unsigned int i = 0; i < numChannels; i++)
+  {
+    corrImages[i]->Delete();
+  }
+  for (int i = 0; i < this->NumTotalTypeCLASS; i++)
+  {
+    probs[i]->Delete();
+  }
+  cerr<<"EMLocalAlgorithm::end"<<endl;
+
 }
 
 
@@ -1520,28 +1605,14 @@ void EMLocalAlgorithm<T>::EstimateImageInhomegeneity(float *skern, EMTriVolume& 
     r_m[i].Conv(skern,SmoothingWidth); 
 }
 
-// -----------------------------------------------------------
-// Intensity Correction 3steps
-//
+
 // TODO: Convert inputVector in itkImage
 //       Convert probVector in itkImage
 //       Call bias correction code
 //       Convert resulting itkImage back to cY_M (should be the same as inputVector)
-// -----------------------------------------------------------
-template <class T> void EMLocalAlgorithm<T>::IntensityCorrection3steps(int printIntermediateFlag, int iter, EMTriVolume &iv_m, EMVolume *r_m, float *cY_M)
-{
-  // test function can be found in EstimateImageInhomegeneity3steps
-
-
+/*
+  //  this->cY_MPtr = new float[this->NumInputImages* this->ImageProd];
   float** InputVector         = this->InputVectorPtr;
-  unsigned char* OutputVector = this->OutputVectorPtr;
-
-  cout << sizeof(OutputVector) << endl;
-
-  cout << "InputVector" << sizeof(InputVector) << endl;
-  cout << "X*Y*Z" << this->ImageProd << endl;
-  cout << "nbIma" << this->NumInputImages << endl;
-
 
   for (int i=0; i< this->ImageProd; i++)
       {
@@ -1554,33 +1625,38 @@ template <class T> void EMLocalAlgorithm<T>::IntensityCorrection3steps(int print
         }
       InputVector++;
       }
+*/
 
-  typedef double ScalarType;
 
-  typedef vnl_matrix<ScalarType> MatrixType;
-  typedef vnl_vector<ScalarType> VectorType;
+template <class T>
+vtkImageData* EMLocalAlgorithm<T>::reconstructImage(float** InputVector, int InputIndex)
+{
+  vtkImageData* data = vtkImageData::New();
+  data->SetDimensions(this->RealMaxX, this->RealMaxY, this->RealMaxZ);
+  data->SetSpacing(1,1,1);
+  data->SetScalarType(VTK_FLOAT);
+  data->SetNumberOfScalarComponents(1);
+  data->AllocateScalars();
 
-  typedef vnl_matrix_inverse<ScalarType> MatrixInverseType;
-  typedef vnl_qr<ScalarType> MatrixQRType;
-  typedef vnl_svd<ScalarType> MatrixSVDType;
-
-    
-  // Use VNL to solve linear system
-  MatrixType coeffs;
-  {
-//    MatrixQRType qr(lhs);
-//    coeffs = qr.solve(rhs);
+  int index = 0;
+  float* in1Ptr = (float*)data->GetScalarPointer();
+  for (int idxZ = 0; idxZ < this->RealMaxZ; idxZ++) { 
+    for (int idxY = 0; idxY < this->RealMaxY; idxY++) {
+      for (int idxX = 0; idxX < this->RealMaxX; idxX++) {
+        // in1Ptr[idxX + idxY*RealMaxX + idxZ*RealMaxX*RealMaxY] = exp(InputVector[index][InputIndex]) - 1;
+        *in1Ptr = InputVector[index][InputIndex];
+//        *in1Ptr = exp(InputVector[index][InputIndex])-1;
+        index++; 
+        in1Ptr++;
+      }
+      //in1Ptr += 0;
+    }
+    //in1Ptr += 0;
   }
 
+  return data;
 
-  typedef double ScalarType;
-  typedef vnl_matrix<ScalarType> MatrixType;
-  
-  //  typedef itk::Image<unsigned char, 3> MaskImageType;
-  //  MatrixType basisT = m_Basis * MatrixInverseType(R);
-  //  itkDebugMacro(<< "LLSBiasCorrector: Computing means and variances...");
-
-
+  //look into vtkImageEMLocalSegmenterReadInputChannel
 }
 
 // -----------------------------------------------------------
@@ -1762,11 +1838,15 @@ template <class T> void EMLocalAlgorithm<T>::InitializeLogIntensity(int HeadLeve
     float** InputVector = this->InputVectorPtr;
     for (int i=0; i< this->ImageProd; i++)
       {
-      for (int l=0; l< this->NumInputImages; l++) (*cY_M ++) = fabs((*InputVector)[l]);
+      for (int l=0; l< this->NumInputImages; l++)
+        (*cY_M ++) = fabs((*InputVector)[l]);
       InputVector++;
       }
     }
-  else this->IntensityCorrection(0, 0, iv_m, r_m, cY_M);
+  else
+    {
+    this->IntensityCorrection(0, 0, iv_m, r_m, cY_M);
+    }
 }
 
 
@@ -1983,11 +2063,7 @@ template  <class T> void EMLocalAlgorithm<T>::RunAlgorithm(EMTriVolume& iv_m, EM
           }
         else
           {
-          vtkImageData* a1 = vtkImageData::New();
-          vtkImageData* a2 = vtkImageData::New();
-          a1->SetScalarType(VTK_FLOAT);
-          this->EstimateImageInhomegeneity3steps(a1,a2);
-          this->IntensityCorrection3steps(this->PrintIntermediateFlag, iter, iv_m, r_m, cY_MPtr);
+          this->LLSBiasCoorection(iter, cY_MPtr);
           }
         }
       else std::cerr << "Bias calculation disabled " << endl; 

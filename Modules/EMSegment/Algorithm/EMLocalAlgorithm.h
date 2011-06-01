@@ -170,8 +170,8 @@ private:
   void UpdatePCASpecificParameters(int iter);
 
 
-  void EstimateImageInhomegeneity3steps(vtkImageData* inData, vtkImageData* outData);
-  void IntensityCorrection3steps(int PrintIntermediateFlag, int iter, EMTriVolume &iv_m, EMVolume *r_m, float *cY_M);
+  void LLSBiasCoorection(int iter, float* outData);
+  vtkImageData* reconstructImage(float** InputVector, int InputIndex);
 
   // -----------------------------------------------------
   // Print Functions
