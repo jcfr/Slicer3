@@ -33,7 +33,9 @@ vtkSlicerCommonInterface::vtkSlicerCommonInterface()
 
   this->StringHolder = std::string("");
 
+#ifndef Slicer3_USE_KWWIDGETS
   this->remoteIOLogic = 0;
+#endif
 
 }
 
@@ -41,11 +43,13 @@ vtkSlicerCommonInterface::vtkSlicerCommonInterface()
 vtkSlicerCommonInterface::~vtkSlicerCommonInterface()
 {
 
+#ifndef Slicer3_USE_KWWIDGETS
   if (this->remoteIOLogic)
     {
     this->remoteIOLogic->Delete();
     this->remoteIOLogic = 0;
     }
+#endif
 
 }
 

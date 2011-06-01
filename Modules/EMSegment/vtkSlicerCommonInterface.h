@@ -84,7 +84,10 @@ private:
   std::string StringHolder;
   //ETX
 
+#ifndef Slicer3_USE_KWWIDGETS
   vtkMRMLRemoteIOLogic *remoteIOLogic;
+#endif
+
 };
 
 #endif
