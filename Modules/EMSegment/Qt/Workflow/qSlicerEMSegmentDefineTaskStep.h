@@ -52,9 +52,19 @@ public slots:
 protected:
   QScopedPointer<qSlicerEMSegmentDefineTaskStepPrivate> d_ptr;
 
+  void showDefaultTasksList();
+  int loadDefaultTask(int index);
+
 private:
   Q_DECLARE_PRIVATE(qSlicerEMSegmentDefineTaskStep);
   Q_DISABLE_COPY(qSlicerEMSegmentDefineTaskStep);
+
+  //BTX:
+  std::vector<std::string> pssDefaultTasksName;
+  std::vector<std::string> pssDefaultTasksFile;
+  std::vector<std::string> DefinePreprocessingTasksName;
+  std::vector<std::string> DefinePreprocessingTasksFile;
+ //ETX:
 
 };
 

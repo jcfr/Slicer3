@@ -185,6 +185,9 @@ void qSlicerEMSegmentModuleWidget::setup()
                                commonSteps.value(i + 1));
     }
 
+  // set module name to get the correct module share directory
+  d->logic()->SetModuleName("EMSegment");
+
   // Assign MRML manager and EMSegment logic to all steps
   foreach(qSlicerEMSegmentWorkflowWidgetStep * step, allSteps)
     {

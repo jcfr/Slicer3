@@ -33,6 +33,7 @@
 #include "qSlicerPythonManager.h"
 #include <QString>
 #include <QVariant>
+#include "vtkMRMLRemoteIOLogic.h"
 
   typedef void Tcl_Interp;
 #endif
@@ -83,6 +84,7 @@ private:
   std::string StringHolder;
   //ETX
 
+  vtkMRMLRemoteIOLogic *remoteIOLogic;
 };
 
 #endif

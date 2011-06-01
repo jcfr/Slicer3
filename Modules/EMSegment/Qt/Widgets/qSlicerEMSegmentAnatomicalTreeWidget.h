@@ -33,14 +33,14 @@
 // VTK includes
 #include <vtkType.h>
 
-#include "qSlicerEMSegmentModuleExport.h"
+#include "qSlicerEMSegmentModuleWidgetsExport.h"
 
 class qSlicerEMSegmentAnatomicalTreeWidgetPrivate;
 class QStandardItem;
 class vtkMRMLNode;
 
 /// \ingroup Slicer_QtModules_EMSegment
-class Q_SLICER_QTMODULES_EMSEGMENT_EXPORT qSlicerEMSegmentAnatomicalTreeWidget :
+class Q_SLICER_MODULE_EMSEGMENT_WIDGET_EXPORT qSlicerEMSegmentAnatomicalTreeWidget :
     public qSlicerEMSegmentWidget
 { 
   Q_OBJECT

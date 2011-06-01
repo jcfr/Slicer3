@@ -30,6 +30,8 @@
 // EMSegment includes
 #include "qSlicerEMSegmentWidget.h"
 
+#include "qSlicerEMSegmentModuleExport.h"
+
 class qSlicerEMSegmentWorkflowWidgetStepPrivate;
 class qSlicerEMSegmentWorkflowWidget;
 class vtkEMSegmentMRMLManager;

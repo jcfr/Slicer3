@@ -8,6 +8,8 @@ class ctkWorkflowWidget;
 // EMSegment includes
 #include "qMRMLWidget.h"
 
+#include "qSlicerEMSegmentModuleExport.h"
+
 class qSlicerEMSegmentWorkflowWidgetPrivate;
 
 class qSlicerEMSegmentWorkflowWidget : public qMRMLWidget

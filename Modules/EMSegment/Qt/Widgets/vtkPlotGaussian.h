@@ -14,13 +14,13 @@
 =========================================================================*/
 
 // EMSegment includes
-#include "qSlicerEMSegmentModuleExport.h"
+#include "qSlicerEMSegmentModuleWidgetsExport.h"
 
 // VTK includes
 #include <vtkPlotLine.h>
 
 /// \ingroup Slicer_QtModules_EMSegment
-class Q_SLICER_QTMODULES_EMSEGMENT_EXPORT vtkPlotGaussian : public vtkPlotLine
+class Q_SLICER_MODULE_EMSEGMENT_WIDGET_EXPORT vtkPlotGaussian : public vtkPlotLine
 {
 public:
   vtkTypeMacro(vtkPlotGaussian, vtkPlotLine);

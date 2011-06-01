@@ -34,7 +34,7 @@
 // VTK includes
 #include <vtkType.h> // For vtkIdType
 
-#include "qSlicerEMSegmentModuleExport.h"
+#include "qSlicerEMSegmentModuleWidgetsExport.h"
 
 class qSlicerEMSegmentAnatomicalTreeWidgetPrivate;
 class QStandardItem;

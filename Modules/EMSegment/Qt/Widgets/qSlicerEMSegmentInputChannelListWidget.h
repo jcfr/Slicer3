@@ -27,13 +27,13 @@
 // EMSegment includes
 #include "qSlicerEMSegmentWidget.h"
 
-#include "qSlicerEMSegmentModuleExport.h"
+#include "qSlicerEMSegmentModuleWidgetsExport.h"
 
 class qSlicerEMSegmentInputChannelListWidgetPrivate;
 class vtkMRMLVolumeNode;
 
 /// \ingroup Slicer_QtModules_EMSegment
-class Q_SLICER_QTMODULES_EMSEGMENT_EXPORT qSlicerEMSegmentInputChannelListWidget :
+class Q_SLICER_MODULE_EMSEGMENT_WIDGET_EXPORT qSlicerEMSegmentInputChannelListWidget :
     public qSlicerEMSegmentWidget
 {
   Q_OBJECT

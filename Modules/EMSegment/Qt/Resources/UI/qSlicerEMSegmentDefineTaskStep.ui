@@ -26,6 +26,15 @@
       <bool>true</bool>
      </property>
      <layout class="QFormLayout" name="formLayout_2">
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+      </property>
+      <property name="labelAlignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="formAlignment">
+       <set>Qt::AlignCenter</set>
+      </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
@@ -34,23 +43,12 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="qMRMLNodeComboBox" name="TaskSelectorComboBox" native="true">
-        <property name="nodeTypes" stdset="0">
-         <stringlist>
-          <string>vtkMRMLEMSTemplateNode</string>
-         </stringlist>
-        </property>
-        <property name="showHidden" stdset="0">
-         <bool>true</bool>
-        </property>
-        <property name="noneEnabled" stdset="0">
-         <bool>true</bool>
-        </property>
-        <property name="addEnabled" stdset="0">
-         <bool>false</bool>
-        </property>
-        <property name="removeEnabled" stdset="0">
-         <bool>false</bool>
+       <widget class="QComboBox" name="TaskSelectorComboBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
        </widget>
       </item>
@@ -103,11 +101,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>qMRMLNodeComboBox</class>
-   <extends>QWidget</extends>
-   <header>qMRMLNodeComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>ctkWorkflowWidgetStep</class>
    <extends>QWidget</extends>
    <header>ctkWorkflowWidgetStep.h</header>
@@ -121,38 +114,5 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections>
-  <connection>
-   <sender>qSlicerEMSegmentDefineTaskStep</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>TaskSelectorComboBox</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>193</x>
-     <y>7</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>213</x>
-     <y>43</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>TaskSelectorComboBox</sender>
-   <signal>currentNodeChanged(bool)</signal>
-   <receiver>ChooseModeGroupBox</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>113</x>
-     <y>54</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>119</x>
-     <y>78</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

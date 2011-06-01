@@ -27,12 +27,12 @@
 // SlicerQt includes
 #include "qSlicerEMSegmentWidget.h"
 
-#include "qSlicerEMSegmentModuleExport.h"
+#include "qSlicerEMSegmentModuleWidgetsExport.h"
 
 class qSlicerEMSegmentGraphWidgetPrivate;
 
 /// \ingroup Slicer_QtModules_EMSegment
-class Q_SLICER_QTMODULES_EMSEGMENT_EXPORT qSlicerEMSegmentGraphWidget : public qSlicerEMSegmentWidget
+class Q_SLICER_MODULE_EMSEGMENT_WIDGET_EXPORT qSlicerEMSegmentGraphWidget : public qSlicerEMSegmentWidget
 {
   Q_OBJECT
 

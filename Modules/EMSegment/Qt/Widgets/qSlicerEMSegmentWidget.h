@@ -28,13 +28,13 @@
 // SlicerQt includes
 #include "qSlicerWidget.h"
 
-#include "qSlicerEMSegmentModuleExport.h"
+#include "qSlicerEMSegmentModuleWidgetsExport.h"
 
 class qSlicerEMSegmentWidgetPrivate;
 class vtkEMSegmentMRMLManager;
 
 /// \ingroup Slicer_QtModules_EMSegment
-class Q_SLICER_QTMODULES_EMSEGMENT_EXPORT qSlicerEMSegmentWidget : public qSlicerWidget
+class Q_SLICER_MODULE_EMSEGMENT_WIDGET_EXPORT qSlicerEMSegmentWidget : public qSlicerWidget
 {
   Q_OBJECT
   QVTK_OBJECT

@@ -33,12 +33,19 @@ vtkSlicerCommonInterface::vtkSlicerCommonInterface()
 
   this->StringHolder = std::string("");
 
+  this->remoteIOLogic = 0;
+
 }
 
 //----------------------------------------------------------------------------
 vtkSlicerCommonInterface::~vtkSlicerCommonInterface()
 {
 
+  if (this->remoteIOLogic)
+    {
+    this->remoteIOLogic->Delete();
+    this->remoteIOLogic = 0;
+    }
 
 }
 
@@ -602,6 +609,20 @@ void vtkSlicerCommonInterface::AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlic
   Slicer3Helper::AddDataIOToScene(mrmlScene,
       vtkSlicerApplication::GetInstance(), appLogic, dataIOManagerLogic);
 
+#else
+
+  // Slicer4
+  if (!this->remoteIOLogic)
+    {
+    vtkMRMLRemoteIOLogic *remoteIOLogic = vtkMRMLRemoteIOLogic::New();
+    this->remoteIOLogic = remoteIOLogic;
+    }
+
+  dataIOManagerLogic->SetAndObserveDataIOManager(this->remoteIOLogic->GetDataIOManager());
+
+  this->remoteIOLogic->SetMRMLScene(mrmlScene);
+  this->remoteIOLogic->AddDataIOToScene();
+
 #endif
 
 }
@@ -614,6 +635,14 @@ void vtkSlicerCommonInterface::RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vt
 
   // Slicer3
   Slicer3Helper::RemoveDataIOFromScene(mrmlScene, dataIOManagerLogic);
+
+#else
+
+  // Slicer4
+  if (this->remoteIOLogic)
+    {
+    this->remoteIOLogic->RemoveDataIOFromScene();
+    }
 
 #endif
 

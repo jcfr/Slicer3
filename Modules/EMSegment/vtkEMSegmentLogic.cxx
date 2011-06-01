@@ -1855,7 +1855,7 @@ void vtkEMSegmentLogic::AddDefaultTasksToList(const char* FilePath, std::vector<
                  // Add to List if it does not exist
                  DefaultTasksFile.push_back(fullFileName);
                  DefaultTasksName.push_back(taskName);
-           }
+               }
         }
       else if ((!strcmp(vtksys::SystemTools::GetFilenameExtension(filename.c_str()).c_str(), ".tcl")) && (filename.compare(0,1,"_") ) 
                     && strcmp(filename.c_str(), vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName()))

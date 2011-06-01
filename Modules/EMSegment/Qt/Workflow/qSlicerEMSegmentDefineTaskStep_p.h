@@ -58,7 +58,7 @@ signals:
   void modeChanged(const QString& branchId);
 
 protected slots:
-  void selectTask(vtkMRMLNode* mrmlNode);
+  void selectTask();
 };
 
 #endif

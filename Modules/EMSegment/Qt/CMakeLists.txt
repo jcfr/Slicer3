@@ -1,11 +1,12 @@
 
 # --------------------------------------------------------------------------
-# Add subdirectories
-ADD_SUBDIRECTORY(Logic)
-
-
 # Module name (usually identique to the directory name)
 SET(qt_module_name "EMSegment")
+
+# Add subdirectories
+ADD_SUBDIRECTORY(Logic)
+ADD_SUBDIRECTORY(Widgets)
+ADD_SUBDIRECTORY(Py)
 
 SET(qt_module_export_directive "Q_SLICER_QTMODULES_EMSEGMENT_EXPORT")
 
@@ -19,30 +20,6 @@ SET(qt_module_include_directories
   ${CMAKE_CURRENT_BINARY_DIR}/Workflow
   )
 
-# Widget source files
-SET(widget_SRCS
-  Widgets/qSlicerEMSegmentAnatomicalTreeWidget.cxx
-  Widgets/qSlicerEMSegmentAnatomicalTreeWidget.h
-  Widgets/qSlicerEMSegmentAnatomicalTreeWidget_p.h
-  Widgets/qSlicerEMSegmentGraphWidget.cxx
-  Widgets/qSlicerEMSegmentGraphWidget.h
-  Widgets/qSlicerEMSegmentInputChannelListWidget.cxx
-  Widgets/qSlicerEMSegmentInputChannelListWidget.h
-  Widgets/vtkPlotGaussian.cxx
-  Widgets/vtkPlotGaussian.h
-
-  Widgets/qSlicerEMSegmentWidget.cxx
-  Widgets/qSlicerEMSegmentWidget.h
-  )
-
-SET(widget_MOC_SRCS
-  Widgets/qSlicerEMSegmentAnatomicalTreeWidget.h
-  Widgets/qSlicerEMSegmentAnatomicalTreeWidget_p.h
-  Widgets/qSlicerEMSegmentGraphWidget.h
-  Widgets/qSlicerEMSegmentInputChannelListWidget.h
-
-  Widgets/qSlicerEMSegmentWidget.h
-  )
 
 # Workflow source files
 SET(workflow_SRCS
@@ -96,7 +73,6 @@ SET(workflow_MOC_SRCS
 
 # Source files
 SET(qt_module_SRCS
-  ${widget_SRCS}
   ${workflow_SRCS}
   qSlicerEMSegmentModule.cxx
   qSlicerEMSegmentModule.h
@@ -106,7 +82,6 @@ SET(qt_module_SRCS
 
 # Headers that should run through moc
 SET(qt_module_MOC_SRCS
-  ${widget_MOC_SRCS}
   ${workflow_MOC_SRCS}
   qSlicerEMSegmentModule.h
   qSlicerEMSegmentModuleWidget.h
@@ -115,10 +90,6 @@ SET(qt_module_MOC_SRCS
 # UI files
 SET(qt_module_UI_SRCS
   Resources/UI/qSlicerEMSegmentModule.ui
-
-  # Widgets
-  Resources/UI/qSlicerEMSegmentAnatomicalTreeWidget.ui
-  Resources/UI/qSlicerEMSegmentGraphWidget.ui
 
   # Workflow: MRI Human brain
   Resources/UI/qSlicerEMSegmentDefineAnatomicalTreeStep.ui           # Step 3
@@ -135,8 +106,10 @@ SET(qt_module_UI_SRCS
 # Additional Target libraries
 SET(qt_module_target_libraries
   vtkSlicerEMSegmentModuleLogic
+  qSlicerEMSegmentModuleWidgets
   vtkCharts
   vtkSlicerAnnotationModuleMRML
+  MRMLLogic
   )
 
 # Resources
@@ -163,6 +136,6 @@ slicerMacroBuildQtModule(
 
 if(BUILD_TESTING)
   SET(EMSegment_TESTING_DATA_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Testing/Data)
-  ADD_SUBDIRECTORY(Widgets/Testing)
+
   #ADD_SUBDIRECTORY(Testing)
 endif()
