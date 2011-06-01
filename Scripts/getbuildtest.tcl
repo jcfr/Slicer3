@@ -80,6 +80,16 @@ set ::GETBUILDTEST(extend) "false"
 set ::GETBUILDTEST(ext-dir) ""
 set ::GETBUILDTEST(compiler) "gcc"
 set ::GETBUILDTEST(bitness) "32"
+
+# set default site as, e.g. JOE-pieper
+set ::GETBUILDTEST(site) "unspecified"
+if { ![catch "exec hostname" hostname] } {
+  set ::GETBUILDTEST(site) $hostname
+}
+if { [info exists ::env(USER)] } {
+  set ::GETBUILDTEST(site) $::GETBUILDTEST(site)-$::env(USER)
+}
+
 switch $::tcl_platform(os) {
     "SunOS" { 
         set isainfo [exec isainfo -b]
@@ -220,6 +230,14 @@ for {set i 0} {$i < $argc} {incr i} {
         "--gcc" {
             set ::GETBUILDTEST(compiler) "gcc"
         }
+        "--site" {
+            incr i
+            if { $i == $argc } {
+                Usage "Missing site argument"
+            } else {
+                set ::GETBUILDTEST(site) [lindex $argv $i]
+            }
+        }
         "--help" -
         "-h" {
             Usage
@@ -244,8 +262,6 @@ if {$argc > 1 } {
 }
 # puts "getbuildtest: setting build list to $strippedargs"
 set ::GETBUILDTEST(buildList) $strippedargs
-
-
 
 ################################################################################
 #
@@ -554,6 +570,7 @@ runcmd $::CMAKE \
         -DSLICERLIBCURL_DIR:FILEPATH=$Slicer3_LIB/cmcurl-build \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=$::GETBUILDTEST(cmake-verbose) \
         -DLAUNCHER_REPORT_VTK_ERRORS=$::LAUNCHER_REPORT_VTK_ERRORS \
+        -DSITE:STRING=$::GETBUILDTEST(site) \
         $Slicer3_HOME
 
 
