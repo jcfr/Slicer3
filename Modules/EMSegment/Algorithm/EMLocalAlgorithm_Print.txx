@@ -158,7 +158,7 @@ static void EMLocalAlgorithm_TransfereDataToOutputExtension(EMLocalAlgorithm<T> 
 
 
 //----------------------------------------------------------------------------
-int EMLocalAlgorithm_GEImageWriter(vtkImageData *Volume, char *FileName,int PrintFlag) {
+int EMLocalAlgorithm_GEImageWriter(vtkImageData *Volume, const char *FileName,int PrintFlag) {
    std::string  name =  std::string (FileName) +  std::string(".nhdr");
   if (PrintFlag) std::cerr << "Write to file " <<   name.c_str() << endl;
    vtkITKImageWriter*  export_iwriter =  vtkITKImageWriter::New();
