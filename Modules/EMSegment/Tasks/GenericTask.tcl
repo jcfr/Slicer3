@@ -77,9 +77,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
-        set CMD "mktemp -u \"[$LOGIC GetTemporaryDirectory]/XXXXXX\""
-        set basefilename [ eval exec $CMD ]
+        set basefilename [ $LOGIC mktemp_file ]
 
         set filename ""
         set NAME ""
@@ -112,9 +110,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
-        set CMD "mktemp -u \"[$LOGIC GetTemporaryDirectory]/XXXXXX\""
-        set basefilename [ eval exec $CMD ]
+        set basefilename [ $LOGIC mktemp_file ]
 
         set filename ""
         set NAME ""
@@ -146,9 +142,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
-        set CMD "mktemp -u -d \"[$LOGIC GetTemporaryDirectory]/XXXXXX\""
-        set basefilename [ eval exec $CMD ]
+        set basefilename [ $LOGIC mktemp_dir ]
 
         set dirname ""
         set NAME ""
@@ -2083,9 +2077,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # Need to download file to temp directory
-        # dry-run, XXXXXX cannot be in the middle of the name on some platforms (fc11)
-        set CMD "mktemp -u \"[$LOGIC GetTemporaryDirectory]/XXXXXX\""
-        catch { set basefilename [ eval exec $CMD ] } errmsg
+        set basefilename [ $LOGIC mktemp_file ]
+
         set NAME "_[file tail $URI]"
         set filename $basefilename$NAME
         $LOGIC PrintText "DEBUG: Created file: $filename"

@@ -132,6 +132,47 @@ vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* v
   return volNode;
 }
 
+char*
+vtkEMSegmentLogic::mktemp_file()
+{
+  char *ptr;
+  char filename[90];
+
+#if _WIN32
+  ptr = tmpnam(filename);
+#else
+  std::ostringstream mytemplate;
+  mytemplate << this->GetTemporaryDirectory() << "/fnXXXXXX";
+
+  strcpy( filename, mytemplate.str().c_str() );
+  ptr = mktemp(filename);
+#endif
+
+  std::cout << ptr << std::endl;
+  return ptr;
+
+}
+
+char*
+vtkEMSegmentLogic::mktemp_dir()
+{
+  char *ptr;
+  char filename[90];
+
+#if _WIN32
+  ptr = tmpnam(filename);
+#else
+  std::ostringstream mytemplate;
+  mytemplate << this->GetTemporaryDirectory() << "/dnXXXXXX";
+  strcpy( filename, mytemplate.str().c_str() );
+  ptr = mkdtemp(filename);
+#endif
+
+  std::cout << ptr << std::endl;
+  return ptr;
+
+}
+
 //----------------------------------------------------------------------------
 bool
 vtkEMSegmentLogic::

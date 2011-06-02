@@ -39,6 +39,9 @@ public:
   vtkGetStringMacro (ModuleName);
   vtkSetStringMacro (ModuleName);
 
+  char* mktemp_file();
+  char* mktemp_dir();
+
   //
   // actions
   //
