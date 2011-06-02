@@ -30,6 +30,11 @@
 #include "vtkITKImageWriter.h" 
 #include "vtkImageEllipsoidSource.h"
 
+#ifdef _WIN32
+  //for _mktemp
+  #include <io.h>
+#endif
+
 // A helper class to compare two maps
 template <class T>
 class MapCompare
@@ -135,42 +140,48 @@ vtkEMSegmentLogic::AddArchetypeScalarVolume (const char* filename, const char* v
 char*
 vtkEMSegmentLogic::mktemp_file()
 {
-  char *ptr;
-  char filename[90];
+  char *ptr = NULL;
+  char filename[256];
+  FILE *fp;
+
+  std::ostringstream mytemplate;
+  mytemplate << this->GetTemporaryDirectory() << "/fn" << rand() << "XXXXXX";
 
 #if _WIN32
-  ptr = tmpnam(filename);
+  // _mktemp alone is unusable because of it's limitation to 26 files
+  strcpy_s( filename, sizeof(filename), mytemplate.str().c_str() );
+  ptr = _mktemp( filename );
 #else
-  std::ostringstream mytemplate;
-  mytemplate << this->GetTemporaryDirectory() << "/fnXXXXXX";
-
   strcpy( filename, mytemplate.str().c_str() );
   ptr = mktemp(filename);
 #endif
 
-  std::cout << ptr << std::endl;
-  return ptr;
+  if ( fopen_s( &fp, ptr, "w" ) != 0 )
+    std::cout << "Cannot create file " << ptr << std::endl;
+  fclose( fp );
 
+  return ptr;
 }
 
 char*
 vtkEMSegmentLogic::mktemp_dir()
 {
   char *ptr;
-  char filename[90];
+  char filename[256];
+
+  std::ostringstream mytemplate;
+  mytemplate << this->GetTemporaryDirectory() << "/dn" << rand() << "XXXXXX";
 
 #if _WIN32
-  ptr = tmpnam(filename);
+  //todo, on windows _mkdtemp is not available
+  strcpy_s( filename, sizeof(filename), mytemplate.str().c_str() );
+  ptr = _mktemp(filename);
 #else
-  std::ostringstream mytemplate;
-  mytemplate << this->GetTemporaryDirectory() << "/dnXXXXXX";
   strcpy( filename, mytemplate.str().c_str() );
   ptr = mkdtemp(filename);
 #endif
 
-  std::cout << ptr << std::endl;
   return ptr;
-
 }
 
 //----------------------------------------------------------------------------
