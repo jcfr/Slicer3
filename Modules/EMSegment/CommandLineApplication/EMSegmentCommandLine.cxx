@@ -177,6 +177,9 @@ int main(int argc, char** argv)
   vtkEMSegmentLogic* EMSLogic = vtkEMSegmentLogic::New();
   EMSLogic->SetModuleName("EMSegment");
   EMSLogic->SetAndObserveMRMLScene(mrmlScene);
+  EMSLogic->SetMRMLScene(mrmlScene);
+  EMSLogic->InitializeEventListeners();
+
   EMSLogic->RegisterMRMLNodesWithScene();
   std::string EMSLogicTcl = vtksys::SystemTools::DuplicateString(slicerCommon->GetTclNameFromPointer(EMSLogic));
 

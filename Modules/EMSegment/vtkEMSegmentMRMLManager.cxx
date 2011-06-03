@@ -82,12 +82,14 @@ ProcessMRMLEvents(vtkObject* caller,
 
   if (vtkMRMLScene::SafeDownCast(caller) != this->MRMLScene)
     {
+    std::cout << "Not the right scene" << std::endl;
     return;
     }
 
-  vtkMRMLNode *node = (vtkMRMLNode*)(callData);
+  vtkMRMLNode *node = reinterpret_cast<vtkMRMLNode*> (callData);
   if (node == NULL)
     {
+    std::cout << "Node is NULL" << std::endl;
     return;
     }
 

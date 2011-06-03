@@ -1,6 +1,6 @@
 from __main__ import vtk, qt, ctk, slicer
 
-from EMSegmentPyWizard import *
+import EMSegmentPyWizard
 
 class EMSegmentPy:
   def __init__(self, parent):
@@ -62,9 +62,9 @@ class EMSegmentPyWidget:
     
       steps = []
     
-      steps.append(EMSegmentPyStepOne('step1'))
-      steps.append(EMSegmentPyStepTwo('step2'))
-      steps.append(EMSegmentPyStep('step3'))
+      steps.append(EMSegmentPyWizard.EMSegmentPyStepOne('step1'))
+      steps.append(EMSegmentPyWizard.EMSegmentPyStepTwo('step2'))
+      steps.append(EMSegmentPyWizard.EMSegmentPyStep('step3'))
     
       # Add transition associated to steps
       for i in range(len(steps) - 1):

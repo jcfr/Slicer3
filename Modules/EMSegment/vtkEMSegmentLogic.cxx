@@ -2877,7 +2877,7 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
       CMD << workingTarget->GetNthVolumeNodeID(i) << " " ;
     }
     CMD << " } ";
-    CMD << atlasNode->GetID() << " {" <<  this->GetMRMLManager()->GetTreeNodeName(nodeID) << "} \n";
+    CMD << atlasNode->GetID() << " {" <<  this->GetMRMLManager()->GetTreeNodeName(nodeID) << "}";
     // cout << CMD.str().c_str() << endl;
 
 

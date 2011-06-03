@@ -91,6 +91,28 @@ public:
       this->MRMLManager->SetMRMLScene(scene);
       }
 
+  // this is needed in Slicer4 to properly listen to the nodeAdded and nodeRemoved events
+  void InitializeEventListeners()
+  {
+
+#ifndef Slicer3_USE_KWWIDGETS
+    if (this->GetMRMLScene() == NULL)
+      {
+      vtkWarningMacro("InitializeEventListeners: no scene to listen to!");
+      return;
+      }
+
+    // a good time to add the observed events!
+    vtkIntArray *events = vtkIntArray::New();
+    events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+    events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+    this->SetAndObserveMRMLSceneEventsInternal(this->GetMRMLScene(), events);
+    events->Delete();
+#endif
+
+  }
+
+
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
                                    void *callData )
       { 
