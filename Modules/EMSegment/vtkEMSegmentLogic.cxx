@@ -151,13 +151,14 @@ vtkEMSegmentLogic::mktemp_file()
   // _mktemp alone is unusable because of it's limitation to 26 files
   strcpy_s( filename, sizeof(filename), mytemplate.str().c_str() );
   ptr = _mktemp( filename );
+  if ( fopen_s( &fp, ptr, "w" ) != 0 )
+    std::cout << "Cannot create file " << ptr << std::endl;
 #else
   strcpy( filename, mytemplate.str().c_str() );
   ptr = mktemp(filename);
-#endif
-
-  if ( fopen_s( &fp, ptr, "w" ) != 0 )
+  if ( (fp = fopen(ptr, "w")) == NULL );
     std::cout << "Cannot create file " << ptr << std::endl;
+#endif
   fclose( fp );
 
   return ptr;
