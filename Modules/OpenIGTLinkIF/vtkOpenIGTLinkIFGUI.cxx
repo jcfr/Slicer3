@@ -183,6 +183,11 @@ vtkOpenIGTLinkIFGUI::vtkOpenIGTLinkIFGUI ( )
 #endif //OpenIGTLinkIF_USE_VERSION_2
 
   //----------------------------------------------------------------
+  // Connection Test Frame
+  this->ConnectionTestButton    = NULL;
+  this->TestWindow              = NULL;
+
+  //----------------------------------------------------------------
   // Locator  (MRML)
   this->CloseScene              = false;
   this->TimerFlag = 0;
@@ -394,6 +399,19 @@ vtkOpenIGTLinkIFGUI::~vtkOpenIGTLinkIFGUI ( )
     }
 #endif //OpenIGTLinkIF_USE_VERSION_2
 
+  //----------------------------------------------------------------
+  // Connection Test Frame
+  this->ConnectionTestButton->Delete();
+  this->ConnectionTestButton = NULL;
+
+  if (this->TestWindow)
+    {
+    this->TestWindow->Withdraw();
+    this->TestWindow->SetApplication(NULL);
+    this->TestWindow->Delete();
+    this->TestWindow = NULL;
+    }
+
 }
 
 
@@ -579,6 +597,14 @@ void vtkOpenIGTLinkIFGUI::RemoveGUIObservers ( )
     this->ImagingMenu->GetMenu()
       ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
+
+  //----------------------------------------------------------------
+  // Connection Test Frame
+  if (this->ConnectionTestButton)
+    {
+    this->ConnectionTestButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand );
+    }
+  
   
   this->RemoveLogicObservers();
 }
@@ -719,6 +745,10 @@ void vtkOpenIGTLinkIFGUI::AddGUIObservers ( )
   this->SetUserModeButton
     ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
 
+  //----------------------------------------------------------------
+  // Connection Test Frame
+  this->ConnectionTestButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
 
   //----------------------------------------------------------------
   // Etc Frame
@@ -726,7 +756,8 @@ void vtkOpenIGTLinkIFGUI::AddGUIObservers ( )
   // observer load volume button
 
   this->AddLogicObservers();
-  
+
+ 
   
 }
 
@@ -1153,6 +1184,15 @@ void vtkOpenIGTLinkIFGUI::ProcessGUIEvents(vtkObject *caller,
     }
 
   //----------------------------------------------------------------
+  // Connection Test Frame + Window
+  else if (this->ConnectionTestButton == vtkKWPushButton::SafeDownCast(caller)
+           && event == vtkKWPushButton::InvokedEvent)
+    {
+    this->TestWindow->DisplayOnWindow();
+    }
+
+
+  //----------------------------------------------------------------
   // Etc Frame
 
           
@@ -1491,6 +1531,13 @@ void vtkOpenIGTLinkIFGUI::ProcessTimerEvents()
                                          newtimer,
                                          this, "ProcessTimerEvents");
     }
+
+  // -----------------------------------------
+  // Check and update Test Window
+  if (this->TestWindow)
+    {
+    this->TestWindow->ProcessTimerEvents();
+    }
 }
 
 
@@ -1550,7 +1597,14 @@ void vtkOpenIGTLinkIFGUI::BuildGUI ( )
   this->TrackingDataControllerWindow = vtkIGTLTrackingDataControllerWindow::New(); 
   this->TrackingDataControllerWindow->SetApplication(this->GetApplication());
   this->TrackingDataControllerWindow->Create();
+
 #endif //OpenIGTLinkIF_USE_VERSION_2
+
+  this->TestWindow = vtkIGTLTestWindow::New(); 
+  this->TestWindow->SetApplication(this->GetApplication());
+  this->TestWindow->Create();
+
+  BuildGUIForTest();
 
   UpdateConnectorPropertyFrame(-1);
   UpdateIOConfigTree();
@@ -2132,6 +2186,44 @@ void vtkOpenIGTLinkIFGUI::BuildGUIForVisualizationControlFrame ()
 
 
 //----------------------------------------------------------------------------
+void vtkOpenIGTLinkIFGUI::BuildGUIForTest()
+{
+
+  vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+  vtkKWWidget *page = this->UIPanel->GetPageWidget ("OpenIGTLinkIF");
+  
+  vtkSlicerModuleCollapsibleFrame *testFrame = vtkSlicerModuleCollapsibleFrame::New();
+
+  testFrame->SetParent(page);
+  testFrame->Create();
+  testFrame->SetLabelText("Test");
+  testFrame->CollapseFrame();
+  app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+               testFrame->GetWidgetName(), page->GetWidgetName());
+
+  vtkKWFrameWithLabel *connectionTestFrame = vtkKWFrameWithLabel::New();
+  connectionTestFrame->SetParent(testFrame->GetFrame());
+  connectionTestFrame->Create();
+  connectionTestFrame->SetLabelText ("Connection Test");
+  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+               connectionTestFrame->GetWidgetName());
+
+  this->ConnectionTestButton = vtkKWPushButton::New();
+  this->ConnectionTestButton->SetParent(connectionTestFrame->GetFrame());
+  this->ConnectionTestButton->Create();
+  this->ConnectionTestButton->SetText( "Open Test Server" );
+  this->ConnectionTestButton->SetWidth (18);
+
+  this->Script("pack %s -side left -anchor w -padx 2 -pady 2", 
+               this->ConnectionTestButton->GetWidgetName());
+
+  testFrame->Delete();
+  connectionTestFrame->Delete();
+
+}
+
+
+//----------------------------------------------------------------------------
 void vtkOpenIGTLinkIFGUI::UpdateAll()
 {
 
@@ -2318,6 +2410,9 @@ void vtkOpenIGTLinkIFGUI::OpenTrackingDataControllerWindow(const char* conID)
     }
 #endif //OpenIGTLinkIF_USE_VERSION_2
 }
+
+
+
 
 
 
