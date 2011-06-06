@@ -401,8 +401,11 @@ vtkOpenIGTLinkIFGUI::~vtkOpenIGTLinkIFGUI ( )
 
   //----------------------------------------------------------------
   // Connection Test Frame
-  this->ConnectionTestButton->Delete();
-  this->ConnectionTestButton = NULL;
+  if (this->ConnectionTestButton)
+    {
+    this->ConnectionTestButton->Delete();
+    this->ConnectionTestButton = NULL;
+    }
 
   if (this->TestWindow)
     {
@@ -1704,8 +1707,6 @@ void vtkOpenIGTLinkIFGUI::BuildGUIForConnectorBrowserFrame ()
   listButtonsFrame->SetParent(listFrame->GetFrame());
   listButtonsFrame->Create();
 
-  listButtonsFrame->Delete();
-
   app->Script ("pack %s %s -fill both -expand true",  
                //app->Script( "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2",
                this->ConnectorList->GetWidgetName(), listButtonsFrame->GetWidgetName());
@@ -1724,6 +1725,8 @@ void vtkOpenIGTLinkIFGUI::BuildGUIForConnectorBrowserFrame ()
 
   app->Script( "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2",
                this->AddConnectorButton->GetWidgetName(), this->DeleteConnectorButton->GetWidgetName());
+
+  listButtonsFrame->Delete();
 
   // -----------------------------------------
   // Connector Property frame

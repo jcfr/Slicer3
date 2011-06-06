@@ -133,7 +133,16 @@ vtkIGTLTestWindow::~vtkIGTLTestWindow()
     this->CloseButton->SetParent(NULL);
     this->CloseButton->Delete();
     }
+  if (this->StatusText)
+    {
+    this->StatusText->SetParent(NULL);
+    this->StatusText->Delete();
+    }
 
+  if (this->Thread)
+    {
+    this->Thread->Delete();
+    }
   if (this->Mutex)
     {
     this->Mutex->Delete();
@@ -499,7 +508,6 @@ void vtkIGTLTestWindow::CreateWidget()
                 this->StopTrackingButton->GetWidgetName(),
                 this->CloseButton->GetWidgetName());
 
-  buttonFrame->Delete();
 
   // --------------------------------------------------
   // Status Frame
@@ -518,6 +526,18 @@ void vtkIGTLTestWindow::CreateWidget()
   //this->StatusText->SetWidth(8);
   app->Script("pack %s -side top -fill both -expand true", 
               this->StatusText->GetWidgetName());
+
+
+  dataSourceFrame->Delete();
+  modeFrame->Delete();
+  trackingFileFrame->Delete();
+  connectionFrame->Delete();
+  portFrame->Delete();
+  portLabel->Delete();
+  frameRateFrame->Delete();
+  frameRateLabel->Delete();
+  buttonFrame->Delete();
+  statusFrame->Delete();
 
 }
 

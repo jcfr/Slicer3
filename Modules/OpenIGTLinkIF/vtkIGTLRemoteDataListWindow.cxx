@@ -108,6 +108,12 @@ vtkIGTLRemoteDataListWindow::~vtkIGTLRemoteDataListWindow()
     this->CloseButton->SetParent(NULL);
     this->CloseButton->Delete();
     }
+  if (this->ImageMetaListQueryNode)
+    {
+    this->MRMLScene->RemoveNode(this->ImageMetaListQueryNode);
+    this->ImageMetaListQueryNode->Delete();
+    this->ImageMetaListQueryNode = NULL;
+    }
 
   this->MRMLObserverManager->Delete();
   this->MainFrame->Delete();
