@@ -1,3 +1,7 @@
+from Helper import Helper
 from EMSegmentPyStep import *
-from EMSegmentPyStepOne import * # Define Tasks step
-from EMSegmentPyStepTwo import * # Define Tasks step
+from EMSegmentPyStepOne import * 
+from EMSegmentPyStepTwo import * 
+from EMSegmentPyStepThree import * 
+from EMSegmentPyDummyStep import *
+

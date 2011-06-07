@@ -5069,6 +5069,16 @@ void vtkEMSegmentMRMLManager::TurnFromParentToLeafNode(vtkMRMLEMSTreeNode* treeN
     parLeafNode ->Delete();
 }
 
+//----------------------------------------------------------------------------
+void vtkEMSegmentMRMLManager::ImportMRMLFile(const char *mrmlFile)
+{
+
+  vtksys_stl::string errMSG = "";
+  this->ImportMRMLFile(mrmlFile,errMSG);
+
+}
+
+//----------------------------------------------------------------------------
 void vtkEMSegmentMRMLManager::ImportMRMLFile(const char *mrmlFile,  vtksys_stl::string errMSG)
 {
  

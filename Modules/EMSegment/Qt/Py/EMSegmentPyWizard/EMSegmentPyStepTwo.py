@@ -1,4 +1,5 @@
 from __main__ import qt, ctk
+import PythonQt
 
 from EMSegmentPyStep import *
 
@@ -6,34 +7,48 @@ class EMSegmentPyStepTwo(EMSegmentPyStep) :
   
   def __init__(self, stepid):
     self.initialize(stepid)
+    self.setName('2. Define Input Channels')
+    self.setDescription('Name the input channels and choose the set of scans for segmentation.')
+    
+    self.__parent = super(EMSegmentPyStepTwo, self)    
     
   def createUserInterface(self):
-    layout = qt.QVBoxLayout(self)
-    label = qt.QLabel("EMPYSTEPTWO: This is %s" % self.id())
-    layout.addWidget(label)
-    #uiloader = qt.QUiLoader()
-    #file = qt.QFile("/Users/daniel/SLICER/QT_TRUNK/Slicer4/QTModules/EMSegment/Qt/Resources/UI/qSlicerEMSegmentDefineAnatomicalTreeStep.ui")
-    #file.open(qt.QFile.ReadOnly)
-    #steptwo_widget = uiloader.load(file)
-    #file.close()
-    #layout.addWidget(steptwo_widget)
+    '''
+    '''
+    self.__layout = self.__parent.createUserInterface()
     
-  
+    # the input channels
+    inputChannelGroupBox = qt.QGroupBox()
+    inputChannelGroupBox.setTitle('Input Channels')
+    self.__layout.addWidget(inputChannelGroupBox)
+    
+    inputChannelGroupBoxLayout = qt.QFormLayout(inputChannelGroupBox)
+    
+    self.__inputChannelList = PythonQt.qSlicerEMSegmentModuleWidgets.qSlicerEMSegmentInputChannelListWidget()
+    inputChannelGroupBoxLayout.addWidget(self.__inputChannelList)
+    
+    # add empty row
+    self.__layout.addRow("", qt.QWidget())        
+    
+    # registration settings
+    input2inputChannelRegistration = qt.QGroupBox()
+    input2inputChannelRegistration.setTitle('Input-to-Input Channel Registration')
+    self.__layout.addWidget(input2inputChannelRegistration)
+
+    input2inputChannelRegistrationLayout = qt.QFormLayout(input2inputChannelRegistration)
+    
+    alignInputScansCheckBox = qt.QCheckBox()
+    input2inputChannelRegistrationLayout.addRow('Align input scans:',alignInputScansCheckBox)
+    
   def onEntry(self, comingFrom, transitionType):
-    comingFromId = "None"
-    if comingFrom: comingFromId = comingFrom.id()
-    print "-> onEntry - current [%s] - comingFrom [%s]" % (self.id(), comingFromId)
-    super(EMSegmentPyStep, self).onEntry(comingFrom, transitionType)
+    '''
+    '''
+    self.__parent.onEntry(comingFrom, transitionType)
     
-  def onExit(self, goingTo, transitionType):
-    goingToId = "None"
-    if goingTo: goingToId = goingTo.id()
-    print "-> onExit - current [%s] - goingTo [%s]" % (self.id(), goingToId)
-    super(EMSegmentPyStep, self).onExit(goingTo, transitionType)
+    self.__inputChannelList.setMRMLManager(self.mrmlManager()) 
+    self.__inputChannelList.updateWidgetFromMRML()
     
-  def validate(self, desiredBranchId):
-    validationSuceeded = True
-    print "-> validate %s" % self.id()    
-    super(EMSegmentPyStep, self).validate(validationSuceeded, desiredBranchId)
+    if self.__inputChannelList.inputChannelCount == 0:
+      self.__inputChannelList.addInputChannel()
     
     

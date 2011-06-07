@@ -87,6 +87,7 @@ namespace eval EMSegmenterAutoSampleTcl {
             EMSegmentPrint $LOGIC "EMSegmentGaussCurveCalculationFromID: Error occured in calculating Gaussian parameters for $ClassName" 1
             return 1
         }
+        
         # -----------------------------------------
         # 3. Print results
         # -----------------------------------------
@@ -214,6 +215,7 @@ namespace eval EMSegmenterAutoSampleTcl {
         if { [info command MathMulti] != ""} {
             MathMulti Delete
         }
+        
         vtkImageMathematics MathMulti
         # Calculate the mean for each image
         for { set channelID 0 } {$channelID < $NumInputChannel} { incr channelID } {
@@ -324,6 +326,7 @@ namespace eval EMSegmenterAutoSampleTcl {
                 set Index($channelID)  [expr $max($channelID) - $min($channelID)]
             }
         }
+      
 
         # ---------------------------------------
         # Calculate Covariance Accross images
@@ -408,14 +411,25 @@ namespace eval EMSegmenterAutoSampleTcl {
             }
         }
 
+   
+
         # Clean Up
         for {set i 0} {$i < $NumInputChannel} {incr i} {
             MathAdd($i) Delete
         }
 
         gaussCurveCalcThreshold Delete
+        
+        Histogram Delete 
+        
+        #
+        # The following line causes problems within Slicer4. (VTK segfault)
+        # Commenting it, fixes this.
+        #
         MathMulti Delete
-        Histogram Delete
+        #
+        #
+        #
 
         return 0
     }

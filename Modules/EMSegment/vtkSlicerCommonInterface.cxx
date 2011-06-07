@@ -67,8 +67,11 @@ Tcl_Interp* vtkSlicerCommonInterface::Startup(int argc, char *argv[], ostream *e
   qSlicerApplication* app = new qSlicerApplication(argc,argv);
 
 
-  //bool exitWhenDone;
-  //app->initialize(exitWhenDone);
+  bool exitWhenDone;
+  app->parseArguments(exitWhenDone);
+
+
+  //app->exec();
 
 #endif
 

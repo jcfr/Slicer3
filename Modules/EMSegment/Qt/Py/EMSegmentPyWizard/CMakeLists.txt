@@ -1,8 +1,11 @@
 SET(EMSegmentPyWizard_PYTHON_SCRIPTS
   __init__.py
+  Helper.py
   EMSegmentPyStep.py
   EMSegmentPyStepOne.py
-  EMSegmentPyStepTwo.py    
+  EMSegmentPyStepTwo.py
+  EMSegmentPyStepThree.py 
+  EMSegmentPyDummyStep.py  
   )
 
 SET(EMSegmentPyWizard_PYTHON_RESOURCES

@@ -218,8 +218,17 @@ public:
   //BTX
   vtkstd::string GetTclTaskDirectory();
   vtkstd::string DefineTclTaskFileFromMRML();
-  vtkstd::string DefineTclTaskFullPathName(const char* TclFileName);
   //ETX
+#ifdef Slicer3_USE_KWWIDGETS
+  // we do not want to wrap this function in Slicer3
+  // it is only used in Slicer4
+
+  //BTX
+#endif
+  std::string DefineTclTaskFullPathName(const char* TclFileName);
+#ifdef Slicer3_USE_KWWIDGETS
+  //ETX
+#endif
 
 
 
@@ -234,6 +243,17 @@ public:
 
   void WriteImage(vtkImageData* file , const char* filename);
 
+
+#ifdef Slicer3_USE_KWWIDGETS
+  // we do not want to wrap this function in Slicer3
+  // it is only used in Slicer4
+
+  //BTX
+#endif
+  std::string GetTasks();
+#ifdef Slicer3_USE_KWWIDGETS
+  //ETX
+#endif
 
 
 protected: 

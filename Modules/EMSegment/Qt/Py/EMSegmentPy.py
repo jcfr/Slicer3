@@ -1,6 +1,7 @@
 from __main__ import vtk, qt, ctk, slicer
 
 import EMSegmentPyWizard
+from EMSegmentPyWizard import Helper
 
 class EMSegmentPy:
   def __init__(self, parent):
@@ -43,46 +44,87 @@ class EMSegmentPyWidget:
   def logic(self):
     if not self.__logic:
         self.__logic = slicer.modulelogic.vtkEMSegmentLogic()
+        self.__logic.SetModuleName("EMSegment")
+        self.__logic.SetMRMLScene(slicer.mrmlScene)
+        self.__logic.RegisterNodes()
+        self.__logic.InitializeEventListeners()   
     
     return self.__logic
 
   def mrmlManager(self):
     if not self.__mrmlManager:
-        self.__mrmlManager = slicer.modulelogic.vtkEMSegmentLogic()
+        self.__mrmlManager = slicer.modulelogic.vtkEMSegmentLogic().GetMRMLManager()
+        self.__mrmlManager.SetMRMLScene(slicer.mrmlScene)
     
     return self.__mrmlManager
 
     
   def setup(self):
-      self.workflow = ctk.ctkWorkflow()
-      
+    '''
+    Create and start the EMSegment workflow.
+    '''
+    self.workflow = ctk.ctkWorkflow()
     
-      workflowWidget = ctk.ctkWorkflowStackedWidget()
-      workflowWidget.setWorkflow(self.workflow)
+    workflowWidget = ctk.ctkWorkflowStackedWidget()
+    workflowWidget.setWorkflow(self.workflow)
     
-      steps = []
+    workflowWidget.buttonBoxWidget().nextButtonDefaultText = ""
+    workflowWidget.buttonBoxWidget().backButtonDefaultText = ""
+           
+    # create all wizard steps
+    selectTaskStep = EMSegmentPyWizard.EMSegmentPyStepOne( Helper.GetNthStepId(1) )
+    defineInputChannelsSimpleStep = EMSegmentPyWizard.EMSegmentPyStepTwo( Helper.GetNthStepId(2) + 'simple' ) # simple branch
+    defineInputChannelsAdvancedStep = EMSegmentPyWizard.EMSegmentPyStepTwo( Helper.GetNthStepId(2) + 'advanced' ) # advanced branch
+    defineAnatomicalTreeStep = EMSegmentPyWizard.EMSegmentPyStepThree( Helper.GetNthStepId(3) )
+    defineAtlasStep = EMSegmentPyWizard.EMSegmentPyDummyStep( Helper.GetNthStepId(4) )
+    editRegistrationParametersStep = EMSegmentPyWizard.EMSegmentPyDummyStep( Helper.GetNthStepId(5) )
+    definePreprocessingStep = EMSegmentPyWizard.EMSegmentPyDummyStep( Helper.GetNthStepId(6) )
+    specifyIntensityDistributionStep = EMSegmentPyWizard.EMSegmentPyDummyStep( Helper.GetNthStepId(7) ) 
+    editNodeBasedParametersStep = EMSegmentPyWizard.EMSegmentPyDummyStep( Helper.GetNthStepId(8) )
+    miscStep = EMSegmentPyWizard.EMSegmentPyDummyStep( Helper.GetNthStepId(9) )
+    segmentStep = EMSegmentPyWizard.EMSegmentPyDummyStep( Helper.GetNthStepId(10) )
     
-      steps.append(EMSegmentPyWizard.EMSegmentPyStepOne('step1'))
-      steps.append(EMSegmentPyWizard.EMSegmentPyStepTwo('step2'))
-      steps.append(EMSegmentPyWizard.EMSegmentPyStep('step3'))
+    # add the wizard steps to an array for convenience
+    allSteps = []
     
-      # Add transition associated to steps
-      for i in range(len(steps) - 1):
-        self.workflow.addTransition(steps[i], steps[i + 1])
- 
+    allSteps.append(selectTaskStep)
+    allSteps.append(defineInputChannelsSimpleStep)
+    allSteps.append(defineInputChannelsAdvancedStep)
+    allSteps.append(defineAnatomicalTreeStep)
+    allSteps.append(defineAtlasStep)
+    allSteps.append(editRegistrationParametersStep)
+    allSteps.append(definePreprocessingStep)
+    allSteps.append(specifyIntensityDistributionStep)
+    allSteps.append(editNodeBasedParametersStep)
+    allSteps.append(miscStep)
+    allSteps.append(segmentStep)
     
-      # Propagate the logic and the MRML Manager to the steps
-      for s in steps:
-          
-          s.setLogic(self.logic())
-          s.setMRMLManager(self.mrmlManager())
+    # Add transition for the first step which let's the user choose between simple and advanced mode
+    self.workflow.addTransition(selectTaskStep, defineInputChannelsSimpleStep, 'SimpleMode')
+    self.workflow.addTransition(selectTaskStep, defineInputChannelsAdvancedStep, 'AdvancedMode')
     
-      self.workflow.start()
+    # Add transitions associated to the simple mode
+    self.workflow.addTransition(defineInputChannelsSimpleStep,segmentStep)
     
-      workflowWidget.visible = True
-      self.layout.addWidget(workflowWidget)    
-      
-      # compress the layout
-      self.layout.addStretch(1)        
+    # Add transitions associated to the advanced mode
+    self.workflow.addTransition(defineInputChannelsAdvancedStep,defineAnatomicalTreeStep)    
+    
+    # .. add transitions for the rest of the advanced mode steps
+    for i in range(2,len(allSteps) - 1):
+      self.workflow.addTransition(allSteps[i], allSteps[i + 1])
+    
+    # Propagate the workflow, the logic and the MRML Manager to the steps
+    for s in allSteps:
+        s.setWorkflow(self.workflow)
+        s.setLogic(self.logic())
+        s.setMRMLManager(self.mrmlManager())
+    
+    # start the workflow and show the widget
+    self.workflow.start()
+    workflowWidget.visible = True
+    self.layout.addWidget(workflowWidget)    
+    
+    # compress the layout
+    #self.layout.addStretch(1)        
       
       

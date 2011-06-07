@@ -7,6 +7,12 @@ class EMSegmentPyStep(ctk.ctkWorkflowWidgetStep) :
     
     self.__mrmlManager = None
     self.__logic = None
+    self.__workflow = None
+    
+  def setWorkflow(self,workflow):
+    '''
+    '''
+    self.__workflow = workflow
     
   def setMRMLManager(self,mrmlManager):
     self.__mrmlManager = mrmlManager
@@ -19,11 +25,26 @@ class EMSegmentPyStep(ctk.ctkWorkflowWidgetStep) :
 
   def logic(self):
     return self.__logic
+
+  def workflow(self):
+    return self.__workflow
+
+  def getBoldFont(self):
+    '''
+    '''
+    boldFont = qt.QFont("Sans Serif", 12, qt.QFont.Bold)
+    return boldFont
     
   def createUserInterface(self):
-    layout = qt.QVBoxLayout(self)
-    label = qt.QLabel("This is %s" % self.id())
-    layout.addWidget(label)
+    self.__layout = qt.QFormLayout(self)
+    self.__layout.setVerticalSpacing(5)
+
+    # add empty row
+    self.__layout.addRow("", qt.QWidget())    
+    # add empty row
+    self.__layout.addRow("", qt.QWidget())        
+    
+    return self.__layout
   
   def onEntry(self, comingFrom, transitionType):
     comingFromId = "None"
