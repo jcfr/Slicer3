@@ -77,8 +77,6 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable GUI
         variable LOGIC
 
-        set basefilename [ $LOGIC mktemp_file ]
-
         set filename ""
         set NAME ""
 
@@ -93,10 +91,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         if { $NAME != "" } {
-            set filename $basefilename$NAME
-            # $LOGIC PrintText "TCL: Create file: $filename"
-            set CMD "touch \"$filename\""
-            eval exec $CMD
+            set filename [ $LOGIC mktemp_file $NAME ]
+            $LOGIC PrintText "TCL: Create file: $filename"
         } else {
             PrintError "Could not create file: $basefilename$NAME"
         }
@@ -109,8 +105,6 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc CreateFileName { type } {
         variable GUI
         variable LOGIC
-
-        set basefilename [ $LOGIC mktemp_file ]
 
         set filename ""
         set NAME ""
@@ -126,12 +120,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         if { $NAME != "" } {
-            set filename $basefilename$NAME
+            set filename [ $LOGIC mktemp_file $NAME ]
             $LOGIC PrintText "TCL: Create file: $filename"
-            set CMD "touch \"$filename\""
-            eval exec $CMD
         } else {
-            PrintError "Could not create file: $basefilename$NAME"
+            PrintError "Could not create file"
         }
 
         return $filename
@@ -2077,10 +2069,10 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         # Need to download file to temp directory
-        set basefilename [ $LOGIC mktemp_file ]
 
         set NAME "_[file tail $URI]"
-        set filename $basefilename$NAME
+        set filename [ $LOGIC mktemp_file $NAME]
+   
         $LOGIC PrintText "DEBUG: Created file: $filename"
 
 

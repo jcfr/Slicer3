@@ -64,6 +64,7 @@ vtkEMSegmentLogic* vtkEMSegmentLogic::New()
 vtkEMSegmentLogic::vtkEMSegmentLogic()
 {
   this->ModuleName = NULL;
+  this->CurrentTmpFileName = NULL;
 
   this->ProgressCurrentAction = NULL;
   this->ProgressGlobalFractionCompleted = 0.0;
@@ -136,31 +137,39 @@ vtkEMSegmentLogic::AddArchetypeScalarVolume(const char* filename, const char* vo
 }
 
 char*
-vtkEMSegmentLogic::mktemp_file()
+vtkEMSegmentLogic::mktemp_file(const char* postfix)
 {
   char *ptr = NULL;
   char filename[256];
-  FILE *fp;
+  FILE *fp, *fp2;
 
   std::ostringstream mytemplate;
   mytemplate << this->GetTemporaryDirectory() << "/fn" << rand() << "XXXXXX";
+  std::ostringstream s;
 
 #if _WIN32
   // _mktemp alone is unusable because of it's limitation to 26 files
   strcpy_s( filename, sizeof(filename), mytemplate.str().c_str() );
   ptr = _mktemp( filename );
   if ( fopen_s( &fp, ptr, "w" ) != 0 )
-  std::cout << "Cannot create file " << ptr << std::endl;
+    std::cout << "Cannot create file " << ptr << std::endl;
+  s << ptr << postfix;
+  if ( fopen_s( &fp2, s.str().c_str(), "w" ) != 0 )
+    std::cout << "Cannot create file " << ptr << std::endl;
 #else
   strcpy(filename, mytemplate.str().c_str());
   ptr = mktemp(filename);
   if ((fp = fopen(ptr, "w")) == NULL)
-    ;
-  std::cout << "Cannot create file " << ptr << std::endl;
+    std::cout << "Cannot create file " << ptr << std::endl;
+  s << ptr << postfix;
+  if ((fp2 = fopen(s.str().c_str(), "w")) == NULL)
+    std::cout << "Cannot create file " << ptr << std::endl;
 #endif
   fclose(fp);
+  fclose(fp2);
 
-  return ptr;
+  this->SetCurrentTmpFileName(s.str().c_str());
+  return this->GetCurrentTmpFileName();
 }
 
 char*

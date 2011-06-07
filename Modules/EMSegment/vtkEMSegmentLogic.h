@@ -39,7 +39,9 @@ public:
   vtkGetStringMacro (ModuleName);
   vtkSetStringMacro (ModuleName);
 
-  char* mktemp_file();
+  vtkGetStringMacro (CurrentTmpFileName);
+  vtkSetStringMacro (CurrentTmpFileName);
+  char* mktemp_file(const char* postfix);
   char* mktemp_dir();
 
   //
@@ -318,6 +320,7 @@ protected:
   vtkEMSegmentMRMLManager* MRMLManager;
 
   char *ModuleName;
+  char *CurrentTmpFileName;
 
 
   //
