@@ -142,12 +142,12 @@ void qSlicerEMSegmentDefineTaskStep::showDefaultTasksList()
   this->pssDefaultTasksFile.push_back(vtksys_stl::string(""));
   this->pssDefaultTasksName.push_back("Create new task");
 
-  for (unsigned int i=0; i<this->pssDefaultTasksName.size();++i)
-    {
-
-    d->TaskSelectorComboBox->addItem(QString(this->pssDefaultTasksName[i].c_str()));
-
-    }
+//  for (unsigned int i=0; i<this->pssDefaultTasksName.size();++i)
+//    {
+//
+//    d->TaskSelectorComboBox->addItem(QString(this->pssDefaultTasksName[i].c_str()));
+//
+//    }
 
 }
 
