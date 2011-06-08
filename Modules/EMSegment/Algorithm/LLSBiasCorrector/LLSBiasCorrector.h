@@ -21,6 +21,8 @@
 
 #include "itkImage.h"
 #include "itkObject.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkImageFileWriter.h"
 
 #include "vnl/vnl_matrix.h"
 #include "vnl/vnl_vector.h"
@@ -77,6 +79,10 @@ public:
   typedef InternalImageType::PixelType InternalImagePixelType;
   typedef InternalImageType::RegionType InternalImageRegionType;
   typedef InternalImageType::SizeType InternalImageSizeType;
+
+  typedef itk::Image<unsigned short, 3> UShortImageType;
+  typedef itk::ImageFileWriter<UShortImageType> WriterType;
+  typedef itk::RescaleIntensityImageFilter<InternalImageType, UShortImageType> ConverterType;
 
   typedef double ScalarType;
 
@@ -142,7 +148,6 @@ protected:
 
   void CheckInputs();
   void ComputeDistributions();
-  void CopyEMSDistributions();
 
 private:
 

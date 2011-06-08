@@ -14,10 +14,10 @@
 // Use the normal equation? Less accurate, but requires much less memory
 #define LLSBIAS_USE_NORMAL_EQUATION 1
 
-//#define EXPP(x) (exp((x)/100.0) - 1.0)
-//#define LOGP(x) (100.0 * log((x)+1.0))
-#define EXPP(x) (exp(x) - 1)
-#define LOGP(x) (log((x)+1))
+#define EXPP(x) (exp((x)/100.0) - 1.0)
+#define LOGP(x) (100.0 * log((x)+1.0))
+//#define EXPP(x) (exp(x) - 1)
+//#define LOGP(x) (log((x)+1))
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -111,6 +111,7 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
     if (size[0] != psize[0] || size[1] != psize[1] || size[2] != psize[2])
       itkExceptionMacro(<< "Image data and probabilities 3D size mismatch");
   }
+
 }
 
 
@@ -126,7 +127,8 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
   {
     for (int n = 0; n < numChannels; n++)
     {
-       m_Means(n,l) = exp(LogMu[l][n]);
+       m_Means(n,l) = LogMu[l][n];
+//       m_Means(n,l) = EXPP(LogMu[l][n]);
     }
   }
 }
@@ -146,25 +148,13 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
     {
       for (int n = 0; n < numChannels; n++)
       {
-        cov(n,m) = exp(LogCovariance[l][m][n]);
+        cov(n,m) = LogCovariance[l][m][n];
+//        cov(n,m) = EXPP(LogCovariance[l][m][n]);
       }
     }
 
     m_Covariances.Append(cov);
   }
-}
-
-
-template <class TInputImage, class TProbabilityImage>
-void
-LLSBiasCorrector <TInputImage, TProbabilityImage>
-::CopyEMSDistributions()
-{
-  itkDebugMacro(<< "LLSBiasCorrector: Computing means and variances already done.");
-  itkDebugMacro(<< "Means:" << std::endl << m_Means);
-  itkDebugMacro(<< "Covariances:" << std::endl)
-//  for (unsigned int iclass = 0; iclass < numClasses; iclass++)
-//    itkDebugMacro(<< m_Covariances[iclass] << std::endl);
 }
 
 
@@ -218,7 +208,7 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
             mu += 
               m_Probabilities[iclass]->GetPixel(ind)
               *
-              m_InputImages[ichan]->GetPixel(ind);
+              LOGP(m_InputImages[ichan]->GetPixel(ind));
             sumClassProb += m_Probabilities[iclass]->GetPixel(ind);
           }
 
@@ -253,8 +243,8 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
           for (ind[1] = 0; ind[1] < (long)size[1]; ind[1] += skips[1])
             for (ind[0] = 0; ind[0] < (long)size[0]; ind[0] += skips[0])
             {
-              double diff1 = m_InputImages[r]->GetPixel(ind) - mu1;
-              double diff2 = m_InputImages[c]->GetPixel(ind) - mu2;
+              double diff1 = LOGP(m_InputImages[r]->GetPixel(ind)) - mu1;
+              double diff2 = LOGP(m_InputImages[c]->GetPixel(ind)) - mu2;
               var += m_Probabilities[iclass]->GetPixel(ind) * (diff1*diff2);
               sumClassProb += m_Probabilities[iclass]->GetPixel(ind);
             }
@@ -509,6 +499,12 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
   DynArray<InputImagePointer>& outputs,
   bool fullRes)
 {
+  ConverterType::Pointer converter = ConverterType::New();
+  converter->SetOutputMinimum(0);
+  converter->SetOutputMaximum(65355);
+  WriterType::Pointer writer = WriterType::New();
+
+
   if (inputs.GetSize() != outputs.GetSize())
     itkExceptionMacro(<< "Number of output images != input images");
 
@@ -526,7 +522,10 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
 
   // Compute means and variances
   this->ComputeDistributions();
-  this->CopyEMSDistributions();
+  itkDebugMacro(<< "LLSBiasCorrector: Computing means and variances already done.");
+  itkDebugMacro(<< "Means:" << std::endl << m_Means);
+  for (unsigned int iclass = 0; iclass < m_Probabilities.GetSize(); iclass++)
+    itkDebugMacro(<< "Cov[" << iclass << "] " << m_Covariances[iclass] << std::endl);
 
   // Compute skips along each dimension
   InputImageSpacingType spacing = m_InputImages[0]->GetSpacing();
@@ -856,6 +855,19 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
 
         } // for ind[0]
 
+
+    // Write biasfield
+    converter->SetInput(biasField);
+    converter->Update();
+
+    std::ostringstream oss;
+    oss << "/tmp/bias_" << rand() << "_" << ichan << ".nhdr" << std::ends;
+    std::cout << "Write bias-ed image..." << oss.str().c_str() << std::endl;
+    writer->SetFileName(oss.str().c_str());
+    writer->SetInput(converter->GetOutput());
+    writer->Update();
+
+
     // Correct image using (clamped) bias field)
     for (ind[2] = 0; ind[2] < (long)size[2]; ind[2] += workingofft[2])
       for (ind[1] = 0; ind[1] < (long)size[1]; ind[1] += workingofft[1])
@@ -868,7 +880,8 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
           if (logb < minBias)
             logb = minBias;
 
-          double logd = m_InputImages[ichan]->GetPixel(ind) - logb;
+          double logd = LOGP(m_InputImages[ichan]->GetPixel(ind)) - logb;
+//          double logd = m_InputImages[ichan]->GetPixel(ind) - logb;
           double d = EXPP(logd);
           //double d = m_InputImages[ichan]->GetPixel(ind) / (logb + 1e-20);
 
@@ -880,28 +893,32 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
           double p = m_Probabilities[m_ReferenceClassIndex]->GetPixel(ind);
           outputMu += p * d;
 
-          output->SetPixel(ind, (InputImagePixelType)logd);
+          output->SetPixel(ind, (InputImagePixelType)d);
+//          output->SetPixel(ind, (InputImagePixelType)logd);
         } // for ind[0]
 
+/**/
     outputMu /= sumP;
 
-//    double resRatio = inputMu / (outputMu + 1e-20);
-//
-//    // Rescale so output mean for ref class stays the same
-//    for (ind[2] = 0; ind[2] < (long)size[2]; ind[2] += workingofft[2])
-//      for (ind[1] = 0; ind[1] < (long)size[1]; ind[1] += workingofft[1])
-//        for (ind[0] = 0; ind[0] < (long)size[0]; ind[0] += workingofft[0])
-//        {
-//          double v = output->GetPixel(ind);
-//          output->SetPixel(ind, v * resRatio);
-//        }
+    double resRatio = inputMu / (outputMu + 1e-20);
+
+    // Rescale so output mean for ref class stays the same
+    for (ind[2] = 0; ind[2] < (long)size[2]; ind[2] += workingofft[2])
+      for (ind[1] = 0; ind[1] < (long)size[1]; ind[1] += workingofft[1])
+        for (ind[0] = 0; ind[0] < (long)size[0]; ind[0] += workingofft[0])
+        {
+          double v = output->GetPixel(ind);
+          output->SetPixel(ind, v * resRatio);
+        }
+/**/
 
   } // for ichan
 
   // Remove internal references to input images when done
   m_InputImages.Clear();
 
-  itkDebugMacro(<< "dommg...");
+//  writer->Delete();
+//  converter->Delete();
 }
 
 #endif

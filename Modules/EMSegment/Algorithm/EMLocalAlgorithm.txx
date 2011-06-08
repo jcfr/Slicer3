@@ -959,7 +959,8 @@ template <class T> void EMLocalAlgorithm<T>::E_Step_Weight_Calculation_Threaded(
   
   
   T** ProbDataPtrCopy = new T*[NumTotalTypeCLASS];
-  for (int i =0;i<NumTotalTypeCLASS;i++) ProbDataPtrCopy[i] = (this->ProbDataPtrStart[i] ? this->ProbDataPtrStart[i] + Thread_ProbDataJump[i] : NULL); 
+  for (int i =0;i<NumTotalTypeCLASS;i++)
+    ProbDataPtrCopy[i] = (this->ProbDataPtrStart[i] ? this->ProbDataPtrStart[i] + Thread_ProbDataJump[i] : NULL); 
   
   unsigned char* OutputVector = this->OutputVectorPtr + Thread_DataJump;
   
@@ -1341,31 +1342,19 @@ template <class T> void EMLocalAlgorithm<T>::E_Step_Weight_Calculation_Threaded(
 //------------------------------------------------------------
 
 
-void WriteImage(vtkImageData* Volume , const char* FileName)
-{
-   std::string  name =  std::string (FileName) +  std::string(".nhdr");
-    std::cout << "Write to file " <<   name.c_str() << endl;
-   vtkITKImageWriter*  export_iwriter =  vtkITKImageWriter::New();
-   export_iwriter->SetInput(Volume);
-   export_iwriter->SetFileName(name.c_str());
-   vtkMatrix4x4* mat = vtkMatrix4x4::New();
-   export_iwriter->SetRasToIJKMatrix(mat);
-   export_iwriter->SetUseCompression(1);
-   export_iwriter->Write();
-   mat->Delete();
-   export_iwriter->Delete();
-}
-
 //------------------------------------------------------------
-// LLSBiasCoorection
+// LLSBiasCorrection
 //------------------------------------------------------------
 template <class T>
-void EMLocalAlgorithm<T>::LLSBiasCoorection(int iter, float* cY)
+void EMLocalAlgorithm<T>::LLSBiasCorrection(int iter, float* cY)
 {
+  srand ( time(NULL) );
+  int random = rand();
+
   // collect input data
   vtkImageData* inData = reconstructImage( this->InputVectorPtr, 0 );
 
-  vtkImageExport* myVTKtoITKImageExporter  = vtkImageExport::New();
+  vtkImageExport* myVTKtoITKImageExporter = vtkImageExport::New();
   myVTKtoITKImageExporter->SetInput(inData);
 
   typedef itk::Image<float, 3> FloatImageType;
@@ -1378,22 +1367,18 @@ void EMLocalAlgorithm<T>::LLSBiasCoorection(int iter, float* cY)
   myVTKtoITKImageImporter->GetOutput()->Print(std::cout);
 
   std::ostringstream s1;
-  s1 << "/tmp/biascorr" << iter;
-  std::cout << s1 << endl;
-  WriteImage(inData, s1.str().c_str());
+  s1 << "/tmp/" << random << "_bias" << iter;
+  EMLocalAlgorithm_GEImageWriter(inData, s1.str().c_str(), 1);
  
-
-  srand(39280694);
-
 
   DynArray<FloatImageType::Pointer> images;
   images.Append(img1);
 
   typedef LLSBiasCorrector<FloatImageType, FloatImageType> BiasCorrectorType;
 
-
   const FloatImageType::RegionType& region = img1->GetBufferedRegion();
   const FloatImageType::SpacingType& spacing = img1->GetSpacing();
+
 
   unsigned int numChannels = 1;
 
@@ -1413,6 +1398,11 @@ void EMLocalAlgorithm<T>::LLSBiasCoorection(int iter, float* cY)
   }
   //////////////////////////////////////////////////////////////////////
 
+//  typedef itk::Image<unsigned short, 3> UShortImageType;
+  typedef itk::ImageFileWriter<FloatImageType> WriterType;
+  WriterType::Pointer writer = WriterType::New();
+
+  // probs must be normalized between 0 and 1
   //////////////////////////////////////////////////////////////////////
   FloatImageType::IndexType idx;
   DynArray<FloatImageType::Pointer> probs;
@@ -1431,12 +1421,19 @@ void EMLocalAlgorithm<T>::LLSBiasCoorection(int iter, float* cY)
           idx[0] = idxX;
           idx[1] = idxY;
           idx[2] = idxZ;
-          prob->SetPixel(idx, this->w_mPtr[i][index]);
+//          prob->SetPixel(idx, (exp(this->w_mPtr[i][index])-1) );
+          prob->SetPixel(idx, this->w_mPtr[i][index] );
+//          std::cout << exp(this->w_mPtr[i][index])-1 << std::endl;
           index++;
         }
       }
     }
     probs.Append(prob);
+    std::ostringstream sx;
+    sx << "/tmp/" << i << "_prob" << ".nrrd";
+    writer->SetFileName(sx.str().c_str());
+    writer->SetInput(prob);
+    writer->Update();
   }
   //////////////////////////////////////////////////////////////////////
 
@@ -1462,8 +1459,8 @@ void EMLocalAlgorithm<T>::LLSBiasCoorection(int iter, float* cY)
   biascorr->SetSampleSpacing(2.0);
   biascorr->SetMask(maskImg);
   biascorr->SetMaxDegree(maxdegree);
-  biascorr->SetEMSMeans(this->LogMu, NumTotalTypeCLASS, NumInputImages);
-  biascorr->SetEMSCovariances(this->LogCovariance, NumTotalTypeCLASS, NumInputImages);
+//  biascorr->SetEMSMeans(this->LogMu, NumTotalTypeCLASS, NumInputImages);
+//  biascorr->SetEMSCovariances(this->LogCovariance, NumTotalTypeCLASS, NumInputImages);
   biascorr->SetProbabilities(probs);
   biascorr->CorrectImages(images, corrImages, true);
   ////////////////////////////////////////////////////////////////////////////
@@ -1480,10 +1477,11 @@ void EMLocalAlgorithm<T>::LLSBiasCoorection(int iter, float* cY)
 
 
   std::ostringstream s2;
-  s2 << "/tmp/biascorrected" << iter;
-  std::cout << s2 << endl;
-  WriteImage(outData, s2.str().c_str());
+  s2 << "/tmp/" << random << "_biascorrected" << iter;
+  
+  EMLocalAlgorithm_GEImageWriter(outData, s2.str().c_str(), 1);
 
+  //copy into cY_MPtr
   // write result back
   int index = 0;
   for (int idxZ = 0; idxZ < this->RealMaxZ; idxZ++) { 
@@ -1499,9 +1497,8 @@ void EMLocalAlgorithm<T>::LLSBiasCoorection(int iter, float* cY)
   }
 
 
-return;
-//copy into cY_MPtr
   inData->Delete();
+return;
   maskImg->Delete();
   biascorr->Delete();
 //  myVTKtoITKImageImporter->Delete();
@@ -1644,8 +1641,8 @@ vtkImageData* EMLocalAlgorithm<T>::reconstructImage(float** InputVector, int Inp
     for (int idxY = 0; idxY < this->RealMaxY; idxY++) {
       for (int idxX = 0; idxX < this->RealMaxX; idxX++) {
         // in1Ptr[idxX + idxY*RealMaxX + idxZ*RealMaxX*RealMaxY] = exp(InputVector[index][InputIndex]) - 1;
-        *in1Ptr = InputVector[index][InputIndex];
-//        *in1Ptr = exp(InputVector[index][InputIndex])-1;
+//        *in1Ptr = InputVector[index][InputIndex];
+        *in1Ptr = exp(InputVector[index][InputIndex])-1;
         index++; 
         in1Ptr++;
       }
@@ -2063,10 +2060,10 @@ template  <class T> void EMLocalAlgorithm<T>::RunAlgorithm(EMTriVolume& iv_m, EM
           }
         else
           {
-          this->LLSBiasCoorection(iter, cY_MPtr);
+          this->LLSBiasCorrection(iter, cY_MPtr);
           }
         }
-      else std::cerr << "Bias calculation disabled " << endl; 
+      else std::cerr << "Bias calculation disabled " << endl;
      
       // Registration
       if (this->RegistrationType > EMSEGMENT_REGISTRATION_APPLY)
