@@ -264,7 +264,7 @@ void  vtkImageEMLocalGenericClass::ExecuteData(vtkDataObject*) {
 
 #if (EMVERBOSE)
       {
-        // If ProbDataPtr points to weired values then do an Update of the orignal source of the data before assinging it to this class 
+        // If ProbDataPtr points to weird values then do an Update of the original source of the data before assigning it to this class
         // e.g. vtkImageReader Blub ; Blub Update ; EMClass SetProbDataPtr [Blub GetOutput]
         std::cerr << "------------------ ProbabilityData ------------------------- " << endl;
         vtkIndent indent;
