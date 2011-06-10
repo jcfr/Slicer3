@@ -12,12 +12,12 @@ ENDIF (USE_ITK_FILE)
 
 ADD_EXECUTABLE(test
   test.cxx
-  Log.cxx
+#  Log.cxx
 )
 
 ADD_EXECUTABLE(bias
   bias.cxx
-  Log.cxx
+#  Log.cxx
 )
 
 TARGET_LINK_LIBRARIES(bias ${ITK_LIBRARIES})
