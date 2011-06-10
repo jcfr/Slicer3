@@ -127,7 +127,7 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
   {
     for (int n = 0; n < numChannels; n++)
     {
-       m_Means(n,l) = LogMu[l][n];
+       m_Means(n,l) = 100.0 * LogMu[l][n];
 //       m_Means(n,l) = EXPP(LogMu[l][n]);
     }
   }
@@ -148,7 +148,7 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
     {
       for (int n = 0; n < numChannels; n++)
       {
-        cov(n,m) = LogCovariance[l][m][n];
+        cov(n,m) = 100.0 * 100.0 * LogCovariance[l][m][n];
 //        cov(n,m) = EXPP(LogCovariance[l][m][n]);
       }
     }
