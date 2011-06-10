@@ -261,7 +261,7 @@ int main(int argc, char** argv)
     converter->Update();
 
     std::ostringstream oss;
-    oss << "bias" << ichan << ".gipl" << std::ends;
+    oss << "bias" << ichan << ".nrrd" << std::ends;
  
     writer->SetFileName(oss.str().c_str());
     writer->SetInput(converter->GetOutput());
@@ -271,12 +271,12 @@ int main(int argc, char** argv)
 
   converter->SetInput(blur1->GetOutput());
   converter->Update();
-  writer->SetFileName("p0.gipl");
+  writer->SetFileName("p0.nrrd");
   writer->Update();
 
   converter->SetInput(blur2->GetOutput());
   converter->Update();
-  writer->SetFileName("p1.gipl");
+  writer->SetFileName("p1.nrrd");
   writer->Update();
 
   // Setup bias correction
@@ -312,7 +312,7 @@ int main(int argc, char** argv)
     converter_corr->Update();
 
     std::ostringstream oss;
-    oss << "corr" << ichan << ".gipl" << std::ends;
+    oss << "corr" << ichan << ".nrrd" << std::ends;
  
     writer->SetFileName(oss.str().c_str());
     writer->SetInput(converter_corr->GetOutput());
@@ -335,7 +335,7 @@ int main(int argc, char** argv)
   converter_corr->SetOutputMaximum(65355);
   converter_corr->Update();
  
-  writer->SetFileName("corr2.gipl");
+  writer->SetFileName("corr2.nrrd");
   writer->SetInput(converter_corr->GetOutput());
   writer->Update();
 */
