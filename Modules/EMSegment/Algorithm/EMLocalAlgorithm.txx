@@ -27,6 +27,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 template <class T> void EMLocalAlgorithm_PrintVector(T* parameters, int Min,  int Max);
 VTK_THREAD_RETURN_TYPE EMLocalAlgorithm_E_Step_Threader_Function(void *arg);
 
+
+#include <time.h>
+
 #include "vtkTimeDef.h"
 #include "vtkDataDef.h"
 #include "vtkImageData.h"
