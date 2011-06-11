@@ -109,6 +109,9 @@ public:
   itkSetMacro(ClampBias, bool);
   itkGetMacro(ClampBias, bool);
 
+  itkSetMacro(ComputeMean, bool);
+  itkGetMacro(ComputeMean, bool);
+
   void SetAdditive() { m_DoLog = false; }
   void SetMultiplicative() { m_DoLog = true; }
 
@@ -179,6 +182,7 @@ private:
   double m_XMu[3];
   double m_XStd[3];
 
+  bool m_ComputeMean;
 };
 
 #ifndef MU_MANUAL_INSTANTIATION

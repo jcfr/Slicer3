@@ -64,7 +64,7 @@ template  <class T> void EMLocalAlgorithm<T>::InitializeEM(vtkImageEMLocalSegmen
   this->RealMaxY                 = Extent[3] - Extent[2] + 1;
   this->RealMaxZ                 = Extent[5] - Extent[4] + 1;
 
-  this->Alpha                         = vtk_filter->GetActiveSuperClass()->GetAlpha();
+  this->Alpha                    = vtk_filter->GetActiveSuperClass()->GetAlpha();
   if ((this->Alpha > 0) && (vtk_filter->GetActiveSuperClass()->GetStopMFAMaxIter() < 1)) {
     vtkEMAddWarningMessage("Alpha is set to " <<this->Alpha << " even though StopMFAMaxIter < 1 ! Thus, we disable MeanField and set Alpha to 0" );
     this->Alpha = 0.0;
@@ -79,7 +79,10 @@ template  <class T> void EMLocalAlgorithm<T>::InitializeEM(vtkImageEMLocalSegmen
 
   this->SmoothingWidth          = vtk_filter->GetSmoothingWidth();
   this->SmoothingSigma          = vtk_filter->GetSmoothingSigma();
-
+  std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: " <<  this->SmoothingWidth << " " << this->SmoothingSigma  << std::endl;
+  this->UseLLS                  = vtk_filter->GetUseLLS();
+  this->UseLLS_Recompute_Means  = vtk_filter->GetUseLLS_Recompute_Means();
+  std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: " <<  this->UseLLS << " " << this->UseLLS_Recompute_Means  << std::endl;
 
   // Should be defined later in EM-Varaible Section but needed for CostFunctionParameters
   this->OutputVectorPtr = new unsigned char[ImageProd];

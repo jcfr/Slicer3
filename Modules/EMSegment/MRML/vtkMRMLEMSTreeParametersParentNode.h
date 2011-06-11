@@ -63,11 +63,17 @@ public:
   vtkGetMacro(SmoothingKernelSigma, double);
   vtkSetMacro(SmoothingKernelSigma, double);
 
+  vtkGetMacro(UseLLS, double);
+  vtkSetMacro(UseLLS, double);
+
+  vtkGetMacro(UseLLS_Recompute_Means, double);
+  vtkSetMacro(UseLLS_Recompute_Means, double);
+
   // EM stopping conditions
   // Type:
   //   0) fixed number of iterations specified by MaxIterations
   //   1) absolute measure specified by MaxValue
-  //   2) relative measrue specified by MaxValue
+  //   2) relative measure specified by MaxValue
   vtkGetMacro(StopEMType, int);
   vtkSetMacro(StopEMType, int);
   vtkGetMacro(StopEMMaxIterations, int);
@@ -79,7 +85,7 @@ public:
   // Type:
   //   0) fixed number of iterations specified by MaxIterations
   //   1) absolute measure specified by MaxValue
-  //   2) relative measrue specified by MaxValue
+  //   2) relative measure specified by MaxValue
   vtkGetMacro(StopMFAType, int);
   vtkSetMacro(StopMFAType, int);
   vtkGetMacro(StopMFAMaxIterations, int);
@@ -131,6 +137,8 @@ protected:
   int                                 BiasCalculationMaxIterations;
   double                              SmoothingKernelSigma;
   int                                 SmoothingKernelWidth;
+  bool                                UseLLS;
+  bool                                UseLLS_Recompute_Means;
   
   // EM stopping conditions
   int                                 StopEMType;

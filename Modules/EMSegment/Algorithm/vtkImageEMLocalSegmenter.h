@@ -39,7 +39,7 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
 {
   public:
   // -----------------------------------------------------
-  // Genral Functions for the filter
+  // General Functions for the filter
   // -----------------------------------------------------
   static vtkImageEMLocalSegmenter *New();
   vtkTypeMacro(vtkImageEMLocalSegmenter,vtkObject);
@@ -71,6 +71,12 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
   vtkSetMacro(SmoothingSigma, int);
   vtkGetMacro(SmoothingSigma, int);
 
+  vtkSetMacro(UseLLS, int);
+  vtkGetMacro(UseLLS, int);
+
+  vtkSetMacro(UseLLS_Recompute_Means, int);
+  vtkGetMacro(UseLLS_Recompute_Means, int);
+
   void SetNumberOfTrainingSamples(int Number) {this->NumberOfTrainingSamples = Number;}
   vtkGetMacro(NumberOfTrainingSamples, int);
 
@@ -89,8 +95,8 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
   vtkGetMacro(DisableMultiThreading,int); 
   vtkSetMacro(DisableMultiThreading,int); 
 
-  // Desciption:
-  // Head Class is the inital class under which all subclasses are attached  
+  // Description:
+  // Head Class is the initial class under which all subclasses are attached
   void SetHeadClass(vtkImageEMLocalSuperClass *InitHead);
 
   int* GetSegmentationBoundaryMin();
@@ -98,7 +104,7 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
 
   int* GetExtent(){return this->Extent;}
 
-  // Desciption:
+  // Description:
   // Dimension of work area => SegmentationBoundaryMax[i] - SegmentationBoundaryMin[i] + 1 
   int GetDimensionX();
   int GetDimensionY();
@@ -108,7 +114,7 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
   // Description:
   // Number of input images for the segmentation - Has to be defined before defining any class specific setting 
   // Otherwise they get deleted
-  // Be carefull: this is just the number of images not attlases, 
+  // Be careful: this is just the number of images not attlases,
   // e.g. I have 5 tissue classes and 3 Inputs (T1, T2, SPGR) -> NumInputImages = 3
   void SetNumInputImages(int number);
   int GetNumInputImages() {return this->NumInputImages;} 
@@ -158,12 +164,14 @@ protected:
   void ResetMessageSettings();  
 
   // Description:
-  // Checks all intput image if they have coresponding dimensions 
+  // Checks all input image if they have corresponding dimensions
   int CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num);
 
 
-  int SmoothingWidth;  // Width for Gausian to regularize weights   
-  int SmoothingSigma;  // Sigma paramter for regularizing Gaussian
+  int SmoothingWidth;  // Width for Gaussian to regularize weights
+  int SmoothingSigma;  // Sigma parameter for regularizing Gaussian
+  int UseLLS;
+  int UseLLS_Recompute_Means;
 
   int NumInputImages;               // Number of input images  
  
@@ -185,12 +193,12 @@ protected:
 
   void   *activeClass;               // Currently Active Class -> Important for interface with TCL
 
-  short  **DebugImage;             // Just used for debuging
+  short  **DebugImage;             // Just used for debugging
 
   int    RegistrationInterpolationType;  // Registration Interpolation Type
 
-  ProtocolMessages ErrorMessage;    // Lists all the error messges -> allows them to be displayed in tcl too 
-  ProtocolMessages WarningMessage;  // Lists all the warning messges -> allows them to be displayed in tcl too 
+  ProtocolMessages ErrorMessage;    // Lists all the error messages -> allows them to be displayed in tcl too
+  ProtocolMessages WarningMessage;  // Lists all the warning messages -> allows them to be displayed in tcl too
 
   int    DisableMultiThreading;     // For validation purposes you might want to disable MultiThreading 
                                     // so that you get the same results on different machines 

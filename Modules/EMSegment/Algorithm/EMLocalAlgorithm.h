@@ -40,7 +40,7 @@ typedef struct {
   int   *PCAMeanShapeJump;
   int   **PCAEigenVectorsJump;
   int   *ProbDataJump;
-  // Job specifc number of Voxels in Image Space (not considering boundaries); 
+  // Job specific number of Voxels in Image Space (not considering boundaries);
   int   NumberOfVoxels;
   int   PCAMin[3];
   int   PCAMax[3];
@@ -222,15 +222,17 @@ private:
 
   int SmoothingWidth;
   int SmoothingSigma;
+  int UseLLS;
+  int UseLLS_Recompute_Means;
 
-  ProtocolMessages ErrorMessage;    // Lists all the error messges -> allows them to be displayed in tcl too 
-  ProtocolMessages WarningMessage;  // Lists all the error messges -> allows them to be displayed in tcl too 
+  ProtocolMessages ErrorMessage;    // Lists all the error messages -> allows them to be displayed in tcl too
+  ProtocolMessages WarningMessage;  // Lists all the error messages -> allows them to be displayed in tcl too
 
   float  *cY_MPtr;
 
   char* PrintDir;
 
- 
+
   // --------------------------------
   // Class Related Variables
   // --------------------------------

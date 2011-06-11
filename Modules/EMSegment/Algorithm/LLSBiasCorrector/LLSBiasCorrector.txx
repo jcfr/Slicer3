@@ -521,7 +521,9 @@ LLSBiasCorrector <TInputImage, TProbabilityImage>
   InputImageIndexType ind;
 
   // Compute means and variances
-  this->ComputeDistributions();
+  if (GetComputeMean()) {
+    this->ComputeDistributions();
+  }
   itkDebugMacro(<< "LLSBiasCorrector: Computing means and variances already done.");
   itkDebugMacro(<< "Means:" << std::endl << m_Means);
   for (unsigned int iclass = 0; iclass < m_Probabilities.GetSize(); iclass++)

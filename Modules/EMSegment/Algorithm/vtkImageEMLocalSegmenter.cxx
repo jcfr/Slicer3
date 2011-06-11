@@ -40,8 +40,10 @@ vtkImageEMLocalSegmenter* vtkImageEMLocalSegmenter::New()
 //----------------------------------------------------------------------------
 vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
 {
-  this->SmoothingWidth = 11;             // Width for Gausian to regularize weights
-  this->SmoothingSigma = 5;              // Sigma paramter for regularizing Gaussian
+  this->SmoothingWidth = 11;             // Width for Gaussian to regularize weights
+  this->SmoothingSigma = 5;              // Sigma parameter for regularizing Gaussian
+  this->UseLLS = 0;                      // Turn on/off internal bias field correction
+  this->UseLLS_Recompute_Means = 0;      // Recompute mean and co-variance values
   this->NumInputImages = 0;              // Number of input images
   this->DisableMultiThreading = 0;       // For validation purposes you might want to disable MultiThreading 
                                          // so that you get the same results on different machines. If disabled 
@@ -65,7 +67,7 @@ vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
 }
 
 //------------------------------------------------------------------------------
-vtkImageEMLocalSegmenter::~vtkImageEMLocalSegmenter(){
+vtkImageEMLocalSegmenter::~vtkImageEMLocalSegmenter() {
   this->DeleteVariables();
 }
 
@@ -89,9 +91,11 @@ void vtkImageEMLocalSegmenter::DeleteVariables() {
 void vtkImageEMLocalSegmenter::PrintSelf(ostream& os,vtkIndent indent) {
   int i;
   // vtkImageEMGeneral::PrintSelf(os,indent);
-   
+
   os << indent << "SmoothingWidth:             " << this->SmoothingWidth << "\n";
   os << indent << "SmoothingSigma:             " << this->SmoothingSigma << "\n";
+  os << indent << "UseLLS:                     " << this->UseLLS << "\n";
+  os << indent << "UseLLS_Recompute_Means:     " << this->UseLLS_Recompute_Means << "\n";
   os << indent << "NumInputImages:             " << this->NumInputImages << "\n";
   os << indent << "PrintDir:                   " << (this->PrintDir ? this->PrintDir : "(none)") << "\n"; 
   os << indent << "NumberOfTrainingSamples:    " << this->NumberOfTrainingSamples << "\n";
@@ -225,7 +229,7 @@ static void vtkImageEMLocalSegmenterReadInputChannel(vtkImageEMLocalSegmenter *s
   int ImageMaxY = self->GetDimensionY();
   int ImageMaxX = self->GetDimensionX();
 
-  int index = 0; 
+  int index = 0;
   double IntensityCorrection = 0.0;
 
   // Get increments to march through data 
@@ -484,7 +488,7 @@ int vtkImageEMLocalSegmenter::HierarchicalSegmentation(vtkImageEMLocalSuperClass
   std::cerr << "GenerateBackgroundProbability: " << (head->GetGenerateBackgroundProbability() ? "On" : "Off" ) << endl;
 
 
-  // The follwoing division is done for multi threading purposes -> even though it is currently not implemented 
+  // The following division is done for multi threading purposes -> even though it is currently not implemented
   // you would also have to make a copy of iv_m and r_m . I currently do not do it because it takes to much space
   // Also first install zoom function before doing it !
   // I will do it sometime
@@ -730,7 +734,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
   if (this->HeadClass->GetWarningFlag()) 
     vtkEMAddWarningMessage( "The following Warning's occured during the class definition:" << endl << this->HeadClass->GetWarningMessages());
   
-  // Check if everything coresponds to each other
+  // Check if everything corresponds to each other
   if (!inData[0]) {
     vtkEMAddErrorMessage( "First image input is not defined !");
     return;
@@ -804,7 +808,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
       this->DebugImage[i] = (short*) inData[idx1]->GetScalarPointerForExtent(this->Extent);
       idx1 ++;
       i++;
-      std::cerr << "Finshed" << endl;
+      std::cerr << "Finished" << endl;
     }
   } else {
     this->DebugImage = NULL; 
@@ -819,7 +823,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
 #endif
 
   // -----------------------------------------------------
-  // Execute Segmentation Algorithmm
+  // Execute Segmentation Algorithm
   // -----------------------------------------------------
   outPtr = outData->GetScalarPointerForExtent(outData->GetExtent());
   switch (this->GetOutput()->GetScalarType()) {

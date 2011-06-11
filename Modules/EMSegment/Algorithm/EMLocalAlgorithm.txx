@@ -1459,8 +1459,13 @@ void EMLocalAlgorithm<T>::LLSBiasCorrection(int iter, float* cY)
   biascorr->SetSampleSpacing(2.0);
   biascorr->SetMask(maskImg);
   biascorr->SetMaxDegree(maxdegree);
-//  biascorr->SetEMSMeans(this->LogMu, NumTotalTypeCLASS, NumInputImages);
-//  biascorr->SetEMSCovariances(this->LogCovariance, NumTotalTypeCLASS, NumInputImages);
+  if (this->UseLLS_Recompute_Means) {
+    biascorr->SetComputeMean(true);
+  } else {
+    biascorr->SetEMSMeans(this->LogMu, NumTotalTypeCLASS, NumInputImages);
+    biascorr->SetEMSCovariances(this->LogCovariance, NumTotalTypeCLASS, NumInputImages);
+    biascorr->SetComputeMean(false);
+  }
   biascorr->SetProbabilities(probs);
   biascorr->CorrectImages(images, corrImages, true);
   ////////////////////////////////////////////////////////////////////////////
@@ -2052,8 +2057,7 @@ template  <class T> void EMLocalAlgorithm<T>::RunAlgorithm(EMTriVolume& iv_m, EM
       // Image Inhomogeneity
       if ((StopBiasCalculation < 0)  ||  (iter <= StopBiasCalculation))
         {
-        bool twostepimplementation = true;
-        if (twostepimplementation)
+        if ( ! this->UseLLS )
           {
           this->EstimateImageInhomegeneity(skern, iv_m, r_m);
           this->IntensityCorrection(this->PrintIntermediateFlag, iter, iv_m, r_m, cY_MPtr);
@@ -2082,7 +2086,6 @@ template  <class T> void EMLocalAlgorithm<T>::RunAlgorithm(EMTriVolume& iv_m, EM
         // as logistic slope is alteres
         this->UpdatePCASpecificParameters(iter); 
         }
-  
       }
     else
       {

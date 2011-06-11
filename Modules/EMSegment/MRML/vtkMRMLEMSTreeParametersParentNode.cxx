@@ -45,6 +45,8 @@ vtkMRMLEMSTreeParametersParentNode::vtkMRMLEMSTreeParametersParentNode()
   this->BiasCalculationMaxIterations  = -1;
   this->SmoothingKernelWidth          = 11;
   this->SmoothingKernelSigma          = 5.0;
+  this->UseLLS                        = 0;
+  this->UseLLS_Recompute_Means        = 0;
 
   this->StopEMType                    = 0;
   this->StopEMMaxIterations           = 4;
@@ -89,6 +91,11 @@ void vtkMRMLEMSTreeParametersParentNode::WriteXML(ostream& of, int nIndent)
      << "\" ";
   of << indent << "SmoothingKernelSigma=\"" << this->SmoothingKernelSigma
      << "\" ";
+  of << indent << "UseLLS=\"" << this->UseLLS
+     << "\" ";
+  of << indent << "UseLLS_Recompute_Means=\"" << this->UseLLS_Recompute_Means
+     << "\" ";
+
 
   of << indent << "StopEMType=\"" << this->StopEMType << "\" ";
   of << indent << "StopEMMaxIterations=\"" << this->StopEMMaxIterations 
@@ -166,6 +173,20 @@ void vtkMRMLEMSTreeParametersParentNode::ReadXMLAttributes(const char** attrs)
       vtksys_stl::stringstream ss;
       ss << val;
       ss >> this->SmoothingKernelSigma;
+      }
+    else if (!strcmp(key, "UseLLS"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << val;
+      ss >> this->UseLLS;
+      std::cout << "UseLLS: " << this->UseLLS << std::endl;
+      }
+    else if (!strcmp(key, "UseLLS_Recompute_Means"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << val;
+      ss >> this->UseLLS_Recompute_Means;
+      std::cout << "UseLLS_Recompute_Means: " << this->UseLLS_Recompute_Means << std::endl;
       }
     else if (!strcmp(key, "StopEMType"))
       {
@@ -267,6 +288,8 @@ void vtkMRMLEMSTreeParametersParentNode::Copy(vtkMRMLNode *rhs)
   this->SetBiasCalculationMaxIterations(node->BiasCalculationMaxIterations);
   this->SetSmoothingKernelWidth(node->SmoothingKernelWidth);
   this->SetSmoothingKernelSigma(node->SmoothingKernelSigma);
+  this->SetUseLLS(node->UseLLS);
+  this->SetUseLLS_Recompute_Means(node->UseLLS_Recompute_Means);
 
   this->SetStopEMType(node->StopEMType);
   this->SetStopEMMaxIterations(node->StopEMMaxIterations);
@@ -302,6 +325,10 @@ void vtkMRMLEMSTreeParametersParentNode::PrintSelf(ostream& os,
   os << indent << "SmoothingKernelWidth: " << this->SmoothingKernelWidth 
      << "\n";
   os << indent << "SmoothingKernelSigma: " << this->SmoothingKernelSigma 
+     << "\n";
+  os << indent << "UseLLS: " << this->UseLLS
+     << "\n";
+  os << indent << "UseLLS_Recompute_Means: " << this->UseLLS_Recompute_Means
      << "\n";
 
   os << indent << "StopEMType: " << this->StopEMType << "\n";
