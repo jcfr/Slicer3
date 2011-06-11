@@ -139,8 +139,6 @@ set ::KWWidgets_TAG "Slicer-3-6"
 #set ::VTK_TAG "http://svn.github.com/pieper/SlicerVTK.git" ;# slicer's patched vtk 5.6
 set ::VTK_TAG "http://svn.slicer.org/Slicer3-lib-mirrors/branches/Slicer-3-6/VTK" ;# slicer's patched vtk 5.6
 set ::ITK_TAG ITK-3-20
-set ::ITK_GIT_BRANCH release
-set ::ITK_GIT_TAG v3.20.0
 #set ::PYTHON_TAG "http://svn.python.org/projects/python/branches/release26-maint"
 #set ::PYTHON_REVISION 76651 ;# avoid windows manifest "fix"
 set ::PYTHON_TAG http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Python-2.6.6
@@ -156,6 +154,14 @@ set ::SLICERLIBCURL_TAG "HEAD"
 #set ::OpenIGTLink_TAG "http://svn.na-mic.org/NAMICSandBox/branches/OpenIGTLink-1-0"
 set ::OpenIGTLink_TAG "http://svn.na-mic.org/NAMICSandBox/trunk/OpenIGTLink"
 set ::OpenCV_TAG https://code.ros.org/svn/opencv/tags/2.1/opencv
+
+# for experimental use
+set ::ITK_GIT_REPO git://itk.org/ITK.git 
+set ::ITK_GIT_BRANCH release          
+set ::ITK_GIT_TAG v3.20.0   
+set ::VTK_GIT_REPO git://vtk.org/VTK.git   
+set ::VTK_GIT_BRANCH release            
+set ::VTK_GIT_TAG v5.6.1     
 
 # set TCL_VERSION to "tcl" to get 8.4, otherwise use tcl85 to get 8.5
 # set 8.5 for Solaris explicitly, because 8.4 complains 
