@@ -16,7 +16,7 @@ ctkMacroCompilePythonScript(
   SCRIPTS "${EMSegmentPyWizard_PYTHON_SCRIPTS}"
   RESOURCES "${EMSegmentPyWizard_PYTHON_RESOURCES}"
   DESTINATION_DIR ${Slicer_BINARY_DIR}/bin/Python/EMSegmentPyWizard
-  INSTALL_DIR ${Slicer_INSTALL_BIN_DIR}
+  INSTALL_DIR ${Slicer_INSTALL_BIN_DIR}/Python
   )
 
 #-----------------------------------------------------------------------------

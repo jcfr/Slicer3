@@ -44,13 +44,13 @@ public:
   explicit qSlicerEMSegmentInputChannelListWidget(QWidget *newParent = 0);
   virtual ~qSlicerEMSegmentInputChannelListWidget();
 
-  int inputChannelCount() const;
+  Q_INVOKABLE int inputChannelCount() const;
 
-  QString inputChannelName(int rowId) const;
+  Q_INVOKABLE QString inputChannelName(int rowId) const;
 
-  vtkMRMLVolumeNode* inputChannelVolume(int rowId) const;
+  Q_INVOKABLE vtkMRMLVolumeNode* inputChannelVolume(int rowId) const;
 
-  bool identicalInputVolumes() const;
+  Q_INVOKABLE bool identicalInputVolumes() const;
 
 public slots:
 

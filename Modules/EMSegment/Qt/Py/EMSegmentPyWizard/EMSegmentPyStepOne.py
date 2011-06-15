@@ -94,18 +94,32 @@ class EMSegmentPyStepOne(EMSegmentPyStep) :
       Helper.Info("Error: either taskName or taskFile was empty!")
       return False
     
-    Helper.Debug("Attempting to load task '" + taskName + "' from file '" + taskFile + "'")
-
-    self.mrmlManager().ImportMRMLFile(taskFile)
+    # now get any loaded EMSTemplateNode which could fit our name
+    templateNodesPreLoad = slicer.mrmlScene.GetNodesByClassByName('vtkMRMLEMSTemplateNode',taskName)
+    if templateNodesPreLoad.GetNumberOfItems() > 0:
+      # this is strange behavior but we can continue in this case!
+      Helper.Info("Warning: we already have the template node in the scene and do not load it again!") 
+    
+    else:
+      
+      # there was no relevant template node in the scene, so let's import the mrml file
+      # this is the normal behavior!      
+      Helper.Debug("Attempting to load task '" + taskName + "' from file '" + taskFile + "'")
+  
+      # only load if no relevant node exists
+      self.mrmlManager().ImportMRMLFile(taskFile)
+    
     
     # now get the loaded EMSTemplateNode
-    # TODO should not be only the first one
-    templateNode = slicer.mrmlScene.GetNthNodeByClass(0,'vtkMRMLEMSTemplateNode')
+    templateNodes = slicer.mrmlScene.GetNodesByClassByName('vtkMRMLEMSTemplateNode',taskName)
     
-    if not templateNode:
+    if not templateNodes:
       # error!
-      Helper.Info("Error: could not find template node!")
+      Helper.Info("Error: could not find any template node after trying to load them!")
       return False
+
+    # we load the last template node which fits the taskname
+    templateNode = templateNodes.GetItemAsObject(templateNodes.GetNumberOfItems()-1)
     
     loadResult = self.mrmlManager().SetLoadedParameterSetIndex(templateNode)
     if not loadResult:

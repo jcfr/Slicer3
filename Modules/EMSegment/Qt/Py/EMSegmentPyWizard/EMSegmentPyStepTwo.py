@@ -48,7 +48,7 @@ class EMSegmentPyStepTwo(EMSegmentPyStep) :
     self.__inputChannelList.setMRMLManager(self.mrmlManager()) 
     self.__inputChannelList.updateWidgetFromMRML()
     
-    if self.__inputChannelList.inputChannelCount == 0:
+    if self.__inputChannelList.inputChannelCount() == 0:
       self.__inputChannelList.addInputChannel()
     
     
