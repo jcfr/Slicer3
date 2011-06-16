@@ -222,7 +222,7 @@ private:
 
   int SmoothingWidth;
   int SmoothingSigma;
-  int UseLLS;
+  int BiasCorrectionType;
   int UseLLS_Recompute_Means;
 
   ProtocolMessages ErrorMessage;    // Lists all the error messages -> allows them to be displayed in tcl too

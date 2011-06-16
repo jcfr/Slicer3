@@ -71,8 +71,12 @@ class VTK_EMSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
   vtkSetMacro(SmoothingSigma, int);
   vtkGetMacro(SmoothingSigma, int);
 
-  vtkSetMacro(UseLLS, int);
-  vtkGetMacro(UseLLS, int);
+  // Description:
+  // Define what kind of bias correction you want
+  // 0 = normal bias correction
+  // 1 = LLS bias correction
+  vtkSetMacro(BiasCorrectionType, int);
+  vtkGetMacro(BiasCorrectionType, int);
 
   vtkSetMacro(UseLLS_Recompute_Means, int);
   vtkGetMacro(UseLLS_Recompute_Means, int);
@@ -170,7 +174,7 @@ protected:
 
   int SmoothingWidth;  // Width for Gaussian to regularize weights
   int SmoothingSigma;  // Sigma parameter for regularizing Gaussian
-  int UseLLS;
+  int BiasCorrectionType;
   int UseLLS_Recompute_Means;
 
   int NumInputImages;               // Number of input images  

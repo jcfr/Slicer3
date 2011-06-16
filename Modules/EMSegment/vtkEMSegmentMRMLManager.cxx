@@ -1427,6 +1427,37 @@ SetTreeNodeSmoothingKernelSigma(vtkIdType nodeID, double value)
     SetSmoothingKernelSigma(value);  
 }
 
+//----------------------------------------------------------------------------
+double
+vtkEMSegmentMRMLManager::
+GetBiasCorrectionType(vtkIdType nodeID)
+{
+  vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
+  if (n == NULL || !n->GetParentParametersNode() )
+    {
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node" );
+      return 0;
+    }
+  return n->GetParentParametersNode()->
+    GetBiasCorrectionType();
+}
+
+//----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
+SetBiasCorrectionType(vtkIdType nodeID, double value)
+{
+  vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
+  if (n == NULL || !n->GetParentParametersNode())
+    {
+      vtkErrorMacro("Tree node is null for nodeID: " << nodeID << " or not a parent node");
+      return;
+    }
+
+  n->GetParentParametersNode()->
+    SetBiasCorrectionType(value);
+}
+
 
 //----------------------------------------------------------------------------
 double

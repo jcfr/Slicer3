@@ -2059,17 +2059,21 @@ template  <class T> void EMLocalAlgorithm<T>::RunAlgorithm(EMTriVolume& iv_m, EM
       std::cerr << "vtkImageEMLocalAlgorithm: M-Step " << endl; 
       // Image Inhomogeneity
       if ((StopBiasCalculation < 0)  ||  (iter <= StopBiasCalculation))
+      {
+        switch (this->BiasCorrectionType)
         {
-        if ( ! this->UseLLS )
-          {
+        case 0:
           this->EstimateImageInhomegeneity(skern, iv_m, r_m);
           this->IntensityCorrection(this->PrintIntermediateFlag, iter, iv_m, r_m, cY_MPtr);
-          }
-        else
-          {
+          break;
+        case 1:
           this->LLSBiasCorrection(iter, cY_MPtr);
-          }
+          break;
+        default:
+          break;
+          // no bias correction
         }
+      }
       else std::cerr << "Bias calculation disabled " << endl;
      
       // Registration

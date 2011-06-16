@@ -45,7 +45,7 @@ vtkMRMLEMSTreeParametersParentNode::vtkMRMLEMSTreeParametersParentNode()
   this->BiasCalculationMaxIterations  = -1;
   this->SmoothingKernelWidth          = 11;
   this->SmoothingKernelSigma          = 5.0;
-  this->UseLLS                        = 0;
+  this->BiasCorrectionType            = 0;
   this->UseLLS_Recompute_Means        = 0;
 
   this->StopEMType                    = 0;
@@ -91,7 +91,7 @@ void vtkMRMLEMSTreeParametersParentNode::WriteXML(ostream& of, int nIndent)
      << "\" ";
   of << indent << "SmoothingKernelSigma=\"" << this->SmoothingKernelSigma
      << "\" ";
-  of << indent << "UseLLS=\"" << this->UseLLS
+  of << indent << "BiasCorrectionType=\"" << this->BiasCorrectionType
      << "\" ";
   of << indent << "UseLLS_Recompute_Means=\"" << this->UseLLS_Recompute_Means
      << "\" ";
@@ -174,12 +174,12 @@ void vtkMRMLEMSTreeParametersParentNode::ReadXMLAttributes(const char** attrs)
       ss << val;
       ss >> this->SmoothingKernelSigma;
       }
-    else if (!strcmp(key, "UseLLS"))
+    else if (!strcmp(key, "BiasCorrectionType"))
       {
       vtksys_stl::stringstream ss;
       ss << val;
-      ss >> this->UseLLS;
-      std::cout << "UseLLS: " << this->UseLLS << std::endl;
+      ss >> this->BiasCorrectionType;
+      std::cout << "BiasCorrectionType: " << this->BiasCorrectionType << std::endl;
       }
     else if (!strcmp(key, "UseLLS_Recompute_Means"))
       {
@@ -288,7 +288,7 @@ void vtkMRMLEMSTreeParametersParentNode::Copy(vtkMRMLNode *rhs)
   this->SetBiasCalculationMaxIterations(node->BiasCalculationMaxIterations);
   this->SetSmoothingKernelWidth(node->SmoothingKernelWidth);
   this->SetSmoothingKernelSigma(node->SmoothingKernelSigma);
-  this->SetUseLLS(node->UseLLS);
+  this->SetBiasCorrectionType(node->BiasCorrectionType);
   this->SetUseLLS_Recompute_Means(node->UseLLS_Recompute_Means);
 
   this->SetStopEMType(node->StopEMType);
@@ -326,7 +326,7 @@ void vtkMRMLEMSTreeParametersParentNode::PrintSelf(ostream& os,
      << "\n";
   os << indent << "SmoothingKernelSigma: " << this->SmoothingKernelSigma 
      << "\n";
-  os << indent << "UseLLS: " << this->UseLLS
+  os << indent << "BiasCorrectionType: " << this->BiasCorrectionType
      << "\n";
   os << indent << "UseLLS_Recompute_Means: " << this->UseLLS_Recompute_Means
      << "\n";

@@ -42,7 +42,7 @@ vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
 {
   this->SmoothingWidth = 11;             // Width for Gaussian to regularize weights
   this->SmoothingSigma = 5;              // Sigma parameter for regularizing Gaussian
-  this->UseLLS = 0;                      // Turn on/off internal bias field correction
+  this->BiasCorrectionType = 0;          // Type of internal bias field correction
   this->UseLLS_Recompute_Means = 0;      // Recompute mean and co-variance values
   this->NumInputImages = 0;              // Number of input images
   this->DisableMultiThreading = 0;       // For validation purposes you might want to disable MultiThreading 
@@ -94,7 +94,7 @@ void vtkImageEMLocalSegmenter::PrintSelf(ostream& os,vtkIndent indent) {
 
   os << indent << "SmoothingWidth:             " << this->SmoothingWidth << "\n";
   os << indent << "SmoothingSigma:             " << this->SmoothingSigma << "\n";
-  os << indent << "UseLLS:                     " << this->UseLLS << "\n";
+  os << indent << "BiasCorrectionType:         " << this->BiasCorrectionType << "\n";
   os << indent << "UseLLS_Recompute_Means:     " << this->UseLLS_Recompute_Means << "\n";
   os << indent << "NumInputImages:             " << this->NumInputImages << "\n";
   os << indent << "PrintDir:                   " << (this->PrintDir ? this->PrintDir : "(none)") << "\n"; 

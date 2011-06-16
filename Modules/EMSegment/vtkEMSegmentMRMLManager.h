@@ -213,6 +213,10 @@ public:
   virtual void     SetTreeNodeSmoothingKernelSigma(vtkIdType nodeID, 
                                                    double value);
 
+  virtual double   GetBiasCorrectionType(vtkIdType nodeID);
+  virtual void     SetBiasCorrectionType(vtkIdType nodeID,
+                                         double value);
+
   virtual double   GetTreeNodeClassProbability(vtkIdType nodeID);
   virtual void     SetTreeNodeClassProbability(vtkIdType nodeID, double value);
 
