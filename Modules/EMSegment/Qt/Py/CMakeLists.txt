@@ -1,4 +1,4 @@
-ADD_SUBDIRECTORY(EMSegmentPyWizard)
+ADD_SUBDIRECTORY(EMSegmentWizard)
 
 SET(EMS_PYTHON_SCRIPTS
     EMSegmentPy.py
