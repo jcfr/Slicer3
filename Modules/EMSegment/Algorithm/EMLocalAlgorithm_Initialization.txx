@@ -79,10 +79,8 @@ template  <class T> void EMLocalAlgorithm<T>::InitializeEM(vtkImageEMLocalSegmen
 
   this->SmoothingWidth          = vtk_filter->GetSmoothingWidth();
   this->SmoothingSigma          = vtk_filter->GetSmoothingSigma();
-  std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: " <<  this->SmoothingWidth << " " << this->SmoothingSigma  << std::endl;
   this->BiasCorrectionType      = vtk_filter->GetBiasCorrectionType();
   this->UseLLS_Recompute_Means  = vtk_filter->GetUseLLS_Recompute_Means();
-  std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: " <<  this->BiasCorrectionType << " " << this->UseLLS_Recompute_Means  << std::endl;
 
   // Should be defined later in EM-Varaible Section but needed for CostFunctionParameters
   this->OutputVectorPtr = new unsigned char[ImageProd];
