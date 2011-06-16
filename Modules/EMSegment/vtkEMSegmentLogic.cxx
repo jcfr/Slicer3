@@ -900,6 +900,10 @@ void vtkEMSegmentLogic::CopyGlobalDataToSegmenter(vtkImageEMLocalSegmenter* segm
       this->MRMLManager-> GetTreeNodeSmoothingKernelSigma(rootNodeID));
   segmenter->SetSmoothingSigma(intSigma);
 
+  int biasType = this->MRMLManager-> GetBiasCorrectionType(rootNodeID);
+  segmenter->SetBiasCorrectionType(biasType);
+
+
   //
   // registration parameters
   //
