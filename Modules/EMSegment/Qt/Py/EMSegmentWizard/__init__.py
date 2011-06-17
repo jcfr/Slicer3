@@ -1,7 +1,8 @@
 from Helper import Helper
-from EMSegmentPyStep import *
-from EMSegmentPyStepOne import * 
-from EMSegmentPyStepTwo import * 
-from EMSegmentPyStepThree import * 
-from EMSegmentPyDummyStep import *
+from EMSegmentStep import *
+from EMSegmentSelectTaskStep import *
+from EMSegmentDefineInputChannelsStep import *
+from EMSegmentDefineAnatomicalTreeStep import *
+from EMSegmentDefineAtlasStep import *
+from EMSegmentEditRegistrationParametersStep import *
 
