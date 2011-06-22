@@ -2,6 +2,7 @@ from __main__ import qt, ctk
 import PythonQt
 
 from EMSegmentStep import *
+from Helper import *
 
 class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
 
@@ -24,15 +25,27 @@ class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
 
     registrationParametersGroupBoxLayout = qt.QFormLayout( registrationParametersGroupBox )
 
-    # for all input channels add a qMRMLNodeComboBox
+    # TODO for all input channels add a qMRMLNodeComboBox
 
     # Affine Registration comboBox
+    affineRegistrationComboBox = qt.QComboBox()
+    affineRegistrationComboBox.addItems( Helper.GetRegistrationTypes() )
+    registrationParametersGroupBoxLayout.addRow( 'Affine Registration:', affineRegistrationComboBox )
 
     # Deformable Registration comboBox
+    deformableRegistrationComboBox = qt.QComboBox()
+    deformableRegistrationComboBox.addItems( Helper.GetRegistrationTypes() )
+    registrationParametersGroupBoxLayout.addRow( 'Deformable Registration:', deformableRegistrationComboBox )
 
     # Interpolation
+    interpolationComboBox = qt.QComboBox()
+    interpolationComboBox.addItems( Helper.GetInterpolationTypes() )
+    registrationParametersGroupBoxLayout.addRow( 'Interpolation:', interpolationComboBox )
 
     # Package
+    packageComboBox = qt.QComboBox()
+    packageComboBox.addItems( Helper.GetPackages() )
+    registrationParametersGroupBoxLayout.addRow( 'Package:', packageComboBox )
 
 
   def onEntry( self, comingFrom, transitionType ):

@@ -313,7 +313,7 @@ QStandardItem* qSlicerEMSegmentAnatomicalTreeWidgetPrivate::insertTreeRow(
     {
 
     qMRMLLabelComboBox * labelComboBox = new qMRMLLabelComboBox;
-    labelComboBox->setMaximumColorCount(10);
+    labelComboBox->setMaximumColorCount(100);
     labelComboBox->setMRMLScene(q->mrmlScene());
     labelComboBox->setMRMLColorNode(this->CurrentColorTableNode);
     logger.debug(QString("insertTreeRow - IntensityLabel: %1").

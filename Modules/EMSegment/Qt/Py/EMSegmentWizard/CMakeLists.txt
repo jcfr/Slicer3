@@ -2,11 +2,15 @@ SET(EMSegmentWizard_PYTHON_SCRIPTS
   __init__.py
   Helper.py
   EMSegmentStep.py
-  EMSegmentSelectTaskStep.py
-  EMSegmentDefineInputChannelsStep.py
-  EMSegmentDefineAnatomicalTreeStep.py
-  EMSegmentDefineAtlasStep.py 
-  EMSegmentEditRegistrationParametersStep.py
+  EMSegmentSelectTaskStep.py                        # step 1
+  EMSegmentDefineInputChannelsStep.py               # step 2
+  EMSegmentDefineAnatomicalTreeStep.py              # step 3
+  EMSegmentDefineAtlasStep.py                       # step 4
+  EMSegmentEditRegistrationParametersStep.py        # step 5
+  EMSegmentDefinePreprocessingStep.py               # step 6
+  EMSegmentSpecifyIntensityDistributionStep.py      # step 7
+  EMSegmentEditNodeBasedParametersStep.py           # step 8
+  EMSegmentDefineMiscParametersStep.py                  # step 9
   EMSegmentDummyStep.py  
   )
 

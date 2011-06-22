@@ -77,11 +77,11 @@ class EMSegmentPyWidget:
     defineInputChannelsAdvancedStep = EMSegmentWizard.EMSegmentDefineInputChannelsStep( Helper.GetNthStepId( 2 ) + 'advanced' ) # advanced branch
     defineAnatomicalTreeStep = EMSegmentWizard.EMSegmentDefineAnatomicalTreeStep( Helper.GetNthStepId( 3 ) )
     defineAtlasStep = EMSegmentWizard.EMSegmentDefineAtlasStep( Helper.GetNthStepId( 4 ) )
-    editRegistrationParametersStep = EMSegmentWizard.EMSegmentDummyStep( Helper.GetNthStepId( 5 ) )
+    editRegistrationParametersStep = EMSegmentWizard.EMSegmentEditRegistrationParametersStep( Helper.GetNthStepId( 5 ) )
     definePreprocessingStep = EMSegmentWizard.EMSegmentDummyStep( Helper.GetNthStepId( 6 ) )
-    specifyIntensityDistributionStep = EMSegmentWizard.EMSegmentDummyStep( Helper.GetNthStepId( 7 ) )
-    editNodeBasedParametersStep = EMSegmentWizard.EMSegmentDummyStep( Helper.GetNthStepId( 8 ) )
-    miscStep = EMSegmentWizard.EMSegmentDummyStep( Helper.GetNthStepId( 9 ) )
+    specifyIntensityDistributionStep = EMSegmentWizard.EMSegmentSpecifyIntensityDistributionStep( Helper.GetNthStepId( 7 ) )
+    editNodeBasedParametersStep = EMSegmentWizard.EMSegmentEditNodeBasedParametersStep( Helper.GetNthStepId( 8 ) )
+    miscStep = EMSegmentWizard.EMSegmentDefineMiscParametersStep( Helper.GetNthStepId( 9 ) )
     segmentStep = EMSegmentWizard.EMSegmentDummyStep( Helper.GetNthStepId( 10 ) )
 
     # add the wizard steps to an array for convenience
@@ -110,7 +110,7 @@ class EMSegmentPyWidget:
     self.workflow.addTransition( defineInputChannelsAdvancedStep, defineAnatomicalTreeStep )
 
     # .. add transitions for the rest of the advanced mode steps
-    for i in range( 2, len( allSteps ) - 1 ):
+    for i in range( 3, len( allSteps ) - 1 ):
       self.workflow.addTransition( allSteps[i], allSteps[i + 1] )
 
     # Propagate the workflow, the logic and the MRML Manager to the steps

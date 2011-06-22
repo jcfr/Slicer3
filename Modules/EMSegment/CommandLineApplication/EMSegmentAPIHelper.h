@@ -80,6 +80,7 @@ Tcl_Interp* CreateTclInterp(int argc, char** argv, vtkSlicerCommonInterface *sli
   Vtkteem_Init(interp);
   Vtkitk_Init(interp);
   Commandlinemodule_Init(interp);
+
 #endif
   return interp;
 }
@@ -106,7 +107,7 @@ std::string StripBackslashes(const std::string& s)
 vtkSlicerApplicationLogic* InitializeApplication(vtkSlicerCommonInterface *slicerCommon, int argc, char** argv)
 {
   // SLICER_HOME
-  cout << "Setting SLICER home: " << endl;
+  cout << "Setting SLICER home.. " << endl;
   vtkstd::string slicerHome = tgGetSLICER_HOME(argv);
   if(!slicerHome.size())
     {
@@ -138,9 +139,9 @@ vtkSlicerApplicationLogic* InitializeApplication(vtkSlicerCommonInterface *slice
 
   // Make generic later 
   slicerCommon->EvaluateTcl("set ::env(KILIS_MODULE) KilisSandbox");
-  std::string CMD = std::string("set ::env(SLICER_HOME) ") + slicerHome + "/..";
-  slicerCommon->EvaluateTcl(CMD.c_str());
-
+  //std::string CMD = std::string("set ::env(SLICER_HOME) ") + slicerHome + "/..";
+  //slicerCommon->EvaluateTcl(CMD.c_str());
+  std::string CMD = "";
   CMD = "set argv { "; 
   for (int i = 2 ; i < argc ; i++) CMD += std::string(argv[i]) + " ";
   CMD += " }  "; 

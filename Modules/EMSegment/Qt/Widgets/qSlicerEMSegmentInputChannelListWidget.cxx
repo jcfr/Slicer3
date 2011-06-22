@@ -250,6 +250,11 @@ vtkMRMLVolumeNode* qSlicerEMSegmentInputChannelListWidget::inputChannelVolume(in
     return 0;
     }
 
+  if (!volumeNodeComboBox->currentNode())
+    {
+    return 0;
+    }
+
   Q_ASSERT(vtkMRMLVolumeNode::SafeDownCast(volumeNodeComboBox->currentNode()));
 
   return vtkMRMLVolumeNode::SafeDownCast(volumeNodeComboBox->currentNode());

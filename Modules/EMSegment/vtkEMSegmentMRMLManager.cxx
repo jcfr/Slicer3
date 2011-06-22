@@ -89,9 +89,11 @@ ProcessMRMLEvents(vtkObject* caller,
   vtkMRMLNode *node = reinterpret_cast<vtkMRMLNode*> (callData);
   if (node == NULL)
     {
-    std::cout << "Node is NULL" << std::endl;
+    //std::cout << "Node is NULL: " << caller << " event: " << event << std::endl;
     return;
     }
+
+  //std::cout << "adding node:" << node << " event: " << event << std::endl;
 
   if (event == vtkMRMLScene::NodeAddedEvent)
     {
