@@ -107,8 +107,13 @@ itcl::body EMSegmenterGraph::constructor { } {
     set EMSegment(GlobalSuperClassList) [ GetListOfSuperClassNodeIDs [ $_mrmlManager GetTreeRootNodeID ] ]
 
     # puts "Global class list: $EMSegment(GlobalClassList) $EMSegment(GlobalSuperClassList) "
-    
-    set ColorTable [[[$_mrmlManager GetMRMLScene] GetNodeByID [$_mrmlManager GetColormap] ] GetLookupTable]
+    set ColorNode [[$_mrmlManager GetMRMLScene] GetNodeByID [$_mrmlManager GetColorNodeID] ]
+    if { $ColorNode == "" } {
+       EMSegmenterPreProcessingTcl::PrintError  "Error: EMSegmenterGraph::constructor : No ColorNode defined !"
+       return 0
+    } 
+
+    set ColorTable [$ColorNode GetLookupTable]
 
     foreach ID $EMSegment(GlobalClassList) {
     set EMSegment(Cattrib,$ID,Label)      [$_mrmlManager GetTreeNodeName $ID]
@@ -256,7 +261,6 @@ itcl::body  EMSegmenterGraph::CreateWindow { } {
     } else {
       set EMSegment(NumGraph) 1
     }
-
     #-------------------------------------------
     # Popup Window
     #-------------------------------------------
@@ -288,7 +292,6 @@ itcl::body  EMSegmenterGraph::CreateWindow { } {
     # $_window Display
     # return 
     # wm positionfrom $w user
-
     eval {label $f.lTitle -text "Display Class Distribution" } $Gui(WTA)
     pack $f.lTitle -side top -padx 4 -pady 4
 
@@ -324,12 +327,10 @@ itcl::body  EMSegmenterGraph::CreateWindow { } {
     set EMSegment(Cl-fGraphButtonsBelow) $f.fGraphButtonsBelow
 
     if {$EMSegment(NumGraph) > 1} { CreateHistogramButton $f.fGraphButtonsBelow 1}
-
     foreach i $EMSegment(GlobalClassList) {
-       CreateGraphButton $i $EMSegment(Cattrib,$i,Label) $EMSegment(Cattrib,$i,ColorCode)
+         CreateGraphButton $i $EMSegment(Cattrib,$i,Label) $EMSegment(Cattrib,$i,ColorCode)
     }
-
-    frame $f.fLastLine -bg $Gui(activeWorkspace)
+     frame $f.fLastLine -bg $Gui(activeWorkspace)
     pack $f.fLastLine -side top -padx 2 -pady 2 -fill x
 
     frame $f.fLastLine.fGraph -bg $Gui(activeWorkspace)
@@ -337,7 +338,6 @@ itcl::body  EMSegmenterGraph::CreateWindow { } {
 
     pack $f.fLastLine.fButtons -side top -padx 0 -pady 2 
     pack $f.fLastLine.fGraph -side top -padx 0 -pady 2 
-
     eval {button $f.fLastLine.fButtons.bCancel -text "Cancel" -width 8 -command "wm withdraw $w"} $Gui(WBA)
     DevAddLabel $f.fLastLine.fButtons.lEmpty2 "      "
     eval {button $f.fLastLine.fButtons.bUpdate -text "Update" -width 8 -command "$this UpdateClasses 1"} $Gui(WBA)
@@ -441,47 +441,47 @@ itcl::body EMSegmenterGraph::CreateGraphButton {Sclass Label Color {Above 0} {Up
     global EMSegment Gui
     set index [lsearch $EMSegment(GlobalClassList) $Sclass]
     set TooltipText "Press button to display Gaussian of $Sclass class  (Label: $Label)" 
-
     if {($index < $EMSegment(Graph,ButtonNum) ) || $Above} {
        set f $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass
     } else {
        set f $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$Sclass
     }
-    eval {button $f -text $Label -width 3 -command "$this MultipleDrawDeleteCurveRegion $Sclass"} $Gui(WBA)
+    eval {button $f -text ${Label}  -width 3 -command "$this MultipleDrawDeleteCurveRegion $Sclass"} $Gui(WBA)
+
     $f configure -bg $Color -activebackground $Color
     pack $f -side left -padx $Gui(pad)
     TooltipAdd $this $f $TooltipText
-    if {$UpdateGraph} {
+ 
+    if {$UpdateGraph } {
        for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-        # Generate setup for each curve 
-        set EMSegment(Graph,$i,ID,$Sclass) -1
-        set mean ""
-        set cov ""
-        set SetFlag 1
-        for {set y 0 } { $y < $EMSegment(Graph,$i,Dimension) } {incr y} {
+          # Generate setup for each curve 
+          set EMSegment(Graph,$i,ID,$Sclass) -1
+          set mean ""
+           set cov ""
+           set SetFlag 1
+           for {set y 0 } { $y < $EMSegment(Graph,$i,Dimension) } {incr y} {
 
            set NumIndex($y) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$i,VolumeID,$y)]
-       # puts "ggggg  $NumIndex($y) | $EMSegment(SelVolList,VolumeList) | $EMSegment(Graph,$i,VolumeID,$y) "
            if {$NumIndex($y) < 0} { set SetFlag 0}  }
       
-        for {set y 0 } { $y < $EMSegment(Graph,$i,Dimension) } {incr y} {
-        if {$SetFlag} {
-            lappend mean [$_mrmlManager GetTreeNodeDistributionLogMeanWithCorrection $Sclass $NumIndex(y)]  
-        } else {
-            lappend mean 0.0
-        }
-        for {set x 0 } { $x < $EMSegment(Graph,$i,Dimension) } {incr x} {
+           for {set y 0 } { $y < $EMSegment(Graph,$i,Dimension) } {incr y} {
+            if {$SetFlag } {
+               lappend mean [$_mrmlManager GetTreeNodeDistributionLogMeanWithCorrection $Sclass $NumIndex(y)]  
+            } else {
+               lappend mean 0.0
+           }
+          for {set x 0 } { $x < $EMSegment(Graph,$i,Dimension) } {incr x} {
            if {$SetFlag} {
             lappend cov [$_mrmlManager GetTreeNodeDistributionLogCovarianceWithCovariance $Sclass $NumIndex(y) $NumIndex(x)] 
             } else {
             if {$y == $x} {lappend cov 1.0
                 } else { lappend cov 0.0}
             }
-        }
-        }
+      }
+       }
         set Prob [expr ($EMSegment(Graph,DisplayProb) > 0 ?  $EMSegment(Cattrib,$Sclass,Prob) : 1.0)]
-        GraphCreateGaussianCurveRegion EMSegment(Graph,$i,Data,$Sclass) $mean $cov $Prob 2 $EMSegment(Graph,$i,Dimension) $EMSegment(Graph,$i,Xmin) $EMSegment(Graph,$i,Xmax) $EMSegment(Graph,$i,Xlen) $EMSegment(Graph,$i,Ymin) $EMSegment(Graph,$i,Ymax) $EMSegment(Graph,$i,Ylen) 
-    }
+      GraphCreateGaussianCurveRegion EMSegment(Graph,$i,Data,$Sclass)  $mean $cov $Prob 2 $EMSegment(Graph,$i,Dimension) $EMSegment(Graph,$i,Xmin) $EMSegment(Graph,$i,Xmax) $EMSegment(Graph,$i,Xlen) $EMSegment(Graph,$i,Ymin) $EMSegment(Graph,$i,Ymax) $EMSegment(Graph,$i,Ylen) 
+       }
     }
 }
 
@@ -564,20 +564,23 @@ itcl::body EMSegmenterGraph::PlotCurveRegion {numGraph} {
 
     # Update Classes
     foreach j $EMSegment(GlobalClassList) {
+
         if {$NumIndex > -1} {
            EMSegment(Graph,$numGraph,Data,$j) SetMean        [$_mrmlManager GetTreeNodeDistributionLogMeanWithCorrection $j $NumIndex] 0  
            EMSegment(Graph,$numGraph,Data,$j) SetCovariance  [$_mrmlManager GetTreeNodeDistributionLogCovarianceWithCorrection $j $NumIndex $NumIndex ] 0 0 
         }
         EMSegment(Graph,$numGraph,Data,$j) SetProbability [expr ($EMSegment(Graph,DisplayProb) > 0 ?  $EMSegment(Cattrib,$j,Prob) : 1.0)]
+        # EMSegmenterPreProcessingTcl::PrintError  "now $j " 
         EMSegment(Graph,$numGraph,Data,$j) Update
+        # EMSegmenterPreProcessingTcl::PrintError  "end $j " 
     }
     } else {
-    set NumIndex(0) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$numGraph,VolumeID,0)]
-    set NumIndex(1) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$numGraph,VolumeID,1)]
-    # Update Classes
-    foreach j $EMSegment(GlobalClassList) {
-        if {($NumIndex(0) > -1) && ($NumIndex(1) > -1)} {
-        for {set y 0 } { $y < 2} {incr y} {
+       set NumIndex(0) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$numGraph,VolumeID,0)]
+       set NumIndex(1) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$numGraph,VolumeID,1)]
+       # Update Classes
+       foreach j $EMSegment(GlobalClassList) {
+          if {($NumIndex(0) > -1) && ($NumIndex(1) > -1)} {
+          for {set y 0 } { $y < 2} {incr y} {
             EMSegment(Graph,$numGraph,Data,$j) SetMean     [$_mrmlManager GetTreeNodeDistributionLogMeanWithCorrection $j $NumIndex($y)]  $y
             for {set x 0 } {$x < 2} {incr x} {
             EMSegment(Graph,$numGraph,Data,$j) SetCovariance [$_mrmlManager GetTreeNodeDistributionLogCovarianceWithCorrection $j $NumIndex($y) $NumIndex($x) ] $y $x 
@@ -585,7 +588,9 @@ itcl::body EMSegmenterGraph::PlotCurveRegion {numGraph} {
         }
         } 
         EMSegment(Graph,$numGraph,Data,$j) SetProbability [expr ($EMSegment(Graph,DisplayProb) > 0 ?  $EMSegment(Cattrib,$j,Prob) : 1.0)]
+      # EMSegmenterPreProcessingTcl::PrintError  "now -- $j " 
         EMSegment(Graph,$numGraph,Data,$j) Update
+      # EMSegmenterPreProcessingTcl::PrintError  "end -- $j " 
     }
     }
     GraphRender EMSegment $EMSegment(Graph,$numGraph,path)
@@ -794,7 +799,7 @@ itcl::body EMSegmenterGraph::GraphXAxisUpdate {path Xmin Xmax Xsca} {
     foreach i $EMSegment(GlobalClassList) {
     EMSegment(Graph,$NumGraph,Data,$i) SetXmin $Xmin
     EMSegment(Graph,$NumGraph,Data,$i) SetXmax $Xmax
-    EMSegment(Graph,$NumGraph,Data,$i) Update
+      EMSegment(Graph,$NumGraph,Data,$i) Update
     }
     
     if {$EMSegment(NumGraph) > 2} {
