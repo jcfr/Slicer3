@@ -570,9 +570,7 @@ itcl::body EMSegmenterGraph::PlotCurveRegion {numGraph} {
            EMSegment(Graph,$numGraph,Data,$j) SetCovariance  [$_mrmlManager GetTreeNodeDistributionLogCovarianceWithCorrection $j $NumIndex $NumIndex ] 0 0 
         }
         EMSegment(Graph,$numGraph,Data,$j) SetProbability [expr ($EMSegment(Graph,DisplayProb) > 0 ?  $EMSegment(Cattrib,$j,Prob) : 1.0)]
-        # EMSegmenterPreProcessingTcl::PrintError  "now $j " 
         EMSegment(Graph,$numGraph,Data,$j) Update
-        # EMSegmenterPreProcessingTcl::PrintError  "end $j " 
     }
     } else {
        set NumIndex(0) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$numGraph,VolumeID,0)]
@@ -588,9 +586,7 @@ itcl::body EMSegmenterGraph::PlotCurveRegion {numGraph} {
         }
         } 
         EMSegment(Graph,$numGraph,Data,$j) SetProbability [expr ($EMSegment(Graph,DisplayProb) > 0 ?  $EMSegment(Cattrib,$j,Prob) : 1.0)]
-      # EMSegmenterPreProcessingTcl::PrintError  "now -- $j " 
         EMSegment(Graph,$numGraph,Data,$j) Update
-      # EMSegmenterPreProcessingTcl::PrintError  "end -- $j " 
     }
     }
     GraphRender EMSegment $EMSegment(Graph,$numGraph,path)

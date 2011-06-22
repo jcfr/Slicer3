@@ -886,7 +886,7 @@ void vtkEMSegmentLogic::CopyGlobalDataToSegmenter(vtkImageEMLocalSegmenter* segm
   segmenter->SetPrintDir(this->MRMLManager->GetSaveWorkingDirectory());
 
   //
-  // NB: In the algorithm code smoothing widht and sigma parameters
+  // NB: In the algorithm code smoothing width and sigma parameters
   // are defined globally.  In this logic, they are defined for each
   // parent node.  For now copy parameters from the root tree
   // node. !!!todo!!!

@@ -13,8 +13,15 @@
 =========================================================================auto=*/
 #include "vtkImageCurveRegion.h"
 
-#include "vtkObjectFactory.h"
 #include "vtkImageData.h"
+#include "vtkImageProgressIterator.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkObjectFactory.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+
+vtkCxxRevisionMacro(vtkImageCurveRegion, "1.32");
+vtkStandardNewMacro(vtkImageCurveRegion);
 
 
 // ---------------------------------------------------------------------------------------------
@@ -179,21 +186,6 @@ inline int InvertMatrix(float **mat, float **inv_mat,int dim) {
 }
 
 
-
-//------------------------------------------------------------------------------
-vtkImageCurveRegion* vtkImageCurveRegion::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageCurveRegion");
-  if(ret)
-    {
-    return (vtkImageCurveRegion*)ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkImageCurveRegion;
-}
-
-
 //----------------------------------------------------------------------------
 vtkImageCurveRegion::vtkImageCurveRegion()
 {
@@ -206,6 +198,7 @@ vtkImageCurveRegion::vtkImageCurveRegion()
   this->Covariance = NULL;
   this->Probability = 1.0;
   this->FileName = NULL;
+  this->SetNumberOfInputPorts(0);
 }
 
 //----------------------------------------------------------------------------
@@ -218,99 +211,6 @@ void vtkImageCurveRegion:: DeleteVariables() {
   this->Dimension = 0;
 }
 
-//----------------------------------------------------------------------------
-void vtkImageCurveRegion::ExecuteInformation()
-{
-  int Extent[6];
-  Extent[0] = Extent[2] = Extent[4] = Extent[5] = 0;
-  vtkImageData *output = this->GetOutput();
-  int ScalarComp = 0;
-
-  if (this->Function == 3 ) {
-    FILE *f = fopen(this->FileName,"r");
-    if ( f == NULL ) {
-      cerr << "vtkImageCurveRegion::ExecuteInformation: Could not open file " << this->FileName << "\n";
-      Extent[1] = Extent[3] = 0; 
-      output->SetUpdateExtent(Extent);
-      output->SetWholeExtent(Extent);
-      output->SetScalarType(VTK_FLOAT);
-      output->SetNumberOfScalarComponents(0);
-      fclose(f);
-      return;
-    }
-    int MaxLength = 100;
-    int index = 0; 
-    bool flag = false;
-    char *line = new char[MaxLength];
-    if (feof(f) || fgets(line, MaxLength, f ) == NULL) {
-      cout << "vtkImageCurveRegion::ExecuteInformation: Error : File was empty !" << endl;
-      fclose(f);
-      delete[] line;
-      return;
-    }
-    Extent[1] = Extent[3] = 0;
-
-    line[MaxLength-1] = '\n';
-    if (line[index] != ' ') ScalarComp = 1;
-    // Check how many numbers are in a row 
-    cout << line << endl;
-    while(line[index] != '\n') {
-      if (line[index] == ' ' ) flag = true;
-      else if (flag) { 
-    ScalarComp++;
-    flag = false;
-      } 
-      index ++;
-    }
-    // Check How many rows there are
-    fgets(line, MaxLength, f); 
-    while(!feof(f)) {
-      Extent[1] ++;
-      fgets(line, MaxLength, f);
-    }
-    fclose(f);
-    delete[] line;
-  } else {
-    float dist;
-    ScalarComp = 1;
-    if ((this->Xunit <= 0.0) && (this->Xlength <= 0)) {
-    vtkErrorMacro(<< "Value for Xunit or Xlength has to be greater 0 !");
-    return;
-    }
-    if (this->Xlength > 0) {
-      dist = this->Xmax - this->Xmin;
-      if (dist) {
-    this->Xunit = dist / float(this->Xlength);
-    while (dist/this->Xunit <  float(this->Xlength))  this->Xunit *= 0.999;
-      } else this->Xunit = 1.0;
-    } else {
-      this->Xlength = int((this->Xmax - this->Xmin)/this->Xunit);
-    }
-    Extent[1] = this->Xlength - 1;
-    
-    if (this->Dimension == 2) {
-      if ((this->Yunit <= 0.0) && (this->Ylength <= 0)) {
-    vtkErrorMacro(<< "Value for Yunit or Ylength has to be greater 0 !");
-    return;
-      }
-      if (this->Ylength > 0) {
-    dist = this->Ymax - this->Ymin;
-    if (dist) {
-      this->Yunit = dist / float(this->Ylength);
-      while (dist/this->Yunit <  float(this->Ylength))  this->Yunit *= 0.999;
-    } else this->Yunit = 1.0;
-      } else {
-    this->Ylength = int((this->Ymax - this->Ymin)/this->Yunit);
-      }
-      Extent[3] = this->Ylength - 1;
-    } else {Extent[3] = 0;}
-   
-  }
-  output->SetUpdateExtent(Extent);
-  output->SetWholeExtent(Extent);
-  output->SetScalarType(VTK_FLOAT);
-  output->SetNumberOfScalarComponents(ScalarComp);
-}
 //----------------------------------------------------------------------------
 void vtkImageCurveRegion::SetFunction(int val) {
   if ((3<val) || (val < 1)) {
@@ -350,10 +250,21 @@ void vtkImageCurveRegion::ExecuteDataGauss(vtkDataObject *output) {
   }
 
   float **InvCov = new float*[this->Dimension];
+  for (int i = 0 ; i < this->Dimension; i++)
+    {
+       InvCov[i] = new float[this->Dimension];
+    } 
+  
   // This is copied from vtkImageEMLocalSegment.cxx EMClass::CalcInvCovParamters()
   if (InvertMatrix(this->Covariance,InvCov,this->Dimension) == 0) {
     vtkErrorMacro(<< "Could not caluclate the Inverse of the Covariance of tissue class. Covariance Matrix is probably almost singular!");
-    delete [] *InvCov;
+    for (int i = 0 ; i < this->Dimension; i++)
+    {
+      delete[] InvCov[i];
+      InvCov[i] = NULL;
+    } 
+    delete [] InvCov;
+
     return;
   }
 
@@ -474,19 +385,10 @@ void vtkImageCurveRegion::ExecuteDataReadFile(vtkDataObject *output) {
 }
 
 //----------------------------------------------------------------------------
-void vtkImageCurveRegion::ExecuteData(vtkDataObject *output) {
-  switch (this->Function) {
-    case 1: 
-    case 2: this->ExecuteDataGauss(output); break;
-    case 3: this->ExecuteDataReadFile(output); break;
-    default:   cerr << "vtkImageCurveRegion::ExecuteData:Error: Function " << this->Function << "not available !" << endl;   
-  }
-}
-
 void vtkImageCurveRegion::PrintSelf(ostream& os, vtkIndent indent)
 {
   int x ,y;
-  vtkImageSource::PrintSelf(os,indent);
+  this->Superclass::PrintSelf(os,indent);
   os << indent << "Dimension:  " << this->Dimension << endl;
   os << indent << "Function:   " << this->Function  << endl;
   os << indent << "Xmin:       " << this->Xmin      << endl;
@@ -506,4 +408,112 @@ void vtkImageCurveRegion::PrintSelf(ostream& os, vtkIndent indent)
   os << endl;
 }
 
+//----------------------------------------------------------------------------
+int vtkImageCurveRegion::RequestInformation (
+  vtkInformation * vtkNotUsed(request),
+  vtkInformationVector** vtkNotUsed( inputVector ),
+  vtkInformationVector *outputVector)
+{
+
+   int Extent[6];
+  Extent[0] = Extent[2] = Extent[4] = Extent[5] = 0;
+   int ScalarComp = 0;
+
+  if (this->Function == 3 ) {
+    FILE *f = fopen(this->FileName,"r");
+    if ( f == NULL ) {
+      cerr << "vtkImageCurveRegion::ExecuteInformation: Could not open file " << this->FileName << "\n";
+      fclose(f);
+      return 0 ;
+    }
+    int MaxLength = 100;
+    int index = 0; 
+    bool flag = false;
+    char *line = new char[MaxLength];
+    if (feof(f) || fgets(line, MaxLength, f ) == NULL) {
+      cout << "vtkImageCurveRegion::ExecuteInformation: Error : File was empty !" << endl;
+      fclose(f);
+      delete[] line;
+      return 0 ;
+    }
+    Extent[1] = Extent[3] = 0;
+
+    line[MaxLength-1] = '\n';
+    if (line[index] != ' ') ScalarComp = 1;
+    // Check how many numbers are in a row 
+    cout << line << endl;
+    while(line[index] != '\n') {
+      if (line[index] == ' ' ) flag = true;
+      else if (flag) { 
+    ScalarComp++;
+    flag = false;
+      } 
+      index ++;
+    }
+    // Check How many rows there are
+    fgets(line, MaxLength, f); 
+    while(!feof(f)) {
+      Extent[1] ++;
+      fgets(line, MaxLength, f);
+    }
+    fclose(f);
+    delete[] line;
+  } else {
+    float dist;
+    ScalarComp = 1;
+    if ((this->Xunit <= 0.0) && (this->Xlength <= 0)) {
+       vtkErrorMacro(<< "Value for Xunit or Xlength has to be greater 0 !");
+      return 0;
+    }
+    if (this->Xlength > 0) {
+      dist = this->Xmax - this->Xmin;
+      if (dist) {
+    this->Xunit = dist / float(this->Xlength);
+    while (dist/this->Xunit <  float(this->Xlength))  this->Xunit *= 0.999;
+      } else this->Xunit = 1.0;
+    } else {
+      this->Xlength = int((this->Xmax - this->Xmin)/this->Xunit);
+    }
+    Extent[1] = this->Xlength - 1;
+    
+    if (this->Dimension == 2) {
+      if ((this->Yunit <= 0.0) && (this->Ylength <= 0)) {
+       vtkErrorMacro(<< "Value for Yunit or Ylength has to be greater 0 !");
+       return 0 ;
+      }
+      if (this->Ylength > 0) {
+    dist = this->Ymax - this->Ymin;
+    if (dist) {
+      this->Yunit = dist / float(this->Ylength);
+      while (dist/this->Yunit <  float(this->Ylength))  this->Yunit *= 0.999;
+    } else this->Yunit = 1.0;
+      } else {
+    this->Ylength = int((this->Ymax - this->Ymin)/this->Yunit);
+      }
+      Extent[3] = this->Ylength - 1;
+    } else {Extent[3] = 0;}
+   
+  }
+  vtkInformation* outInfo = outputVector->GetInformationObject(0);  
+  outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), Extent,6);
+  vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, ScalarComp);
+  return 1;
+}
+
+void vtkImageCurveRegion::ExecuteData(vtkDataObject *output)
+{
+   vtkImageData *data = this->AllocateOutputData(output);
+  
+   if (data->GetScalarType() != VTK_FLOAT)
+    {
+    vtkErrorMacro("Execute: This source only outputs floats");
+    }
+  
+   switch (this->Function) {
+    case 1: 
+    case 2: this->ExecuteDataGauss(output); break;
+    case 3: this->ExecuteDataReadFile(output); break;
+    default:   cerr << "vtkImageCurveRegion::ExecuteData:Error: Function " << this->Function << "not available !" << endl;   
+   }
+}
 

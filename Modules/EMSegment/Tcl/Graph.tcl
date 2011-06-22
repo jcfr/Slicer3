@@ -675,9 +675,8 @@ proc GraphAddCurveRegion {varName path data color type ignore} {
 # .END
 #-------------------------------------------------------------------------------
 proc GraphCreateGaussianCurveRegion {varDataName mean covariance probability fct dimension Xmin Xmax Xlen {Ymin 0} {Ymax 0} {Ylen 0} } {
-
-   catch "$varDataName Delete"
-   vtkImageCurveRegion $varDataName
+   catch {$varDataName Delete} 
+   vtkImageCurveRegion $varDataName 
    $varDataName SetDimension $dimension
    $varDataName SetFunction  $fct
    set index 0
@@ -698,7 +697,9 @@ proc GraphCreateGaussianCurveRegion {varDataName mean covariance probability fct
        $varDataName SetYmax $Ymax 
        $varDataName SetYlength $Ylen
    }
+
    $varDataName Update
+   return $varDataName
 }  
 
 #-------------------------------------------------------------------------------

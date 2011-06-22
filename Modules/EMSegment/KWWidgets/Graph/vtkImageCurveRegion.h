@@ -19,6 +19,9 @@
 #ifndef __vtkImageCurveRegion_h
 #define __vtkImageCurveRegion_h
 
+
+#include "vtkImageAlgorithm.h"
+
 #include "vtkImageSource.h"
 #include "vtkEMSegmentStep.h"
 
@@ -40,14 +43,14 @@
 #define EMSEGMENT_ONE_OVER_ROOT_2_PI sqrt(EMSEGMENT_ONE_OVER_2_PI)
 #define EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 ((float) -.72134752)
 
-class VTK_EMSEGMENT_EXPORT vtkImageCurveRegion : public vtkImageSource
+class VTK_EMSEGMENT_EXPORT vtkImageCurveRegion : public vtkImageAlgorithm 
 {
 public:
   static vtkImageCurveRegion *New();
-  vtkTypeMacro(vtkImageCurveRegion,vtkImageSource);
+  vtkTypeRevisionMacro(vtkImageCurveRegion,vtkImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  void SetDimension(int value);
+void SetDimension(int value);
   vtkGetMacro(Dimension, int);
   vtkSetMacro(Xmin, float);
   vtkGetMacro(Xmin, float);
@@ -106,7 +109,8 @@ public:
 
 protected:
   vtkImageCurveRegion();
-  void DeleteVariables();
+
+   void DeleteVariables();
   ~vtkImageCurveRegion() {this->DeleteVariables();};
 
   int Dimension;
@@ -130,10 +134,11 @@ protected:
 
   char* FileName;
 
-  virtual void ExecuteInformation();
-  virtual void ExecuteData(vtkDataObject *data);
   void ExecuteDataReadFile(vtkDataObject *output) ;
   void ExecuteDataGauss(vtkDataObject *output);
+  virtual void ExecuteData(vtkDataObject *data);
+  virtual int RequestInformation (vtkInformation *, vtkInformationVector**, vtkInformationVector *);
+
 private:
   vtkImageCurveRegion(const vtkImageCurveRegion&);  // Not implemented.
   void operator=(const vtkImageCurveRegion&);  // Not implemented.
