@@ -30,7 +30,7 @@
 #include "qSlicerEMSegmentSpecifyIntensityDistributionStep.h"
 #include "ui_qSlicerEMSegmentSpecifyIntensityDistributionStep.h"
 #include "qSlicerEMSegmentSpecifyIntensityDistributionStep_p.h"
-#include "qSlicerEMSegmentGraphWidget.h"
+
 
 // EMSegment/MRML includes
 #include <vtkEMSegmentMRMLManager.h>
@@ -106,11 +106,7 @@ void qSlicerEMSegmentSpecifyIntensityDistributionStepPrivate::openGraphDialog()
 {
   Q_Q(qSlicerEMSegmentSpecifyIntensityDistributionStep);
   QDialog dialog(q);
-  qSlicerEMSegmentGraphWidget* graph = new qSlicerEMSegmentGraphWidget(&dialog);
-  QVBoxLayout* boxLayout = new QVBoxLayout;
-  boxLayout->addWidget(graph);
-  dialog.setLayout(boxLayout);
-  graph->setMRMLManager(q->mrmlManager());
+
   dialog.exec();
 }
 
