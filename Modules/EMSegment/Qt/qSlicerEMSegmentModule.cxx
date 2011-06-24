@@ -35,7 +35,7 @@
 #include "qSlicerEMSegmentModule.h"
 #include "qSlicerEMSegmentModuleWidget.h"
 
-void PythonQt_init_org_slicer_libs_qSlicerEMSegmentModuleWidgets(PyObject*);
+void PythonQt_init_org_slicer_module_qSlicerEMSegmentModuleWidgets(PyObject*);
 
 //-----------------------------------------------------------------------------
 Q_EXPORT_PLUGIN2(qSlicerEMSegmentModule, qSlicerEMSegmentModule);
@@ -53,7 +53,7 @@ qSlicerEMSegmentModule::qSlicerEMSegmentModule(QObject* _parent)
   , d_ptr(new qSlicerEMSegmentModulePrivate)
 {
 
-  PythonQt_init_org_slicer_libs_qSlicerEMSegmentModuleWidgets(0);
+  PythonQt_init_org_slicer_module_qSlicerEMSegmentModuleWidgets(0);
 
 }
 
