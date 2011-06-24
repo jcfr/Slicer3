@@ -787,14 +787,17 @@ proc EditorGestureCheckPoint {} {
    
    if { $mIndx == -1}  {
 
-       set name "[$labelNode GetName]-growcut"
+       set name "[$labelNode GetName]-growcut-input"
+       set labelname "[$labelNode GetName]"
+       [[[$::slicer3::ApplicationLogic GetSliceLogic "Red"] GetLabelLayer] GetVolumeNode] SetName $name
 
+       [$layerLogic GetVolumeNode] SetName $name  
        #
        # Check if we have a node corresponding to the label node
        #
        #set name "[$labelNode GetID]-gesture"
        # puts "name : $name"
-       set nodes [$::slicer3::MRMLScene GetNodesByName $name]
+       set nodes [$::slicer3::MRMLScene GetNodesByName $labelname]
 
        #puts "number of items : [$nodes GetNumberOfItems]"
 
@@ -802,7 +805,7 @@ proc EditorGestureCheckPoint {} {
 
      puts "adding a new volume to MRML Scene $name"
      set volumesLogic [$::slicer3::VolumesGUI GetLogic]
-     set gestureNode [$volumesLogic CreateLabelVolume $::slicer3::MRMLScene $labelNode $name]
+     set gestureNode [$volumesLogic CreateLabelVolume $::slicer3::MRMLScene $labelNode $labelname]
      #puts "color lut is $colorID"
      [$gestureNode GetDisplayNode] SetAndObserveColorNodeID $colorID
      set ID [$gestureNode GetID]
