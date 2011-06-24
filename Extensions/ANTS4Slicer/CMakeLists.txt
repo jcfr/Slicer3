@@ -47,7 +47,7 @@ message("######### LOCAL_CMAKE_BUILD_OPTIONS:            ${LOCAL_CMAKE_BUILD_OPT
 
 set(PROJECTNAME ANTSExternal)
 ExternalProject_Add(${PROJECTNAME}
-  SVN_REPOSITORY "https://advants.svn.sourceforge.net/svnroot/advants ANTS"
+  SVN_REPOSITORY "https://advants.svn.sourceforge.net/svnroot/advants"
   CMAKE_ARGS
     ${LOCAL_CMAKE_BUILD_OPTIONS}
     -DCMAKE_INSTALL_PREFIX:PATH=${PROJECTNAME}-install
