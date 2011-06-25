@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 
   typedef itk::Image< short, 3 > MaskImageType;
 
-  double levelSetThreshold = 1.0;
+  //double levelSetThreshold = 1.0;
   MaskImageType::Pointer finalMask = getFinalMask<float>(seg.mp_phi, labelValue, levelSetThreshold);
   finalMask->CopyInformation(img);
 
