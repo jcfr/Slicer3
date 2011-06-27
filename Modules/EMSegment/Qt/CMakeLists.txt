@@ -4,8 +4,14 @@
 SET(qt_module_name "EMSegment")
 
 # Add subdirectories
+
+# Logic
 ADD_SUBDIRECTORY(Logic)
+
+# Qt Widgets
 ADD_SUBDIRECTORY(Widgets)
+
+# The Python-based EMSegment wizard
 ADD_SUBDIRECTORY(Py)
 
 SET(qt_module_export_directive "Q_SLICER_QTMODULES_EMSEGMENT_EXPORT")
@@ -30,7 +36,6 @@ SET(qt_module_MOC_SRCS
 
 # UI files
 SET(qt_module_UI_SRCS
-  #Resources/UI/qSlicerEMSegmentModule.ui
   )
 
 # Additional Target libraries

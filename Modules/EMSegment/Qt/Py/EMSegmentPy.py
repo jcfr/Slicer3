@@ -5,7 +5,7 @@ from EMSegmentWizard import Helper
 
 class EMSegmentPy:
   def __init__( self, parent ):
-    parent.title = "EMSegmentPy"
+    parent.title = "EMSegment"
     parent.category = ""
     parent.contributor = "--"
     parent.helpText = """dsfdsf"""
