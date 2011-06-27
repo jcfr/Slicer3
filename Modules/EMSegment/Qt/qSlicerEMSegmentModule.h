@@ -54,6 +54,10 @@ public:
   /// Return the icon of the EMSegment module.
   virtual QIcon icon()const;
 
+  ///
+  /// Activate hidden mode for this module.
+  virtual bool isHidden()const;
+
 protected:
   ///
   /// Initialize the module. Register the volumes reader/writer

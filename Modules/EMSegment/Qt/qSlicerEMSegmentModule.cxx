@@ -33,7 +33,6 @@
 
 // EMSegment QTModule includes
 #include "qSlicerEMSegmentModule.h"
-#include "qSlicerEMSegmentModuleWidget.h"
 
 void PythonQt_init_org_slicer_module_qSlicerEMSegmentModuleWidgets(PyObject*);
 
@@ -53,8 +52,6 @@ qSlicerEMSegmentModule::qSlicerEMSegmentModule(QObject* _parent)
   , d_ptr(new qSlicerEMSegmentModulePrivate)
 {
 
-  PythonQt_init_org_slicer_module_qSlicerEMSegmentModuleWidgets(0);
-
 }
 
 //-----------------------------------------------------------------------------
@@ -66,6 +63,8 @@ qSlicerEMSegmentModule::~qSlicerEMSegmentModule()
 void qSlicerEMSegmentModule::setup()
 {
   this->Superclass::setup();
+
+  PythonQt_init_org_slicer_module_qSlicerEMSegmentModuleWidgets(0);
 }
 
 //-----------------------------------------------------------------------------
@@ -89,7 +88,8 @@ QString qSlicerEMSegmentModule::helpText()const
 //-----------------------------------------------------------------------------
 qSlicerAbstractModuleRepresentation * qSlicerEMSegmentModule::createWidgetRepresentation()
 {
-  return new qSlicerEMSegmentModuleWidget;
+  //return new qSlicerEMSegmentModuleWidget;
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -102,4 +102,10 @@ vtkMRMLAbstractLogic* qSlicerEMSegmentModule::createLogic()
 QIcon qSlicerEMSegmentModule::icon() const
 {
   return QIcon(":/Icons/EMSegment.png");
+}
+
+//-----------------------------------------------------------------------------
+bool qSlicerEMSegmentModule::isHidden()const
+{
+  return true;
 }
