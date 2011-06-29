@@ -93,7 +93,7 @@ vtkEMSegmentPreProcessingStep::ShowUserInterface()
   
   const char* logicTcl = vtkKWTkUtilities::GetTclNameFromPointer(vtkSlicerApplication::GetInstance()->GetMainInterp(),this->GUI->GetLogic());
 
-  std::string showCheckListCommand = "::EMSegmenterSimpleTcl::ShowUserInterface ";
+  std::string showCheckListCommand = "::EMSegmenterPreProcessingTcl::ShowUserInterface ";
   showCheckListCommand += logicTcl;
 
  this->Script(showCheckListCommand.c_str());
