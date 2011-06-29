@@ -152,10 +152,10 @@ vtkEMSegmentLogic::mktemp_file(const char* postfix)
   strcpy_s( filename, sizeof(filename), mytemplate.str().c_str() );
   ptr = _mktemp( filename );
   if ( fopen_s( &fp, ptr, "w" ) != 0 )
-    std::cout << "Cannot create file " << ptr << std::endl;
+  std::cout << "Cannot create file " << ptr << std::endl;
   s << ptr << postfix;
   if ( fopen_s( &fp2, s.str().c_str(), "w" ) != 0 )
-    std::cout << "Cannot create file " << ptr << std::endl;
+  std::cout << "Cannot create file " << ptr << std::endl;
 #else
   strcpy(filename, mytemplate.str().c_str());
   ptr = mktemp(filename);
@@ -902,7 +902,6 @@ void vtkEMSegmentLogic::CopyGlobalDataToSegmenter(vtkImageEMLocalSegmenter* segm
 
   int biasType = this->MRMLManager-> GetBiasCorrectionType(rootNodeID);
   segmenter->SetBiasCorrectionType(biasType);
-
 
   //
   // registration parameters
@@ -2929,12 +2928,16 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
       { // own scope starts
 
       std::ostringstream os;
-      os << "expr $::EMSegment(GaussCurveCalc,Mean,";
-      os << r;
-      os << ")";
+      //os << "expr $::EMSegment(GaussCurveCalc,Mean,";
+      //os << r;
+      //os << ")";
+
+      os << "set a 0.3";
 
       double value = atof(this->GetSlicerCommonInterface()->EvaluateTcl(
           os.str().c_str()));
+
+      cout << "::::::LOGMEAN:" << value << endl;
 
       leafNode->SetLogMean(r, value);
       } // own scope ends
@@ -3441,12 +3444,12 @@ std::string vtkEMSegmentLogic::GetTasks()
 
   std::string tasksList = "";
 
-  for (unsigned int i=0; i<pssDefaultTasksName.size(); ++i)
+  for (unsigned int i = 0; i < pssDefaultTasksName.size(); ++i)
     {
     tasksList += pssDefaultTasksName[i];
     tasksList += ":";
     tasksList += pssDefaultTasksFile[i];
-    if (i!=pssDefaultTasksName.size()-1)
+    if (i != pssDefaultTasksName.size() - 1)
       tasksList += ",";
     }
 

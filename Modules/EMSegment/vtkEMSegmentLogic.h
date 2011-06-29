@@ -207,6 +207,7 @@ public:
   const char*       GetTemporaryDirectory();
   const char*       GetPluginsDirectory();
 
+
   //
   // SLICER COMMON INTERFACE ENDS HERE
   //

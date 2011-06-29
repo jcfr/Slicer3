@@ -16,6 +16,7 @@
 #include "vtkMRMLEMSVolumeCollectionNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkEMSegmentKWDynamicFrame.h"
+#include "vtkKWTkUtilities.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentPreProcessingStep);
@@ -90,11 +91,12 @@ vtkEMSegmentPreProcessingStep::ShowUserInterface()
   // Sets up Task Specific GUI
   this->CheckListFrame->CreateEntryLists();
   
-  //  this->CheckListFrame->Create(parent, this->GetSlicerApplication(), mrmlManager,"Check List", this->GetGUI()->IsSegmentationModeAdvanced()); 
-  //
-  // Define Tas  this->CreateEntryLists();k Specific GUI 
-  //
-  this->Script("::EMSegmenterPreProcessingTcl::ShowUserInterface");
+  const char* logicTcl = vtkKWTkUtilities::GetTclNameFromPointer(vtkSlicerApplication::GetInstance()->GetMainInterp(),this->GUI->GetLogic());
+
+  std::string showCheckListCommand = "::EMSegmenterSimpleTcl::ShowUserInterface ";
+  showCheckListCommand += logicTcl;
+
+ this->Script(showCheckListCommand.c_str());
 
 }
 

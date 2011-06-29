@@ -8,6 +8,18 @@
 // Slicer3
 #include "vtkKWTkUtilities.h"
 #include "../../Applications/GUI/Slicer3Helper.cxx"
+#include "vtkEMSegmentKWDynamicFrame.h"
+#include "vtkEMSegmentPreProcessingStep.h"
+#include "vtkEMSegmentInputChannelsStep.h"
+#include "vtkEMSegmentGUI.h"
+
+#else
+
+// Slicer4
+#include <QDebug>
+
+// PythonQT includes
+#include <PythonQt.h>
 
 #endif
 
@@ -34,7 +46,10 @@ vtkSlicerCommonInterface::vtkSlicerCommonInterface()
   this->StringHolder = std::string("");
 
 #ifndef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
   this->remoteIOLogic = 0;
+
 #endif
 
 }
@@ -66,10 +81,8 @@ Tcl_Interp* vtkSlicerCommonInterface::Startup(int argc, char *argv[], ostream *e
   // Slicer4
   qSlicerApplication* app = new qSlicerApplication(argc,argv);
 
-
   bool exitWhenDone;
   app->parseArguments(exitWhenDone);
-
 
   //app->exec();
 
@@ -147,9 +160,13 @@ const char* vtkSlicerCommonInterface::EvaluateTcl(const char* command)
 
     QVariant returnValue = py->executeString(tclCall.arg(command));
 
+    //cout << "RETURNVALUE:" << returnValue.toString().toUtf8() << endl;
+
     // convert returnValue to const char*
     QByteArray byteArray = returnValue.toString().toUtf8();
     const char* cString = byteArray.constData();
+
+    cout << "RETURNVALUE:" << returnValue.toFloat() << endl;
 
     return cString;
     }
@@ -455,7 +472,8 @@ const char* vtkSlicerCommonInterface::GetTemporaryDirectory()
 #ifdef Slicer3_USE_KWWIDGETS
 
   // Slicer3
-  this->StringHolder = std::string(vtkSlicerApplication::GetInstance()->GetTemporaryDirectory());
+  this->StringHolder = std::string(
+      vtkSlicerApplication::GetInstance()->GetTemporaryDirectory());
   return this->StringHolder.c_str();
 
 #else
@@ -667,4 +685,192 @@ std::string vtkSlicerCommonInterface::randomStrGen(int length)
     result[i] = charset[rand() % charset.length()];
 
   return result;
+}
+
+//-----------------------------------------------------------------------------
+//
+// DYNAMIC FRAME CREATION
+//
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+#ifdef Slicer3_USE_KWWIDGETS
+vtkEMSegmentKWDynamicFrame* vtkSlicerCommonInterface::GetSimpleDynamicFrame()
+{
+  // Slicer 3 only
+
+  vtkEMSegmentGUI* mod =
+      vtkEMSegmentGUI::SafeDownCast(vtkSlicerApplication::GetInstance()->GetModuleGUIByName("EMSegmenter"));
+  if (!mod)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter GUI!")
+    return 0;
+    }
+
+  vtkEMSegmentKWDynamicFrame* dynFrame = 0;
+  // EMS Simple Mode
+  dynFrame = mod->GetInputChannelStep()->GetCheckListFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return 0;
+    }
+
+  return dynFrame;
+}
+
+//-----------------------------------------------------------------------------
+vtkEMSegmentKWDynamicFrame* vtkSlicerCommonInterface::GetAdvancedDynamicFrame()
+{
+  // Slicer 3 only
+
+  vtkEMSegmentGUI* mod =
+      vtkEMSegmentGUI::SafeDownCast(vtkSlicerApplication::GetInstance()->GetModuleGUIByName("EMSegmenter"));
+  if (!mod)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter GUI!")
+    return 0;
+    }
+
+  vtkEMSegmentKWDynamicFrame* dynFrame = 0;
+  // EMS Advanced Mode
+  dynFrame = mod->GetPreProcessingStep()->GetCheckListFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return 0;
+    }
+
+  return dynFrame;
+}
+#endif
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::DefineCheckButton(const char *label, int initState, vtkIdType ID)
+{
+
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+int vtkSlicerCommonInterface::GetCheckButtonValue(vtkIdType ID)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+  return -1;
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::DefineTextLabel(const char *label, vtkIdType ID)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::DefineVolumeMenuButton(const char *label, vtkIdType initVolID, vtkIdType buttonID)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+vtkIdType vtkSlicerCommonInterface::GetVolumeMenuButtonValue(vtkIdType ID)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+  return 0;
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::VolumeMenuButtonCallback(vtkIdType buttonID, vtkIdType volID)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::DefineTextEntry(const char *label, const char *initText, vtkIdType entryID, int widgetWidth)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::DefineTextEntry(const char *label, const char *initText, vtkIdType entryID)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+const char* vtkSlicerCommonInterface::GetTextEntryValue(vtkIdType ID)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+  return 0;
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::SetButtonsFromMRML()
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::PopUpWarningWindow(const char * msg)
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+#endif
+
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerCommonInterface::SaveSettingToMRML()
+{
+#ifdef Slicer3_USE_KWWIDGETS
+
+
+#endif
 }

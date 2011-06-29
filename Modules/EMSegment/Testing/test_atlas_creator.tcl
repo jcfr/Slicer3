@@ -43,6 +43,6 @@ set outputDir        "/tmp/AC/"
 set segmentationsDir "$Slicer3_HOME/../Slicer3/Modules/AtlasCreator/TestData/segmentations/"
 set imagesDir        "$Slicer3_HOME/../Slicer3/Modules/AtlasCreator/TestData/originals/"
 
-EMSegmenterPreProcessingTcl::InitVariables
+EMSegmenterPreProcessingTcl::InitVariables $EMSLogic
 EMSegmenterPreProcessingTcl::AtlasCreator $segmentationsDir $imagesDir $outputDir $targetNode
 puts "End"

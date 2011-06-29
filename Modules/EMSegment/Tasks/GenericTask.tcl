@@ -27,7 +27,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     #
 
     ## Slicer
-    variable GUI
+#    variable GUI
     variable SCENE
 
     ## EM GUI/MRML/LOGIC
@@ -74,7 +74,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     #------------------------------------------------------
     # returns filename when no error occurs
     proc CreateTemporaryFileNameForNode { Node } {
-        variable GUI
+#        variable GUI
         variable LOGIC
 
         set filename ""
@@ -103,7 +103,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     #
     proc CreateFileName { type } {
-        variable GUI
+#        variable GUI
         variable LOGIC
 
         set filename ""
@@ -131,7 +131,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     #
     proc CreateDirName { type } {
-        variable GUI
+#        variable GUI
         variable LOGIC
 
         set basefilename [ $LOGIC mktemp_dir ]
@@ -260,7 +260,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     # Preprocessing Functions
     #
     proc InitVariables { {initLOGIC ""} {initManager ""} {initPreGUI "" } } {
-        variable GUI
+#        variable GUI
         variable preGUI
         variable LOGIC
 
@@ -276,26 +276,33 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable selectedRegistrationPackage
         variable CMTKFOLDER
 
-        set GUI $::slicer3::Application
-        if { $GUI == "" } {
-            puts stderr "ERROR: GenericTask: InitVariables: GUI not defined"
+        if {$initLOGIC == ""} {
+            PrintError "ERROR: Logic not defined!"
             return 1
-        }
-
-        if { $initLOGIC == "" } {
-            set MOD [$GUI GetModuleGUIByName "EMSegmenter"]
-            if {$MOD == ""} {
-                puts stderr "ERROR: GenericTask: InitVariables: EMSegmenter not defined"
-                return 1
-            }
-            set LOGIC [$MOD GetLogic]
-            if { $LOGIC == "" } {
-                puts stderr "ERROR: GenericTask: InitVariables: LOGIC not defined"
-                return 1
-            }
         } else {
             set LOGIC $initLOGIC
         }
+
+#        set GUI $::slicer3::Application
+#        if { $GUI == "" } {
+#            puts stderr "ERROR: GenericTask: InitVariables: GUI not defined"
+#            return 1
+#        }
+#
+#        if { $initLOGIC == "" } {
+#            set MOD [$GUI GetModuleGUIByName "EMSegmenter"]
+#            if {$MOD == ""} {
+#                puts stderr "ERROR: GenericTask: InitVariables: EMSegmenter not defined"
+#                return 1
+#            }
+#            set LOGIC [$MOD GetLogic]
+#            if { $LOGIC == "" } {
+#                puts stderr "ERROR: GenericTask: InitVariables: LOGIC not defined"
+#                return 1
+#            }
+#        } else {
+#            set LOGIC $initLOGIC
+#        }
 
         # Do not move it before bc LOGIC is not defined until here
 
@@ -306,13 +313,15 @@ namespace eval EMSegmenterPreProcessingTcl {
 
 
         if { $initManager == "" } {
-            set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
-            if {$MOD == ""} {
-                PrintError "InitVariables: EMSegmenter not defined"
-                return 1
-            }
+#            set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
+#            if {$MOD == ""} {
+#                PrintError "InitVariables: EMSegmenter not defined"
+#                return 1
+#            }
+#
+#           set mrmlManager [$MOD GetMRMLManager]
 
-            set mrmlManager [$MOD GetMRMLManager]
+            set mrmlManager [$LOGIC GetMRMLManager]
             if { $mrmlManager == "" } {
                 PrintError "InitVariables: mrmManager not defined"
                 return 1
@@ -335,23 +344,25 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         if {$initPreGUI == "" } {
-            set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
-            if {$MOD == ""} {
-                PrintError "InitVariables: EMSegmenter not defined"
-                return 1
-            }
+#            set MOD [$::slicer3::Application GetModuleGUIByName "EMSegmenter"]
+#            if {$MOD == ""} {
+#                PrintError "InitVariables: EMSegmenter not defined"
+#                return 1
+#            }
+#
+#            set preStep [$MOD GetPreProcessingStep]
+#            if { $preStep == "" } {
+#                PrintError "InitVariables: PreProcessingStep not defined"
+#                return 1
+#            }
+#
+#            set preGUI [$preStep GetCheckListFrame]
+#            if { $preGUI == "" } {
+#                PrintError "InitVariables:  CheckListFrame not defined"
+#                return 1
+#            }
 
-            set preStep [$MOD GetPreProcessingStep]
-            if { $preStep == "" } {
-                PrintError "InitVariables: PreProcessingStep not defined"
-                return 1
-            }
-
-            set preGUI [$preStep GetCheckListFrame]
-            if { $preGUI == "" } {
-                PrintError "InitVariables:  CheckListFrame not defined"
-                return 1
-            }
+             set preGUI [[$LOGIC GetSlicerCommonInterface] GetAdvancedDynamicFrame]
 
         } else {
             set preGUI $initPreGUI
@@ -405,11 +416,10 @@ namespace eval EMSegmenterPreProcessingTcl {
 
     #------------------------------------------------------
     # return 0 when no error occurs
-    proc ShowUserInterface { } {
+    proc ShowUserInterface { {LOGIC ""} } {
         variable preGUI
-        variable LOGIC
 
-        if { [InitVariables] } {
+        if { [InitVariables $LOGIC] } {
             puts stderr "ERROR: GernicTask.tcl: ShowUserInterface: Not all variables are correctly defined!"
             return 1
         }
@@ -2648,31 +2658,46 @@ namespace eval EMSegmenterSimpleTcl {
 
     variable inputChannelGUI
     variable mrmlManager
+    variable LOGIC
 
-    proc InitVariables { {GUI ""} } {
+    proc InitVariables { {LOGIC ""} } {
         variable inputChannelGUI
         variable mrmlManager
-        if {$GUI == "" } {
-            set GUI [$::slicer3::Application GetModuleGUIByName EMSegmenter]
-        }
-        if { $GUI == "" } {
-            PrintError "InitVariables: GUI not defined"
-            return 1
-        }
-        set mrmlManager [$GUI GetMRMLManager]
-        if { $mrmlManager == "" } {
-            PrintError "InitVariables: mrmManager not defined"
+#        if {$GUI == "" } {
+#            set GUI [$::slicer3::Application GetModuleGUIByName EMSegmenter]
+#        }
+#        if { $GUI == "" } {
+#            PrintError "InitVariables: GUI not defined"
+#            return 1
+#        }
+#        set mrmlManager [$GUI GetMRMLManager]
+#        if { $mrmlManager == "" } {
+#            PrintError "InitVariables: mrmManager not defined"
+#            return 1
+#        }
+#
+#        set inputChannelStep [$GUI GetInputChannelStep]
+#        if { $inputChannelStep == "" } {
+#            PrintError "InitVariables: InputChannelStep not defined"
+#            return 1
+#        }
+#        set inputChannelGUI [$inputChannelStep GetCheckListFrame]
+
+        if {$LOGIC == ""} {
+            PrintError "InitVariables: Logic not defined!"
             return 1
         }
 
-        set inputChannelStep [$GUI GetInputChannelStep]
-        if { $inputChannelStep == "" } {
-            PrintError "InitVariables: InputChannelStep not defined"
+        set mrmlManager [$LOGIC GetMRMLManager]
+        if {$mrmlManager == "" } {
+            PrintError "InitVariables: mrmlManager not defined!"
             return 1
         }
-        set inputChannelGUI [$inputChannelStep GetCheckListFrame]
+        
+        set inputChannelGUI [[$LOGIC GetSlicerCommonInterface] GetSimpleDynamicFrame]        
+        
         if { $inputChannelGUI == "" } {
-            PrintError "InitVariables: CheckListFrame is not defined"
+            PrintError "InitVariables: Could not get dynamic frame"
             return 1
         }
         return 0

@@ -44,14 +44,13 @@ namespace eval EMSegmenterPreProcessingTcl {
     # Define GUI
     # return 1 when error occurs
     # -------------------------------------
-    proc ShowUserInterface { } {
+    proc ShowUserInterface { {LOGIC ""} } {
         variable preGUI
         variable atlasAlignedFlagID
         variable inhomogeneityCorrectionFlagID
-        variable LOGIC
 
         # Always has to be done initially so that variables are correctly defined
-        if { [InitVariables] } {
+        if { [InitVariables $LOGIC] } {
             puts stderr "ERROR: Non Human Primate: ShowUserInterface: Not all variables are correctly defined!"
             return 1
         }
@@ -173,10 +172,10 @@ namespace eval EMSegmenterSimpleTcl {
         return 1
     }
 
-    proc ShowCheckList { } {
+    proc ShowCheckList { {LOGIC ""} } {
         variable inputChannelGUI
         # Always has to be done initially so that variables are correctly defined
-        if { [InitVariables] } {
+        if { [InitVariables $LOGIC] } {
             PrintError "ShowCheckList: Not all variables are correctly defined!"
             return 1
         }

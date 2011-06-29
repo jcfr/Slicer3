@@ -19,6 +19,7 @@
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
 #include "vtkEMSegmentKWDynamicFrame.h"
+#include "vtkKWTkUtilities.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentInputChannelsStep);
@@ -284,8 +285,12 @@ void vtkEMSegmentInputChannelsStep::ShowUserInterface()
          }
          // Sets up Task Specific GUI
          this->CheckListFrame->CreateEntryLists();
+         const char* logicTcl = vtkKWTkUtilities::GetTclNameFromPointer(vtkSlicerApplication::GetInstance()->GetMainInterp(),this->GUI->GetLogic());
 
-        this->Script("::EMSegmenterSimpleTcl::ShowCheckList");
+         std::string showCheckListCommand = "::EMSegmenterSimpleTcl::ShowCheckList ";
+         showCheckListCommand += logicTcl;
+
+        this->Script(showCheckListCommand.c_str());
       }
    }
 }

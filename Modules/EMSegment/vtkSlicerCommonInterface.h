@@ -11,6 +11,7 @@
 
 // Slicer3 includes
 #include  "vtkSlicerApplication.h"
+#include "KWWidgets/vtkEMSegmentKWDynamicFrame.h"
 
   // Slicer3 python
   #ifdef Slicer3_USE_PYTHON
@@ -28,12 +29,12 @@
 
 #else
 
-// Slicer4 includes
-#include "qSlicerApplication.h"
-#include "qSlicerPythonManager.h"
-#include <QString>
-#include <QVariant>
-#include "vtkMRMLRemoteIOLogic.h"
+  // Slicer4 includes
+  #include "qSlicerApplication.h"
+  #include "qSlicerPythonManager.h"
+  #include <QString>
+  #include <QVariant>
+  #include "vtkMRMLRemoteIOLogic.h"
 
   typedef void Tcl_Interp;
 #endif
@@ -71,6 +72,35 @@ public:
   void AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplicationLogic *appLogic, vtkDataIOManagerLogic *dataIOManagerLogic);
   void RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOManagerLogic *dataIOManagerLogic);
 
+//ETX
+
+  // the following interface is for the dynamic panel
+#ifdef Slicer3_USE_KWWIDGETS
+  vtkEMSegmentKWDynamicFrame* GetSimpleDynamicFrame();
+  vtkEMSegmentKWDynamicFrame* GetAdvancedDynamicFrame();
+#endif
+
+  void DefineCheckButton(const char *label, int initState, vtkIdType ID);
+  int GetCheckButtonValue(vtkIdType ID);
+
+  void DefineTextLabel(const char *label, vtkIdType ID);
+
+  void DefineVolumeMenuButton(const char *label, vtkIdType initVolID, vtkIdType buttonID);
+  vtkIdType GetVolumeMenuButtonValue(vtkIdType ID);
+  void  VolumeMenuButtonCallback(vtkIdType buttonID, vtkIdType volID);
+
+  void DefineTextEntry(const char *label, const char *initText, vtkIdType entryID, int widgetWidth);
+  void DefineTextEntry(const char *label, const char *initText, vtkIdType entryID);
+  const char* GetTextEntryValue(vtkIdType ID);
+
+  void SetButtonsFromMRML();
+
+  // Is only in here bc it is called from tcl files
+  void PopUpWarningWindow(const char *);
+
+  void SaveSettingToMRML();
+
+//BTX
   std::string randomStrGen(int length);
 //ETX
 
