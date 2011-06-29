@@ -687,6 +687,25 @@ slicer3_set_plugins_output_path(${CLP})
 target_link_libraries (${CLP} ${CLP}Lib)
 
 #####################
+set (CLP DTIimport)
+
+set (${CLP}_SOURCE ${CLP}.cxx)
+generateclp(${CLP}_SOURCE ${CLP}.xml)
+
+add_executable(${CLP} ${${CLP}_SOURCE})
+slicer3_set_plugins_output_path(${CLP})
+target_link_libraries (${CLP} ${ITK_LIBRARIES})
+
+#####################
+set (CLP DTIexport)
+
+set (${CLP}_SOURCE ${CLP}.cxx)
+generateclp(${CLP}_SOURCE ${CLP}.xml)
+
+add_executable(${CLP} ${${CLP}_SOURCE})
+slicer3_set_plugins_output_path(${CLP})
+target_link_libraries (${CLP} ${ITK_LIBRARIES})
+
 
 # culled from Slicer 3.6 release
 #set (CLP ZeroCrossingBasedEdgeDetectionImageFilter)
@@ -856,6 +875,8 @@ if (Slicer3_SOURCE_DIR)
     DiffusionTensorEstimation
     BSplineToDeformationField
     BSplineToDeformationFieldLib
+    DTIimport
+    DTIexport
     )
 
   slicer3_install_plugins(${TARGETS})
