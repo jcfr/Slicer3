@@ -73,12 +73,12 @@ class EMSegmentPyWidget:
 
     # create all wizard steps
     selectTaskStep = EMSegmentWizard.EMSegmentSelectTaskStep( Helper.GetNthStepId( 1 ) )
-    defineInputChannelsSimpleStep = EMSegmentWizard.EMSegmentDefineInputChannelsStep( Helper.GetNthStepId( 2 ) + 'simple' ) # simple branch
-    defineInputChannelsAdvancedStep = EMSegmentWizard.EMSegmentDefineInputChannelsStep( Helper.GetNthStepId( 2 ) + 'advanced' ) # advanced branch
+    defineInputChannelsSimpleStep = EMSegmentWizard.EMSegmentDefineInputChannelsStep( Helper.GetNthStepId( 2 ) + 'Simple' ) # simple branch
+    defineInputChannelsAdvancedStep = EMSegmentWizard.EMSegmentDefineInputChannelsStep( Helper.GetNthStepId( 2 ) + 'Advanced' ) # advanced branch
     defineAnatomicalTreeStep = EMSegmentWizard.EMSegmentDefineAnatomicalTreeStep( Helper.GetNthStepId( 3 ) )
     defineAtlasStep = EMSegmentWizard.EMSegmentDefineAtlasStep( Helper.GetNthStepId( 4 ) )
     editRegistrationParametersStep = EMSegmentWizard.EMSegmentEditRegistrationParametersStep( Helper.GetNthStepId( 5 ) )
-    definePreprocessingStep = EMSegmentWizard.EMSegmentDummyStep( Helper.GetNthStepId( 6 ) )
+    definePreprocessingStep = EMSegmentWizard.EMSegmentDefinePreprocessingStep( Helper.GetNthStepId( 6 ) )
     specifyIntensityDistributionStep = EMSegmentWizard.EMSegmentSpecifyIntensityDistributionStep( Helper.GetNthStepId( 7 ) )
     editNodeBasedParametersStep = EMSegmentWizard.EMSegmentEditNodeBasedParametersStep( Helper.GetNthStepId( 8 ) )
     miscStep = EMSegmentWizard.EMSegmentDefineMiscParametersStep( Helper.GetNthStepId( 9 ) )
@@ -124,7 +124,15 @@ class EMSegmentPyWidget:
     workflowWidget.visible = True
     self.layout.addWidget( workflowWidget )
 
+    # enable global access to the dynamicFrames on step 2 and step 6
+    slicer.modules.emsegmentSimpleDynamicFrame = defineInputChannelsSimpleStep.dynamicFrame()
+    slicer.modules.emsegmentAdvancedDynamicFrame = definePreprocessingStep.dynamicFrame()
+
     # compress the layout
     #self.layout.addStretch(1)        
 
 
+  def GetDynamicFrame( self ):
+    '''
+    '''
+    return EMSegmentWizard.EMSegmentDynamicFrame()

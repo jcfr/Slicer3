@@ -33,6 +33,8 @@ set(TEST_LINK_LIBRARIES
     vtkCommon
     )
     
+set(EMS_SLICER_LAUNCH_ARGUMENTS --no-error-popup)
+    
 else(NOT EM_Slicer4_FOUND)
 
 # Slicer4
@@ -41,6 +43,8 @@ set(TEST_LINK_LIBRARIES
     vtkCommon
     vtkSlicerEMSegmentModuleLogic
     )
+
+set(EMS_SLICER_LAUNCH_ARGUMENTS "")
 
 endif(NOT EM_Slicer4_FOUND)
 
@@ -201,7 +205,7 @@ if(NOT DISABLE_CXX_TESTING)
   
     # Slicer4
   
-    set(Slicer3_EXE ${Slicer_BINARY_DIR}/Slicer4)
+    set(Slicer3_EXE ${Slicer_BINARY_DIR}/Slicer)
     set(WRAPPED_TEST_EXE_PREFIX --launch ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
     set(WRAPPED_EXE_PREFIX --launch ${Slicer_BINARY_DIR}/${Slicer_PLUGINS_BIN_DIR})
     if(WIN32)
@@ -470,7 +474,7 @@ if(NOT DISABLE_CXX_TESTING)
   # Does it fail elegently when a bogus parameter node is specified?
   add_test( EMSegCL_EFBogusParameterNode
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --parametersMRMLNodeName BogusNodeName  
@@ -484,7 +488,7 @@ if(NOT DISABLE_CXX_TESTING)
   # Does it fail elegently when a bogus mrml scene is specified?
   add_test( EMSegCL_EFBogusMRMLScene
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --dontWriteResults --mrmlSceneFileName ${Slicer3_BINARY_DIR}/Testing/Temporary/bogus_file_scene.mrml
     )
   set_tests_properties(
@@ -496,7 +500,7 @@ if(NOT DISABLE_CXX_TESTING)
   # Does it fail elegently when a bogus target images are specified?
   add_test( EMSegCL_EFBogusTargetImages
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
@@ -511,7 +515,7 @@ if(NOT DISABLE_CXX_TESTING)
   # Does it fail elegently when too many target images are specified?
   add_test( EMSegCL_EFTooManyImages
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
@@ -526,7 +530,7 @@ if(NOT DISABLE_CXX_TESTING)
   # Does it fail elegently when too few target images are specified?
   add_test( EMSegCL_EFTooFewImages
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
@@ -541,7 +545,7 @@ if(NOT DISABLE_CXX_TESTING)
   # Does the option --intermediateResultsDirectory work?
   add_test( EMSegCL_IntermediateResults
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --mrmlSceneFileName
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
@@ -562,7 +566,7 @@ if(NOT DISABLE_CXX_TESTING)
   # Does it fail elegently when a bogus result standard is specified?
   add_test( EMSegCL_EFBogusResultStandardImage
     ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --dontWriteResults --mrmlSceneFileName
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --resultStandardVolumeFileName
@@ -702,7 +706,7 @@ if(NOT DISABLE_CXX_TESTING)
       # Task test - scalartypes - registrationpackages
       midas_add_test( EMSegCL_Task_${registrationpackage}_MRIHumanBrain_${scalartype}
         ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-        --no-error-popup
+        ${EMS_SLICER_LAUNCH_ARGUMENTS}
         --verbose --mrmlSceneFileName
         ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
         --targetVolumeFileNames
@@ -739,7 +743,7 @@ if(NOT DISABLE_CXX_TESTING)
     add_test(
       EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
       --targetVolumeFileNames
@@ -766,7 +770,7 @@ if(NOT DISABLE_CXX_TESTING)
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
         EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
         )
@@ -777,7 +781,7 @@ if(NOT DISABLE_CXX_TESTING)
     add_test(
       EMSegCL_Task_HumanEye_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/Human-Eye.mrml
       --targetVolumeFileNames
@@ -802,7 +806,7 @@ if(NOT DISABLE_CXX_TESTING)
 #    if(EMSEG_RUN_COMPARE_TESTS)
 #      midas_add_test(
 #        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
-#        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+#        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
 #        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
 #                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
 #        )
@@ -817,7 +821,7 @@ if(NOT DISABLE_CXX_TESTING)
     add_test(
       EMSegCL_Task_HumanEye_LogMean_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Testing/TestData/Human-Eye_LogMeanError.mrml
       --targetVolumeFileNames
@@ -844,7 +848,7 @@ if(NOT DISABLE_CXX_TESTING)
 #    if(EMSEG_RUN_COMPARE_TESTS)
 #      midas_add_test(
 #        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
-#        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+#        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
 #        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
 #                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
 #        )
@@ -856,7 +860,7 @@ if(NOT DISABLE_CXX_TESTING)
     add_test(
       EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Exp.mrml
       --targetVolumeFileNames
@@ -879,7 +883,7 @@ if(NOT DISABLE_CXX_TESTING)
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
         EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}_CompareTest
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainExp_T1_aligned.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainExp_T1_aligned.nrrd.md5}
         )
@@ -890,7 +894,7 @@ if(NOT DISABLE_CXX_TESTING)
     # Task MRI-Human-Brain-Parcellation
     add_test( EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Parcellation.mrml
       --targetVolumeFileNames
@@ -917,7 +921,7 @@ if(NOT DISABLE_CXX_TESTING)
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
         EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}_CompareTest
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainParcellation_T1.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainParcellation_T1.nrrd.md5}
       )
@@ -927,7 +931,7 @@ if(NOT DISABLE_CXX_TESTING)
     # Task MRI-Human-Brain-Full-Parcellation 
     add_test( EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Full-Parcellation.mrml
       --targetVolumeFileNames
@@ -954,7 +958,7 @@ if(NOT DISABLE_CXX_TESTING)
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
         EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}_CompareTest
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainFullParcellation_T1.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainFullParcellation_T1.nrrd.md5}
         )
@@ -964,7 +968,7 @@ if(NOT DISABLE_CXX_TESTING)
     # Task Test-Atlas-Cluster
     add_test( EMSegCL_Task_TestAtlasCluster_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/Test-Atlas-Cluster.mrml
       --targetVolumeFileNames
@@ -987,7 +991,7 @@ if(NOT DISABLE_CXX_TESTING)
       # Task cine MRI
       add_test( EMSegCL_Task_cineMRI_${registrationpackage}_${size}
         ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-        --no-error-popup
+        ${EMS_SLICER_LAUNCH_ARGUMENTS}
         --verbose --mrmlSceneFileName
         ${EMSegment_SOURCE_DIR}/../KilisSandbox/Tasks/AC-cineMR-Ventricles.mrml
         --targetVolumeFileNames
@@ -1013,7 +1017,7 @@ if(NOT DISABLE_CXX_TESTING)
     add_test(
       EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/Non-Human-Primate.mrml
       --targetVolumeFileNames
@@ -1042,7 +1046,7 @@ if(NOT DISABLE_CXX_TESTING)
         NAME
         EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}_CompareTest
         COMMAND
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest --no-error-popup
+        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_NonHumanPrimate_T1.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_NonHumanPrimate_T1.nrrd.md5}
         )
@@ -1059,7 +1063,7 @@ if( EMSEG_RUN_LOCAL_TESTS )
   # Task test - CT Hand Bone
   midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject1
     COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --mrmlSceneFileName
     ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
     --targetVolumeFileNames
@@ -1077,7 +1081,7 @@ if( EMSEG_RUN_LOCAL_TESTS )
   # Task test - CT Hand Bone
   midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject2
     COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --mrmlSceneFileName
     ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
     --targetVolumeFileNames
@@ -1095,7 +1099,7 @@ if( EMSEG_RUN_LOCAL_TESTS )
   # Task test - CT Hand Bone
   midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject3
     COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --no-error-popup
+    ${EMS_SLICER_LAUNCH_ARGUMENTS}
     --verbose --mrmlSceneFileName
     ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
     --targetVolumeFileNames
@@ -1132,7 +1136,7 @@ if( EMSEG_RUN_LOCAL_TESTS )
     add_test(
       EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_compare
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --no-error-popup
+      ${EMS_SLICER_LAUNCH_ARGUMENTS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
       --targetVolumeFileNames

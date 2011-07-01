@@ -10,7 +10,7 @@
 #ifdef Slicer3_USE_KWWIDGETS
 
 // Slicer3 includes
-#include  "vtkSlicerApplication.h"
+#include "vtkSlicerApplication.h"
 #include "KWWidgets/vtkEMSegmentKWDynamicFrame.h"
 
   // Slicer3 python
@@ -36,7 +36,12 @@
   #include <QVariant>
   #include "vtkMRMLRemoteIOLogic.h"
 
+  // these types do not natively exist in Slicer4,
+  // so we define them as voids
   typedef void Tcl_Interp;
+  //BTX
+  typedef void vtkEMSegmentKWDynamicFrame;
+  //ETX
 #endif
 
 #include "vtkDataIOManagerLogic.h"
@@ -53,7 +58,7 @@ public:
   Tcl_Interp* Startup(int argc, char *argv[], ostream *err = 0);
   int SourceTclFile(const char *tclFile);
   const char* EvaluateTcl(const char* command);
-  const char* GetTclNameFromPointer(vtkObject *obj);
+
   void RegisterObjectWithTcl(vtkObject *obj, const char* name);
   const char* GetApplicationTclName();
 
@@ -74,11 +79,12 @@ public:
 
 //ETX
 
-  // the following interface is for the dynamic panel
-#ifdef Slicer3_USE_KWWIDGETS
-  vtkEMSegmentKWDynamicFrame* GetSimpleDynamicFrame();
-  vtkEMSegmentKWDynamicFrame* GetAdvancedDynamicFrame();
-#endif
+  const char* GetTclNameFromPointer(vtkObject *obj);
+
+
+  // distinguishes between simple and advanced mode for Slicer3 and Slicer4
+  vtkSlicerCommonInterface* GetSimpleDynamicFrame();
+  vtkSlicerCommonInterface* GetAdvancedDynamicFrame();
 
   void DefineCheckButton(const char *label, int initState, vtkIdType ID);
   int GetCheckButtonValue(vtkIdType ID);
@@ -113,6 +119,13 @@ private:
   //BTX
   std::string StringHolder;
   //ETX
+
+  // BTX
+  // returns the appropriate frame for Slicer3
+  vtkEMSegmentKWDynamicFrame* GetSlicer3DynamicFrame();
+  // ETX
+
+  bool simpleMode;
 
 #ifndef Slicer3_USE_KWWIDGETS
   vtkMRMLRemoteIOLogic *remoteIOLogic;

@@ -45,6 +45,8 @@ vtkSlicerCommonInterface::vtkSlicerCommonInterface()
 
   this->StringHolder = std::string("");
 
+  this->simpleMode = false;
+
 #ifndef Slicer3_USE_KWWIDGETS
 
   // Slicer3
@@ -207,7 +209,7 @@ const char* vtkSlicerCommonInterface::GetTclNameFromPointer(vtkObject *obj)
     py->addVTKObjectToPythonMain(pythonName.c_str(), obj);
 
     // register the python variable in Tcl
-    std::string registerCmd = "proc ::" + this->StringHolder + " {args} {::tpycl::methodCaller " + pythonName + " $args}";
+    std::string registerCmd = "proc ::" + this->StringHolder + " {args} {::tpycl::methodCaller " + this->StringHolder + " " + pythonName + " $args}";
     this->EvaluateTcl(registerCmd.c_str());
 
     return this->StringHolder.c_str();
@@ -520,7 +522,7 @@ const char* vtkSlicerCommonInterface::GetPluginsDirectory()
 
   // Slicer4
   QString slicerDir = qSlicerApplication::application()->slicerHome();
-  slicerDir += "/lib/Slicer3/Plugins/";
+  slicerDir += "/plugins/";
   return slicerDir.toLatin1();
 
 #endif
@@ -694,40 +696,30 @@ std::string vtkSlicerCommonInterface::randomStrGen(int length)
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-#ifdef Slicer3_USE_KWWIDGETS
-vtkEMSegmentKWDynamicFrame* vtkSlicerCommonInterface::GetSimpleDynamicFrame()
+vtkSlicerCommonInterface* vtkSlicerCommonInterface::GetSimpleDynamicFrame()
 {
-  // Slicer 3 only
 
-  vtkEMSegmentGUI* mod =
-      vtkEMSegmentGUI::SafeDownCast(vtkSlicerApplication::GetInstance()->GetModuleGUIByName("EMSegmenter"));
-  if (!mod)
-    {
-    vtkErrorMacro("Could not get the EMSegmenter GUI!")
-    return 0;
-    }
-
-  vtkEMSegmentKWDynamicFrame* dynFrame = 0;
-  // EMS Simple Mode
-  dynFrame = mod->GetInputChannelStep()->GetCheckListFrame();
-
-  if (!dynFrame)
-    {
-    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
-    return 0;
-    }
-
-  return dynFrame;
+  this->simpleMode = true;
+  return this;
 }
 
 //-----------------------------------------------------------------------------
-vtkEMSegmentKWDynamicFrame* vtkSlicerCommonInterface::GetAdvancedDynamicFrame()
+vtkSlicerCommonInterface* vtkSlicerCommonInterface::GetAdvancedDynamicFrame()
 {
-  // Slicer 3 only
 
-  vtkEMSegmentGUI* mod =
-      vtkEMSegmentGUI::SafeDownCast(vtkSlicerApplication::GetInstance()->GetModuleGUIByName("EMSegmenter"));
+  this->simpleMode = false;
+  return this;
+}
+
+//-----------------------------------------------------------------------------
+vtkEMSegmentKWDynamicFrame* vtkSlicerCommonInterface::GetSlicer3DynamicFrame()
+{
+
+#ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  vtkEMSegmentGUI* mod = vtkEMSegmentGUI::SafeDownCast(
+      vtkSlicerApplication::GetInstance()->GetModuleGUIByName("EMSegmenter"));
   if (!mod)
     {
     vtkErrorMacro("Could not get the EMSegmenter GUI!")
@@ -736,26 +728,61 @@ vtkEMSegmentKWDynamicFrame* vtkSlicerCommonInterface::GetAdvancedDynamicFrame()
 
   vtkEMSegmentKWDynamicFrame* dynFrame = 0;
   // EMS Advanced Mode
-  dynFrame = mod->GetPreProcessingStep()->GetCheckListFrame();
-
-  if (!dynFrame)
+  if (this->simpleMode)
     {
-    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
-    return 0;
+    dynFrame = mod->GetInputChannelStep()->GetCheckListFrame();
+    }
+  else
+    {
+    dynFrame = mod->GetPreProcessingStep()->GetCheckListFrame();
     }
 
   return dynFrame;
-}
+
 #endif
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+
+  return 0;
+
+}
 
 //-----------------------------------------------------------------------------
 void vtkSlicerCommonInterface::DefineCheckButton(const char *label, int initState, vtkIdType ID)
 {
 
-
 #ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->DefineCheckButton(label, initState, ID);
+
+#endif
+
+#ifdef Slicer_USE_PYTHONQT
+
+  // Slicer4
+  std::stringstream cmd;
+  if (this->simpleMode)
+    {
+    cmd << "slicer.modules.emsegmentSimpleDynamicFrame.DefineCheckButton('";
+    }
+  else
+    {
+    cmd << "slicer.modules.emsegmentAdvancedDynamicFrame.DefineCheckButton('";
+    }
+  cmd << label << "',";
+  cmd << initState;
+  cmd << ",";
+  cmd << ID;
+  cmd << ")\n";
+
+  this->EvaluatePython(cmd.str().c_str());
 
 #endif
 
@@ -766,6 +793,17 @@ int vtkSlicerCommonInterface::GetCheckButtonValue(vtkIdType ID)
 {
 
 #ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return -1;
+    }
+
+  return dynFrame->GetCheckButtonValue(ID);
 
 #endif
 
@@ -779,6 +817,48 @@ void vtkSlicerCommonInterface::DefineTextLabel(const char *label, vtkIdType ID)
 
 #ifdef Slicer3_USE_KWWIDGETS
 
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->DefineTextLabel(label, ID);
+
+#endif
+
+#ifdef Slicer_USE_PYTHONQT
+
+  // Slicer4
+  std::string str( label );
+  std::string searchString( "\n" );
+  std::string replaceString( "<br>" );
+
+  std::string::size_type pos = 0;
+  while ( (pos = str.find(searchString, pos)) != std::string::npos )
+    {
+    str.replace( pos, searchString.size(), replaceString );
+    pos++;
+    }
+
+  std::stringstream cmd;
+  if (this->simpleMode)
+    {
+    cmd << "slicer.modules.emsegmentSimpleDynamicFrame.DefineTextLabel('";
+    }
+  else
+    {
+    cmd << "slicer.modules.emsegmentAdvancedDynamicFrame.DefineTextLabel('";
+    }
+  cmd << str << "',";
+  cmd << ID;
+  cmd << ")\n";
+
+  this->EvaluatePython(cmd.str().c_str());
+
 #endif
 
 }
@@ -788,6 +868,18 @@ void vtkSlicerCommonInterface::DefineVolumeMenuButton(const char *label, vtkIdTy
 {
 
 #ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->DefineVolumeMenuButton(label, initVolID, buttonID);
+
 #endif
 
 }
@@ -797,6 +889,17 @@ vtkIdType vtkSlicerCommonInterface::GetVolumeMenuButtonValue(vtkIdType ID)
 {
 
 #ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return 0;
+    }
+
+  return dynFrame->GetVolumeMenuButtonValue(ID);
 
 #endif
 
@@ -810,6 +913,17 @@ void vtkSlicerCommonInterface::VolumeMenuButtonCallback(vtkIdType buttonID, vtkI
 
 #ifdef Slicer3_USE_KWWIDGETS
 
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->VolumeMenuButtonCallback(buttonID, volID);
+
 #endif
 
 }
@@ -819,6 +933,17 @@ void vtkSlicerCommonInterface::DefineTextEntry(const char *label, const char *in
 {
 
 #ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->DefineTextEntry(label, initText, entryID, widgetWidth);
 
 #endif
 
@@ -830,6 +955,17 @@ void vtkSlicerCommonInterface::DefineTextEntry(const char *label, const char *in
 
 #ifdef Slicer3_USE_KWWIDGETS
 
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->DefineTextEntry(label, initText, entryID);
+
 #endif
 
 }
@@ -839,6 +975,17 @@ const char* vtkSlicerCommonInterface::GetTextEntryValue(vtkIdType ID)
 {
 
 #ifdef Slicer3_USE_KWWIDGETS
+
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return 0;
+    }
+
+  return dynFrame->GetTextEntryValue(ID);
 
 #endif
 
@@ -852,6 +999,17 @@ void vtkSlicerCommonInterface::SetButtonsFromMRML()
 
 #ifdef Slicer3_USE_KWWIDGETS
 
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->SetButtonsFromMRML();
+
 #endif
 
 }
@@ -862,8 +1020,18 @@ void vtkSlicerCommonInterface::PopUpWarningWindow(const char * msg)
 
 #ifdef Slicer3_USE_KWWIDGETS
 
-#endif
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
 
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->PopUpWarningWindow(msg);
+
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -871,6 +1039,16 @@ void vtkSlicerCommonInterface::SaveSettingToMRML()
 {
 #ifdef Slicer3_USE_KWWIDGETS
 
+  // Slicer3
+  vtkEMSegmentKWDynamicFrame* dynFrame = this->GetSlicer3DynamicFrame();
+
+  if (!dynFrame)
+    {
+    vtkErrorMacro("Could not get the EMSegmenter Dynamic Frame!")
+    return;
+    }
+
+  dynFrame->SaveSettingToMRML();
 
 #endif
 }

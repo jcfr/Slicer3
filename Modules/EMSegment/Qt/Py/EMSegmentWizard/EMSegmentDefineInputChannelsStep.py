@@ -1,8 +1,9 @@
-from __main__ import qt, ctk
+from __main__ import qt, ctk, tcl
 import PythonQt
 
 from EMSegmentStep import *
 from Helper import *
+from EMSegmentDynamicFrame import *
 
 class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
 
@@ -13,6 +14,27 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
 
     self.__parent = super( EMSegmentDefineInputChannelsStep, self )
 
+    self.__stepid = stepid
+    self.__dynamicFrame = None
+
+  def isSimpleMode( self ):
+    '''
+    '''
+    if self.__stepid == ( str( Helper.GetNthStepId( 2 ) ) + str( 'Simple' ) ):
+      # we are in simple mode
+      return True
+    else:
+      return False
+
+  def dynamicFrame( self ):
+    '''
+    '''
+    if not self.__dynamicFrame:
+
+      Helper.Debug( "No dynamic frame yet, creating one.." )
+      self.__dynamicFrame = EMSegmentDynamicFrame()
+
+    return self.__dynamicFrame
 
   def createUserInterface( self ):
     '''
@@ -43,6 +65,25 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
     input2inputChannelRegistrationLayout.addRow( 'Align input scans:', self.__alignInputScansCheckBox )
     self.__alignInputScansCheckBox.connect( "stateChanged(int)", self.onAlignInputScansChanged )
 
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
+
+    if self.isSimpleMode():
+      #
+      # dynamic frame
+      #
+      dynamicFrame = qt.QGroupBox()
+      dynamicFrame.setTitle( 'Check List' )
+      self.__layout.addWidget( dynamicFrame )
+      dynamicFrameLayout = qt.QVBoxLayout( dynamicFrame )
+
+      # .. now pass the layout to the dynamicFrame
+      self.dynamicFrame().setLayout( dynamicFrameLayout )
+      #
+      # end of dynamic frame
+      #
+
+
   def onAlignInputScansChanged( self ):
     '''
     Gets called whenever the 'Align input scans' checkbox is toggled
@@ -62,6 +103,17 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
 
     if self.__inputChannelList.inputChannelCount() == 0:
       self.__inputChannelList.addInputChannel()
+
+    if self.isSimpleMode():
+      self.logic().SourceTaskFiles()
+
+      # clear the dynamic panel
+      self.dynamicFrame().clearElements()
+
+      logicTclName = self.logic().GetSlicerCommonInterface().GetTclNameFromPointer( self.logic() )
+
+      tcl( '::EMSegmenterSimpleTcl::ShowCheckList ' + str( logicTclName ) )
+
 
   def validate( self, desiredBranchId ):
     '''

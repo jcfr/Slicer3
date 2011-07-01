@@ -21,7 +21,7 @@ int main(int argc, char** argv)
   vtkSlicerCommonInterface *slicerCommon = vtkSlicerCommonInterface::New();
 
   // interp has to be set to initialize vtkSlicer
-  Tcl_Interp *interp = CreateTclInterp(argc,argv,slicerCommon);
+  CreateTclInterp(argc,argv,slicerCommon);
 
   vtkSlicerApplicationLogic* appLogic = InitializeApplication(slicerCommon,argc,argv);
   if (!appLogic)

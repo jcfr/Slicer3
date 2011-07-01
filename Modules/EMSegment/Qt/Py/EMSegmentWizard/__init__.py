@@ -1,4 +1,5 @@
 from Helper import Helper
+from EMSegmentDynamicFrame import *
 from EMSegmentStep import *
 from EMSegmentDummyStep import *
 from EMSegmentSelectTaskStep import *

@@ -1,6 +1,7 @@
 SET(EMSegmentWizard_PYTHON_SCRIPTS
   __init__.py
   Helper.py
+  EMSegmentDynamicFrame.py
   EMSegmentStep.py
   EMSegmentSelectTaskStep.py                        # step 1
   EMSegmentDefineInputChannelsStep.py               # step 2
