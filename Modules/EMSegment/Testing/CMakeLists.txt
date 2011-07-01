@@ -204,8 +204,8 @@ if(NOT DISABLE_CXX_TESTING)
   else(NOT EM_Slicer4_FOUND)
   
     # Slicer4
-  
-    set(Slicer3_EXE ${Slicer_BINARY_DIR}/Slicer)
+    set(Slicer3_BINARY_DIR ${Slicer_BINARY_DIR})
+    set(Slicer3_EXE ${Slicer_BINARY_DIR}/Slicer --launcher-no-splash)
     set(WRAPPED_TEST_EXE_PREFIX --launch ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
     set(WRAPPED_EXE_PREFIX --launch ${Slicer_BINARY_DIR}/${Slicer_PLUGINS_BIN_DIR})
     if(WIN32)

@@ -36,7 +36,11 @@ int main(int argc, char** argv)
   // create an instance of vtkEMSegmentLogic and connect it with the
   // MRML scene
   vtkEMSegmentLogic* emLogic = vtkEMSegmentLogic::New();
+  emLogic->SetModuleName("EMSegment");
   emLogic->SetAndObserveMRMLScene(mrmlScene);
+  emLogic->SetMRMLScene(mrmlScene);
+  emLogic->InitializeEventListeners();
+
   emLogic->RegisterMRMLNodesWithScene();
 
   try 

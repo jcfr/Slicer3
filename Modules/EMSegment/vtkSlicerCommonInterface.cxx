@@ -17,6 +17,7 @@
 
 // Slicer4
 #include <QDebug>
+#include <ctkErrorLogModel.h>
 
 // PythonQT includes
 #include <PythonQt.h>
@@ -85,6 +86,9 @@ Tcl_Interp* vtkSlicerCommonInterface::Startup(int argc, char *argv[], ostream *e
 
   bool exitWhenDone;
   app->parseArguments(exitWhenDone);
+
+  // we don't need this here!
+  app->errorLogModel()->setAllMsgHandlerEnabled(false);
 
   //app->exec();
 
@@ -157,18 +161,19 @@ const char* vtkSlicerCommonInterface::EvaluateTcl(const char* command)
     {
     qSlicerPythonManager *py = qSlicerApplication::application()->pythonManager();
 
-    QString import = QString("from __main__ import tcl\n");
-    QString tclCall = import + QString("tcl('%1')\n");
+    QString import = QString("from __main__ import tcl");
 
-    QVariant returnValue = py->executeString(tclCall.arg(command));
+    py->executeString(import);
 
-    //cout << "RETURNVALUE:" << returnValue.toString().toUtf8() << endl;
+    QString tclCall = QString("__rv = tcl('%1')");
+
+    py->executeString(tclCall.arg(command));
+
+    QVariant returnValue = py->getVariable("__rv");
 
     // convert returnValue to const char*
     QByteArray byteArray = returnValue.toString().toUtf8();
     const char* cString = byteArray.constData();
-
-    cout << "RETURNVALUE:" << returnValue.toFloat() << endl;
 
     return cString;
     }

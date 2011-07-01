@@ -155,7 +155,9 @@ int main(int argc, char** argv)
 
   vtkMRMLScene* mrmlScene = vtkMRMLScene::New();
   vtkMRMLScene::SetActiveScene(mrmlScene);
-  appLogic->SetAndObserveMRMLScene(mrmlScene);
+
+  // We don't need to observe the scene in the applogic
+  //appLogic->SetAndObserveMRMLScene(mrmlScene);
 
   vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New ( );
   colorLogic->SetMRMLScene(mrmlScene);
@@ -182,12 +184,6 @@ int main(int argc, char** argv)
 
   EMSLogic->RegisterMRMLNodesWithScene();
   std::string EMSLogicTcl = vtksys::SystemTools::DuplicateString(slicerCommon->GetTclNameFromPointer(EMSLogic));
-
-  vtkIntArray *emsEvents                 = vtkIntArray::New();
-  emsEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-  emsEvents->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-  EMSLogic->SetAndObserveMRMLSceneEvents(mrmlScene, emsEvents);
-  emsEvents->Delete();
 
   // For the EMSegment logic, getting and setting of parameters in the
   // MRML scene is delegated to the EMSegment MRML manager.  Get a

@@ -133,13 +133,12 @@ int main(int vtkNotUsed(argc), char** argv)
   // create an instance of vtkEMSegmentLogic and connect it with the
   // MRML scene
   vtkEMSegmentLogic* emLogic = vtkEMSegmentLogic::New();
+  emLogic->SetModuleName("EMSegment");
   emLogic->SetAndObserveMRMLScene(mrmlScene);
+  emLogic->SetMRMLScene(mrmlScene);
+  emLogic->InitializeEventListeners();
+
   emLogic->RegisterMRMLNodesWithScene();
-  vtkIntArray *emsEvents                 = vtkIntArray::New();
-  emsEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-  emsEvents->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-  emLogic->SetAndObserveMRMLSceneEvents(mrmlScene, emsEvents);
-  emsEvents->Delete();
 
   try 
     {

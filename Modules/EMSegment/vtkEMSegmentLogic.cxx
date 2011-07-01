@@ -2928,11 +2928,9 @@ void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkIdType nodeID)
       { // own scope starts
 
       std::ostringstream os;
-      //os << "expr $::EMSegment(GaussCurveCalc,Mean,";
-      //os << r;
-      //os << ")";
-
-      os << "set a 0.3";
+      os << "expr $::EMSegment(GaussCurveCalc,Mean,";
+      os << r;
+      os << ")";
 
       double value = atof(this->GetSlicerCommonInterface()->EvaluateTcl(
           os.str().c_str()));
