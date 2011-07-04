@@ -362,6 +362,10 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
         eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake"
 
+#        if { ![file exists CMake] } {
+#            eval "runcmd $::GIT clone $::CMake_GIT_REPO CMake"
+#        }
+
         if {$::GENLIB(buildit)} {
           cd $::CMAKE_PATH
           if { $isDarwin } {
@@ -374,6 +378,11 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
             close $fp
             runcmd $Slicer3_LIB/CMake/configure --init=initialCache.cmake
           } else {
+#            cd $Slicer3_LIB/CMake
+#            eval "runcmd $::GIT checkout $::CMake_GIT_BRANCH"
+#            eval "runcmd $::GIT pull"
+#            eval "runcmd $::GIT checkout $::CMake_GIT_TAG"
+#            cd $::CMAKE_PATH
             runcmd $Slicer3_LIB/CMake/configure
           }
 

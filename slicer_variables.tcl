@@ -162,6 +162,9 @@ set ::ITK_GIT_TAG v3.20.0
 set ::VTK_GIT_REPO git://vtk.org/VTK.git   
 set ::VTK_GIT_BRANCH release            
 set ::VTK_GIT_TAG v5.6.1     
+set ::CMake_GIT_REPO git://cmake.org/cmake.git
+set ::CMake_GIT_BRANCH release
+set ::CMake_GIT_TAG v2.8.4
 
 # set TCL_VERSION to "tcl" to get 8.4, otherwise use tcl85 to get 8.5
 # set 8.5 for Solaris explicitly, because 8.4 complains 
