@@ -97,7 +97,9 @@ itcl::body EffectSWidget::constructor {sliceGUI} {
   $this createCursor
 
   if { [info exists ::slicer3::FiducialsGUI] } {
-    $::slicer3::FiducialsGUI ModifyAllLock 1
+    # TODO: do not call this because it causes many extra observers
+    # to be added in the scene and impacts performance
+    # $::slicer3::FiducialsGUI ModifyAllLock 1
   }
 
   set _startPosition "0 0 0"
@@ -137,7 +139,9 @@ itcl::body EffectSWidget::destructor {} {
   $this tearDownOptions
 
   if { [info exists ::slicer3::FiducialsGUI] } {
-    $::slicer3::FiducialsGUI ModifyAllLock 0
+    # TODO: do not call this because it causes many extra observers
+    # to be added in the scene and impacts performance
+    # $::slicer3::FiducialsGUI ModifyAllLock 0
   }
 
 
