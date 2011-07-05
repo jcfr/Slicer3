@@ -12,7 +12,8 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 if(NOT EM_Slicer4_FOUND)
 
-  # we are not in the Slicer4 Source Dir, let's check if we are in Slicer3 Source Dir
+  # Slicer3
+
   if(NOT Slicer3_SOURCE_DIR)
     # we are not even in the Slicer3 Source Dir, we have to find Slicer3
     find_package(Slicer3 REQUIRED)
@@ -30,10 +31,7 @@ if(NOT EM_Slicer4_FOUND)
 
 else(NOT EM_Slicer4_FOUND)
 
-  IF(NOT Slicer_SOURCE_DIR)
-    FIND_PACKAGE(Slicer REQUIRED)
-    INCLUDE(${Slicer_USE_FILE})
-  ENDIF(NOT Slicer_SOURCE_DIR)
+  # Slicer4
 
   set(COMMANDLINE_LINK_LIBRARIES
     vtkCommon
