@@ -6,14 +6,23 @@ IF(COMMAND CMAKE_POLICY)
 ENDIF(COMMAND CMAKE_POLICY)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
-#SET(EM_Slicer4_FOUND ON)
+# automatically detect if we build for Slicer3 or Slicer4
+if(Slicer3_SOURCE_DIR)
+  # this is Slicer3
+  SET(EM_Slicer4_FOUND OFF)
+  MESSAGE(STATUS "Configuring EMSegment for Slicer3..")
+else(Slicer3_SOURCE_DIR)
+  # this is Slicer4
+  SET(EM_Slicer4_FOUND ON)
+  MESSAGE(STATUS "Configuring EMSegment for Slicer4..")
+endif(Slicer3_SOURCE_DIR)
 
 # --------------------------------------------------------------------------
 # Find Slicer3 or Slicer4
 
 if(NOT EM_Slicer4_FOUND)
 
-  # we are not in the Slicer4 Source Dir, let's check if we are in Slicer3 Source Dir
+  # Slicer3
   if(NOT Slicer3_SOURCE_DIR)
     # we are not even in the Slicer3 Source Dir, we have to find Slicer3
     find_package(Slicer3 REQUIRED)
@@ -27,6 +36,7 @@ if(NOT EM_Slicer4_FOUND)
 
 else(NOT EM_Slicer4_FOUND)
   
+  # Slicer4
   #-----------------------------------------------------------------------------
   cmake_minimum_required(VERSION 2.8.2)
   #-----------------------------------------------------------------------------
@@ -39,8 +49,28 @@ else(NOT EM_Slicer4_FOUND)
 
 
   IF(NOT Slicer_SOURCE_DIR)
+  
+    # extension configuration!
+    set(EXTENSION_NAME EMSegment)
+  
+    set(EXTENSION_HOMEPAGE "http://www.slicer.org/slicerWiki/index.php/Slicer4:Developers:Projects:QtSlicer/Tutorials/ExtensionWriting")
+    set(EXTENSION_CATEGORY "Segmentation")
+    set(EXTENSION_STATUS "Beta")
+    set(EXTENSION_DESCRIPTION "This is an example of Qt loadable module built as an extension")
+    set(EXTENSION_DEPENDS CLIExtensionTemplate)  
+  
     FIND_PACKAGE(Slicer REQUIRED)
+    
+    set(ADDITIONAL_C_FLAGS "" CACHE STRING "Additional ${EXTENSION_NAME} C Flags")
+    set(ADDITIONAL_CXX_FLAGS "" CACHE STRING "Additional ${EXTENSION_NAME} CXX Flags")    
+    
     INCLUDE(${Slicer_USE_FILE})
+    
+    set(EXTENSION_LICENSE_FILE ${Slicer_LICENSE_FILE})
+    set(EXTENSION_README_FILE ${Slicer_README_FILE})
+  
+    include(SlicerEnableExtensionTesting)    
+    
   ENDIF(NOT Slicer_SOURCE_DIR)
 
   SET(EM_SHARE_DIR ${Slicer_QTLOADABLEMODULES_SHARE_DIR})
@@ -240,6 +270,23 @@ endif(EM_Slicer3_FOUND)
 
 if(EM_Slicer4_FOUND)
   ADD_SUBDIRECTORY(Qt)
+  
+  if(NOT Slicer_SOURCE_DIR)
+    include(SlicerFunctionGenerateExtensionDescription)
+    slicerFunctionGenerateExtensionDescription(
+    EXTENSION_NAME ${EXTENSION_NAME}
+    EXTENSION_CATEGORY ${EXTENSION_CATEGORY}
+    EXTENSION_STATUS ${EXTENSION_STATUS}
+    EXTENSION_HOMEPAGE ${EXTENSION_HOMEPAGE}
+    EXTENSION_DESCRIPTION ${EXTENSION_DESCRIPTION}
+    EXTENSION_DEPENDS ${EXTENSION_DEPENDS}
+    DESTINATION_DIR ${CMAKE_CURRENT_BINARY_DIR}
+    SLICER_WC_REVISION ${Slicer_WC_REVISION}
+    SLICER_WC_ROOT ${Slicer_WC_ROOT}
+    )
+   include(${Slicer_EXTENSION_CPACK})
+  endif()  
+  
 endif(EM_Slicer4_FOUND)
 
 
