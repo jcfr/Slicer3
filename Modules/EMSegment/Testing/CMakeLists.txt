@@ -54,7 +54,7 @@ endif(NOT EM_Slicer4_FOUND)
 include(MIDAS)
 if (NOT MIDAS_REST_URL)
   set(MIDAS_REST_URL "http://midas.kitware.com/api/rest" CACHE STRING "The MIDAS server where testing data resides")
-endif (MIDAS_REST_URL)
+endif (NOT MIDAS_REST_URL)
 set(MIDAS_KEY_DIR "${EMSegment_SOURCE_DIR}/Testing/TestData/MIDAS_Keys")
 #### MIDAS
 
