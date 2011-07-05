@@ -32,7 +32,8 @@ if(NOT EM_Slicer4_FOUND)
 else(NOT EM_Slicer4_FOUND)
 
   # Slicer4
-
+  find_package(SlicerExecutionModel REQUIRED GenerateCLP)
+  
   set(COMMANDLINE_LINK_LIBRARIES
     vtkCommon
     vtkSlicerAtlasCreatorModuleLogic
