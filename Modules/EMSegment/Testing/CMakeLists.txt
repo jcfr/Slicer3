@@ -52,7 +52,9 @@ endif(NOT EM_Slicer4_FOUND)
 #### MIDAS
 # http://www.kitware.com/midaswiki/index.php/MIDAS%2BCTest
 include(MIDAS)
-SETIFEMPTY(MIDAS_REST_URL "http://midas.kitware.com/api/rest" CACHE STRING "The MIDAS server where testing data resides")
+if (NOT MIDAS_REST_URL)
+  set(MIDAS_REST_URL "http://midas.kitware.com/api/rest" CACHE STRING "The MIDAS server where testing data resides")
+endif (MIDAS_REST_URL)
 set(MIDAS_KEY_DIR "${EMSegment_SOURCE_DIR}/Testing/TestData/MIDAS_Keys")
 #### MIDAS
 

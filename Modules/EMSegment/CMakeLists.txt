@@ -1,5 +1,3 @@
-project(EMSegment)
-
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
@@ -9,6 +7,8 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # automatically detect if we build for Slicer3 or Slicer4
 if(Slicer3_SOURCE_DIR)
   # this is Slicer3
+  project(EMSegment)
+  
   SET(EM_Slicer4_FOUND OFF)
   MESSAGE(STATUS "Configuring EMSegment for Slicer3..")
 else(Slicer3_SOURCE_DIR)
@@ -71,6 +71,8 @@ else(NOT EM_Slicer4_FOUND)
   
     include(SlicerEnableExtensionTesting)    
     
+  ELSE(NOT Slicer_SOURCE_DIR)
+    project(EMSegment) # we only define the project when inside the Slicer source tree
   ENDIF(NOT Slicer_SOURCE_DIR)
 
   SET(EM_SHARE_DIR ${Slicer_QTLOADABLEMODULES_SHARE_DIR})
