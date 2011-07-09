@@ -275,6 +275,7 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable preferredRegistrationPackage
         variable selectedRegistrationPackage
         variable CMTKFOLDER
+        variable PLASTIMATCHFOLDER
 
         if {$initLOGIC == ""} {
             PrintError "ERROR: Logic not defined!"
@@ -374,6 +375,9 @@ namespace eval EMSegmenterPreProcessingTcl {
         } elseif { [$mrmlManager GetRegistrationPackageType] == [$mrmlManager GetPackageTypeFromString BRAINS] } {
             set preferredRegistrationPackage BRAINS
             $LOGIC PrintText "TCL: User selected BRAINS"
+        } elseif { [$mrmlManager GetRegistrationPackageType] == [$mrmlManager GetPackageTypeFromString PLASTIMATCH] } {
+            set preferredRegistrationPackage PLASTIMATCH
+            $LOGIC PrintText "TCL: User selected PLASTIMATCH"
         } else {
             PrintError "InitVariables: RegistrationPackage [$mrmlManager GetRegistrationPackageType] not defined"
             return 1
@@ -393,6 +397,16 @@ namespace eval EMSegmenterPreProcessingTcl {
             }
             "BRAINS" {
                 set selectedRegistrationPackage "BRAINS"
+            }
+            "PLASTIMATCH" {
+                set PLASTIMATCHFOLDER [Get_PLASTIMATCH_Installation_Path]
+                if { $PLASTIMATCHFOLDER != "" } {
+                    $LOGIC PrintText "TCL: Found PLASTIMATCH in $PLASTIMATCHFOLDER"
+                    set selectedRegistrationPackage "PLASTIMATCH"
+                } else {
+                    $LOGIC PrintText "TCL: WARNING: Couldn't find PLASTIMATCH, switch back to BRAINSTools"
+                    set selectedRegistrationPackage "BRAINS"
+                }
             }
             default {
                 PrintError "registration package not known"
@@ -1472,6 +1486,70 @@ namespace eval EMSegmenterPreProcessingTcl {
         return 0
     }
 
+    # ----------------------------------------------------------------------------
+    proc PLASTIMATCHResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformFileName interpolationType backgroundLevel } {
+        variable SCENE
+        variable LOGIC
+        variable PLASTIMATCHFOLDER
+
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == Resample Image CLI : PLASTIMATCHResampleCLI "
+        $LOGIC PrintText "TCL: =========================================="
+
+        set CMD "$PLASTIMATCHFOLDER/plastimatch_slicer_xformwarp"
+
+
+        set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
+        if { $outVolumeFileName == "" } { return 1 }
+
+        set inputVolumeFileName [WriteDataToTemporaryDir $inputVolumeNode Volume]
+        if { $inputVolumeFileName == "" } { return 1 }
+
+        set referenceVolumeFileName [WriteDataToTemporaryDir $referenceVolumeNode Volume]
+        if { $referenceVolumeFileName == "" } { return 1 }
+
+
+        set CMD "$CMD --pad-out $backgroundLevel"
+        set CMD "$CMD --outfile \"$outVolumeFileName\""
+        set CMD "$CMD --floating \"$inputVolumeFileName\"  --interpolation"
+
+        # Naming convention is based on BRAINSResample
+        switch -exact  "$interpolationType" {
+            "NearestNeighbor"  { set CMD "$CMD nn" }
+            "Linear"           { set CMD "$CMD linear" }
+            "BSpline"          { set CMD "$CMD cubic" }
+            "WindowedSinc"     { set CMD "$CMD sinc-cosine" }
+            "PartialVolume"    { set CMD "$CMD pv" }
+            "SincHamming"      { set CMD "$CMD sinc-hamming" }
+            default {
+                PrintError "PLASTIMATCHResampleCLI: interpolation of type $interpolationType is unknown"
+                return 1
+            }
+        }
+
+#        set CMD "$CMD [PLASTIMATCHGetPixelTypeFromVolumeNode $referenceVolumeNode]"
+
+        # - no attributes after this line that start with the flag ---
+        set CMD "$CMD \"$referenceVolumeFileName\""
+        set CMD "$CMD \"$transformDirName\""
+
+        $LOGIC PrintText "TCL: Executing $CMD"
+        catch { eval exec $CMD } errmsg
+        $LOGIC PrintText "TCL: $errmsg"
+
+
+        # Write results back to scene
+        # This does not work $::slicer3::ApplicationLogic RequestReadData [$outVolumeNode GetID] $outVolumeFileName 0 1
+        ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume
+
+        # clean up
+        file delete -force $outVolumeFileName
+        file delete -force $inputVolumeFileName
+        file delete -force $referenceVolumeFileName
+
+        return 0
+    }
+
 
     proc WaitForDataToBeRead { } {
         variable LOGIC
@@ -1539,6 +1617,24 @@ namespace eval EMSegmenterPreProcessingTcl {
         }
 
         return $CMTKFOLDER
+    }
+
+    proc Get_PLASTIMATCH_Installation_Path { } {
+        variable LOGIC
+
+        set PLASTIMATCHFOLDER ""
+        # search for directories , sorted with the highest svn first
+        set dirs [lsort -decreasing [glob -directory [$::slicer3::Application GetExtensionsInstallPath] -type d * ] ]
+        foreach dir $dirs {
+            set filename $dir\/plastimatch-slicer/plastimatch_slicer_bspline
+            if { [file exists $filename] } {
+                set PLASTIMATCHFOLDER  $dir\/plastimatch-slicer
+                $LOGIC PrintText "TCL: Found PLASTIMATCH in $dir\/plastimatch-slicer"
+                break
+            }
+        }
+
+        return $PLASTIMATCHFOLDER
     }
 
     proc WriteDataToTemporaryDir { Node Type } {
@@ -1677,7 +1773,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         # Do not worry about fileExtensions=".mat" type="linear" reference="movingVolume"
         # these are set in vtkCommandLineModuleLogic.cxx automatically
-        if {  $deformableType != 0 } {
+        if { $deformableType != 0 } {
             set transformNode [vtkMRMLBSplineTransformNode New]
             $transformNode SetName "EMSegmentBSplineTransform"
             $SCENE AddNode $transformNode
@@ -1985,6 +2081,127 @@ namespace eval EMSegmenterPreProcessingTcl {
         puts "outTransformDirName: $outTransformDirName"
         return $outTransformDirName
     }
+
+
+
+    # ----------------------------------------------------------------------------
+    proc PLASTIMATCHRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel deformableType affineType} {
+        variable SCENE
+        variable LOGIC
+        variable PLASTIMATCHFOLDER
+        variable mrmlManager
+
+        # Do not get rid of debug mode variable - it is sometimes very helpful !
+        set PLASTIMATCH_DEBUG_MODE 1
+
+        if { $PLASTIMATCH_DEBUG_MODE } {
+            $LOGIC PrintText ""
+            $LOGIC PrintText "DEBUG: ==========PLASTIMATCHRegistration DEBUG MODE ============="
+            $LOGIC PrintText ""
+        }
+
+        $LOGIC PrintText "TCL: =========================================="
+        $LOGIC PrintText "TCL: == Image Alignment CommandLine: $deformableType "
+        $LOGIC PrintText "TCL: =========================================="
+
+        # check arguments
+
+        if { $fixedVolumeNode == "" || [$fixedVolumeNode GetImageData] == "" } {
+            PrintError "PLASTIMATCHRegistration: fixed volume node not correctly defined"
+            return ""
+        }
+
+        if { $movingVolumeNode == "" || [$movingVolumeNode GetImageData] == "" } {
+            PrintError "PLASTIMATCHRegistration: moving volume node not correctly defined"
+            return ""
+        }
+
+        if { $outVolumeNode == "" } {
+            PrintError "PLASTIMATCHRegistration: output volume node not correctly defined"
+            return ""
+        }
+
+        set fixedVolumeFileName [WriteDataToTemporaryDir $fixedVolumeNode Volume]
+        if { $fixedVolumeFileName == "" } {
+            # remove files
+            return ""
+        }
+        set RemoveFiles "$fixedVolumeFileName"
+
+
+        set movingVolumeFileName [WriteDataToTemporaryDir $movingVolumeNode Volume]
+        if { $movingVolumeFileName == "" } {
+            #remove files
+            return ""
+        }
+        set RemoveFiles "$RemoveFiles $movingVolumeFileName"
+
+
+        set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
+        if { $outVolumeFileName == "" } {
+            #remove files
+            return ""
+        }
+        set RemoveFiles "$RemoveFiles $outVolumeFileName"
+
+        ## PLASTIMATCH specific arguments
+
+        set CMD "$PLASTIMATCHFOLDER/plastimatch_slicer_bspline"
+        if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
+            set CMD "$CMD --stage1its 3"
+        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
+            set CMD "$CMD --stage1its 3"
+        } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
+            set CMD "$CMD --stage1its 3"
+        } else {
+            PrintError "PLASTIMATCHRegistration: Unknown deformableType: $deformableType"
+            return ""
+        }
+
+        # affine
+        set outLinearTransformFileName [CreateFileName "txt"]
+
+        set outTransformFileName $outLinearTransformFileName
+
+#        set CMD "$CMD --plmslc_output_bsp_f \"$outLinearTransformFileName\""
+        set CMD "$CMD --plmslc_output_vf \"$outLinearTransformFileName\""
+
+        set CMD "$CMD \"$fixedVolumeFileName\""
+        set CMD "$CMD \"$movingVolumeFileName\""
+        set CMD "$CMD \"$outVolumeFileName\""
+
+        $LOGIC PrintText "TCL: Executing $CMD"
+        catch { eval exec $CMD } errmsg
+        $LOGIC PrintText "TCL: $errmsg"
+
+        ## Read results back to scene
+        if { [ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume] == 0 } {
+            if { [file exists $outVolumeFileName] == 0 } {
+                set outTransformDirName ""
+                PrintError "PLASTIMATCHRegistration: out volume file doesn't exists"
+            }
+        }
+
+        if { [file exists $outTransformFileName] == 0 } {
+            set outTransformFileName ""
+            PrintError "PLASTIMATCHRegistration: out transform file doesn't exists"
+        }
+
+        foreach NAME $RemoveFiles {
+            #file delete -force $NAME
+        }
+
+        # Remove Transformation from image
+        $movingVolumeNode SetAndObserveTransformNodeID ""
+        $SCENE Edited
+
+        # return transformation directory name or ""
+        puts "outTransformFileName: $outTransformFileName"
+        return $outTransformFileName
+    }
+
+
+
 
     proc CheckAndCorrectClassCovarianceMatrix {parentNodeID } {
         variable mrmlManager
@@ -2499,6 +2716,21 @@ namespace eval EMSegmenterPreProcessingTcl {
                     return 1
                 }
             }
+            "PLASTIMATCH" {
+                set transformFileName [PLASTIMATCHRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
+                if { $transformFileName == "" } {
+                    PrintError "ResgisterAtlas: Transform node is null"
+                    return 1
+                }
+                set transformNodeType "PLASTIMATCHTransform"
+
+                $LOGIC PrintText "TCL: Resampling atlas template in PLASTIMATCHRegistration ..."
+                # transformNode is not needed, it's value is ""
+                if { [Resample $movingAtlasVolumeNode $fixedTargetVolumeNode $transformNode $transformFileName $transformNodeType Linear $backgroundLevel $outputAtlasVolumeNode] } {
+                    PrintError "RegisterAtlas: Could not resample(reformatx) atlas template volume"
+                    return 1
+                }
+            }
             "BRAINS" {
                 # return value is a affine or bspline transformation node
                 set BRAINStransformNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $affineType $deformableType]
@@ -2599,6 +2831,12 @@ namespace eval EMSegmenterPreProcessingTcl {
             "CMTKTransform" {
                 $LOGIC PrintText "TCL: with CMTKResampleCLI..."
                 if { [CMTKResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName $interpolationType $backgroundLevel] } {
+                    return 1
+                }
+            }
+            "PLASTIMATCHTransform" {
+                $LOGIC PrintText "TCL: with PLASTIMATCHResampleCLI..."
+                if { [PLASTIMATCHResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName $interpolationType $backgroundLevel] } {
                     return 1
                 }
             }

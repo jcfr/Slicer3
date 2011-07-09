@@ -133,6 +133,20 @@ vtkEMSegmentPreProcessingStep::Validate()
     }
   }
 
+  if ( mrmlManager->GetRegistrationPackageType() == mrmlManager->GetPackageTypeFromString("PLASTIMATCH") ) {
+    const char* path = this->Script("::EMSegmenterPreProcessingTcl::Get_PLASTIMATCH_Installation_Path");
+    if ( *path == '\0' ) {
+      if (!vtkKWMessageDialog::PopupYesNo(this->GetApplication(), NULL, "PLASTIMATCH is not installed",
+                                          "\nDo you want to proceed with BRAINSTools instead?",
+                                          vtkKWMessageDialog::WarningIcon | vtkKWMessageDialog::InvokeAtPointer))
+        {
+          wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+          wizard_workflow->ProcessInputs();
+          return;
+        }
+    }
+  }
+
   if (this->askQuestionsBeforeRunningPreprocessingFlag)
     {
       if (mrmlManager->GetWorkingDataNode()->GetAlignedTargetNodeIsValid() && mrmlManager->GetWorkingDataNode()->GetAlignedAtlasNodeIsValid())

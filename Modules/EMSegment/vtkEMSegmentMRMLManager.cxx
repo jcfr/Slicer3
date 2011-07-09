@@ -4627,6 +4627,12 @@ int  vtkEMSegmentMRMLManager::GetPackageTypeFromString(const char* type)
       return vtkEMSegmentMRMLManager::BRAINS;
     }
 
+  if (!strcmp(type,"PLASTIMATCH"))
+    {
+      return vtkEMSegmentMRMLManager::PLASTIMATCH;
+    }
+
+
   return -1;
 }
 

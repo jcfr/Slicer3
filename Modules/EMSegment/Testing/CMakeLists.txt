@@ -688,7 +688,7 @@ if(NOT DISABLE_CXX_TESTING)
 
 
   if (EMSEG_RUN_LOCAL_TESTS)
-    set (registrationpackages CMTK BRAINS)
+    set (registrationpackages CMTK BRAINS PLASTIMATCH)
     set (scalartypes float char double int short uchar uint ushort)
     set (sizes small very_small)
   else (EMSEG_RUN_LOCAL_TESTS)

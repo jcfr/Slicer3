@@ -278,6 +278,10 @@ int main(int argc, char** argv)
           {
             emMRMLManager->SetRegistrationPackageType(1); // BRAINS
           }
+        else if (registrationPackage == "PLASTIMATCH")
+          {
+            emMRMLManager->SetRegistrationPackageType(2); // PLASTIMATCH
+          }
         else
           {
             throw std::runtime_error("ERROR: registration package not known.");

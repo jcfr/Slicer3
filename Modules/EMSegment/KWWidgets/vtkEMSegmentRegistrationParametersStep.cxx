@@ -310,10 +310,16 @@ void vtkEMSegmentRegistrationParametersStep::ShowUserInterface()
               vtkEMSegmentMRMLManager::CMTK);
       this->RegistrationParametersPackageMenuButton->
         GetWidget()->GetMenu()->AddRadioButton("CMTK", this, buffer);
+
       sprintf(buffer, "RegistrationPackageCallback %d",
               vtkEMSegmentMRMLManager::BRAINS);
       this->RegistrationParametersPackageMenuButton->
         GetWidget()->GetMenu()->AddRadioButton("BRAINS", this, buffer);
+
+      sprintf(buffer, "RegistrationPackageCallback %d",
+              vtkEMSegmentMRMLManager::PLASTIMATCH);
+      this->RegistrationParametersPackageMenuButton->
+        GetWidget()->GetMenu()->AddRadioButton("PLASTIMATCH", this, buffer);
       }
 
 
@@ -324,20 +330,31 @@ void vtkEMSegmentRegistrationParametersStep::ShowUserInterface()
       {
       vtksys_stl::string value;
       int v = mrmlManager->GetRegistrationPackageType();
-      if (v == vtkEMSegmentMRMLManager::CMTK)
+      switch(v)
+      {
+      case vtkEMSegmentMRMLManager::CMTK:
         {
         value = "CMTK";
+        break;
         }
-      else if (v == vtkEMSegmentMRMLManager::BRAINS)
+      case vtkEMSegmentMRMLManager::BRAINS:
         {
         value = "BRAINS";
+        break;
         }
+      case vtkEMSegmentMRMLManager::PLASTIMATCH:
+        {
+        value = "PLASTIMATCH";
+        break;
+        }
+      default:
+        value = "BRAINS";
+      }
       this->RegistrationParametersPackageMenuButton->
         GetWidget()->SetValue(value.c_str());
       this->RegistrationParametersPackageMenuButton->
         SetEnabled(mrmlManager->HasGlobalParametersNode() ? enabled : 0);
       }
-
 
 
     {
@@ -359,8 +376,7 @@ void vtkEMSegmentRegistrationParametersStep::ShowUserInterface()
 void vtkEMSegmentRegistrationParametersStep::RegistrationAtlasImageCallback(
   vtkIdType volume_id)
 {
-
-  cout << "What RegistrationAtlasImageCallback " << endl; 
+  cout << "What RegistrationAtlasImageCallback " << endl;
   // The atlas image has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
