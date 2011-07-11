@@ -1316,6 +1316,14 @@ class AtlasCreatorLogic( object ):
         deformationFieldsOutputDir = outputDir + os.sep + 'deformationFields' + os.sep
         os.makedirs( deformationFieldsOutputDir )
 
+        # convert pathToTemplate to .hdr/.img
+        pluginsDir = slicer.Application.GetPluginsDir()
+        orientImagesCommand = pluginsDir + os.sep + "OrientImage -o RIP"
+        orientImagesCommand += " " + str( pathToTemplate ) + " " + str( tmpImagesOutputDir ) + 'template.hdr'
+        self.Helper().Execute( orientImagesCommand )
+
+        pathToTemplate = tmpImagesOutputDir + 'template.hdr'
+
         # loop through alignedImages and start dramms command
         for imageFilePath in alignedImages:
 
