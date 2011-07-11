@@ -1338,6 +1338,9 @@ class AtlasCreatorLogic( object ):
             dimensions = currentImageData.GetDimensions()
             sizeX = dimensions[0]
             sizeY = dimensions[1]
+            # .. convert orientation to RIP
+            plugin = Slicer.Plugin( "Orient Images" )
+            plugin.Execute( volNode, volNode, orientation='RIP' )
             self.Helper().SaveVolume( imageFilePathHdr, volNode )
             slicer.MRMLScene.RemoveNode( volNode )
 
@@ -1350,6 +1353,8 @@ class AtlasCreatorLogic( object ):
             # .. convert to .IMG
             self.Helper().info( "Converting segmentation: " + str( fileNameWithoutExtension ) + " to .hdr/.img .." )
             volNode = self.Helper().LoadVolume( segmentationFilePath )
+            plugin = Slicer.Plugin( "Orient Images" )
+            plugin.Execute( volNode, volNode, orientation='RIP' )
             self.Helper().SaveVolume( segmentationFilePathHdr, volNode )
             slicer.MRMLScene.RemoveNode( volNode )
 
