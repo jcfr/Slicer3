@@ -1367,7 +1367,7 @@ class AtlasCreatorLogic( object ):
             # we will create a string containing the command(s) which then get written to a script
             command = ""
 
-            command += drammsDir + "scripts" + os.sep + self.Helper().GetDRAMMSRegistrationCommand( pathToTemplate,
+            command += drammsDir + "script" + os.sep + self.Helper().GetDRAMMSRegistrationCommand( pathToTemplate,
                                                                   imageFilePathImg,
                                                                   outputAlignedImageFilePath,
                                                                   outputDeformationFieldFilePath )
