@@ -1303,7 +1303,7 @@ class AtlasCreatorLogic( object ):
         mapFilesToIDs = {}
 
         # create all output directories
-        outputDir += os.sep + 'dramms'
+        outputDir += os.sep + 'dramms' + os.sep
         os.makedirs( outputDir )
         tmpImagesOutputDir = outputDir + 'tmpImages' + os.sep
         os.makedirs( tmpImagesOutputDir )
