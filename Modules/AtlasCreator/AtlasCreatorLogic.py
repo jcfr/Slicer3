@@ -1331,19 +1331,18 @@ class AtlasCreatorLogic( object ):
             # get the existing image filepath (.IMG format)
             imageFilePathHdr = tmpImagesOutputDir + os.sep + fileNameWithoutExtension + '.hdr'
             imageFilePathImg = tmpImagesOutputDir + os.sep + fileNameWithoutExtension + '.img'
-            # .. convert to .IMG
-            self.Helper().info( "Converting image: " + str( fileNameWithoutExtension ) + " to .hdr/.img .." )
             volNode = self.Helper().LoadVolume( imageFilePath )
             # .. get the dimensions of the current image
             currentImageData = volNode.GetImageData()
             dimensions = currentImageData.GetDimensions()
             sizeX = dimensions[0]
             sizeY = dimensions[1]
-            # .. convert orientation to RIP
-            plugin = Slicer.Plugin( "Orient Images" )
-            plugin.Execute( volNode, volNode, orientation='RIP' )
-            self.Helper().SaveVolume( imageFilePathHdr, volNode )
             slicer.MRMLScene.RemoveNode( volNode )
+            # .. convert orientation to RIP
+            self.Helper().info( "Converting image: " + str( fileNameWithoutExtension ) + " to .hdr/.img .." )
+            pluginsDir = slicer.Application.GetPluginsDir()
+            orientImagesCommand = pluginsDir + os.sep + "OrientImage -o RIP"
+            orientImagesCommand += " " + str( imageFilePath ) + " " + str( imageFilePathHdr )
 
 
             # get the existing segmentation filepath (.IMG format)
@@ -1353,11 +1352,9 @@ class AtlasCreatorLogic( object ):
             segmentationFilePathImg = tmpSegmentationsOutputDir + os.sep + fileNameWithoutExtension + '.img'
             # .. convert to .IMG
             self.Helper().info( "Converting segmentation: " + str( fileNameWithoutExtension ) + " to .hdr/.img .." )
-            volNode = self.Helper().LoadVolume( segmentationFilePath )
-            plugin = Slicer.Plugin( "Orient Images" )
-            plugin.Execute( volNode, volNode, orientation='RIP' )
-            self.Helper().SaveVolume( segmentationFilePathHdr, volNode )
-            slicer.MRMLScene.RemoveNode( volNode )
+            pluginsDir = slicer.Application.GetPluginsDir()
+            orientImagesCommand = pluginsDir + os.sep + "OrientImage -o RIP"
+            orientImagesCommand += " " + str( segmentationFilePath ) + " " + str( segmentationFilePathHdr )
 
             # set the paths
             outputAlignedImageFilePath = alignedOutputDir + fileNameWithoutExtension + ".img"
