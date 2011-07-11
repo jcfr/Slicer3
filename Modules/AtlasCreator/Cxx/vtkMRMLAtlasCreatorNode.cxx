@@ -89,6 +89,8 @@ vtkMRMLAtlasCreatorNode::vtkMRMLAtlasCreatorNode()
   this->ExistingTemplate = 0;
   this->TransformsDirectory = 0;
 
+  this->UseDRAMMS = 0;
+
   this->DebugMode = 0;
   this->DryrunMode = 0;
 
@@ -272,6 +274,9 @@ void vtkMRMLAtlasCreatorNode::WriteXML(ostream& of, int nIndent)
     {
     of << " TransformsDirectory =\"" << this->TransformsDirectory << "\"";
     }
+
+
+  of << " UseDRAMMS =\"" << this->UseDRAMMS << "\"";
 
 
   of << " DebugMode =\"" << this->DebugMode << "\"";
@@ -505,6 +510,18 @@ void vtkMRMLAtlasCreatorNode::ReadXMLAttributes(const char** atts)
       }
 
 
+    if ( !strcmp(attName, "UseDRAMMS") )
+      {
+      std::stringstream ss;
+      ss << attValue;
+
+      int val;
+      ss >> val;
+
+      this->SetUseDRAMMS(val);
+      }
+
+
     if ( !strcmp(attName, "DebugMode") )
       {
       std::stringstream ss;
@@ -574,6 +591,8 @@ void vtkMRMLAtlasCreatorNode::Copy(vtkMRMLNode *anode)
   this->SetExistingTemplate( node->GetExistingTemplate());
   this->SetTransformsDirectory( node->GetTransformsDirectory());
 
+  this->SetUseDRAMMS( node->GetUseDRAMMS());
+
   this->SetDebugMode( node->GetDebugMode());
   this->SetDryrunMode( node->GetDryrunMode());
 
@@ -620,6 +639,8 @@ void vtkMRMLAtlasCreatorNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "ExistingTemplate: " << (this->GetExistingTemplate() ? this->GetExistingTemplate() : "(none)") << "\n";
   os << indent << "TransformsDirectory: " << (this->GetTransformsDirectory() ? this->GetTransformsDirectory() : "(none)") << "\n";
 
+  os << indent << "UseDRAMMS: " << this->GetUseDRAMMS() << "\n";
+
   os << indent << "DebugMode: " << this->GetDebugMode() << "\n";
   os << indent << "DryrunMode: " << this->GetDryrunMode() << "\n";
 
@@ -664,6 +685,8 @@ void vtkMRMLAtlasCreatorNode::InitializeByDefault()
   this->SkipRegistration = 0;
   this->SetExistingTemplate("");
   this->SetTransformsDirectory("");
+
+  this->UseDRAMMS = 0;
 
   this->DebugMode = 0;
   this->DryrunMode = 0;

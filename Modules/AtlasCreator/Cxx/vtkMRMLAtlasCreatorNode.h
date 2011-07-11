@@ -195,6 +195,11 @@ class VTK_ATLASCREATORCXXMODULE_EXPORT vtkMRMLAtlasCreatorNode : public vtkMRMLN
   vtkSetStringMacro (TransformsDirectory);
 
 
+  // Description: 1: Use DRAMMS on top of Registration and Resampling 0: Don't use DRAMMS
+  vtkGetMacro(UseDRAMMS,int);
+  vtkSetMacro(UseDRAMMS,int);
+
+
   // Description: 1: Use Debug Mode 0: Don't use Debug Mode
   vtkGetMacro(DebugMode,int);
   vtkSetMacro(DebugMode,int);
@@ -244,6 +249,8 @@ protected:
   int SkipRegistration;
   char *ExistingTemplate;
   char *TransformsDirectory;
+
+  int UseDRAMMS;
 
   int DebugMode;
   int DryrunMode;
