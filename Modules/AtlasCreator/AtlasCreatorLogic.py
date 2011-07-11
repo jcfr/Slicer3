@@ -1,3 +1,4 @@
+import Slicer
 from Slicer import slicer
 import os
 import glob
