@@ -1322,7 +1322,7 @@ class AtlasCreatorLogic( object ):
         orientImagesCommand += " " + str( pathToTemplate ) + " " + str( tmpImagesOutputDir ) + 'template.hdr'
         self.Helper().Execute( orientImagesCommand )
 
-        pathToTemplate = tmpImagesOutputDir + 'template.hdr'
+        pathToTemplate = tmpImagesOutputDir + 'template.img'
 
         # loop through alignedImages and start dramms command
         for imageFilePath in alignedImages:
