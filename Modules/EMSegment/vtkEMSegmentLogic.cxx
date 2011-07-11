@@ -3121,6 +3121,10 @@ void vtkEMSegmentLogic::RunAtlasCreator(vtkMRMLAtlasCreatorNode *node)
   convert << node->GetTestMode();
   pythonCommand += "node.SetTestMode(" + convert.str() + ")\n";
 
+  convert.str("");
+  convert << node->GetUseDRAMMS();
+  pythonCommand += "node.SetUseDRAMMS(" + convert.str() + ")\n";
+
   pythonCommand += "logic.Start(node)\n";
   pythonCommand += "node = None\n";
   pythonCommand += "logic = None\n";
