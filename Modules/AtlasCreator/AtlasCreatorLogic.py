@@ -1343,6 +1343,7 @@ class AtlasCreatorLogic( object ):
             pluginsDir = slicer.Application.GetPluginsDir()
             orientImagesCommand = pluginsDir + os.sep + "OrientImage -o RIP"
             orientImagesCommand += " " + str( imageFilePath ) + " " + str( imageFilePathHdr )
+            self.Helper().Execute( orientImagesCommand )
 
 
             # get the existing segmentation filepath (.IMG format)
@@ -1355,6 +1356,7 @@ class AtlasCreatorLogic( object ):
             pluginsDir = slicer.Application.GetPluginsDir()
             orientImagesCommand = pluginsDir + os.sep + "OrientImage -o RIP"
             orientImagesCommand += " " + str( segmentationFilePath ) + " " + str( segmentationFilePathHdr )
+            self.Helper().Execute( orientImagesCommand )
 
             # set the paths
             outputAlignedImageFilePath = alignedOutputDir + fileNameWithoutExtension + ".img"
