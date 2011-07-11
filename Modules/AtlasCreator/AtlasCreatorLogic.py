@@ -1367,14 +1367,14 @@ class AtlasCreatorLogic( object ):
             # we will create a string containing the command(s) which then get written to a script
             command = ""
 
-            command += self.Helper().GetDRAMMSRegistrationCommand( pathToTemplate,
+            command += drammsDir + self.Helper().GetDRAMMSRegistrationCommand( pathToTemplate,
                                                                   imageFilePathImg,
                                                                   outputAlignedImageFilePath,
                                                                   outputDeformationFieldFilePath )
 
             command += "\n"
 
-            command += self.Helper().GetDRAMMSResampleCommand( segmentationFilePathImg,
+            command += drammsDir + self.Helper().GetDRAMMSResampleCommand( segmentationFilePathImg,
                                                               outputDeformationFieldFilePath,
                                                               outputSegmentationFilePath,
                                                               sizeX,
