@@ -1321,16 +1321,17 @@ class AtlasCreatorLogic( object ):
         orientImagesCommand = pluginsDir + os.sep + "OrientImage -o RIP"
         orientImagesCommand += " " + str( pathToTemplate ) + " " + str( tmpImagesOutputDir ) + 'template.hdr'
         self.Helper().Execute( orientImagesCommand )
-
+        
+        originalTemplate = pathToTemplate
         pathToTemplate = tmpImagesOutputDir + 'template.img'
 
         # loop through alignedImages and start dramms command
         for imageFilePath in alignedImages:
 
-            # do not resample the same file
-            if os.path.basename( imageFilePath ) == os.path.basename( pathToTemplate ):
+            # do not process the template
+            if os.path.basename( imageFilePath ) == os.path.basename( originalTemplate ):
                 continue
-
+            
             # increase the uniqueID
             uniqueID = uniqueID + 1
 
@@ -1370,6 +1371,9 @@ class AtlasCreatorLogic( object ):
             outputAlignedImageFilePath = alignedOutputDir + fileNameWithoutExtension + ".img"
             outputDeformationFieldFilePath = deformationFieldsOutputDir + fileNameWithoutExtension + ".def"
             outputSegmentationFilePath = alignedSegmentationsOutputDir + fileNameWithoutExtension + ".img"
+
+            # since the DRAMMS resampling does not re-create a .hdr file, we will just copy them over
+            shutil.copyfile( segmentationFilePathHdr, alignedSegmentationsOutputDir + fileNameWithoutExtension + ".hdr" )
 
             # save the uniqueID and the filePath in our map
             mapFilesToIDs[uniqueID] = outputSegmentationFilePath
