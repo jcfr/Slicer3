@@ -1292,7 +1292,7 @@ class AtlasCreatorLogic( object ):
 
         # try to find dramms
         cmtkDir = self.Helper().GetCMTKInstallationDirectory()
-        drammsDir = cmtkDir + os.sep + 'DRAMMS' + os.sep
+        drammsDir = str( cmtkDir ) + os.sep + 'DRAMMS' + os.sep
 
         if not os.path.isdir( drammsDir ):
             self.Helper().info( "ERROR: Could not find DRAMMS at " + drammsDir )
@@ -1321,7 +1321,7 @@ class AtlasCreatorLogic( object ):
         orientImagesCommand = pluginsDir + os.sep + "OrientImage -o RIP"
         orientImagesCommand += " " + str( pathToTemplate ) + " " + str( tmpImagesOutputDir ) + 'template.hdr'
         self.Helper().Execute( orientImagesCommand )
-        
+
         originalTemplate = pathToTemplate
         pathToTemplate = tmpImagesOutputDir + 'template.img'
 
@@ -1331,7 +1331,7 @@ class AtlasCreatorLogic( object ):
             # do not process the template
             if os.path.basename( imageFilePath ) == os.path.basename( originalTemplate ):
                 continue
-            
+
             # increase the uniqueID
             uniqueID = uniqueID + 1
 
