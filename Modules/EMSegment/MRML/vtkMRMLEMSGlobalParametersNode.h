@@ -4,6 +4,7 @@
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkEMSegment.h"
+#include <vector>
 
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSGlobalParametersNode : 
   public vtkMRMLNode
