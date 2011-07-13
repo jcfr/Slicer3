@@ -1036,7 +1036,7 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
   this->LabelOpacityTopLevel->SetApplication ( app );
   this->LabelOpacityTopLevel->SetMasterWindow ( this->ContainerFrame );
   this->LabelOpacityTopLevel->Create ( );
-  this->LabelOpacityTopLevel->HideDecorationOn ( );
+  //this->LabelOpacityTopLevel->HideDecorationOn ( ); /* bad on linux */
   this->LabelOpacityTopLevel->Withdraw ( );
   this->LabelOpacityTopLevel->SetBorderWidth ( 2 );
   this->LabelOpacityTopLevel->SetReliefToGroove ( );
@@ -1044,7 +1044,7 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
   vtkKWFrame *popUpFrame2 = vtkKWFrame::New ( );
   popUpFrame2->SetParent ( this->LabelOpacityTopLevel );
   popUpFrame2->Create ( );
-  popUpFrame2->SetBinding ( "<Leave>", this, "HideLabelOpacityScaleAndEntry" );
+  //popUpFrame2->SetBinding ( "<Leave>", this, "HideLabelOpacityScaleAndEntry" ); /* bad on linux */
   this->Script ( "pack %s -side left -anchor w -padx 2 -pady 2 -fill x -fill y -expand n", popUpFrame2->GetWidgetName ( ) );   
   // Scale and entry packed in the pop-up toplevel's frame
   this->LabelOpacityScale = vtkKWScaleWithEntry::New ( );
