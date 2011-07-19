@@ -54,6 +54,7 @@ class Q_SLICER_MODULE_EMSEGMENT_WIDGET_EXPORT qSlicerEMSegmentAnatomicalTreeWidg
   Q_PROPERTY(bool alphaColumnVisible READ alphaColumnVisible WRITE setAlphaColumnVisible)
   Q_PROPERTY(bool displayAlphaCheckBoxVisible READ isDisplayAlphaCheckBoxVisible WRITE setDisplayAlphaCheckBoxVisible)
   Q_PROPERTY(bool probabilityMapColumnVisible READ probabilityMapColumnVisible WRITE setProbabilityMapColumnVisible)
+  Q_PROPERTY(bool parcellationMapColumnVisible READ parcellationMapColumnVisible WRITE setParcellationMapColumnVisible)
 
 public:
 
@@ -81,6 +82,8 @@ public:
 
   bool probabilityMapColumnVisible() const;
 
+  bool parcellationMapColumnVisible() const;
+
 public slots:
 
   virtual void setMRMLManager(vtkEMSegmentMRMLManager * newMRMLManager);
@@ -106,6 +109,8 @@ public slots:
   void setDisplayAlphaCheckBoxVisible(bool visible);
 
   void setProbabilityMapColumnVisible(bool visible);
+
+  void setParcellationMapColumnVisible(bool visible);
 
 protected slots:
 

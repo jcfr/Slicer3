@@ -2,7 +2,10 @@
 #include <sstream>
 #include "vtkMRMLScene.h"
 #include "vtkMRMLEMSVolumeCollectionNode.h"
+#include <vtkObjectFactory.h>
 #include "vtkMRMLEMSAtlasNode.h"
+#include <vtksys/stl/algorithm>
+#include <vtksys/stl/string>
 #include "vtkMRMLScalarVolumeNode.h"
 // for some reason it was otherwise not wrapping it in tcl
 // maybe take it out later 

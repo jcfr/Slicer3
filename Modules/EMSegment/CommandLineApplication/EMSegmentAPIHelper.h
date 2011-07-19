@@ -1,5 +1,7 @@
 #include "vtkSlicerCommonInterface.h"
 #include <sstream>
+#include <vtksys/SystemTools.hxx>
+#include <vtksys/stl/string>
 
 #ifdef Slicer3_USE_KWWIDGETS
 extern "C" int Emsegment_Init(Tcl_Interp *interp);

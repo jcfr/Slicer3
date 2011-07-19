@@ -2,6 +2,7 @@
 #include <sstream>
 #include "vtkMRMLScene.h"
 #include <algorithm>
+#include <vtkObjectFactory.h>
 
 #include <vtksys/ios/sstream>
 

@@ -3,6 +3,7 @@
 #include "vtkMRMLEMSAtlasNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkMRMLEMSTreeNode.h"
+#include <vtkObjectFactory.h>
 #include "vtkMRMLEMSWorkingDataNode.h"
 
 //-----------------------------------------------------------------------------

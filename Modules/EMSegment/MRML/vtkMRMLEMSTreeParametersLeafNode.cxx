@@ -1,6 +1,7 @@
 #include "vtkMRMLEMSTreeParametersLeafNode.h"
 #include <sstream>
 #include "vtkMRMLScene.h"
+#include <vtkObjectFactory.h>
 #include <algorithm>
 
 #include <vtksys/ios/sstream>

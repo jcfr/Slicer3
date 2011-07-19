@@ -77,7 +77,7 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
       taskName = task[0]
       taskFile = task[1]
 
-      # add this entry to out tasksList
+      # add this entry to our tasksList
       self.__tasksList[taskName] = taskFile
 
     return True

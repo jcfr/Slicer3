@@ -1,5 +1,6 @@
 #include "vtkMRMLEMSSegmenterNode.h"
 #include <sstream>
+#include <vtkObjectFactory.h>
 #include "vtkMRMLScene.h"
 #include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLEMSWorkingDataNode.h"

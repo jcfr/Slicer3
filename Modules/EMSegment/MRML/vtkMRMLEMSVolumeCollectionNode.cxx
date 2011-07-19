@@ -2,6 +2,7 @@
 #include "vtkSlicerVolumesLogic.h"
 #include <sstream>
 #include "vtkMRMLScene.h"
+#include <vtkObjectFactory.h>
 #include <algorithm>
 #include "vtkMRMLScalarVolumeNode.h"
 #include <vtksys/stl/string>

@@ -3,6 +3,7 @@
 #include "vtkMRMLScene.h"
 #include <algorithm>
 #include <vtksys/stl/string>
+#include <vtkObjectFactory.h>
 
 vtkMRMLEMSCollectionNode* 
 vtkMRMLEMSCollectionNode::

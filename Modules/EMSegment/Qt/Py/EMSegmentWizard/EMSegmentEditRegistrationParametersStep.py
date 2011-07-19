@@ -12,6 +12,8 @@ class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
     self.setDescription( 'Specify atlas-to-input scans registration parameters.' )
 
     self.__parent = super( EMSegmentEditRegistrationParametersStep, self )
+    self.__channelComboBoxList = []
+    self.__updating = 0
 
   def createUserInterface( self ):
     '''
@@ -25,33 +27,99 @@ class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
 
     registrationParametersGroupBoxLayout = qt.QFormLayout( registrationParametersGroupBox )
 
-    # TODO for all input channels add a qMRMLNodeComboBox
+    globalParametersNode = self.mrmlManager().GetGlobalParametersNode()
+
+    # for all input channels add a qMRMLNodeComboBox
+    for i in range( self.mrmlManager().GetTargetNumberOfSelectedVolumes() ):
+
+      channelComboBox = slicer.qMRMLNodeComboBox()
+      channelComboBox.setMRMLScene( slicer.mrmlScene )
+      channelComboBox.nodeTypes = ['vtkMRMLScalarVolumeNode']
+      channelComboBox.noneEnabled = True
+      channelComboBox.addEnabled = False
+      channelComboBox.removeEnabled = False
+      registrationParametersGroupBoxLayout.addRow( globalParametersNode.GetNthTargetInputChannelName( i ), channelComboBox )
+      channelComboBox.connect( 'currentNodeChanged(vtkMRMLNode*)', self.propagateToMRML )
+      self.__channelComboBoxList.append( channelComboBox )
+
 
     # Affine Registration comboBox
-    affineRegistrationComboBox = qt.QComboBox()
-    affineRegistrationComboBox.addItems( Helper.GetRegistrationTypes() )
-    registrationParametersGroupBoxLayout.addRow( 'Affine Registration:', affineRegistrationComboBox )
+    self.__affineRegistrationComboBox = qt.QComboBox()
+    self.__affineRegistrationComboBox.addItems( Helper.GetRegistrationTypes() )
+    registrationParametersGroupBoxLayout.addRow( 'Affine Registration:', self.__affineRegistrationComboBox )
+    self.__affineRegistrationComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
     # Deformable Registration comboBox
-    deformableRegistrationComboBox = qt.QComboBox()
-    deformableRegistrationComboBox.addItems( Helper.GetRegistrationTypes() )
-    registrationParametersGroupBoxLayout.addRow( 'Deformable Registration:', deformableRegistrationComboBox )
+    self.__deformableRegistrationComboBox = qt.QComboBox()
+    self.__deformableRegistrationComboBox.addItems( Helper.GetRegistrationTypes() )
+    registrationParametersGroupBoxLayout.addRow( 'Deformable Registration:', self.__deformableRegistrationComboBox )
+    self.__deformableRegistrationComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
     # Interpolation
-    interpolationComboBox = qt.QComboBox()
-    interpolationComboBox.addItems( Helper.GetInterpolationTypes() )
-    registrationParametersGroupBoxLayout.addRow( 'Interpolation:', interpolationComboBox )
+    self.__interpolationComboBox = qt.QComboBox()
+    self.__interpolationComboBox.addItems( Helper.GetInterpolationTypes() )
+    registrationParametersGroupBoxLayout.addRow( 'Interpolation:', self.__interpolationComboBox )
+    self.__interpolationComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
     # Package
-    packageComboBox = qt.QComboBox()
-    packageComboBox.addItems( Helper.GetPackages() )
-    registrationParametersGroupBoxLayout.addRow( 'Package:', packageComboBox )
+    self.__packageComboBox = qt.QComboBox()
+    self.__packageComboBox.addItems( Helper.GetPackages() )
+    registrationParametersGroupBoxLayout.addRow( 'Package:', self.__packageComboBox )
+    self.__packageComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
+
+  def loadFromMRML( self ):
+    '''
+    '''
+    if not self.__updating:
+
+      self.__updating = 1
+
+      for i in range( self.mrmlManager().GetTargetNumberOfSelectedVolumes() ):
+
+        volumeNodeID = self.mrmlManager().GetRegistrationAtlasVolumeID( i )
+        print "id," + str( i ) + ": " + str( volumeNodeID )
+        if volumeNodeID:
+          volumeNode = slicer.mrmlScene.GetNodeByID( volumeNodeID )
+          if volumeNode:
+            self.__channelComboBoxList[i].setCurrentNode( volumeNode )
+
+      self.__affineRegistrationComboBox.setCurrentIndex( self.mrmlManager().GetRegistrationAffineType() )
+      self.__deformableRegistrationComboBox.setCurrentIndex( self.mrmlManager().GetRegistrationDeformableType() )
+      self.__interpolationComboBox.setCurrentIndex( self.mrmlManager().GetRegistrationInterpolationType() )
+      self.__packageComboBox.setCurrentIndex( self.mrmlManager().GetRegistrationPackageType() )
+
+      self.__updating = 0
+
+  def propagateToMRML( self ):
+    '''
+    '''
+    if not self.__updating:
+
+      self.__updating = 1
+
+      for i in range( self.mrmlManager().GetTargetNumberOfSelectedVolumes() ):
+
+        volumeNode = self.__channelComboBoxList[i].currentNode()
+        if not volumeNode:
+          volumeNodeID = None
+        else:
+          volumeNodeID = volumeNode.GetID()
+        self.mrmlManager().SetRegistrationAtlasVolumeID( i, volumeNodeID )
+
+      self.mrmlManager().SetRegistrationAffineType( self.__affineRegistrationComboBox.currentIndex )
+      self.mrmlManager().SetRegistrationDeformableType( self.__deformableRegistrationComboBox.currentIndex )
+      self.mrmlManager().SetRegistrationInterpolationType( self.__interpolationComboBox.currentIndex )
+      self.mrmlManager().SetRegistrationPackageType( self.__packageComboBox.currentIndex )
+
+      self.__updating = 0
 
   def onEntry( self, comingFrom, transitionType ):
     '''
     '''
     self.__parent.onEntry( comingFrom, transitionType )
+    # Load all values from MRML
+    self.loadFromMRML()
 
 
 

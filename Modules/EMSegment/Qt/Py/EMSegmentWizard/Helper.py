@@ -92,13 +92,13 @@ class Helper( object ):
   def GetInterpolationTypes():
     '''
     '''
-    return ['Nearest Neighbor', 'Linear']
+    return ['Linear', 'Nearest Neighbor', 'Cubic' ]
 
   @staticmethod
   def GetPackages():
     '''
     '''
-    return ['CMTK', 'BRAINS']
+    return ['CMTK', 'BRAINS', 'PLASTIMATCH']
 
   @staticmethod
   def GetSpecificationTypes():

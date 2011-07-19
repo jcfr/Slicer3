@@ -77,7 +77,8 @@ public:
     UpdateClassWeightItemType,
     AtlasWeightItemType,
     AlphaItemType,
-    ProbabilityMapItemType
+    ProbabilityMapItemType,
+    ParcellationMapItemType
     };
 
   enum ColumnIds
@@ -89,7 +90,8 @@ public:
     UpdateClassWeightColumn,
     AtlasWeightColumn,
     AlphaColumn,
-    ProbabilityMapColumn
+    ProbabilityMapColumn,
+    ParcellationMapColumn
     };
 
   void setupUi(qSlicerEMSegmentWidget * widget);
@@ -111,6 +113,8 @@ public slots:
 
   void onProbabilityMapChanged(vtkMRMLNode * node);
 
+  void onParcellationMapChanged(vtkMRMLNode * node);
+
 public:
 
   vtkMRMLEMSNode *         EMSNode;
@@ -125,6 +129,7 @@ public:
   bool                     AtlasWeightColumnVisible;
   bool                     AlphaColumnVisible;
   bool                     ProbabilityMapColumnVisible;
+  bool                     ParcellationMapColumnVisible;
 };
 
 #endif

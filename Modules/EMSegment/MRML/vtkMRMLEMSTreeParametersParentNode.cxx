@@ -1,6 +1,7 @@
 #include "vtkMRMLEMSTreeParametersParentNode.h"
 #include <sstream>
 #include "vtkMRMLScene.h"
+#include <vtkObjectFactory.h>
 
 #include <vtksys/ios/sstream>
 

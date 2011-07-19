@@ -1,5 +1,6 @@
 #include "vtkMRMLEMSNode.h"
 #include <sstream>
+#include <vtkObjectFactory.h>
 #include "vtkMRMLScene.h"
 
 #include <vtksys/ios/sstream>

@@ -16,6 +16,7 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
 
     self.__stepid = stepid
     self.__dynamicFrame = None
+    self.__updating = 0
 
   def isSimpleMode( self ):
     '''
@@ -49,6 +50,7 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
     inputChannelGroupBoxLayout = qt.QFormLayout( inputChannelGroupBox )
 
     self.__inputChannelList = PythonQt.qSlicerEMSegmentModuleWidgets.qSlicerEMSegmentInputChannelListWidget()
+    self.__inputChannelList.setMRMLManager( self.mrmlManager() )
     inputChannelGroupBoxLayout.addWidget( self.__inputChannelList )
 
     # add empty row
@@ -63,7 +65,7 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
 
     self.__alignInputScansCheckBox = qt.QCheckBox()
     input2inputChannelRegistrationLayout.addRow( 'Align input scans:', self.__alignInputScansCheckBox )
-    self.__alignInputScansCheckBox.connect( "stateChanged(int)", self.onAlignInputScansChanged )
+    self.__alignInputScansCheckBox.connect( "stateChanged(int)", self.propagateToMRML )
 
     # add empty row
     self.__layout.addRow( "", qt.QWidget() )
@@ -84,25 +86,43 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
       #
 
 
-  def onAlignInputScansChanged( self ):
+  def propagateToMRML( self ):
     '''
-    Gets called whenever the 'Align input scans' checkbox is toggled
     '''
-    if self.__alignInputScansCheckBox.isChecked():
-      self.mrmlManager().SetEnableTargetToTargetRegistration( 1 )
-    else:
-      self.mrmlManager().SetEnableTargetToTargetRegistration( 0 )
+    if not self.__updating:
+
+      self.__updating = 1
+
+      self.__inputChannelList.updateMRMLFromWidget()
+
+      self.mrmlManager().SetEnableTargetToTargetRegistration( int( self.__alignInputScansCheckBox.isChecked() ) )
+
+      self.__updating = 0
+
+
+
+  def loadFromMRML( self ):
+    '''
+    '''
+    if not self.__updating:
+
+      self.__updating = 1
+
+      self.__inputChannelList.updateWidgetFromMRML()
+
+      if self.__inputChannelList.inputChannelCount() == 0:
+        self.__inputChannelList.addInputChannel()
+
+      self.__alignInputScansCheckBox.setChecked( self.mrmlManager().GetEnableTargetToTargetRegistration() )
+
+      self.__updating = 0
+
+
 
   def onEntry( self, comingFrom, transitionType ):
     '''
     '''
     self.__parent.onEntry( comingFrom, transitionType )
-
-    self.__inputChannelList.setMRMLManager( self.mrmlManager() )
-    self.__inputChannelList.updateWidgetFromMRML()
-
-    if self.__inputChannelList.inputChannelCount() == 0:
-      self.__inputChannelList.addInputChannel()
 
     if self.isSimpleMode():
       self.logic().SourceTaskFiles()
@@ -113,6 +133,17 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
       logicTclName = self.logic().GetSlicerCommonInterface().GetTclNameFromPointer( self.logic() )
 
       tcl( '::EMSegmenterSimpleTcl::ShowCheckList ' + str( logicTclName ) )
+
+    self.loadFromMRML()
+
+
+
+  def onExit( self, goingTo, transitionType ):
+    '''
+    '''
+    self.__parent.onExit( goingTo, transitionType )
+
+    self.propagateToMRML()
 
 
   def validate( self, desiredBranchId ):

@@ -1,4 +1,4 @@
-from __main__ import qt, ctk
+from __main__ import qt, ctk, slicer
 import PythonQt
 
 from EMSegmentStep import *
@@ -17,6 +17,19 @@ class EMSegmentDefineAnatomicalTreeStep( EMSegmentStep ) :
     '''
     self.__layout = self.__parent.createUserInterface()
 
+    # the colorpicker combobox
+    self.__colorTableComboBox = slicer.qMRMLColorTableComboBox()
+    self.__colorTableComboBox.setMRMLScene( slicer.mrmlScene )
+
+    # get current color node from the mrmlManager
+    currentColorNodeID = self.mrmlManager().GetColorNodeID()
+    currentColorNode = slicer.mrmlScene.GetNodeByID( currentColorNodeID )
+    if currentColorNode:
+      self.__colorTableComboBox.setCurrentNode( currentColorNode )
+
+    self.__colorTableComboBox.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onColorNodeChanged )
+    self.__layout.addWidget( self.__colorTableComboBox )
+
     # the anatomical tree
     anatomicalTreeGroupBox = qt.QGroupBox()
     anatomicalTreeGroupBox.setTitle( 'Anatomical Tree' )
@@ -28,6 +41,16 @@ class EMSegmentDefineAnatomicalTreeStep( EMSegmentStep ) :
     self.__anatomicalTree.structureNameEditable = True
     self.__anatomicalTree.labelColumnVisible = True
     anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
+
+  def onColorNodeChanged( self ):
+    '''
+    '''
+    # use the selected colorNodeID
+    print self.mrmlManager().GetColorNodeID()
+    self.mrmlManager().SetColorNodeID( self.__colorTableComboBox.currentNodeId )
+    print self.mrmlManager().GetColorNodeID()
+    # .. propagate to widget
+    self.__anatomicalTree.updateWidgetFromMRML()
 
 
   def onEntry( self, comingFrom, transitionType ):

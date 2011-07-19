@@ -1,6 +1,6 @@
 #include "vtkSlicerCommonInterface.h"
 #include "vtkEMSegmentLogic.h"
-
+#include <vtksys/SystemTools.hxx>
 
 // test the tcl adapter provided by the Slicer Common Interface
 int main(int argc, char** argv)

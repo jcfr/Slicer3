@@ -1,6 +1,7 @@
 #include "vtkMRMLEMSTargetNode.h"
 #include <sstream>
 #include "vtkMRMLScene.h"
+#include <vtkObjectFactory.h>
 
 vtkMRMLEMSTargetNode* 
 vtkMRMLEMSTargetNode::

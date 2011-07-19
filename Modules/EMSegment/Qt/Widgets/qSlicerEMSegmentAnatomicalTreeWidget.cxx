@@ -98,6 +98,7 @@ qSlicerEMSegmentAnatomicalTreeWidgetPrivate::qSlicerEMSegmentAnatomicalTreeWidge
   this->AtlasWeightColumnVisible = false;
   this->AlphaColumnVisible = false;
   this->ProbabilityMapColumnVisible = false;
+  this->ParcellationMapColumnVisible = false;
 
   this->initializeHorizontalHeader();
 }
@@ -155,6 +156,7 @@ void qSlicerEMSegmentAnatomicalTreeWidgetPrivate::initializeHorizontalHeader()
   headerNames.insert(Self::AtlasWeightColumn, "Atlas");
   headerNames.insert(Self::AlphaColumn, "Alpha");
   headerNames.insert(Self::ProbabilityMapColumn, "Probability map");
+  headerNames.insert(Self::ParcellationMapColumn, "Parcellation map");
   this->TreeModel->setHorizontalHeaderLabels(headerNames);
 
   this->TreeModel->setHeaderData(Self::ClassWeightColumn, Qt::Horizontal,
@@ -306,6 +308,16 @@ QStandardItem* qSlicerEMSegmentAnatomicalTreeWidgetPrivate::insertTreeRow(
     }
   itemList << probabilityMapItem;
 
+  // ParcellationMap item - Available only for tree leaf
+  QStandardItem * parcellationMapItem = new QStandardItem();
+  parcellationMapItem->setData(QVariant(treeNodeId), Self::TreeNodeIDRole);
+  parcellationMapItem->setEditable(false);
+  if (isLeaf) // Is treeNode a leaf ?
+    {
+    parcellationMapItem->setData(QVariant(Self::ParcellationMapItemType), Self::TreeItemTypeRole);
+    }
+  itemList << parcellationMapItem;
+
   parentItem->appendRow(itemList);
 
   // Set widget associated with labelItem
@@ -345,6 +357,29 @@ QStandardItem* qSlicerEMSegmentAnatomicalTreeWidgetPrivate::insertTreeRow(
         this->TreeModel->indexFromItem(probabilityMapItem), probabilityMapComboBox);
     connect(probabilityMapComboBox, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
             this, SLOT(onProbabilityMapChanged(vtkMRMLNode*)));
+    }
+
+  // Set widget associated with parcellationMapItem
+  if (isLeaf && this->ParcellationMapColumnVisible)
+    {
+    vtkIdType volumeId = q->mrmlManager()->GetTreeNodeSubParcellationVolumeID(treeNodeId);
+    vtkMRMLVolumeNode * volumeNode = q->mrmlManager()->GetVolumeNode(volumeId);
+    qMRMLNodeComboBox * parcellationMapComboBox = new qMRMLNodeComboBox;
+    QStringList nodeTypes;
+    nodeTypes << "vtkMRMLVolumeNode";
+    // Set treeNodeId property so that "onProbabilityMapChanged" can retrieve it
+    parcellationMapComboBox->setProperty("treeNodeId", QVariant(treeNodeId));
+    parcellationMapComboBox->setNodeTypes(nodeTypes);
+    parcellationMapComboBox->setShowHidden(true);
+    parcellationMapComboBox->setAddEnabled(false);
+    parcellationMapComboBox->setRemoveEnabled(false);
+    parcellationMapComboBox->setEditEnabled(false);
+    parcellationMapComboBox->setMRMLScene(q->mrmlScene());
+    parcellationMapComboBox->setCurrentNode(volumeNode);
+    this->TreeView->setIndexWidget(
+        this->TreeModel->indexFromItem(parcellationMapItem), parcellationMapComboBox);
+    connect(parcellationMapComboBox, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
+            this, SLOT(onParcellationMapChanged(vtkMRMLNode*)));
     }
 
   return structureItem;
@@ -452,6 +487,21 @@ void qSlicerEMSegmentAnatomicalTreeWidgetPrivate::onProbabilityMapChanged(vtkMRM
 }
 
 //-----------------------------------------------------------------------------
+void qSlicerEMSegmentAnatomicalTreeWidgetPrivate::onParcellationMapChanged(vtkMRMLNode * node)
+{
+  Q_Q(qSlicerEMSegmentAnatomicalTreeWidget);
+  if (!node)
+    {
+    return;
+    }
+  int treeNodeId = QObject::sender()->property("treeNodeId").toInt();
+  Q_ASSERT(treeNodeId > 0);
+  q->mrmlManager()->SetTreeNodeSubParcellationVolumeID(
+      treeNodeId, q->mrmlManager()->MapMRMLNodeIDToVTKNodeID(node->GetID()));
+}
+
+
+//-----------------------------------------------------------------------------
 // qSlicerEMSegmentAnatomicalTreeWidget methods
 
 //-----------------------------------------------------------------------------
@@ -471,6 +521,7 @@ qSlicerEMSegmentAnatomicalTreeWidget::qSlicerEMSegmentAnatomicalTreeWidget(QWidg
   this->setAtlasWeightColumnVisible(false);
   this->setAlphaColumnVisible(false);
   this->setProbabilityMapColumnVisible(false);
+  this->setParcellationMapColumnVisible(false);
 
   // Display checkboxes hidden by default
   this->setDisplayMRMLIDsCheckBoxVisible(false);
@@ -675,6 +726,19 @@ void qSlicerEMSegmentAnatomicalTreeWidget::setProbabilityMapColumnVisible(bool v
   d->TreeView->header()->setSectionHidden(ctkPimpl::ProbabilityMapColumn, !visible);
   d->ProbabilityMapColumnVisible = visible;
 }
+
+//-----------------------------------------------------------------------------
+CTK_GET_CPP(qSlicerEMSegmentAnatomicalTreeWidget, bool,
+            parcellationMapColumnVisible, ParcellationMapColumnVisible);
+
+//-----------------------------------------------------------------------------
+void qSlicerEMSegmentAnatomicalTreeWidget::setParcellationMapColumnVisible(bool visible)
+{
+  Q_D(qSlicerEMSegmentAnatomicalTreeWidget);
+  d->TreeView->header()->setSectionHidden(ctkPimpl::ParcellationMapColumn, !visible);
+  d->ParcellationMapColumnVisible = visible;
+}
+
 
 //-----------------------------------------------------------------------------
 void qSlicerEMSegmentAnatomicalTreeWidget::collapseToDepthZero()

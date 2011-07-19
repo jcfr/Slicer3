@@ -28,6 +28,7 @@ class EMSegmentDefineAtlasStep( EMSegmentStep ) :
     self.__anatomicalTree.structureNameEditable = False
     self.__anatomicalTree.labelColumnVisible = False
     self.__anatomicalTree.probabilityMapColumnVisible = True
+    self.__anatomicalTree.parcellationMapColumnVisible = True
     anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
 
 

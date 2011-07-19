@@ -29,6 +29,7 @@
 #include "vtkImageTranslateExtent.h"
 #include "vtkITKImageWriter.h" 
 #include "vtkImageEllipsoidSource.h"
+#include <vtksys/SystemTools.hxx>
 
 #ifdef _WIN32
 //for _mktemp

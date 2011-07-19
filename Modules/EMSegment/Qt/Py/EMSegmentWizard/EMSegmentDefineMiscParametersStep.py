@@ -18,15 +18,66 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     '''
     self.__layout = self.__parent.createUserInterface()
 
-    # the registration parameters
+    # the ROI parameters
     voiGroupBox = qt.QGroupBox()
     voiGroupBox.setTitle( 'Define VOI' )
     self.__layout.addWidget( voiGroupBox )
 
     voiGroupBoxLayout = qt.QFormLayout( voiGroupBox )
 
-    roiWidget = slicer.qMRMLROIWidget()
+    roiWidget = PythonQt.qSlicerAnnotationsModuleWidgets.qMRMLAnnotationROIWidget()
     voiGroupBoxLayout.addWidget( roiWidget )
+
+    #
+    # save groupbox
+    #
+    saveGroupBox = qt.QGroupBox()
+    saveGroupBox.setTitle( 'Save' )
+    self.__layout.addWidget( saveGroupBox )
+
+    saveGroupBoxLayout = qt.QFormLayout ( saveGroupBox )
+
+    saveButton = qt.QPushButton( 'Create' )
+    saveGroupBoxLayout.addRow( "Create Template File:", saveButton )
+
+    saveIntermediateResultsCheckBox = qt.QCheckBox()
+    saveGroupBoxLayout.addRow( "Save Intermediate Results:", saveIntermediateResultsCheckBox )
+
+    selectDirectoryButton = qt.QPushButton( 'Select' )
+    saveGroupBoxLayout.addRow( "Select Intermediate Directory:", selectDirectoryButton )
+
+    #
+    # post processing groupbox
+    #
+    postProcessingGroupBox = qt.QGroupBox()
+    postProcessingGroupBox.setTitle( 'Postprocessing' )
+    self.__layout.addWidget( postProcessingGroupBox )
+
+    postProcessingGroupBoxLayout = qt.QFormLayout( postProcessingGroupBox )
+
+    subparcellationCheckBox = qt.QCheckBox()
+    postProcessingGroupBoxLayout.addRow( "Subparcellation enabled:", subparcellationCheckBox )
+
+    minimumIslandSizeSpinBox = qt.QSpinBox()
+    minimumIslandSizeSpinBox.minimum = 0
+    minimumIslandSizeSpinBox.maximum = 200
+    minimumIslandSizeSpinBox.singleStep = 1
+    postProcessingGroupBoxLayout.addRow( "Minimum island size:", minimumIslandSizeSpinBox )
+
+    twoDIslandNeighborhoodCheckBox = qt.QCheckBox()
+    postProcessingGroupBoxLayout.addRow( "2D Island Neighborhood:", twoDIslandNeighborhoodCheckBox )
+
+    #
+    # Misc. groupbox
+    #
+    miscGroupBox = qt.QGroupBox()
+    miscGroupBox.setTitle( 'Misc.' )
+    self.__layout.addWidget( miscGroupBox )
+
+    miscGroupBoxLayout = qt.QFormLayout( miscGroupBox )
+
+    multithreadingCheckBox = qt.QCheckBox()
+    miscGroupBoxLayout.addRow( "Multi-threading enabled:", multithreadingCheckBox )
 
 
   def onEntry( self, comingFrom, transitionType ):
