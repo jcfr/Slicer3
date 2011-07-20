@@ -15,7 +15,10 @@
 #include <vtkMRMLVolumeArchetypeStorageNode.h>
 #include <vtkMRMLScalarVolumeNode.h>
 #include <vtkMRMLVolumeNode.h>
+
+#ifdef Slicer3_USE_KWWIDGETS
 #include <vtkMRMLAtlasCreatorNode.h>
+#endif
 
 // needed to get the CMake variables
 #include <vtkSlicerConfigure.h>
@@ -253,7 +256,9 @@ public:
 
   void UpdateIntensityDistributionAuto(vtkIdType nodeID);
 
+#ifdef Slicer3_USE_KWWIDGETS  
   void RunAtlasCreator(vtkMRMLAtlasCreatorNode *node);
+#endif
 
   void WriteImage(vtkImageData* file, const char* filename);
 

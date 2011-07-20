@@ -131,7 +131,7 @@ if(NOT DISABLE_CXX_TESTING)
     ${TEST_LINK_LIBRARIES}
     )
 
-
+if(NOT EM_Slicer4_FOUND)
   add_executable(
     vtkEMSegmentBlackBoxSegmentationTest
     vtkEMSegmentBlackBoxSegmentationTest.cxx
@@ -141,7 +141,7 @@ if(NOT DISABLE_CXX_TESTING)
     vtkEMSegmentBlackBoxSegmentationTest
     ${TEST_LINK_LIBRARIES}
     )
-
+endif(NOT EM_Slicer4_FOUND)
 
   add_executable(
     vtkEMSegmentCompareTest
@@ -967,7 +967,8 @@ if(NOT DISABLE_CXX_TESTING)
     endif(EMSEG_RUN_COMPARE_TESTS)
 
 
-    # Task Test-Atlas-Cluster
+    if(NOT EM_Slicer4_FOUND)
+    # Task Test-Atlas-Cluster, only for Slicer3
     add_test( EMSegCL_Task_TestAtlasCluster_${registrationpackage}_${size}
       ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
       ${EMS_SLICER_LAUNCH_ARGUMENTS}
@@ -988,6 +989,7 @@ if(NOT DISABLE_CXX_TESTING)
       FAIL_REGULAR_EXPRESSION
       "ERROR"
       )
+    endif(NOT EM_Slicer4_FOUND)
 
     if (EMSEG_RUN_LOCAL_TESTS)
       # Task cine MRI

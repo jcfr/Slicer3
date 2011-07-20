@@ -3007,6 +3007,7 @@ void vtkEMSegmentLogic::CreateDefaultTasksList(std::vector<std::string> & Defaul
       DefinePreprocessingTasksFile);
 }
 
+#ifdef Slicer3_USE_KWWIDGETS
 //-----------------------------------------------------------------------------
 void vtkEMSegmentLogic::RunAtlasCreator(vtkMRMLAtlasCreatorNode *node)
 {
@@ -3133,6 +3134,7 @@ void vtkEMSegmentLogic::RunAtlasCreator(vtkMRMLAtlasCreatorNode *node)
   this->GetSlicerCommonInterface()->EvaluatePython(pythonCommand.c_str());
 
 }
+#endif
 
 //-----------------------------------------------------------------------------
 int vtkEMSegmentLogic::ActiveMeanField(vtkImageEMLocalSegmenter* segmenter, vtkImageData* result)

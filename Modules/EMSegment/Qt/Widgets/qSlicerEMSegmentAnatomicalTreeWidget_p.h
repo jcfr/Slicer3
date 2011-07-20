@@ -130,6 +130,7 @@ public:
   bool                     AlphaColumnVisible;
   bool                     ProbabilityMapColumnVisible;
   bool                     ParcellationMapColumnVisible;
+  bool                     AddDeleteSubclassesEnabled;
 };
 
 #endif

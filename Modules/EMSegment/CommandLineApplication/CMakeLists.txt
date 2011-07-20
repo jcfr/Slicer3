@@ -55,8 +55,8 @@ include_directories(
   ${EMSegment_SOURCE_DIR}/CommandLineApplication  
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
-  ${Slicer_Libs_INCLUDE_DIRS}
-  ${Slicer_Base_INCLUDE_DIRS}
+  #${Slicer_Libs_INCLUDE_DIRS}
+  #${Slicer_Base_INCLUDE_DIRS}
   ${vtkSlicerAtlasCreatorModuleLogic_SOURCE_DIR}
   ${vtkSlicerAtlasCreatorModuleLogic_BINARY_DIR}  
   )
@@ -89,6 +89,7 @@ slicerMacroBuildCLI(
   NAME ${CLP_MODULE}
   TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
   EXECUTABLE_ONLY
+  INCLUDE_DIRECTORIES ${Slicer_ModuleLogic_INCLUDE_DIRS}
   )
 
 endif(NOT EM_Slicer4_FOUND)

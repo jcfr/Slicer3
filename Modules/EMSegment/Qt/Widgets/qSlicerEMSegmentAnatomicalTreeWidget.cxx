@@ -99,6 +99,7 @@ qSlicerEMSegmentAnatomicalTreeWidgetPrivate::qSlicerEMSegmentAnatomicalTreeWidge
   this->AlphaColumnVisible = false;
   this->ProbabilityMapColumnVisible = false;
   this->ParcellationMapColumnVisible = false;
+  this->AddDeleteSubclassesEnabled = false;
 
   this->initializeHorizontalHeader();
 }
@@ -737,6 +738,17 @@ void qSlicerEMSegmentAnatomicalTreeWidget::setParcellationMapColumnVisible(bool 
   Q_D(qSlicerEMSegmentAnatomicalTreeWidget);
   d->TreeView->header()->setSectionHidden(ctkPimpl::ParcellationMapColumn, !visible);
   d->ParcellationMapColumnVisible = visible;
+}
+
+//-----------------------------------------------------------------------------
+CTK_GET_CPP(qSlicerEMSegmentAnatomicalTreeWidget, bool,
+            addDeleteSubclassesEnabled, AddDeleteSubclassesEnabled);
+
+//-----------------------------------------------------------------------------
+void qSlicerEMSegmentAnatomicalTreeWidget::setAddDeleteSubclassesEnabled(bool enabled)
+{
+  Q_D(qSlicerEMSegmentAnatomicalTreeWidget);
+  d->ParcellationMapColumnVisible = enabled;
 }
 
 
