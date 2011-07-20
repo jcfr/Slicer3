@@ -3,6 +3,7 @@
 # EM Segmenter for 3D Slicer3 and 3D Slicer4
 #
 # --------------------------------------------------------------------------
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 # --------------------------------------------------------------------------
 # Detect if we build for Slicer3 or Slicer4 and set EM_Slicer4_FOUND accordingly
