@@ -476,7 +476,7 @@ class AtlasCreatorHelper( object ):
 
 
     '''=========================================================================================='''
-    def ReadLabelsFromImage( self, pathsList ):
+    def ReadLabelsFromImages( self, pathsList ):
         '''
         Read labels from an image.
         

@@ -201,7 +201,7 @@ class AtlasCreatorLogic( object ):
 
                 self.Helper().info( "Labels were not specified correctly.." )
                 self.Helper().info( "Reading labels from the segmentations.." )
-                labelsList = self.Helper().ReadLabelsFromImage( segmentationsFilePathList )
+                labelsList = self.Helper().ReadLabelsFromImages( segmentationsFilePathList )
 
                 # now we save the labelList back to the node
                 node.SetLabelsList( self.Helper().ConvertListToString( labelsList ) )

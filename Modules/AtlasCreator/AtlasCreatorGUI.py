@@ -572,19 +572,9 @@ class AtlasCreatorGUI(ScriptedModuleGUI):
         
             if self._segDirButton.GetWidget().GetFileName():
                 # only perform the following if a segmentation directory was selected
-                
-                if self._useExistingTransformsCheckBox.GetWidget().GetSelectedState():
-                    # use existing transforms mode
-                    listOfSegmentations = self.GetHelper().ConvertDirectoryToList(self._segDirButton.GetWidget().GetFileName())
+                listOfSegmentations = self.GetHelper().ConvertDirectoryToList(self._segDirButton.GetWidget().GetFileName())
                     
-                    if len(listOfSegmentations) > 1:
-                        defaultCaseSegmentationFilePath = listOfSegmentations[0]
-                else:
-                    caseFile = self._defaultCaseCombo.GetWidget().GetValue()
-                    if self._segDirButton.GetWidget().GetFileName():
-                        defaultCaseSegmentationFilePath = str(self._segDirButton.GetWidget().GetFileName()) + os.sep + str(caseFile).strip("'")
-                    
-                labelList = self.GetHelper().ReadLabelsFromImage(defaultCaseSegmentationFilePath)
+                labelList = self.GetHelper().ReadLabelsFromImages(listOfSegmentations)
                 
                 if labelList:
                     labelListAsString = self.GetHelper().ConvertListToString(labelList)
