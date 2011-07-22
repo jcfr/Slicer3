@@ -1498,7 +1498,6 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set CMD "$PLASTIMATCHFOLDER/plastimatch_slicer_xformwarp"
 
-
         set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
         if { $outVolumeFileName == "" } { return 1 }
 
@@ -1508,38 +1507,16 @@ namespace eval EMSegmenterPreProcessingTcl {
         set referenceVolumeFileName [WriteDataToTemporaryDir $referenceVolumeNode Volume]
         if { $referenceVolumeFileName == "" } { return 1 }
 
-
-        set CMD "$CMD --pad-out $backgroundLevel"
-        set CMD "$CMD --outfile \"$outVolumeFileName\""
-        set CMD "$CMD --floating \"$inputVolumeFileName\"  --interpolation"
-
-        # Naming convention is based on BRAINSResample
-        switch -exact  "$interpolationType" {
-            "NearestNeighbor"  { set CMD "$CMD nn" }
-            "Linear"           { set CMD "$CMD linear" }
-            "BSpline"          { set CMD "$CMD cubic" }
-            "WindowedSinc"     { set CMD "$CMD sinc-cosine" }
-            "PartialVolume"    { set CMD "$CMD pv" }
-            "SincHamming"      { set CMD "$CMD sinc-hamming" }
-            default {
-                PrintError "PLASTIMATCHResampleCLI: interpolation of type $interpolationType is unknown"
-                return 1
-            }
-        }
-
-#        set CMD "$CMD [PLASTIMATCHGetPixelTypeFromVolumeNode $referenceVolumeNode]"
-
-        # - no attributes after this line that start with the flag ---
-        set CMD "$CMD \"$referenceVolumeFileName\""
-        set CMD "$CMD \"$transformDirName\""
+        set CMD "$CMD --plmslc_xformwarp_output_img \"$outVolumeFileName\""
+        set CMD "$CMD --plmslc_xformwarp_input_xform_f \"$transformFileName\""
+        set CMD "$CMD --plmslc_xformwarp_input_img \"$inputVolumeFileName\""
+        set CMD "$CMD --reference_vol \"$referenceVolumeFileName\""
 
         $LOGIC PrintText "TCL: Executing $CMD"
         catch { eval exec $CMD } errmsg
         $LOGIC PrintText "TCL: $errmsg"
 
-
         # Write results back to scene
-        # This does not work $::slicer3::ApplicationLogic RequestReadData [$outVolumeNode GetID] $outVolumeFileName 0 1
         ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume
 
         # clean up
@@ -2158,17 +2135,19 @@ namespace eval EMSegmenterPreProcessingTcl {
             return ""
         }
 
+        
         # affine
-        set outLinearTransformFileName [CreateFileName "txt"]
+        set outLinearTransformFileName [CreateFileName "Text"]
 
         set outTransformFileName $outLinearTransformFileName
 
 #        set CMD "$CMD --plmslc_output_bsp_f \"$outLinearTransformFileName\""
-        set CMD "$CMD --plmslc_output_vf \"$outLinearTransformFileName\""
+#        set CMD "$CMD --plmslc_output_vf \"$outVolumeFileName\""
+        set CMD "$CMD --plmslc_output_warped  \"$outVolumeFileName\""
+        set CMD "$CMD --plmslc_output_bsp  \"$outLinearTransformFileName\""
 
         set CMD "$CMD \"$fixedVolumeFileName\""
         set CMD "$CMD \"$movingVolumeFileName\""
-        set CMD "$CMD \"$outVolumeFileName\""
 
         $LOGIC PrintText "TCL: Executing $CMD"
         catch { eval exec $CMD } errmsg
@@ -2717,8 +2696,8 @@ namespace eval EMSegmenterPreProcessingTcl {
                 }
             }
             "PLASTIMATCH" {
-                set transformFileName [PLASTIMATCHRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
-                if { $transformFileName == "" } {
+                set transformDirName [PLASTIMATCHRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
+                if { $transformDirName == "" } {
                     PrintError "ResgisterAtlas: Transform node is null"
                     return 1
                 }
@@ -2726,7 +2705,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
                 $LOGIC PrintText "TCL: Resampling atlas template in PLASTIMATCHRegistration ..."
                 # transformNode is not needed, it's value is ""
-                if { [Resample $movingAtlasVolumeNode $fixedTargetVolumeNode $transformNode $transformFileName $transformNodeType Linear $backgroundLevel $outputAtlasVolumeNode] } {
+                if { [Resample $movingAtlasVolumeNode $fixedTargetVolumeNode $transformNode $transformDirName $transformNodeType Linear $backgroundLevel $outputAtlasVolumeNode] } {
                     PrintError "RegisterAtlas: Could not resample(reformatx) atlas template volume"
                     return 1
                 }
@@ -2815,6 +2794,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     # interpolationType : NearestNeighbor|Linear|BSpline|WindowedSinc
     # in Addition for CMTK: PartialVolume, SincHamming
     proc Resample { inputVolumeNode referenceVolumeNode transformation_Node_or_FileName transformDirName transformType interpolationType backgroundLevel outputVolumeNode } {
+
         variable LOGIC
         if {[$inputVolumeNode GetImageData] == ""} {
             PrintError "Resample: Input image is null, skipping: $inputVolumeNode"
