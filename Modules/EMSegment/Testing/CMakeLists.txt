@@ -648,7 +648,13 @@ endif(NOT EM_Slicer4_FOUND)
     set(test_exe         "${Slicer3_EXE}")
     set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
     set(test_cmp_file    "${test_file_prefix}.mrml")
+
+if(EM_Slicer4_FOUND)
+    set(test_std_file    "${EMSegment_TUTORIAL_DIR}/Template_Slicer4_small_normalizationOn_noImages.mrml")
+else(EM_Slicer4_FOUND)
     set(test_std_file    "${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn_noImages.mrml")
+endif(EM_Slicer4_FOUND)
+
     if(${EMSEG_REMOVE_TMP_TEST_DATA})
       set(test_rm_files    ${test_file_prefix}.mrml)
     else(${EMSEG_REMOVE_TMP_TEST_DATA})
