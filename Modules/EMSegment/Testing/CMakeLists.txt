@@ -688,7 +688,7 @@ endif(NOT EM_Slicer4_FOUND)
 
 
   if (EMSEG_RUN_LOCAL_TESTS)
-    set (registrationpackages CMTK BRAINS PLASTIMATCH)
+    set (registrationpackages CMTK BRAINS PLASTIMATCH DEMONS)
     set (scalartypes float char double int short uchar uint ushort)
     set (sizes small very_small)
   else (EMSEG_RUN_LOCAL_TESTS)
