@@ -391,7 +391,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                     $LOGIC PrintText "TCL: Found CMTK in $CMTKFOLDER"
                     set selectedRegistrationPackage "CMTK"
                 } else {
-                    $LOGIC PrintText "TCL: WARNING: Couldn't find CMTK, switch back to BRAINSTools"
+                    $LOGIC PrintText "TCL: WARNING: Could not find CMTK, switch back to BRAINSTools"
                     set selectedRegistrationPackage "BRAINS"
                 }
             }
@@ -404,7 +404,7 @@ namespace eval EMSegmenterPreProcessingTcl {
                     $LOGIC PrintText "TCL: Found PLASTIMATCH in $PLASTIMATCHFOLDER"
                     set selectedRegistrationPackage "PLASTIMATCH"
                 } else {
-                    $LOGIC PrintText "TCL: WARNING: Couldn't find PLASTIMATCH, switch back to BRAINSTools"
+                    $LOGIC PrintText "TCL: WARNING: Could not find PLASTIMATCH, switch back to BRAINSTools"
                     set selectedRegistrationPackage "BRAINS"
                 }
             }
@@ -1583,7 +1583,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set CMTKFOLDER ""
         # search for directories , sorted with the highest svn first
-        set dirs [lsort -decreasing [glob -directory [$::slicer3::Application GetExtensionsInstallPath] -type d * ] ]
+        set dirs [lsort -decreasing [glob -nocomplain -directory [[$LOGIC GetSlicerCommonInterface] GetExtensionsDirectory] -type d * ] ]
         foreach dir $dirs {
             set filename $dir\/CMTK4Slicer/registration
             if { [file exists $filename] } {
@@ -1601,7 +1601,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
         set PLASTIMATCHFOLDER ""
         # search for directories , sorted with the highest svn first
-        set dirs [lsort -decreasing [glob -directory [$::slicer3::Application GetExtensionsInstallPath] -type d * ] ]
+        set dirs [lsort -decreasing [glob -nocomplain -directory [[$LOGIC GetSlicerCommonInterface] GetExtensionsDirectory] -type d * ] ]
         foreach dir $dirs {
             set filename $dir\/plastimatch-slicer/plastimatch_slicer_bspline
             if { [file exists $filename] } {
@@ -2359,9 +2359,11 @@ namespace eval EMSegmenterPreProcessingTcl {
         $LOGIC PrintText "TCL: =========================================="
         $LOGIC PrintText "TCL: == Generate ICC MASK (not yet implemented)"
         $LOGIC PrintText "TCL: =========================================="
-        set EXE_DIR "$::env(Slicer3_HOME)/bin"
+        #set EXE_DIR "$::env(Slicer3_HOME)/bin"
+        set EXE_DIR "[[$LOGIC GetSlicerCommonInterface] GetBinDirectory]"
         #set PLUGINS_DIR "[$::slicer3::Application GetPluginsDir]"
         set PLUGINS_DIR "[$LOGIC GetPluginsDirectory]"
+        
 
         # set CMD "$PLUGINS_DIR/DemonsRegistration --fixed_image $Scan2Image --moving_image $Scan1Image --output_image $Scan1ToScan2Image --output_field $Scan1ToScan2Deformation --num_levels 3 --num_iterations 20,20,20 --def_field_sigma 1 --use_histogram_matching --verbose"
 
