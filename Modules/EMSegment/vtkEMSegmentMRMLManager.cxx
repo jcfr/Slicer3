@@ -4632,6 +4632,10 @@ int  vtkEMSegmentMRMLManager::GetPackageTypeFromString(const char* type)
       return vtkEMSegmentMRMLManager::PLASTIMATCH;
     }
 
+  if (!strcmp(type,"DEMONS"))
+    {
+      return vtkEMSegmentMRMLManager::DEMONS;
+    }
 
   return -1;
 }
