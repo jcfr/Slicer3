@@ -985,7 +985,7 @@ endif(EM_Slicer4_FOUND)
       --resultVolumeFileName
       ${EMSegment_BINARY_DIR}/RESULT_${size}_TestAtlasCluster.nrrd
       --taskPreProcessingSetting
-      :C1:C0:E../Slicer3/Modules/AtlasCreator/TestData/originals/:E../Slicer3/Modules/AtlasCreator/TestData/segmentations/:E${EMSegment_BINARY_DIR}/ACEMS
+      :C1:C0:Eshare/Slicer3/Modules/AtlasCreator/TestData/originals/:Eshare/Slicer3/Modules/AtlasCreator/TestData/segmentations/:E${EMSegment_BINARY_DIR}/ACEMS
       )
     set_tests_properties(
       EMSegCL_Task_TestAtlasCluster_${registrationpackage}_${size}
