@@ -77,8 +77,8 @@ class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
 
       for i in range( self.mrmlManager().GetTargetNumberOfSelectedVolumes() ):
 
-        #volumeNodeID = self.mrmlManager().GetTargetSelectedVolumeNthMRMLID( i )
-        volumeNodeID = self.mrmlManager().GetRegistrationAtlasVolumeID( i )
+        volumeNodeID = self.mrmlManager().GetTargetSelectedVolumeNthMRMLID( i )
+        #volumeNodeID = self.mrmlManager().GetRegistrationAtlasVolumeID( i )
         print "id," + str( i ) + ": " + str( volumeNodeID )
         if volumeNodeID:
           volumeNode = slicer.mrmlScene.GetNodeByID( volumeNodeID )
