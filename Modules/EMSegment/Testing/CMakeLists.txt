@@ -131,7 +131,6 @@ if(NOT DISABLE_CXX_TESTING)
     ${TEST_LINK_LIBRARIES}
     )
 
-if(NOT EM_Slicer4_FOUND)
   add_executable(
     vtkEMSegmentBlackBoxSegmentationTest
     vtkEMSegmentBlackBoxSegmentationTest.cxx
@@ -141,7 +140,6 @@ if(NOT EM_Slicer4_FOUND)
     vtkEMSegmentBlackBoxSegmentationTest
     ${TEST_LINK_LIBRARIES}
     )
-endif(NOT EM_Slicer4_FOUND)
 
   add_executable(
     vtkEMSegmentCompareTest
