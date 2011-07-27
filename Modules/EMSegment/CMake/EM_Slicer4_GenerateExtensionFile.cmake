@@ -3,9 +3,9 @@
 # Here, we generate the extension description.
 #
 
-  if(NOT Slicer_SOURCE_DIR)
-    include(SlicerFunctionGenerateExtensionDescription)
-    slicerFunctionGenerateExtensionDescription(
+if(NOT Slicer_SOURCE_DIR)
+  include(SlicerFunctionGenerateExtensionDescription)
+  slicerFunctionGenerateExtensionDescription(
     EXTENSION_NAME ${EXTENSION_NAME}
     EXTENSION_CATEGORY ${EXTENSION_CATEGORY}
     EXTENSION_STATUS ${EXTENSION_STATUS}
@@ -16,6 +16,6 @@
     SLICER_WC_REVISION ${Slicer_WC_REVISION}
     SLICER_WC_ROOT ${Slicer_WC_ROOT}
     )
-    include(${Slicer_EXTENSION_CPACK})
-  endif()
-  
+  include(${Slicer_EXTENSION_CPACK})
+endif()
+
