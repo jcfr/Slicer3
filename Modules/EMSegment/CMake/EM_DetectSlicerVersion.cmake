@@ -8,22 +8,15 @@
 #
 
 if(Slicer3_SOURCE_DIR)
-  # this is Slicer3  
+  project(EMSegment)
+  # this is Slicer3
   SET(EM_Slicer3_FOUND ON)
   SET(EM_Slicer4_FOUND OFF)
-  MESSAGE(STATUS "Configuring EMSegment for Slicer3..")
-  
-else(Slicer3_SOURCE_DIR)
-
+  MESSAGE(STATUS "Configuring EMSegment for Slicer3")
+else()
   # this is Slicer4
   SET(EM_Slicer4_FOUND ON)
   SET(EM_Slicer3_FOUND OFF)
-  MESSAGE(STATUS "Configuring EMSegment for Slicer4..")
-  
-endif(Slicer3_SOURCE_DIR)
+  MESSAGE(STATUS "Configuring EMSegment for Slicer4")
+endif()
 
-  # we do not want CMake project definitions so we set the following variables manually
-  #project(EMSegment)
-  SET(PROJECT_NAME "EMSegment")
-  SET(EMSegment_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-  SET(EMSegment_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})

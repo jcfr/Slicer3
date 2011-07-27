@@ -3,27 +3,19 @@
 # EM Segmenter for 3D Slicer3 and 3D Slicer4
 #
 # --------------------------------------------------------------------------
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
+cmake_minimum_required(VERSION 2.8)
+if(POLICY CMP0016)
+  CMAKE_POLICY(SET CMP0016 NEW)
+endif()
+if(POLICY CMP0017)
+  CMAKE_POLICY(SET CMP0017 OLD)
+endif()
 
 # --------------------------------------------------------------------------
 # Detect if we build for Slicer3 or Slicer4 and set EM_Slicer4_FOUND accordingly
 #
 include(CMake/EM_DetectSlicerVersion.cmake)
-
-
-
-# --------------------------------------------------------------------------
-# CMake Requirements and Policies
-#
-if(EM_Slicer3_FOUND)
-  # include Slicer3 specific file
-  include(CMake/EM_Slicer3_CMakeRequirements.cmake)
-endif()
-
-if(EM_Slicer4_FOUND)
-  # include Slicer4 specific file
-  include(CMake/EM_Slicer4_CMakeRequirements.cmake)
-endif()
 
 
 
