@@ -359,10 +359,15 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
     if {$isWindows} {
       runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Binaries/Windows/CMake-build CMake-build
     } else {
-        if { [info exists ::CMAKE_GIT_REPO] } {
-            eval "runcmd $::GIT clone $::CMAKE_GIT_REPO CMake"
+        if { [info exists ::CMake_GIT_REPO] } {
+            if { ![file exists CMake] } {
+              eval "runcmd $::GIT clone $::CMake_GIT_REPO CMake"
+            }
             cd $::Slicer3_LIB/CMake
-            eval "runcmd $::GIT checkout $::CMAKE_GIT_BRANCH"
+            eval "runcmd $::GIT checkout $::CMake_GIT_BRANCH"
+            eval "runcmd $::GIT pull"
+            eval "runcmd $::GIT checkout $::CMake_GIT_TAG"
+            cd $::Slicer3_LIB
         } else {
             runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
             eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake"
@@ -380,11 +385,6 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
             close $fp
             runcmd $Slicer3_LIB/CMake/configure --init=initialCache.cmake
           } else {
-#            cd $Slicer3_LIB/CMake
-#            eval "runcmd $::GIT checkout $::CMake_GIT_BRANCH"
-#            eval "runcmd $::GIT pull"
-#            eval "runcmd $::GIT checkout $::CMake_GIT_TAG"
-#            cd $::CMAKE_PATH
             runcmd $Slicer3_LIB/CMake/configure
           }
 
@@ -967,9 +967,7 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
 if { [BuildThis $::VTK_TEST_FILE "vtk"] == 1 } {
     cd $Slicer3_LIB
 
-    if { 1 } {
-      runcmd $::SVN co $::VTK_TAG VTK
-    } else {
+    if { [info exists ::VTK_GIT_REPO] } {
       if { ![file exists VTK] } {
           eval "runcmd $::GIT clone $::VTK_GIT_REPO VTK"
       }
@@ -977,6 +975,8 @@ if { [BuildThis $::VTK_TEST_FILE "vtk"] == 1 } {
       eval "runcmd $::GIT checkout $::VTK_GIT_BRANCH"
       eval "runcmd $::GIT pull"
       eval "runcmd $::GIT checkout $::VTK_GIT_TAG"
+    } else {
+      runcmd $::SVN co $::VTK_TAG VTK
     }
 
     # Andy's temporary hack to get around wrong permissions in VTK cvs repository
@@ -1199,10 +1199,7 @@ if { [BuildThis $::KWWidgets_TEST_FILE "kwwidgets"] == 1 } {
 if { [BuildThis $::ITK_TEST_FILE "itk"] == 1 } {
     cd $Slicer3_LIB
 
-    if { 1 } {
-      runcmd $::CVS -d :pserver:anoncvs:@www.vtk.org:/cvsroot/Insight login
-      eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anoncvs@www.vtk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight"
-    } else {
+    if { [info exists ::ITK_GIT_REPO] } {
       if { ![file exists Insight] } {
           eval "runcmd $::GIT clone -b $::ITK_GIT_BRANCH $::ITK_GIT_REPO Insight"
       }
@@ -1210,6 +1207,9 @@ if { [BuildThis $::ITK_TEST_FILE "itk"] == 1 } {
       eval "runcmd $::GIT checkout $::ITK_GIT_BRANCH"
       eval "runcmd $::GIT pull"
       eval "runcmd $::GIT checkout $::ITK_GIT_TAG"
+    } else {
+      runcmd $::CVS -d :pserver:anoncvs:@www.vtk.org:/cvsroot/Insight login
+      eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anoncvs@www.vtk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight"
     }
 
     if {$::GENLIB(buildit)} {

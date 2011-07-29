@@ -133,8 +133,6 @@ puts "Slicer3_HOME is $::Slicer3_HOME"
 # section below, or genlib will happily build the library again.
 
 set ::Slicer3_TAG "http://svn.slicer.org/Slicer3/trunk"
-#set ::CMAKE_GIT_REPO git://cmake.org/cmake.git
-#set ::CMAKE_GIT_BRANCH "v2.8.5"
 set ::CMAKE_TAG "CMake-2-8-0"
 set ::Teem_TAG http://teem.svn.sourceforge.net/svnroot/teem/teem/branches/Teem-1.11
 set ::KWWidgets_TAG "Slicer-3-6"
@@ -158,15 +156,15 @@ set ::OpenIGTLink_TAG "http://svn.na-mic.org/NAMICSandBox/trunk/OpenIGTLink"
 set ::OpenCV_TAG https://code.ros.org/svn/opencv/tags/2.1/opencv
 
 # for experimental use
-set ::ITK_GIT_REPO git://itk.org/ITK.git 
-set ::ITK_GIT_BRANCH release          
-set ::ITK_GIT_TAG v3.20.0   
-set ::VTK_GIT_REPO git://vtk.org/VTK.git   
-set ::VTK_GIT_BRANCH release            
-set ::VTK_GIT_TAG v5.6.1     
-set ::CMake_GIT_REPO git://cmake.org/cmake.git
+#set ::ITK_GIT_REPO git://itk.org/ITK.git
+set ::ITK_GIT_BRANCH release
+set ::ITK_GIT_TAG v3.20.0
+#set ::VTK_GIT_REPO git://vtk.org/VTK.git
+set ::VTK_GIT_BRANCH release
+set ::VTK_GIT_TAG v5.6.1
+#set ::CMake_GIT_REPO git://cmake.org/cmake.git
 set ::CMake_GIT_BRANCH release
-set ::CMake_GIT_TAG v2.8.4
+set ::CMake_GIT_TAG v2.8.5
 
 # set TCL_VERSION to "tcl" to get 8.4, otherwise use tcl85 to get 8.5
 # set 8.5 for Solaris explicitly, because 8.4 complains 
