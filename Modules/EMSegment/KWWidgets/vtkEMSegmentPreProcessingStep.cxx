@@ -192,7 +192,7 @@ vtkEMSegmentPreProcessingStep::Validate()
     progress->SetParent(this->GetGUI ()->GetApplicationGUI ()->GetMainSlicerWindow ());
     progress->SetMasterWindow (this->GetGUI ()->GetApplicationGUI ()->GetMainSlicerWindow());
     progress->Create();
-    progress->SetMessageText("Please wait until pre-processing has been finished.");
+    progress->SetMessageText("Please wait until pre-processing has finished.");
     progress->Display();
     int flag = atoi(this->Script("::EMSegmenterPreProcessingTcl::Run"));
     progress->SetParent(NULL);
