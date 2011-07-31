@@ -147,6 +147,10 @@ public:
   vtkGetMacro(FMRIMapping, int);
   vtkSetMacro(FMRIMapping, int);
 
+#if (VTK_MAJOR_VERSION == 5 && VTK_MINOR_VERSION == 8)
+  virtual vtkIdType GetNumberOfAvailableColors();
+#endif
+
 protected:
   vtkIndirectLookupTable();
   ~vtkIndirectLookupTable();
