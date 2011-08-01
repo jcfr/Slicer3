@@ -10,6 +10,7 @@ class EMSegmentPy:
     parent.contributor = "--"
     parent.helpText = """dsfdsf"""
     parent.acknowledgementText = """sdfsdfdsf"""
+    parent.icon = qt.QIcon( ":/Icons/EMSegment.png" )
     self.parent = parent
 
 class EMSegmentPyWidget:
@@ -104,7 +105,7 @@ class EMSegmentPyWidget:
     self.workflow.addTransition( selectTaskStep, defineInputChannelsAdvancedStep, 'AdvancedMode' )
 
     # Add transitions associated to the simple mode
-    self.workflow.addTransition( defineInputChannelsSimpleStep, segmentStep )
+    self.workflow.addTransition( defineInputChannelsSimpleStep, defineAnatomicalTreeStep )
 
     # Add transitions associated to the advanced mode
     self.workflow.addTransition( defineInputChannelsAdvancedStep, defineAnatomicalTreeStep )
@@ -127,6 +128,7 @@ class EMSegmentPyWidget:
     # enable global access to the dynamicFrames on step 2 and step 6
     slicer.modules.emsegmentSimpleDynamicFrame = defineInputChannelsSimpleStep.dynamicFrame()
     slicer.modules.emsegmentAdvancedDynamicFrame = definePreprocessingStep.dynamicFrame()
+    slicer.modules.emsegmentPreprocessingStep = definePreprocessingStep
 
     # compress the layout
     #self.layout.addStretch(1)        

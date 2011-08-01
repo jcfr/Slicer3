@@ -504,6 +504,10 @@ public:
 
   virtual void SynchronizeAtlasNode(vtkMRMLEMSAtlasNode* templateNode, vtkMRMLEMSAtlasNode* changingNode, const char* name);
 
+  //
+  // convenience functions for managing ID mapping (mrml id <-> vtkIdType)
+  //
+  virtual const char*  MapVTKNodeIDToMRMLNodeID(vtkIdType vtkID);
   virtual vtkIdType    MapMRMLNodeIDToVTKNodeID(const char* MRMLNodeID);
 
   //BTX
@@ -567,10 +571,7 @@ private:
   vtksys_stl::string TurnDefaultFileIntoName(vtksys_stl::string taskName);
  //ETX
 
-  //
-  // convenience functions for managing ID mapping (mrml id <-> vtkIdType)
-  //
-  virtual const char*  MapVTKNodeIDToMRMLNodeID(vtkIdType vtkID);
+
 
   virtual void         IDMapInsertPair(vtkIdType vtkID, 
                                        const char* MRMLNodeID);
