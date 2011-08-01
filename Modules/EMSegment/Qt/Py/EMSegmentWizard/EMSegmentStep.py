@@ -60,6 +60,7 @@ class EMSegmentStep( ctk.ctkWorkflowWidgetStep ) :
 
   def validate( self, desiredBranchId ):
     #print "-> validate %s" % self.id()
+    pass
 
   def validationSucceeded( self, desiredBranchId ):
     '''
