@@ -172,7 +172,8 @@ class EMSegmentDynamicFrame:
     # Final step:
 
     # build the defText string
-    newDefText = ":".join( defList )
+    newDefText = ":"
+    newDefText += ":".join( defList )
 
     # and propagate it to MRML
     self.mrmlManager().GetGlobalParametersNode().SetTaskPreProcessingSetting( newDefText )

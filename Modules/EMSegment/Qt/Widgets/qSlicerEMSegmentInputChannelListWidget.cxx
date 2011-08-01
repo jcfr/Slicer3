@@ -309,6 +309,8 @@ void qSlicerEMSegmentInputChannelListWidget::updateMRMLFromWidget()
     return;
     }
 
+  globalNode->AddTargetInputChannel();
+
   nodeId = node->GetID();
 
   if (rowId == this->mrmlManager()->GetTargetNumberOfSelectedVolumes())
