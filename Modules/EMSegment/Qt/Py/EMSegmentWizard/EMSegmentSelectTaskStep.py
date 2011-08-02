@@ -123,7 +123,8 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
     templateNode = templateNodes.GetItemAsObject( templateNodes.GetNumberOfItems() - 1 )
 
     loadResult = self.mrmlManager().SetLoadedParameterSetIndex( templateNode )
-    if not loadResult:
+
+    if int( loadResult ) != 0:
       Helper.Info( "EMS node is corrupted - the manager could not be updated with new task: " + taskName )
       #return False
 

@@ -32,7 +32,6 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
     '''
     if not self.__dynamicFrame:
 
-      Helper.Debug( "No dynamic frame yet, creating one.." )
       self.__dynamicFrame = EMSegmentDynamicFrame()
 
     return self.__dynamicFrame
