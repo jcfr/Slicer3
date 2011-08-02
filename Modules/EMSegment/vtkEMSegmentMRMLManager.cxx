@@ -3710,6 +3710,12 @@ void
 vtkEMSegmentMRMLManager::
 GetListOfTreeNodeIDs(vtkIdType rootNodeID, vtkstd::vector<vtkIdType>& idList)
 {
+  if (rootNodeID == 0)
+  {
+    vtkErrorMacro("rootNodeID is zero");
+    return;
+  }
+
   // add this node
   idList.push_back(rootNodeID);
 
