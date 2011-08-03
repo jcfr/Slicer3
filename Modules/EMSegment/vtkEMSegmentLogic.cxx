@@ -2818,7 +2818,7 @@ int vtkEMSegmentLogic::SourcePreprocessingTclFiles()
 }
 
 //----------------------------------------------------------------------------
-std::string vtkEMSegmentLogic::DefineTclTaskFileFromMRML()
+const char* vtkEMSegmentLogic::DefineTclTaskFileFromMRML()
 {
   std::string tclFile("");
   tclFile = this->DefineTclTaskFullPathName(
@@ -2827,7 +2827,7 @@ std::string vtkEMSegmentLogic::DefineTclTaskFileFromMRML()
   if (vtksys::SystemTools::FileExists(tclFile.c_str())
       && (!vtksys::SystemTools::FileIsDirectory(tclFile.c_str())))
     {
-    return tclFile;
+    return tclFile.c_str();
     }
 
   cout << "vtkEMSegmentTclConnector::DefineTclTaskFileFromMRML: "
@@ -2835,7 +2835,7 @@ std::string vtkEMSegmentLogic::DefineTclTaskFileFromMRML()
 
   tclFile = this->DefineTclTaskFullPathName(
       vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
-  return tclFile;
+  return tclFile.c_str();
 }
 
 //----------------------------------------------------------------------------

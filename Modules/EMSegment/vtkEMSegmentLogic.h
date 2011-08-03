@@ -230,24 +230,15 @@ public:
 
   virtual int SourceTaskFiles();
   virtual int SourcePreprocessingTclFiles();
+
   int ComputeIntensityDistributionsFromSpatialPrior();
+
+  const char* DefineTclTaskFileFromMRML();
 
   //BTX
   vtkstd::string GetTclTaskDirectory();
-  vtkstd::string DefineTclTaskFileFromMRML();
-  //ETX
-#ifdef Slicer3_USE_KWWIDGETS
-  // we do not want to wrap this function in Slicer3
-  // it is only used in Slicer4
 
-  //BTX
-#endif
   std::string DefineTclTaskFullPathName(const char* TclFileName);
-#ifdef Slicer3_USE_KWWIDGETS
-  //ETX
-#endif
-
-  //BTX
   void
       CreateDefaultTasksList(std::vector<std::string> & DefaultTasksName, std::vector<
           std::string> & DefaultTasksFile, std::vector<std::string> & DefinePreprocessingTasksName, std::vector<
