@@ -1,6 +1,9 @@
 #ifndef __vtkEMSegmentLogic_h
 #define __vtkEMSegmentLogic_h
 
+// needed to get the CMake variables
+#include "vtkSlicerConfigure.h"
+
 #include "vtkSlicerModuleLogic.h"
 #include "vtkEMSegment.h"
 #include "vtkEMSegmentMRMLManager.h"
@@ -19,9 +22,6 @@
 #ifdef Slicer3_USE_KWWIDGETS
 #include <vtkMRMLAtlasCreatorNode.h>
 #endif
-
-// needed to get the CMake variables
-#include <vtkSlicerConfigure.h>
 
 class vtkImageEMLocalSegmenter;
 class vtkImageEMLocalGenericClass;
@@ -247,21 +247,20 @@ public:
 
   void UpdateIntensityDistributionAuto(vtkIdType nodeID);
 
-#ifdef Slicer3_USE_KWWIDGETS  
+#ifndef Slicer_USE_QT
   void RunAtlasCreator(vtkMRMLAtlasCreatorNode *node);
 #endif
 
   void WriteImage(vtkImageData* file, const char* filename);
 
+// we do not want to wrap this function in Slicer3
+// it is only used in Slicer4
 #ifdef Slicer3_USE_KWWIDGETS
-  // we do not want to wrap this function in Slicer3
-  // it is only used in Slicer4
-
   //BTX
-#endif
   std::string GetTasks();
-#ifdef Slicer3_USE_KWWIDGETS
   //ETX
+#else
+  std::string GetTasks();
 #endif
 
 protected:
