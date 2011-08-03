@@ -247,7 +247,7 @@ public:
 
   void UpdateIntensityDistributionAuto(vtkIdType nodeID);
 
-#ifndef Slicer_USE_QT
+#ifdef Slicer3_USE_KWWIDGETS
   void RunAtlasCreator(vtkMRMLAtlasCreatorNode *node);
 #endif
 
