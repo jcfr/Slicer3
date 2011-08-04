@@ -255,13 +255,14 @@ public:
 
 // we do not want to wrap this function in Slicer3
 // it is only used in Slicer4
+
 #ifdef Slicer3_USE_KWWIDGETS
-  //BTX
-  std::string GetTasks();
-  //ETX
-#else
-  std::string GetTasks();
+//BTX
 #endif
+std::string GetTasks();
+#ifdef Slicer3_USE_KWWIDGETS
+//ETX
+#endif 
 
 protected:
   // the mrml manager is created in the constructor
