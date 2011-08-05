@@ -86,7 +86,7 @@ proc DEMONSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgro
     set CMD "$CMD -m \"$movingVolumeFileName\""
 
     if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
-        set CMD "$CMD -s 1.5 -i 1x1x1"
+        set CMD "$CMD -s 1.5 -i 20x5x0"
     } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
         set CMD "$CMD -s 1.0 -i 30x20x10"
     } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
