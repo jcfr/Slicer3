@@ -16,6 +16,28 @@ proc Get_PLASTIMATCH_Installation_Path { } {
     return $PLASTIMATCHFOLDER
 }
 
+proc PLASTIMATCHGetPixelTypeFromVolumeNode { volumeNode } {
+
+    set referenceVolume [$volumeNode GetImageData]
+    set scalarType [$referenceVolume GetScalarTypeAsString]
+    switch -exact "$scalarType" {
+        "char"           { set PIXELTYPE "char" }
+        "unsigned char"  { set PIXELTYPE "uchar" }
+        "short"          { set PIXELTYPE "short" }
+        "unsigned short" { set PIXELTYPE "ushort" }
+        "int"            { set PIXELTYPE "int" }
+        "unsigned int"   { set PIXELTYPE "uint" }
+        "float"          { set PIXELTYPE "float" }
+        "double"         { set PIXELTYPE "double" }
+        default {
+            PrintError "PLASTIMATCHGetPixelTypeFromVolumeNode: Cannot handle a volume of type $scalarType"
+            set PIXELTYPE "INVALID"
+        }
+    }
+    return $PIXELTYPE
+}
+
+
 # ----------------------------------------------------------------------------
 proc PLASTIMATCHResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformFileName interpolationType backgroundLevel } {
     variable SCENE
@@ -27,6 +49,12 @@ proc PLASTIMATCHResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode 
     $LOGIC PrintText "TCL: =========================================="
 
     set CMD "$PLASTIMATCHFOLDER/plastimatch_slicer_xformwarp"
+
+    set PIXELTYPEFILENAME [CreateFileName "Text"]
+    set fo [open $PIXELTYPEFILENAME w]
+    puts -nonewline $fo "\[GLOBAL\] \n img_out_type=[PLASTIMATCHGetPixelTypeFromVolumeNode $referenceVolumeNode]"
+    close $fo
+    set CMD "$CMD --returnparameterfile $PIXELTYPEFILENAME"
 
     set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
     if { $outVolumeFileName == "" } { return 1 }
@@ -121,6 +149,13 @@ proc PLASTIMATCHRegistration { fixedVolumeNode movingVolumeNode outVolumeNode ba
     ## PLASTIMATCH specific arguments
 
     set CMD "$PLASTIMATCHFOLDER/plastimatch_slicer_bspline"
+
+    set PIXELTYPEFILENAME [CreateFileName "Text"]
+    set fo [open $PIXELTYPEFILENAME w]
+    puts -nonewline $fo "\[GLOBAL\] \n img_out_type=[PLASTIMATCHGetPixelTypeFromVolumeNode $fixedVolumeNode]"
+    close $fo
+    set CMD "$CMD --returnparameterfile $PIXELTYPEFILENAME"
+
     if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
         set CMD "$CMD --stage1its 3"
     } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationFast] } {
