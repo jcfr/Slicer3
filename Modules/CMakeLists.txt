@@ -42,7 +42,6 @@ endif(GenerateLM_FOUND)
 #   - ScriptedModule (at run-time for its Tcl package)
 
 SET(modules
-  AtlasCreator
   CommandLineModule
   Editor
   Endoscopy
@@ -86,6 +85,7 @@ SET(modules
 #  UDPServer
 #  CaptureBetaProbe
 #  OsteoPlan
+  AtlasCreator
   )
 
 if(Slicer3_USE_OPENIGTLINK)
