@@ -175,12 +175,51 @@ class EMSegmentDefinePreprocessingStep( EMSegmentStep ) :
 
     # same for plastimatch
     if self.mrmlManager().GetRegistrationPackageType() == self.mrmlManager().GetPackageTypeFromString( 'PLASTIMATCH' ):
-      # cmtk was selected
+      # plastimatch was selected
       plastimatchPath = tcl( "::EMSegmenterPreProcessingTcl::Get_PLASTIMATCH_Installation_Path" )
 
       if plastimatchPath == "":
         # plastimatch was not found, ask if we want BRAINSFit instead
         answer = qt.QMessageBox.question( self, "PLASTIMATCH is not installed", "Do you want to proceed with BRAINSTools instead?", qt.QMessageBox.Yes | qt.QMessageBox.No )
+        if answer == qt.QMessageBox.No:
+          # if no, exit here and stay at this step
+          self.__parent.validationFailed( desiredBranchId, '', '', False )
+          return
+
+    # same for DEMONS
+    if self.mrmlManager().GetRegistrationPackageType() == self.mrmlManager().GetPackageTypeFromString( 'DEMONS' ):
+      # DEMONS was selected
+      demonsPath = tcl( "::EMSegmenterPreProcessingTcl::Get_DEMONS_Installation_Path" )
+
+      if demonsPath == "":
+        # demons was not found, ask if we want BRAINSFit instead
+        answer = qt.QMessageBox.question( self, "DEMONS is not installed", "Do you want to proceed with BRAINSTools instead?", qt.QMessageBox.Yes | qt.QMessageBox.No )
+        if answer == qt.QMessageBox.No:
+          # if no, exit here and stay at this step
+          self.__parent.validationFailed( desiredBranchId, '', '', False )
+          return
+
+    # same for DRAMMS
+    if self.mrmlManager().GetRegistrationPackageType() == self.mrmlManager().GetPackageTypeFromString( 'DRAMMS' ):
+      # dramms was selected
+      drammsPath = tcl( "::EMSegmenterPreProcessingTcl::Get_DRAMMS_Installation_Path" )
+
+      if drammsPath == "":
+        # dramms was not found, ask if we want BRAINSFit instead
+        answer = qt.QMessageBox.question( self, "DRAMMS is not installed", "Do you want to proceed with BRAINSTools instead?", qt.QMessageBox.Yes | qt.QMessageBox.No )
+        if answer == qt.QMessageBox.No:
+          # if no, exit here and stay at this step
+          self.__parent.validationFailed( desiredBranchId, '', '', False )
+          return
+
+    # same for ANTS
+    if self.mrmlManager().GetRegistrationPackageType() == self.mrmlManager().GetPackageTypeFromString( 'ANTS' ):
+      # ANTS was selected
+      antsPath = tcl( "::EMSegmenterPreProcessingTcl::Get_ANTS_Installation_Path" )
+
+      if antsPath == "":
+        # ANTS was not found, ask if we want BRAINSFit instead
+        answer = qt.QMessageBox.question( self, "ANTS is not installed", "Do you want to proceed with BRAINSTools instead?", qt.QMessageBox.Yes | qt.QMessageBox.No )
         if answer == qt.QMessageBox.No:
           # if no, exit here and stay at this step
           self.__parent.validationFailed( desiredBranchId, '', '', False )
