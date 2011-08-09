@@ -68,7 +68,6 @@ SET(modules
 # WFEngineModule  <- can't work with 2.6 and Win32??
   ModelMirror
   ModelTransform
-  EMSegment
   # DistanceTransformModel <- culled from slicer 3.6
   ClipModel
   Measurements
@@ -86,6 +85,7 @@ SET(modules
 #  CaptureBetaProbe
 #  OsteoPlan
   AtlasCreator
+  EMSegment
   )
 
 if(Slicer3_USE_OPENIGTLINK)
