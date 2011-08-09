@@ -368,6 +368,8 @@ public:
     BRAINS = 1,
     PLASTIMATCH = 2,
     DEMONS = 3,
+    DRAMMS = 4,
+    ANTS = 5,
     };
   //ETX
   virtual int       GetRegistrationPackageType();
