@@ -1,20 +1,7 @@
 # This function will be called by the wizard and expects a path or "" in the case CMTK is not installed
 proc Get_CMTK_Installation_Path { } {
-    variable LOGIC
-
-    set CMTKFOLDER ""
-    # search for directories , sorted with the highest svn first
-    set dirs [lsort -decreasing [glob -nocomplain -directory [[$LOGIC GetSlicerCommonInterface] GetExtensionsDirectory] -type d * ] ]
-    foreach dir $dirs {
-        set filename $dir\/CMTK4Slicer/registration
-        if { [file exists $filename] } {
-            set CMTKFOLDER  $dir\/CMTK4Slicer
-            $LOGIC PrintText "TCL: Found CMTK in $dir\/CMTK4Slicer"
-            break
-        }
-    }
-
-    return $CMTKFOLDER
+    set REGISTRATION_PACKAGE_FOLDER [Get_Installation_Path "CMTK4Slicer" "registration"]
+    return $REGISTRATION_PACKAGE_FOLDER
 }
 
 
@@ -38,17 +25,18 @@ proc CMTKGetPixelTypeFromVolumeNode { volumeNode } {
     }
     return $PIXELTYPE
 }
+
 # ----------------------------------------------------------------------------
 proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformDirName interpolationType backgroundLevel } {
     variable SCENE
     variable LOGIC
-    variable CMTKFOLDER
+    variable REGISTRATION_PACKAGE_FOLDER
 
     $LOGIC PrintText "TCL: =========================================="
     $LOGIC PrintText "TCL: == Resample Image CLI : CMTKResampleCLI "
     $LOGIC PrintText "TCL: =========================================="
 
-    set CMD "$CMTKFOLDER/reformatx"
+    set CMD "$REGISTRATION_PACKAGE_FOLDER/reformatx"
 
 
     set outVolumeFileName [CreateTemporaryFileNameForNode $outVolumeNode]
@@ -106,7 +94,7 @@ proc CMTKResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transfo
 proc CMTKRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel deformableType affineType} {
     variable SCENE
     variable LOGIC
-    variable CMTKFOLDER
+    variable REGISTRATION_PACKAGE_FOLDER
     variable mrmlManager
 
     # Do not get rid of debug mode variable - it is sometimes very helpful !
@@ -164,7 +152,7 @@ proc CMTKRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroun
 
     ## CMTK specific arguments
 
-    set CMD "$CMTKFOLDER/registration"
+    set CMD "$REGISTRATION_PACKAGE_FOLDER/registration"
 
     if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
         set CMD "$CMD --dofs 0"
@@ -202,7 +190,7 @@ proc CMTKRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroun
 
     if { $deformableType != 0 } {
 
-        set CMD "$CMTKFOLDER/warp"
+        set CMD "$REGISTRATION_PACKAGE_FOLDER/warp"
 
         # BSpline
         set outNonLinearTransformDirName [CreateDirName "xform"]

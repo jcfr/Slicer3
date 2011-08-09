@@ -1,20 +1,3 @@
-proc Get_PLASTIMATCH_Installation_Path { } {
-    variable LOGIC
-
-    set PLASTIMATCHFOLDER ""
-    # search for directories , sorted with the highest svn first
-    set dirs [lsort -decreasing [glob -nocomplain -directory [[$LOGIC GetSlicerCommonInterface] GetExtensionsDirectory] -type d * ] ]
-    foreach dir $dirs {
-        set filename $dir\/plastimatch-slicer/plastimatch_slicer_bspline
-        if { [file exists $filename] } {
-            set PLASTIMATCHFOLDER  $dir\/plastimatch-slicer
-            $LOGIC PrintText "TCL: Found PLASTIMATCH in $dir\/plastimatch-slicer"
-            break
-        }
-    }
-
-    return $PLASTIMATCHFOLDER
-}
 
 proc PLASTIMATCHGetPixelTypeFromVolumeNode { volumeNode } {
 
@@ -42,13 +25,13 @@ proc PLASTIMATCHGetPixelTypeFromVolumeNode { volumeNode } {
 proc PLASTIMATCHResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode transformFileName interpolationType backgroundLevel } {
     variable SCENE
     variable LOGIC
-    variable PLASTIMATCHFOLDER
+    variable REGISTRATION_PACKAGE_FOLDER
 
     $LOGIC PrintText "TCL: =========================================="
     $LOGIC PrintText "TCL: == Resample Image CLI : PLASTIMATCHResampleCLI "
     $LOGIC PrintText "TCL: =========================================="
 
-    set CMD "$PLASTIMATCHFOLDER/plastimatch_slicer_xformwarp"
+    set CMD "$REGISTRATION_PACKAGE_FOLDER/plastimatch_slicer_xformwarp"
 
     set PIXELTYPEFILENAME [CreateFileName "Text"]
     set fo [open $PIXELTYPEFILENAME w]
@@ -90,7 +73,7 @@ proc PLASTIMATCHResampleCLI { inputVolumeNode referenceVolumeNode outVolumeNode 
 proc PLASTIMATCHRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel deformableType affineType} {
     variable SCENE
     variable LOGIC
-    variable PLASTIMATCHFOLDER
+    variable REGISTRATION_PACKAGE_FOLDER
     variable mrmlManager
 
     # Do not get rid of debug mode variable - it is sometimes very helpful !
@@ -148,7 +131,7 @@ proc PLASTIMATCHRegistration { fixedVolumeNode movingVolumeNode outVolumeNode ba
 
     ## PLASTIMATCH specific arguments
 
-    set CMD "$PLASTIMATCHFOLDER/plastimatch_slicer_bspline"
+    set CMD "$REGISTRATION_PACKAGE_FOLDER/plastimatch_slicer_bspline"
 
     set PIXELTYPEFILENAME [CreateFileName "Text"]
     set fo [open $PIXELTYPEFILENAME w]
@@ -180,6 +163,8 @@ proc PLASTIMATCHRegistration { fixedVolumeNode movingVolumeNode outVolumeNode ba
 
     set CMD "$CMD \"$fixedVolumeFileName\""
     set CMD "$CMD \"$movingVolumeFileName\""
+#    set CMD "$CMD \"$outVolumeFileName\""
+
 
     $LOGIC PrintText "TCL: Executing $CMD"
     catch { eval exec $CMD } errmsg

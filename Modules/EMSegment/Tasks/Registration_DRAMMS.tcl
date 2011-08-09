@@ -1,35 +1,22 @@
-proc Get_DEMONS_Installation_Path { } {
-    variable LOGIC
-
-    set DEMONSFOLDER ""
-    # search for directories , sorted with the highest svn first
-    set dirs [lsort -decreasing [glob -nocomplain -directory [[$LOGIC GetSlicerCommonInterface] GetExtensionsDirectory] -type d * ] ]
-    foreach dir $dirs {
-        set filename $dir\/LogDomainDemonsRegistration-0.0.5-Source/bin/DemonsRegistration
-        if { [file exists $filename] } {
-            set DEMONSFOLDER  $dir\/LogDomainDemonsRegistration-0.0.5-Source/bin
-            $LOGIC PrintText "TCL: Found DEMONS in $dir\/LogDomainDemonsRegistration-0.0.5-Source/bin/"
-            break
-        }
-    }
-
-    return $DEMONSFOLDER
+proc Get_DRAMMS_Installation_Path { } {
+    set REGISTRATION_PACKAGE_FOLDER [Get_Installation_Path "DRAMMS" "DRAMMS3D.sh"]
+    return $REGISTRATION_PACKAGE_FOLDER
 }
 
 
 # ----------------------------------------------------------------------------
-proc DEMONSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel deformableType affineType} {
+proc DRAMMSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroundLevel deformableType affineType} {
     variable SCENE
     variable LOGIC
-    variable DEMONSFOLDER
+    variable REGISTRATION_PACKAGE_FOLDER
     variable mrmlManager
 
     # Do not get rid of debug mode variable - it is sometimes very helpful !
-    set DEMONS_DEBUG_MODE 0
+    set DRAMMS_DEBUG_MODE 0
 
-    if { $DEMONS_DEBUG_MODE } {
+    if { $DRAMMS_DEBUG_MODE } {
         $LOGIC PrintText ""
-        $LOGIC PrintText "DEBUG: ==========DEMONSRegistration DEBUG MODE ============="
+        $LOGIC PrintText "DEBUG: ==========DRAMMSRegistration DEBUG MODE ============="
         $LOGIC PrintText ""
     }
 
@@ -40,17 +27,17 @@ proc DEMONSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgro
     # check arguments
 
     if { $fixedVolumeNode == "" || [$fixedVolumeNode GetImageData] == "" } {
-        PrintError "DEMONSRegistration: fixed volume node not correctly defined"
+        PrintError "DRAMMSRegistration: fixed volume node not correctly defined"
         return ""
     }
 
     if { $movingVolumeNode == "" || [$movingVolumeNode GetImageData] == "" } {
-        PrintError "DEMONSRegistration: moving volume node not correctly defined"
+        PrintError "DRAMMSRegistration: moving volume node not correctly defined"
         return ""
     }
 
     if { $outVolumeNode == "" } {
-        PrintError "DEMONSRegistration: output volume node not correctly defined"
+        PrintError "DRAMMSRegistration: output volume node not correctly defined"
         return ""
     }
 
@@ -77,9 +64,9 @@ proc DEMONSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgro
     }
     set RemoveFiles "$RemoveFiles $outVolumeFileName"
 
-    ## DEMONS specific arguments
+    ## DRAMMS specific arguments
 
-    set CMD "$DEMONSFOLDER/DemonsRegistration"
+    set CMD "$REGISTRATION_PACKAGE_FOLDER/DRAMMS3D.sh"
 
 
     set CMD "$CMD -f \"$fixedVolumeFileName\""
@@ -92,7 +79,7 @@ proc DEMONSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgro
     } elseif { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationSlow] } {
         set CMD "$CMD -s 1.5 -i 50x30x10"
     } else {
-        PrintError "DEMONSRegistration: Unknown deformableType: $deformableType"
+        PrintError "DRAMMSRegistration: Unknown deformableType: $deformableType"
         return ""
     }
 
@@ -113,13 +100,13 @@ proc DEMONSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgro
     if { [ReadDataFromDisk $outVolumeNode $outVolumeFileName Volume] == 0 } {
         if { [file exists $outVolumeFileName] == 0 } {
             set outTransformDirName ""
-            PrintError "DEMONSRegistration: out volume file doesn't exists"
+            PrintError "DRAMMSRegistration: out volume file doesn't exists"
         }
     }
 
     if { [file exists $outTransformFileName] == 0 } {
         set outTransformFileName ""
-        PrintError "DEMONSRegistration: out transform file doesn't exists"
+        PrintError "DRAMMSRegistration: out transform file doesn't exists"
     }
 
     foreach NAME $RemoveFiles {

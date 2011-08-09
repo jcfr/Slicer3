@@ -258,6 +258,24 @@ namespace eval EMSegmenterPreProcessingTcl {
         return ""
     }
 
+    proc Get_Installation_Path { myfolder myfile } {
+        variable LOGIC
+
+        set REGISTRATION_PACKAGE_FOLDER ""
+        # search for directories , sorted with the highest svn first
+        set dirs [lsort -decreasing [glob -nocomplain -directory [[$LOGIC GetSlicerCommonInterface] GetExtensionsDirectory] -type d * ] ]
+        foreach dir $dirs {
+            set filename $dir\/$myfolder\/$myfile
+            if { [file exists $filename] } {
+                set REGISTRATION_PACKAGE_FOLDER  $dir\/$myfolder
+                $LOGIC PrintText "TCL: Found PLASTIMATCH in $dir\/$myfolder"
+                break
+            }
+        }
+
+        return $REGISTRATION_PACKAGE_FOLDER
+    }
+
 
     #
     # Preprocessing Functions
@@ -277,9 +295,8 @@ namespace eval EMSegmenterPreProcessingTcl {
         variable outputSubParcellationNode
         variable preferredRegistrationPackage
         variable selectedRegistrationPackage
-        variable CMTKFOLDER
-        variable PLASTIMATCHFOLDER
-        variable DEMONSFOLDER
+        variable REGISTRATION_PACKAGE_FOLDER
+
 
         if {$initLOGIC == ""} {
             PrintError "ERROR: Logic not defined!"
@@ -385,6 +402,12 @@ namespace eval EMSegmenterPreProcessingTcl {
         } elseif { [$mrmlManager GetRegistrationPackageType] == [$mrmlManager GetPackageTypeFromString DEMONS] } {
             set preferredRegistrationPackage DEMONS
             $LOGIC PrintText "TCL: User selected DEMONS"
+        } elseif { [$mrmlManager GetRegistrationPackageType] == [$mrmlManager GetPackageTypeFromString DRAMMS] } {
+            set preferredRegistrationPackage DRAMMS
+            $LOGIC PrintText "TCL: User selected DRAMMS"
+        } elseif { [$mrmlManager GetRegistrationPackageType] == [$mrmlManager GetPackageTypeFromString ANTS] } {
+            set preferredRegistrationPackage ANTS
+            $LOGIC PrintText "TCL: User selected ANTS"
         } else {
             PrintError "InitVariables: RegistrationPackage [$mrmlManager GetRegistrationPackageType] not defined"
             return 1
@@ -398,10 +421,10 @@ namespace eval EMSegmenterPreProcessingTcl {
                 set selectedRegistrationPackage "BRAINS"
             }
             "CMTK" {
-                source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/CMTK.tcl"
-                set CMTKFOLDER [Get_CMTK_Installation_Path]
-                if { $CMTKFOLDER != "" } {
-                    $LOGIC PrintText "TCL: Found CMTK in $CMTKFOLDER"
+                source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/Registration_CMTK.tcl"
+                set REGISTRATION_PACKAGE_FOLDER [Get_CMTK_Installation_Path]
+                if { $REGISTRATION_PACKAGE_FOLDER != "" } {
+                    $LOGIC PrintText "TCL: Found CMTK in $REGISTRATION_PACKAGE_FOLDER"
                     set selectedRegistrationPackage "CMTK"
                 } else {
                     $LOGIC PrintText "TCL: WARNING: Could not find CMTK, switch back to BRAINSTools"
@@ -409,10 +432,10 @@ namespace eval EMSegmenterPreProcessingTcl {
                 }
             }
             "PLASTIMATCH" {
-                source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/plastimatch.tcl"
-                set PLASTIMATCHFOLDER [Get_PLASTIMATCH_Installation_Path]
-                if { $PLASTIMATCHFOLDER != "" } {
-                    $LOGIC PrintText "TCL: Found PLASTIMATCH in $PLASTIMATCHFOLDER"
+                source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/Registration_plastimatch.tcl"
+                set REGISTRATION_PACKAGE_FOLDER [Get_Installation_Path "plastimatch-slicer" "plastimatch_slicer_bspline"]
+                if { $REGISTRATION_PACKAGE_FOLDER != "" } {
+                    $LOGIC PrintText "TCL: Found PLASTIMATCH in $REGISTRATION_PACKAGE_FOLDER"
                     set selectedRegistrationPackage "PLASTIMATCH"
                 } else {
                     $LOGIC PrintText "TCL: WARNING: Could not find PLASTIMATCH, switch back to BRAINSTools"
@@ -420,13 +443,35 @@ namespace eval EMSegmenterPreProcessingTcl {
                 }
             }
             "DEMONS" {
-                source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/DEMONS.tcl"
-                set DEMONSFOLDER [Get_DEMONS_Installation_Path]
-                if { $DEMONSFOLDER != "" } {
-                    $LOGIC PrintText "TCL: Found DEMONS in $DEMONSFOLDER"
+                source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/Registration_DEMONS.tcl"
+                set REGISTRATION_PACKAGE_FOLDER [Get_DEMONS_Installation_Path]
+                if { $REGISTRATION_PACKAGE_FOLDER != "" } {
+                    $LOGIC PrintText "TCL: Found DEMONS in $REGISTRATION_PACKAGE_FOLDER"
                     set selectedRegistrationPackage "DEMONS"
                 } else {
                     $LOGIC PrintText "TCL: WARNING: Couldn't find DEMONS, switch back to BRAINSTools"
+                    set selectedRegistrationPackage "BRAINS"
+                }
+            }
+            "DRAMMS" {
+                source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/Registration_DRAMMS.tcl"
+                set REGISTRATION_PACKAGE_FOLDER [Get_DRAMMS_Installation_Path]
+                if { $REGISTRATION_PACKAGE_FOLDER != "" } {
+                    $LOGIC PrintText "TCL: Found DRAMMS in $REGISTRATION_PACKAGE_FOLDER"
+                    set selectedRegistrationPackage "DRAMMS"
+                } else {
+                    $LOGIC PrintText "TCL: WARNING: Couldn't find DRAMMSS, switch back to BRAINSTools"
+                    set selectedRegistrationPackage "BRAINS"
+                }
+            }
+            "ANTS" {
+                source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/Registration_ANTS.tcl"
+                set REGISTRATION_PACKAGE_FOLDER [Get_ANTS_Installation_Path]
+                if { $REGISTRATION_PACKAGE_FOLDER != "" } {
+                    $LOGIC PrintText "TCL: Found ANTS in $REGISTRATION_PACKAGE_FOLDER"
+                    set selectedRegistrationPackage "ANTS"
+                } else {
+                    $LOGIC PrintText "TCL: WARNING: Couldn't find ANTS, switch back to BRAINSTools"
                     set selectedRegistrationPackage "BRAINS"
                 }
             }
@@ -841,7 +886,7 @@ namespace eval EMSegmenterPreProcessingTcl {
     proc SkullStripper { alignedInputNode tmpNonStrippedAtlasFileName atlas_mask_FileName } {
         variable SCENE
         variable LOGIC
-        variable CMTKFOLDER
+        variable REGISTRATION_PACKAGE_FOLDER
         variable mrmlManager
         variable selectedRegistrationPackage
 
@@ -892,7 +937,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
                 ## CMTK specific arguments
 
-                set CMD "$CMTKFOLDER/registration"
+                set CMD "$REGISTRATION_PACKAGE_FOLDER/registration"
 
                 if { $affineType == [$mrmlManager GetRegistrationTypeFromString RegistrationTest] } {
                     set CMD "$CMD --dofs 0"
@@ -926,7 +971,7 @@ namespace eval EMSegmenterPreProcessingTcl {
 
                 #Resample
 
-                set CMD "$CMTKFOLDER/reformatx"
+                set CMD "$REGISTRATION_PACKAGE_FOLDER/reformatx"
 
                 set backgroundLevel 0
                 set CMD "$CMD --pad-out $backgroundLevel"
@@ -2009,6 +2054,36 @@ namespace eval EMSegmenterPreProcessingTcl {
                     return 1
                 }
             }
+            "DRAMMS" {
+                set transformDirName [DRAMMSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
+                if { $transformDirName == "" } {
+                    PrintError "ResgisterAtlas: Transform node is null"
+                    return 1
+                }
+                set transformNodeType "DRAMMSTransform"
+
+                $LOGIC PrintText "TCL: Resampling atlas template in DRAMMSRegistration ..."
+                # transformNode is not needed, it's value is ""
+                if { [Resample $movingAtlasVolumeNode $fixedTargetVolumeNode $transformNode $transformDirName $transformNodeType Linear $backgroundLevel $outputAtlasVolumeNode] } {
+                    PrintError "RegisterAtlas: Could not resample atlas template volume"
+                    return 1
+                }
+            }
+            "ANTS" {
+                set transformDirName [ANTSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $deformableType $affineType]
+                if { $transformDirName == "" } {
+                    PrintError "ResgisterAtlas: Transform node is null"
+                    return 1
+                }
+                set transformNodeType "ANTSTransform"
+
+                $LOGIC PrintText "TCL: Resampling atlas template in ANTSRegistration ..."
+                # transformNode is not needed, it's value is ""
+                if { [Resample $movingAtlasVolumeNode $fixedTargetVolumeNode $transformNode $transformDirName $transformNodeType Linear $backgroundLevel $outputAtlasVolumeNode] } {
+                    PrintError "RegisterAtlas: Could not resample atlas template volume"
+                    return 1
+                }
+            }
             "BRAINS" {
                 # return value is a affine or bspline transformation node
                 set BRAINStransformNode [BRAINSRegistration $fixedTargetVolumeNode $movingAtlasVolumeNode $outputAtlasVolumeNode $backgroundLevel $affineType $deformableType]
@@ -2116,6 +2191,18 @@ namespace eval EMSegmenterPreProcessingTcl {
             "PLASTIMATCHTransform" {
                 $LOGIC PrintText "TCL: with PLASTIMATCHResampleCLI..."
                 if { [PLASTIMATCHResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName $interpolationType $backgroundLevel] } {
+                    return 1
+                }
+            }
+            "DRAMMSTransform" {
+                $LOGIC PrintText "TCL: with DRAMMSResampleCLI..."
+                if { [DRAMMSResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName $interpolationType $backgroundLevel] } {
+                    return 1
+                }
+            }
+            "ANTSTransform" {
+                $LOGIC PrintText "TCL: with ANTSResampleCLI..."
+                if { [ANTSResampleCLI $inputVolumeNode $referenceVolumeNode $outputVolumeNode $transformDirName $interpolationType $backgroundLevel] } {
                     return 1
                 }
             }
