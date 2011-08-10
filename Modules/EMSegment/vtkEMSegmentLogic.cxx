@@ -79,6 +79,8 @@ vtkEMSegmentLogic::vtkEMSegmentLogic()
   manager->Delete();
 
   this->SlicerCommonInterface = NULL;
+
+  this->StringHolder = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -93,6 +95,8 @@ vtkEMSegmentLogic::~vtkEMSegmentLogic()
     this->SlicerCommonInterface->Delete();
     this->SlicerCommonInterface = NULL;
     }
+
+  this->StringHolder = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -2782,7 +2786,7 @@ int vtkEMSegmentLogic::SourceTaskFiles()
 {
   vtkstd::string generalFile = this->DefineTclTaskFullPathName(
       vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
-  vtkstd::string specificFile = this->DefineTclTaskFileFromMRML();
+  vtkstd::string specificFile = std::string(this->DefineTclTaskFileFromMRML());
   cout << "Sourcing general Task file : " << generalFile.c_str() << endl;
   // Have to first source the default file to set up the basic structure"
   if (this->SourceTclFile(generalFile.c_str()))
@@ -2833,9 +2837,10 @@ const char* vtkEMSegmentLogic::DefineTclTaskFileFromMRML()
   cout << "vtkEMSegmentTclConnector::DefineTclTaskFileFromMRML: "
       << tclFile.c_str() << " does not exist - using default file" << endl;
 
-  tclFile = this->DefineTclTaskFullPathName(
+  this->StringHolder = this->DefineTclTaskFullPathName(
       vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
-  return tclFile.c_str();
+
+  return this->StringHolder.c_str();
 }
 
 //----------------------------------------------------------------------------

@@ -346,6 +346,8 @@ private:
 
   vtkSlicerCommonInterface *SlicerCommonInterface;
 
+  std::string StringHolder;
+
 };
 
 #endif
