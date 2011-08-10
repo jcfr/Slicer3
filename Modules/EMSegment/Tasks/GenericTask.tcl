@@ -413,7 +413,7 @@ namespace eval EMSegmenterPreProcessingTcl {
             return 1
         }
 
-        source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/BRAINS.tcl"
+        source "[$LOGIC GetTemporaryDirectory]/EMSegmentTaskCopy/Registration_BRAINS.tcl"
 
         set selectedRegistrationPackage ""
         switch -exact "$preferredRegistrationPackage" {
