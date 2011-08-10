@@ -80,7 +80,6 @@ vtkEMSegmentLogic::vtkEMSegmentLogic()
 
   this->SlicerCommonInterface = NULL;
 
-  this->StringHolder = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -96,7 +95,6 @@ vtkEMSegmentLogic::~vtkEMSegmentLogic()
     this->SlicerCommonInterface = NULL;
     }
 
-  this->StringHolder = NULL;
 }
 
 //----------------------------------------------------------------------------

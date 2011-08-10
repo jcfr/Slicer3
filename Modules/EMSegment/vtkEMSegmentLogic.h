@@ -346,7 +346,9 @@ private:
 
   vtkSlicerCommonInterface *SlicerCommonInterface;
 
+  //BTX
   std::string StringHolder;
+  //ETX
 
 };
 
