@@ -2823,21 +2823,19 @@ int vtkEMSegmentLogic::SourcePreprocessingTclFiles()
 const char* vtkEMSegmentLogic::DefineTclTaskFileFromMRML()
 {
   std::string tclFile("");
-  tclFile = this->DefineTclTaskFullPathName(
-      this->GetMRMLManager()->GetTclTaskFilename());
-
-  if (vtksys::SystemTools::FileExists(tclFile.c_str())
-      && (!vtksys::SystemTools::FileIsDirectory(tclFile.c_str())))
-    {
-    return tclFile.c_str();
-    }
-
-  cout << "vtkEMSegmentTclConnector::DefineTclTaskFileFromMRML: "
-      << tclFile.c_str() << " does not exist - using default file" << endl;
-
   this->StringHolder = this->DefineTclTaskFullPathName(
-      vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
+                                                       this->GetMRMLManager()->GetTclTaskFilename());
 
+  if (!vtksys::SystemTools::FileExists(this->StringHolder.c_str())
+      || vtksys::SystemTools::FileIsDirectory(this->StringHolder.c_str()))
+    {
+
+      cout << "vtkEMSegmentTclConnector::DefineTclTaskFileFromMRML: "
+           << this->StringHolder.c_str() << " does not exist - using default file" << endl;
+
+      this->StringHolder = this->DefineTclTaskFullPathName(
+           vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
+    }
   return this->StringHolder.c_str();
 }
 
