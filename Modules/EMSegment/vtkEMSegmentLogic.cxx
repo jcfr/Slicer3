@@ -852,6 +852,13 @@ void vtkEMSegmentLogic::CopyTargetDataToSegmenter(vtkImageEMLocalSegmenter* segm
   // !!! todo: TESTING HERE!!!
   vtkMRMLEMSVolumeCollectionNode* workingTarget =
       this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNode();
+
+  if (workingTarget == NULL)
+  {
+    vtkErrorMacro("TargetNode is null");
+    return;
+  }
+
   unsigned int numTargetImages = workingTarget->GetNumberOfVolumes();
   std::cout << "Setting number of target images: " << numTargetImages
       << std::endl;
