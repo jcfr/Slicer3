@@ -46,6 +46,12 @@ if {[info exists ::env(GIT)]} {
     set ::GIT git 
 }
 
+foreach tool {::CVS ::SVN ::GIT} {
+  if { [catch "exec [set $tool] --version"] } {
+    error "Cannot execute $tool - please install it before building"
+  }
+}
+
 
 ################################################################################
 #
@@ -359,14 +365,14 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
     if {$isWindows} {
       runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Binaries/Windows/CMake-build CMake-build
     } else {
-        if { [info exists ::CMake_GIT_REPO] } {
+        if { [info exists ::CMAKE_GIT_REPO] } {
             if { ![file exists CMake] } {
-              eval "runcmd $::GIT clone $::CMake_GIT_REPO CMake"
+              eval "runcmd $::GIT clone $::CMAKE_GIT_REPO CMake"
             }
             cd $::Slicer3_LIB/CMake
-            eval "runcmd $::GIT checkout $::CMake_GIT_BRANCH"
+            eval "runcmd $::GIT checkout $::CMAKE_GIT_BRANCH"
             eval "runcmd $::GIT pull"
-            eval "runcmd $::GIT checkout $::CMake_GIT_TAG"
+            eval "runcmd $::GIT checkout $::CMAKE_GIT_TAG"
             cd $::Slicer3_LIB
         } else {
             runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
@@ -490,18 +496,21 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
 
         exec chmod +x ../incrTcl/configure 
 
+        set extraArgs ""
         if { $isDarwin } {
           exec cp ../incrTcl/itcl/configure ../incrTcl/itcl/configure.orig
           exec sed -e "s/\\*\\.c | \\*\\.o | \\*\\.obj) ;;/\\*\\.c | \\*\\.o | \\*\\.obj | \\*\\.dSYM | \\*\\.gnoc ) ;;/" ../incrTcl/itcl/configure.orig > ../incrTcl/itcl/configure 
+
+          set extraArgs "--x-includes=/usr/X11R6/include --x-libraries=/usr/X11R6/lib --with-cflags=-fno-common"
       }
       if {$::GENLIB(bitness) == "64"} {
         set ::env(CC) "$::GENLIB(compiler) -m64"
         puts "genlib incrTcl 64 bit branch: $::env(CC)"
-        runcmd ../incrTcl/configure --with-tcl=$Slicer3_LIB/tcl-build/lib --with-tk=$Slicer3_LIB/tcl-build/lib --prefix=$Slicer3_LIB/tcl-build
+        eval runcmd ../incrTcl/configure --with-tcl=$Slicer3_LIB/tcl-build/lib --with-tk=$Slicer3_LIB/tcl-build/lib --prefix=$Slicer3_LIB/tcl-build $extraArgs
       } else {
         set ::env(CC) "$::GENLIB(compiler)"
         puts "genlib incrTcl 32 bit branch: $::env(CC)"
-        runcmd ../incrTcl/configure --with-tcl=$Slicer3_LIB/tcl-build/lib --with-tk=$Slicer3_LIB/tcl-build/lib --prefix=$Slicer3_LIB/tcl-build
+        eval runcmd ../incrTcl/configure --with-tcl=$Slicer3_LIB/tcl-build/lib --with-tk=$Slicer3_LIB/tcl-build/lib --prefix=$Slicer3_LIB/tcl-build $extraArgs
       }
 
       if { $isDarwin } {
@@ -547,7 +556,7 @@ if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
 # Get and build blt
 #
 
-if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
+if { 0 && [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
 
   if {$::GENLIB(buildit)} {
 
@@ -1610,7 +1619,7 @@ if { ![file exists $::CMAKE] || \
          ![file exists $::TK_TEST_FILE] || \
          ![file exists $::ITCL_TEST_FILE] || \
          ![file exists $::IWIDGETS_TEST_FILE] || \
-         ![file exists $::BLT_TEST_FILE] || \
+         !(1 || [file exists $::BLT_TEST_FILE]) || \
          ![file exists $::VTK_TEST_FILE] || \
          ![file exists $::ITK_TEST_FILE] } {
     puts "Not all packages compiled; check errors and run genlib.tcl again."
