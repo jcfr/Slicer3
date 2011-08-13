@@ -85,22 +85,10 @@ proc ANTSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroun
 
     set CMD "$CMD -r Gauss\\\[3,1\\\] -t Elast\\\[3\\\]"
 
-    append outLinearTransformFileName $outVolumeFileName Affine.txt
-    append outNonLinearTransformFileName $outVolumeFileName Warp.nii.gz
+    set outLinearTransformFileName [string map {.nrrd Affine.txt} $outVolumeFileName]
+    set outNonLinearTransformFileName [string map {.nrrd Warp.nrrd} $outVolumeFileName]
     set outTransformFileName $outNonLinearTransformFileName
 
-    $LOGIC PrintText "TCL: Executing $CMD"
-    catch { eval exec $CMD } errmsg
-    $LOGIC PrintText "TCL: $errmsg"
-
-
-    #TODO: remove workaround
-    append outVolumeFileName_nii $outVolumeFileName ".nii"
-    set CMD "$REGISTRATION_PACKAGE_FOLDER/WarpImageMultiTransform"
-    set CMD "$CMD 3"
-    set CMD "$CMD $movingVolumeFileName $outVolumeFileName_nii"
-    set CMD "$CMD $outNonLinearTransformFileName $outLinearTransformFileName"
-    set CMD "$CMD -R $fixedVolumeFileName"
     $LOGIC PrintText "TCL: Executing $CMD"
     catch { eval exec $CMD } errmsg
     $LOGIC PrintText "TCL: $errmsg"
@@ -110,8 +98,7 @@ proc ANTSRegistration { fixedVolumeNode movingVolumeNode outVolumeNode backgroun
         #TODO: remove workaround
         # convert pixeltype because of missing functionality in ANTS
         set CMD "$REGISTRATION_PACKAGE_FOLDER/ConvertImagePixelType"
-        append $outVolumeFileName_nii ".nrrd"
-        set CMD "$CMD $outVolumeFileName_nii $outVolumeFileName"
+        set CMD "$CMD $outVolumeFileName $outVolumeFileName"
         set CMD "$CMD [ANTSGetPixelTypeFromVolumeNode $fixedVolumeNode]"
         $LOGIC PrintText "TCL: Executing $CMD"
         catch { eval exec $CMD } errmsg
