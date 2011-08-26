@@ -107,6 +107,12 @@ class Helper( object ):
     return ['Manual', 'Manual Sampling', 'Auto Sampling']
 
   @staticmethod
+  def GetStoppingConditionTypes():
+    '''
+    '''
+    return ['Iterations', 'LabelMap', 'Weights']
+
+  @staticmethod
   def onClickInSliceView( sliceViewInteractorStyle, sliceLogic ):
     '''
     Get the last event of a certain sliceView and return it as RAS coordinates.
@@ -128,6 +134,6 @@ class Helper( object ):
 
       rasPos = xyToRas.MultiplyPoint( coordinates )
 
-      return rasPos
+      return [rasPos[0], rasPos[1], rasPos[2]]
 
 
