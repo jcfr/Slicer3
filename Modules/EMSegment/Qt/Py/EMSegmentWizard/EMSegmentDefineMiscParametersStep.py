@@ -35,7 +35,7 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     self.__layout = self.__parent.createUserInterface()
 
     # deactivate next button since it is the last step
-    self.buttonBoxHints = self.NextButtonHidden
+    self.buttonBoxHints = self.NextButtonDisabled
 
     # the ROI parameters
     voiGroupBox = qt.QGroupBox()

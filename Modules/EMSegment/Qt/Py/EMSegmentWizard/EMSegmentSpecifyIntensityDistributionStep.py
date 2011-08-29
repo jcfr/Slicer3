@@ -64,8 +64,8 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
 
     self.__specificationComboBox = qt.QComboBox()
     self.__specificationComboBox.addItems( Helper.GetSpecificationTypes() )
-    self.__specificationComboBox.model().item( 2 ).setSelectable( False )
-    self.__specificationComboBox.model().item( 2 ).setEnabled( False )
+    #self.__specificationComboBox.model().item( 2 ).setSelectable( False )
+    #self.__specificationComboBox.model().item( 2 ).setEnabled( False )
     intensityDistributionPageLayout.addRow( "Specification:", self.__specificationComboBox )
     self.__specificationComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
@@ -74,7 +74,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__meanMatrixWidget.rowCount = 1
     self.__meanMatrixWidget.decimals = 4
     self.__meanMatrixWidget.minimum = 0
-    self.__meanMatrixWidget.maximum = 1000
+    self.__meanMatrixWidget.maximum = 1000000
     intensityDistributionPageLayout.addRow( "Mean:", self.__meanMatrixWidget )
     self.__meanMatrixWidget.connect( 'matrixChanged()', self.propagateToMRML )
 
@@ -83,7 +83,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__logCovarianceMatrixWidget.rowCount = 1
     self.__logCovarianceMatrixWidget.decimals = 4
     self.__logCovarianceMatrixWidget.minimum = 0
-    self.__logCovarianceMatrixWidget.maximum = 1000
+    self.__logCovarianceMatrixWidget.maximum = 1000000
     intensityDistributionPageLayout.addRow( "Log Covariance:", self.__logCovarianceMatrixWidget )
     self.__logCovarianceMatrixWidget.connect( 'matrixChanged()', self.propagateToMRML )
 
@@ -110,7 +110,10 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__tabWidget.addTab( intensityDistributionPage, "Intensity Distribution" )
     self.__tabWidget.addTab( manualSamplingPage, "Manual Sampling" )
 
-
+    self.__plotDistributionButton = qt.QPushButton()
+    self.__plotDistributionButton.text = "Plot Distribution"
+    self.__layout.addRow( self.__plotDistributionButton )
+    self.__plotDistributionButton.connect( 'clicked()', self.plotDistribution )
 
   def onEntry( self, comingFrom, transitionType ):
     '''
@@ -131,6 +134,17 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__parent.validate( desiredBranchId )
 
     self.__parent.validationSucceeded( desiredBranchId )
+
+  def plotDistribution( self ):
+    '''
+    '''
+    self.__d = qt.QDialog()
+    self.__graphWidget = PythonQt.qSlicerEMSegmentModuleWidgets.qSlicerEMSegmentGraphWidget( self.__d )
+    self.__graphWidget.setMRMLManager( self.mrmlManager() )
+    self.__graphWidget.updateFromMRMLManager()
+    self.__d.setModal( True )
+    self.__d.show()
+
 
   def resetDistribution( self ):
     '''

@@ -137,9 +137,11 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
 
   def getTaskNames( self ):
     '''
-    Get the taskNames of our tasksList
+    Get the taskNames of our tasksList (alphabetically sorted)
     '''
-    return self.__tasksList.keys()
+    list = self.__tasksList.keys()
+    list.sort( lambda x, y: cmp( x.lower(), y.lower() ) )
+    return list
 
   def goSimple( self ):
     '''

@@ -452,6 +452,10 @@ void qSlicerEMSegmentAnatomicalTreeWidgetPrivate::onTreeItemChanged(QStandardIte
     {
     q->mrmlManager()->SetTreeNodeName(treeNodeId, treeItem->text().toLatin1());
     }
+  else if (treeItemType == Self::LabelItemType)
+    {
+    q->mrmlManager()->SetTreeNodeIntensityLabel(treeNodeId, treeItem->data(Qt::DisplayRole).toInt());
+    }
   else if (treeItemType == Self::ClassWeightItemType)
     {
     q->mrmlManager()->SetTreeNodeClassProbability(

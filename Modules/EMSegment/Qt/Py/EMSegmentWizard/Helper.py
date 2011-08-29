@@ -104,7 +104,7 @@ class Helper( object ):
   def GetSpecificationTypes():
     '''
     '''
-    return ['Manual', 'Manual Sampling', 'Auto Sampling']
+    return ['Manual', 'Manual Sampling']#, 'Auto Sampling']
 
   @staticmethod
   def GetStoppingConditionTypes():
