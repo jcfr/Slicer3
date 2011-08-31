@@ -44,7 +44,7 @@ class Helper( object ):
     
     '''
 
-    showDebugOutput = 1
+    showDebugOutput = 0
     from time import strftime
     if showDebugOutput:
         print "[EMSegmentPy " + time.strftime( "%m/%d/%Y %H:%M:%S" ) + "] DEBUG: " + str( message )

@@ -23,8 +23,12 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__tabWidget = None
 
     self.__updating = 0
-    self.__hasObservers = False
+    self.__manualSampling = False
     self.__vtkId = None
+
+    slicer.sliceWidgetRed_interactorStyle.AddObserver( vtk.vtkCommand.LeftButtonReleaseEvent, self.onClickInRedSliceView )
+    slicer.sliceWidgetYellow_interactorStyle.AddObserver( vtk.vtkCommand.LeftButtonReleaseEvent, self.onClickInYellowSliceView )
+    slicer.sliceWidgetGreen_interactorStyle.AddObserver( vtk.vtkCommand.LeftButtonReleaseEvent, self.onClickInGreenSliceView )
 
   def createUserInterface( self ):
     '''
@@ -47,6 +51,8 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__anatomicalTree.atlasWeightColumnVisible = False
     self.__anatomicalTree.alphaColumnVisible = False
     self.__anatomicalTree.displayAlphaCheckBoxVisible = False
+    self.__anatomicalTree.setMinimumHeight( 140 )
+    self.__anatomicalTree.setSizePolicy( qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding )
     self.__anatomicalTree.connect( 'currentTreeNodeChanged(vtkMRMLNode*)', self.onTreeSelectionChanged )
     anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
 
@@ -141,7 +147,6 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__d = qt.QDialog()
     self.__graphWidget = PythonQt.qSlicerEMSegmentModuleWidgets.qSlicerEMSegmentGraphWidget( self.__d )
     self.__graphWidget.setMRMLManager( self.mrmlManager() )
-    self.__graphWidget.updateFromMRMLManager()
     self.__d.setModal( True )
     self.__d.show()
 
@@ -197,8 +202,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
         self.__tabWidget.setTabEnabled( 1, ( self.__specificationComboBox.currentIndex == 1 ) )
         if self.__specificationComboBox.currentIndex == 1:
           self.setupManualSampleTable( mrmlNode )
-        else:
-          self.removeManualSampleObservers()
+
 
         # number of volumes
         numberOfVolumes = self.mrmlManager().GetTargetNumberOfSelectedVolumes()
@@ -245,8 +249,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
           # manual sampling, enable the manual sampling tab
           self.__tabWidget.setTabEnabled( 1, True )
           self.setupManualSampleTable( mrmlNode )
-        else:
-          self.removeManualSampleObservers()
+
 
 
         self.__meanMatrixWidget.columnCount = numberOfVolumes
@@ -255,7 +258,9 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
         self.__meanMatrixWidget.editable = ( self.__specificationComboBox.currentIndex == 0 )
         # fill values
         for c in range( numberOfVolumes ):
+
           value = self.mrmlManager().GetTreeNodeDistributionMeanWithCorrection( vtkId, c )
+          Helper.Debug( 'Mean:' + str( value ) )
           self.__meanMatrixWidget.setValue( 0, c, value )
 
         self.__logCovarianceMatrixWidget.columnCount = numberOfVolumes
@@ -321,24 +326,13 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
         self.__items.append( qt.QTableWidgetItem( str( intensity ) ) )
         self.__manualSampleTable.setItem( m, n, self.__items[-1] )
 
-
-    # setup observers
-    if not self.__hasObservers:
-      slicer.sliceWidgetRed_interactorStyle.AddObserver( vtk.vtkCommand.LeftButtonReleaseEvent, self.onClickInRedSliceView )
-      slicer.sliceWidgetYellow_interactorStyle.AddObserver( vtk.vtkCommand.LeftButtonReleaseEvent, self.onClickInYellowSliceView )
-      slicer.sliceWidgetGreen_interactorStyle.AddObserver( vtk.vtkCommand.LeftButtonReleaseEvent, self.onClickInGreenSliceView )
-      self.__hasObservers = True
+    self.mrmlManager().ResetTreeNodeDistributionLogMeanCorrection( vtkId );
+    self.mrmlManager().ResetTreeNodeDistributionLogCovarianceCorrection( vtkId );
 
     self.__vtkId = vtkId
 
-  def removeManualSampleObservers( self ):
-    '''
-    '''
-    if self.__hasObservers:
-      slicer.sliceWidgetRed_interactorStyle.RemoveObserver( vtk.vtkCommand.LeftButtonReleaseEvent )
-      slicer.sliceWidgetYellow_interactorStyle.RemoveObserver( vtk.vtkCommand.LeftButtonReleaseEvent )
-      slicer.sliceWidgetGreen_interactorStyle.RemoveObserver( vtk.vtkCommand.LeftButtonReleaseEvent )
-      self.__hasObservers = False
+    self.__manualSampling = True
+
 
   def resetPanel( self, enabled=False ):
     '''
@@ -372,10 +366,15 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
       self.__tabWidget.setEnabled( enabled )
       self.__tabWidget.setTabEnabled( 1, False )
 
+    self.__manualSampling = False
+
 
   def onClickInRedSliceView( self, interactorStyleTrackballCamera, event ):
     '''
     '''
+    if not self.__manualSampling:
+      return
+
     rasPos = Helper.onClickInSliceView( slicer.sliceWidgetRed_interactorStyle, slicer.sliceWidgetRed_sliceLogic )
     mrmlNode = self.__anatomicalTree.currentNode()
     self.mrmlManager().AddTreeNodeDistributionSamplePoint( self.__vtkId, rasPos );
@@ -388,6 +387,9 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
   def onClickInYellowSliceView( self, interactorStyleTrackballCamera, event ):
     '''
     '''
+    if not self.__manualSampling:
+      return
+
     rasPos = Helper.onClickInSliceView( slicer.sliceWidgetYellow_interactorStyle, slicer.sliceWidgetYellow_sliceLogic )
     mrmlNode = self.__anatomicalTree.currentNode()
     self.mrmlManager().AddTreeNodeDistributionSamplePoint( self.__vtkId, rasPos );
@@ -400,6 +402,9 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
   def onClickInGreenSliceView( self, interactorStyleTrackballCamera, event ):
     '''
     '''
+    if not self.__manualSampling:
+      return
+
     rasPos = Helper.onClickInSliceView( slicer.sliceWidgetGreen_interactorStyle, slicer.sliceWidgetGreen_sliceLogic )
     mrmlNode = self.__anatomicalTree.currentNode()
     self.mrmlManager().AddTreeNodeDistributionSamplePoint( self.__vtkId, rasPos );

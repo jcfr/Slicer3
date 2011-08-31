@@ -54,6 +54,7 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__anatomicalTree.alphaColumnVisible = False
     self.__anatomicalTree.displayAlphaCheckBoxVisible = False
     self.__anatomicalTree.connect( 'currentTreeNodeChanged(vtkMRMLNode*)', self.onTreeSelectionChanged )
+    self.__anatomicalTree.setSizePolicy( qt.QSizePolicy.Expanding, qt.QSizePolicy.Expanding )
     self.__anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
 
     #
@@ -87,9 +88,6 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
 
     self.__classLabel = qt.QLabel( "XX" )
     self.__basicPageLayoutLeft.addRow( "Class:", self.__classLabel )
-
-    self.__dummyLabel5 = qt.QLabel( "  " )
-    self.__basicPageLayoutLeft.addRow( "  ", self.__dummyLabel5 )
 
     self.__classWeightSpinBox = qt.QDoubleSpinBox()
     self.__classWeightSpinBox.minimum = 0
@@ -139,9 +137,6 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
 
     self.__classLabel2 = qt.QLabel( "XX" )
     self.__stoppingConditionsPageLayoutLeft.addRow( "Class:", self.__classLabel2 )
-
-    self.__dummyLabel7 = qt.QLabel( "  " )
-    self.__stoppingConditionsPageLayoutLeft.addRow( "  ", self.__dummyLabel7 )
 
     self.__emComboBox = qt.QComboBox()
     self.__emComboBox.addItems( Helper.GetStoppingConditionTypes() )
@@ -194,9 +189,6 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
 
     self.__classLabel3 = qt.QLabel( "XX" )
     self.__printPageLayoutLeft.addRow( "Class:", self.__classLabel3 )
-
-    self.__dummyLabel4 = qt.QLabel( "  " )
-    self.__printPageLayoutLeft.addRow( "  ", self.__dummyLabel4 )
 
     self.__weightCheckBox = qt.QCheckBox()
     self.__printPageLayoutLeft.addRow( "Weight:", self.__weightCheckBox )
@@ -259,9 +251,6 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
 
     self.__classLabel4 = qt.QLabel( "Class: XX" )
     self.__advancedPageLayout.addWidget( self.__classLabel4 )
-
-    self.__dummyLabel13 = qt.QLabel( "  " )
-    self.__advancedPageLayout.addWidget( self.__dummyLabel13 )
 
 #    self.__pcaParametersBox = qt.QGroupBox()
 #    self.__pcaParametersBox.title = 'PCA Parameters'
@@ -701,6 +690,7 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
             self.__classWeightLayouts.append( weightRowLayout )
 
             self.__overviewBoxLayout.addWidget( self.__classWeights[-1], 0, 2 )
+
 
 
       self.__updating = 0
