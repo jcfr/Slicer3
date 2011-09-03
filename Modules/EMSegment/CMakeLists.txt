@@ -13,85 +13,45 @@ if(POLICY CMP0017)
 endif()
 
 # --------------------------------------------------------------------------
-# Detect if we build for Slicer3 or Slicer4 and set EM_Slicer4_FOUND accordingly
-#
-include(CMake/EM_DetectSlicerVersion.cmake)
-
-
-
-# --------------------------------------------------------------------------
-# Find package Slicer and include it
-#
-if(EM_Slicer3_FOUND)
-  # include Slicer3 specific file
+if(Slicer3_SOURCE_DIR)
   include(CMake/EM_Slicer3_FindPackageSlicer.cmake)
-endif()
-
-if(EM_Slicer4_FOUND)
-  # include Slicer4 specific file
+else()
   include(CMake/EM_Slicer4_FindPackageSlicer.cmake)
 endif()
 
-
-
 # --------------------------------------------------------------------------
-# Define the EMSegment Base Sources (MRML, Algorithms, Logic etc.) 
 include(CMake/EM_BaseSources.cmake)
 
-
-
 # --------------------------------------------------------------------------
-# Install Task-files (.tcl and .mrml files)
-include(CMake/EM_InstallTasks.cmake)
-
-
-
-# --------------------------------------------------------------------------
-# Slicer3 specific: Include Slicer3 Python
-if(EM_Slicer3_FOUND)
+if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
   include(CMake/EM_Slicer3_IncludeSlicerPython.cmake)
-endif()
-
-
-
-# --------------------------------------------------------------------------
-# Slicer3 specific: Generate EMSegment Configure File
-if(EM_Slicer3_FOUND)
   include(CMake/EM_Slicer3_GenerateConfigureFile.cmake)
 endif()
 
-
+# --------------------------------------------------------------------------
+ADD_SUBDIRECTORY(CommandLineApplication)
 
 # --------------------------------------------------------------------------
-# Install Test-Data and include the Testing/ sub-directory
-include(CMake/EM_Testing.cmake)
-
-
-
-# --------------------------------------------------------------------------
-# Include the commandline application
-include(CMake/EM_CommandLineApplication.cmake)
-
-
-
-# --------------------------------------------------------------------------
-# Add the GUI classes depending on the Slicer version
-#
-if(EM_Slicer3_FOUND)
-  include(CMake/EM_Slicer3_GraphicalUserInterface.cmake)
+if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
+  add_subdirectory(KWWidgets)
+else()
+  add_subdirectory(Qt)
 endif()
 
-if(EM_Slicer4_FOUND)
-  include(CMake/EM_Slicer4_GraphicalUserInterface.cmake)
+# --------------------------------------------------------------------------
+if(BUILD_TESTING)
+  ADD_SUBDIRECTORY(Testing)
 endif()
 
-
+# --------------------------------------------------------------------------
+include(CMake/EM_InstallTasks.cmake)
+install(DIRECTORY
+  Testing/TestData
+  DESTINATION ${EM_SHARE_DIR}/${PROJECT_NAME}/Testing COMPONENT Development
+  PATTERN ".svn" EXCLUDE
+  )
 
 # --------------------------------------------------------------------------
-# Slicer4 specific: Generate Extension Files
-if(EM_Slicer4_FOUND)
+if("${Slicer_MAJOR_VERSION}" EQUAL "4")
   include(CMake/EM_Slicer4_GenerateExtensionFile.cmake)
-endif()  
-
-
-
+endif()

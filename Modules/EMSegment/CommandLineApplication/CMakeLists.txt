@@ -8,58 +8,49 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
  
 # --------------------------------------------------------------------------
-# Find Slicer3 or Slicer4
-
-if(NOT EM_Slicer4_FOUND)
-
-  # Slicer3
-
-  if(NOT Slicer3_SOURCE_DIR)
-    # we are not even in the Slicer3 Source Dir, we have to find Slicer3
+# Find appropriate package so that this project can be built standalone
+if(NOT Slicer3_SOURCE_DIR AND NOT Slicer_SOURCE_DIR)
+  if(EXISTS "${Slicer3_DIR}")
     find_package(Slicer3 REQUIRED)
     include(${Slicer3_USE_FILE})
     slicer3_set_default_install_prefix_for_external_projects()
-  endif(NOT Slicer3_SOURCE_DIR)
-  
-  set (EM_Slicer3_FOUND ${Slicer3_SOURCE_DIR})
-
-  set(COMMANDLINE_LINK_LIBRARIES
-    EMSegment
-    vtkCommon
-    AtlasCreatorCxxModule
-    )
-
-else(NOT EM_Slicer4_FOUND)
-
-  # Slicer4
-  find_package(SlicerExecutionModel REQUIRED GenerateCLP)
-  
-  set(COMMANDLINE_LINK_LIBRARIES
-    vtkCommon
-    vtkSlicerAtlasCreatorModuleLogic
-    vtkSlicerEMSegmentModuleLogic
-    )
-
-endif(NOT EM_Slicer4_FOUND)
-
-
+  elseif(EXISTS "${SlicerExecutionModel_DIR}")
+    find_package(SlicerExecutionModel REQUIRED GenerateCLP)
+  endif()
+endif()
 
 # --------------------------------------------------------------------------
-# Include dirs
+set(CommandLineApplication_LIBRARIES ${VTK_LIBRARIES})
 
-include_directories(
+# --------------------------------------------------------------------------
+set(CommandLineApplication_INCLUDE_DIRS
   ${EMSegment_BINARY_DIR}
   ${EMSegment_SOURCE_DIR}
   ${EMSegment_SOURCE_DIR}/MRML
   ${EMSegment_SOURCE_DIR}/Algorithm
-  ${EMSegment_SOURCE_DIR}/CommandLineApplication  
-  ${Slicer3_Libs_INCLUDE_DIRS}
-  ${Slicer3_Base_INCLUDE_DIRS}
-  #${Slicer_Libs_INCLUDE_DIRS}
-  #${Slicer_Base_INCLUDE_DIRS}
-  ${vtkSlicerAtlasCreatorModuleLogic_SOURCE_DIR}
-  ${vtkSlicerAtlasCreatorModuleLogic_BINARY_DIR}  
+  ${EMSegment_SOURCE_DIR}/CommandLineApplication
   )
+
+# --------------------------------------------------------------------------
+if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
+  list(APPEND CommandLineApplication_LIBRARIES
+    EMSegment
+    AtlasCreatorCxxModule
+    )
+  list(APPEND CommandLineApplication_INCLUDE_DIRS
+    ${Slicer3_Libs_INCLUDE_DIRS}
+    ${Slicer3_Base_INCLUDE_DIRS}
+    )
+else()
+  list(APPEND CommandLineApplication_LIBRARIES
+    vtkSlicerAtlasCreatorModuleLogic
+    vtkSlicerEMSegmentModuleLogic
+    )
+  list(APPEND CommandLineApplication_INCLUDE_DIRS
+    ${vtkSlicerAtlasCreatorModuleLogic_SOURCE_DIR}
+    ${vtkSlicerAtlasCreatorModuleLogic_BINARY_DIR}
+    )
+endif()
 
 
 # --------------------------------------------------------------------------
@@ -69,30 +60,31 @@ include_directories(
 
 set(CLP_MODULE EMSegmentCommandLine)
 
-if(NOT EM_Slicer4_FOUND)
+if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
 
-# Slicer3 version
-set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
-generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
-add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
-slicer3_set_plugins_output_path(${CLP_MODULE})
-target_link_libraries(
-  ${CLP_MODULE}
-  ${COMMANDLINE_LINK_LIBRARIES}
-  )
+  # Slicer3 version
+  set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
+  generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
+  add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE} EMSegmentCommandLineFct.cxx)
+  slicer3_set_plugins_output_path(${CLP_MODULE})
+  target_link_libraries(
+    ${CLP_MODULE}
+    ${CommandLineApplication_LIBRARIES}
+    )
+  slicer3_install_plugins(${CLP_MODULE})
 
-slicer3_install_plugins(${CLP_MODULE})
+else()
 
-else(NOT EM_Slicer4_FOUND)
+  slicerMacroBuildCLI(
+    NAME ${CLP_MODULE}
+    TARGET_LIBRARIES ${CommandLineApplication_LIBRARIES}
+    EXECUTABLE_ONLY
+    INCLUDE_DIRECTORIES ${Slicer_ModuleLogic_INCLUDE_DIRS}
+    ADDITIONAL_SRCS
+      EMSegmentCommandLineFct.cxx
+    )
 
-slicerMacroBuildCLI(
-  NAME ${CLP_MODULE}
-  TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
-  EXECUTABLE_ONLY
-  INCLUDE_DIRECTORIES ${Slicer_ModuleLogic_INCLUDE_DIRS}
-  )
-
-endif(NOT EM_Slicer4_FOUND)
+endif()
 
 # --------------------------------------------------------------------------
 #
@@ -101,30 +93,31 @@ endif(NOT EM_Slicer4_FOUND)
 
 set(CLP_MODULE EMSegmentTclInterpreter)
 
-if(NOT EM_Slicer4_FOUND)
+if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
 
-# Slicer3 version
-set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
-generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
-add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
-slicer3_set_plugins_output_path(${CLP_MODULE})
-target_link_libraries(
-  ${CLP_MODULE}
-  ${COMMANDLINE_LINK_LIBRARIES}
-  )
+  set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
+  generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
+  add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE} EMSegmentCommandLineFct.cxx)
+  slicer3_set_plugins_output_path(${CLP_MODULE})
+  target_link_libraries(
+    ${CLP_MODULE}
+    ${CommandLineApplication_LIBRARIES}
+    )
 
-slicer3_install_plugins(${CLP_MODULE})
+  slicer3_install_plugins(${CLP_MODULE})
 
 # TODO
-#else(NOT EM_Slicer4_FOUND)
+#else()
 
 #slicerMacroBuildCLI(
 #  NAME ${CLP_MODULE}
-#  TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
-#  EXECUTABLE_ONLY  
+#  TARGET_LIBRARIES ${CommandLineApplication_LIBRARIES}
+#  EXECUTABLE_ONLY
+#  ADDITIONAL_SRCS
+#    EMSegmentCommandLineFct.cxx
 #  )
 
-endif(NOT EM_Slicer4_FOUND)
+endif()
 
 # --------------------------------------------------------------------------
 #
@@ -133,27 +126,26 @@ endif(NOT EM_Slicer4_FOUND)
 
 set(CLP_MODULE EMSegmentTransformToNewFormat)
 
-if(NOT EM_Slicer4_FOUND)
+if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
 
-# Slicer3 version
-set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
-generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
-add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
-slicer3_set_plugins_output_path(${CLP_MODULE})
-target_link_libraries(
-  ${CLP_MODULE}
-  ${COMMANDLINE_LINK_LIBRARIES}
-  )
+  set(${CLP_MODULE}_SOURCE ${CLP_MODULE}.cxx )
+  generateclp( ${CLP_MODULE}_SOURCE  ${CLP_MODULE}.xml)
+  add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE} EMSegmentCommandLineFct.cxx)
+  slicer3_set_plugins_output_path(${CLP_MODULE})
+  target_link_libraries(
+    ${CLP_MODULE}
+    ${CommandLineApplication_LIBRARIES}
+    )
+  slicer3_install_plugins(${CLP_MODULE})
 
-slicer3_install_plugins(${CLP_MODULE})
+else()
 
-else(NOT EM_Slicer4_FOUND)
+  slicerMacroBuildCLI(
+    NAME ${CLP_MODULE}
+    TARGET_LIBRARIES ${CommandLineApplication_LIBRARIES}
+    EXECUTABLE_ONLY
+    ADDITIONAL_SRCS
+      EMSegmentCommandLineFct.cxx
+    )
 
-slicerMacroBuildCLI(
-  NAME ${CLP_MODULE}
-  TARGET_LIBRARIES ${COMMANDLINE_LINK_LIBRARIES}
-  EXECUTABLE_ONLY  
-  )
-
-endif(NOT EM_Slicer4_FOUND)
-
+endif()

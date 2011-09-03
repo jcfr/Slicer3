@@ -1,19 +1,6 @@
 project(EMSegmentTesting)
 
-include_directories(
-  ${EMSegment_SOURCE_DIR}
-  ${EMSegment_SOURCE_DIR}/MRML
-  ${EMSegment_SOURCE_DIR}/Algorithm
-  ${VTK_INCLUDE_DIR}
-  ${Slicer3_Libs_INCLUDE_DIRS}
-  ${Slicer3_Base_INCLUDE_DIRS}
-  ${Slicer_Libs_INCLUDE_DIRS}
-  ${Slicer_Base_INCLUDE_DIRS}
-  ${vtkSlicerAtlasCreatorModuleLogic_SOURCE_DIR}
-  ${vtkSlicerAtlasCreatorModuleLogic_BINARY_DIR}    
-  ${EMSegment_BINARY_DIR}
-  )
-
+# --------------------------------------------------------------------------
 set(EMSegment_TEST_DIR ${EMSegment_BINARY_DIR})
 set(EMSegment_TUTORIAL_DIR
   ${EMSegment_SOURCE_DIR}/Testing/TestData/TutorialTest)
@@ -22,39 +9,42 @@ set(EMSegment_TUTORIAL2_DIR
 set(EMSegment_TESTDATA_DIR
   ${EMSegment_SOURCE_DIR}/Testing/TestData)
 
-# target link libraries depend on the Slicer version
+# --------------------------------------------------------------------------
+# Target link libraries and include directories depend on the Slicer version
+set(TEST_LINK_LIBRARIES ${VTK_LIBRARIES})
+set(TEST_INCLUDE_DIRS
+  ${EMSegment_SOURCE_DIR}
+  ${EMSegment_BINARY_DIR}
+  ${EMSegment_SOURCE_DIR}/MRML
+  ${EMSegment_SOURCE_DIR}/Algorithm
+  ${VTK_INCLUDE_DIR}
+  )
 
-if(NOT EM_Slicer4_FOUND)
-
-# Slicer3
-
-set(TEST_LINK_LIBRARIES
-    EMSegment
-    vtkCommon
+# --------------------------------------------------------------------------
+if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
+  list(APPEND TEST_LINK_LIBRARIES EMSegment)
+  list(APPEND TEST_INCLUDE_DIRS
+    ${Slicer3_Libs_INCLUDE_DIRS}
+    ${Slicer3_Base_INCLUDE_DIRS}
     )
-    
-set(EMS_SLICER_LAUNCH_ARGUMENTS --no-error-popup)
-    
-else(NOT EM_Slicer4_FOUND)
-
-# Slicer4
-
-set(TEST_LINK_LIBRARIES
-    vtkCommon
-    vtkSlicerEMSegmentModuleLogic
+else()
+  list(APPEND TEST_LINK_LIBRARIES vtkSlicerEMSegmentModuleLogic)
+  list(APPEND TEST_INCLUDE_DIRS
+    ${Slicer_Libs_INCLUDE_DIRS}
+    ${Slicer_Base_INCLUDE_DIRS}
+    ${vtkSlicerAtlasCreatorModuleLogic_SOURCE_DIR}
+    ${vtkSlicerAtlasCreatorModuleLogic_BINARY_DIR}
     )
+endif()
 
-set(EMS_SLICER_LAUNCH_ARGUMENTS "")
-
-endif(NOT EM_Slicer4_FOUND)
+include_directories(${TEST_INCLUDE_DIRS})
 
 
 #### MIDAS
-# http://www.kitware.com/midaswiki/index.php/MIDAS%2BCTest
 include(MIDAS)
-if (NOT MIDAS_REST_URL)
+if(NOT MIDAS_REST_URL)
   set(MIDAS_REST_URL "http://midas.kitware.com/api/rest" CACHE STRING "The MIDAS server where testing data resides")
-endif (NOT MIDAS_REST_URL)
+endif()
 set(MIDAS_KEY_DIR "${EMSegment_SOURCE_DIR}/Testing/TestData/MIDAS_Keys")
 #### MIDAS
 
@@ -66,45 +56,29 @@ set(MIDAS_KEY_DIR "${EMSegment_SOURCE_DIR}/Testing/TestData/MIDAS_Keys")
 # amount of memory!!!
 
 
-set(EMSEG_RUN_OLD_TESTS   OFF
-  CACHE BOOL "Enable old EMSegment tests." FORCE
-  )
+set(EMSEG_RUN_OLD_TESTS OFF CACHE BOOL "Enable old EMSegment tests." FORCE)
 mark_as_advanced(EMSEG_RUN_OLD_TEST)
 
-set(EMSEG_RUN_COMPARE_TESTS   OFF
-  CACHE BOOL "Enable EMSegment tests to compare segmentation results." FORCE
-  )
+set(EMSEG_RUN_COMPARE_TESTS OFF CACHE BOOL "Enable EMSegment tests to compare segmentation results." FORCE)
 mark_as_advanced(EMSEG_RUN_COMPARE_TESTS)
 
-set(EMSEG_RUN_LOCAL_TESTS   OFF
-  CACHE BOOL "Enable local EMSegment tests." FORCE
-  )
+set(EMSEG_RUN_LOCAL_TESTS OFF CACHE BOOL "Enable local EMSegment tests." FORCE)
 mark_as_advanced(EMSEG_RUN_LOCAL_TESTS)
 
-set(EMSEG_RUN_VALGRIND_TESTS    OFF
-  CACHE BOOL "Enable EMSegment Valgrind test." FORCE
-  )
+set(EMSEG_RUN_VALGRIND_TESTS OFF CACHE BOOL "Enable EMSegment Valgrind test." FORCE)
 mark_as_advanced(EMSEG_RUN_VALGRIND_TESTS)
 
-set(EMSEG_RUN_EXTRA_SHORT_TESTS  ON
-  CACHE BOOL "Enable EMSegment extra, short tests." FORCE
-  )
+set(EMSEG_RUN_EXTRA_SHORT_TESTS ON CACHE BOOL "Enable EMSegment extra, short tests." FORCE)
 mark_as_advanced(EMSEG_RUN_EXTRA_SHORT_TESTS)
 
-set(EMSEG_RUN_EXTRA_LONG_TESTS   OFF
-  CACHE BOOL "Enable EMSegment extra, long tests." FORCE
-  )
+set(EMSEG_RUN_EXTRA_LONG_TESTS OFF CACHE BOOL "Enable EMSegment extra, long tests." FORCE)
 mark_as_advanced(EMSEG_RUN_EXTRA_LONG_TESTS)
 
-set(EMSEG_RUN_REG_TESTS   OFF
-  CACHE BOOL "Enable EMSegment extra, registration tests." FORCE
-  )
+set(EMSEG_RUN_REG_TESTS OFF CACHE BOOL "Enable EMSegment extra, registration tests." FORCE)
 mark_as_advanced(EMSEG_RUN_REG_TESTS)
 
-
 # Set to 1 to remove temporary test output files
-set(EMSEG_REMOVE_TMP_TEST_DATA   "1"
-  CACHE BOOL "Remove EMSegment temporary test data." FORCE)
+set(EMSEG_REMOVE_TMP_TEST_DATA "1" CACHE BOOL "Remove EMSegment temporary test data." FORCE)
 mark_as_advanced(EMSEG_REMOVE_TMP_TEST_DATA)
 
 if(NOT DISABLE_CXX_TESTING)
@@ -181,39 +155,19 @@ if(NOT DISABLE_CXX_TESTING)
     )
 
   ############################################################################
-  # The test is a stand-alone executable.  However, the Slicer3
+  # The test is a stand-alone executable.  However, the Slicer
   # launcher is needed to set up shared library paths correctly.
-  # We create a prefix for the test executable that accomplishes this
-  # wrapping.
-  # WRAPPED_TEST_EXE_PREFIX: path to tests that only exist in build tree
-  # WRAPPED_EXE_PREFIX: path to command line utilities that install with
-  # slicer
   ############################################################################
-  if(NOT EM_Slicer4_FOUND)
+  set(Slicer_LAUNCHER_ADDITIONAL_ARGS)
+  if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
+    set(Slicer_LAUNCHER_EXECUTABLE ${Slicer3_BINARY_DIR}/Slicer3)
+    set(Slicer_LAUNCH_COMMAND ${Slicer_LAUNCHER_EXECUTABLE} --launch)
+    set(Slicer_LAUNCHER_ADDITIONAL_ARGS --no-error-popup)
+  endif()
 
-    # Slicer3
-  
-    set(Slicer3_EXE ${Slicer3_BINARY_DIR}/Slicer3)
-    set(WRAPPED_TEST_EXE_PREFIX --launch ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-    set(WRAPPED_EXE_PREFIX --launch ${Slicer3_BINARY_DIR}/${Slicer3_INSTALL_PLUGINS_BIN_DIR})
-    if(WIN32)
-      set(WRAPPED_EXE_PREFIX ${WRAPPED_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
-      set(WRAPPED_TEST_EXE_PREFIX ${WRAPPED_TEST_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
-    endif(WIN32)
-    
-  else(NOT EM_Slicer4_FOUND)
-  
-    # Slicer4
-    set(Slicer3_BINARY_DIR ${Slicer_BINARY_DIR})
-    set(Slicer3_EXE ${Slicer_BINARY_DIR}/Slicer --launcher-no-splash)
-    set(WRAPPED_TEST_EXE_PREFIX --launch ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-    set(WRAPPED_EXE_PREFIX --launch ${Slicer_BINARY_DIR}/${Slicer_CLIMODULES_BIN_DIR})
-    if(WIN32)
-      set(WRAPPED_EXE_PREFIX ${WRAPPED_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
-      set(WRAPPED_TEST_EXE_PREFIX ${WRAPPED_TEST_EXE_PREFIX}/${CMAKE_BUILD_TYPE})
-    endif(WIN32)
-  
-  endif(NOT EM_Slicer4_FOUND)
+  macro(ADD_EMSEGMENT_TEST TESTNAME EXECUTABLE_TARGET)
+    add_test(NAME ${TESTNAME} COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:${EXECUTABLE_TARGET}> ${Slicer_LAUNCHER_ADDITIONAL_ARGS} ${ARGN})
+  endmacro()
 
   ############################################################################
   #
@@ -222,37 +176,28 @@ if(NOT DISABLE_CXX_TESTING)
   ############################################################################
 
   # Does the mrml manager's api function correctly?
-  add_test( vtkEMSegmentMRMLManagerTest
-    ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentMRMLManagerTest
-    ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml
-    "EMSegment Tutorial Template"
-    )
+  ADD_EMSEGMENT_TEST(vtkEMSegmentMRMLManagerTest vtkEMSegmentMRMLManagerTest
+    ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml "EMSegment Tutorial Template")
 
   # Does the preprocessing function correctly?
-  #add_test( vtkEMSegmentPreprocessingManagerTest
-  #  ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentPreprocessingManagerTest
+  #ADD_EMSEGMENT_TEST(vtkEMSegmentPreprocessingManagerTest vtkEMSegmentPreprocessingManagerTest
   #  ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml
   #  "EMSegment Tutorial Template"
   #  )
 
   # Test that the segmentation results match what the expected
   # results.  This is a legacy test that should not be removed.
-  add_test( vtkEMSegmentBlackBoxSegmentationTest_TutorialDataSmallRead
-    ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentBlackBoxSegmentationTest
+  ADD_EMSEGMENT_TEST(vtkEMSegmentBlackBoxSegmentationTest_TutorialDataSmallRead vtkEMSegmentBlackBoxSegmentationTest
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     ${EMSegment_TUTORIAL_DIR}
     "EMSegment Tutorial Template"
     ${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult_small.mhd
     )
     
-  add_test( vtkSlicerCommonInterfaceTest1
-    ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkSlicerCommonInterfaceTest1
-    )
-        
+  ADD_EMSEGMENT_TEST(vtkSlicerCommonInterfaceTest1 vtkSlicerCommonInterfaceTest1)
 
   # Build parameters from scratch and run the segmentation
-  #add_test( vtkEMSegmentBuildAndRunNewSegmentationParameters001
-  #  ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentBuildAndRunNewSegmentationParameters001
+  #ADD_EMSEGMENT_TEST(vtkEMSegmentBuildAndRunNewSegmentationParameters001 vtkEMSegmentBuildAndRunNewSegmentationParameters001
   #  ${EMSegment_SOURCE_DIR}/Testing/TestData/MiscVolumeData/R.mhd
   #  ${EMSegment_SOURCE_DIR}/Testing/TestData/MiscVolumeData/G.mhd
   #  ${EMSegment_SOURCE_DIR}/Testing/TestData/MiscVolumeData/B.mhd
@@ -260,207 +205,142 @@ if(NOT DISABLE_CXX_TESTING)
   #  )
 
   # Does help work right?
-  add_test( EMSegCL_Help
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --help
-    )
-  set_tests_properties(
-    EMSegCL_Help
-    PROPERTIES
-    PASS_REGULAR_EXPRESSION "USAGE"
-    )
+  ADD_EMSEGMENT_TEST(EMSegCL_Help EMSegmentCommandLine --help)
+  set_tests_properties(EMSegCL_Help PROPERTIES PASS_REGULAR_EXPRESSION "USAGE")
 
+  macro(ADD_EMSEGMENT_DIFF_TEST)
+    set(options)
+    set(oneValueArgs NAME EXECUTABLE CMP_FILENAME STANDARD_DATA_FILENAME)
+    set(multiValueArgs ARGS)
+    cmake_parse_arguments(MY "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-  if(EMSEG_RUN_REG_TESTS)
-    # Does the segmenter work and give the correct answer using the
-    # Tutorial2 default parameters (this includes registration)?
-    set(test_name        "EMSegCL_RunReg")
-    set(test_exe         "${Slicer3_EXE}")
+    set(test_name        ${MY_NAME})
+    set(test_exe         ${Slicer_LAUNCH_COMMAND} ${MY_EXECUTABLE})
     set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-    set(test_cmp_file    "${test_file_prefix}.raw.gz")
-    set(test_std_file    "${EMSegment_TUTORIAL2_DIR}/StandardData/Segmentation_med.raw.gz")
+    set(test_cmp_file    "${MY_CMP_FILENAME}")
+    set(test_std_file    "${MY_STANDARD_DATA_FILENAME}")
+    set(test_rm_files)
     if(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files    ${test_file_prefix}.mhd ${test_file_prefix}.raw.gz)
-    else(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files)
-    endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args
-      ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --verbose
-      --mrmlSceneFileName ${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_med.mrml
-      --resultVolumeFileName "${test_file_prefix}.nhdr"
-      )
-    add_test( ${test_name}
+      set(test_rm_files ${test_file_prefix}.mhd ${test_file_prefix}.raw.gz ${test_file_prefix}.mrml)
+    endif()
+    set(test_args ${MY_ARGS})
+    add_test(NAME ${test_name} COMMAND
       ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-      "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-      "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
+      "-Dtest_exe:STRING=${test_exe}"        "-Dtest_exe_args:STRING=${test_args}"
+      "-Dfile_cmp:FILEPATH=${test_cmp_file}" "-Dfile_std:FILEPATH=${test_std_file}"
       "-Drm_files:STRING=${test_rm_files}"
       -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+      )
+  endmacro()
+
+  if(EMSEG_RUN_REG_TESTS)
+
+    # Does the segmenter work and give the correct answer using the
+    # Tutorial2 default parameters (this includes registration)?
+    set(test_name "EMSegCL_RunReg")
+    set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
+    ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+      CMP_FILENAME "${test_file_prefix}.raw.gz"
+      STANDARD_DATA_FILENAME "${EMSegment_TUTORIAL2_DIR}/StandardData/Segmentation_med.raw.gz"
+      ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+        --verbose
+        --mrmlSceneFileName "${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_med.mrml"
+        --resultVolumeFileName "${test_file_prefix}.nhdr"
       )
 
     # Does the segmenter work and give the correct answer using the
     # Tutorial2 default parameters with no registration?
-    set(test_name        "EMSegCL_RunRegNoReg")
-    set(test_exe         "${Slicer3_EXE}")
+    set(test_name "EMSegCL_RunRegNoReg")
     set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-    set(test_cmp_file    "${test_file_prefix}.raw.gz")
-    set(test_std_file    "${EMSegment_TUTORIAL2_DIR}/StandardData/Segmentation_NoReg_med.raw.gz")
-    if(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files    ${test_file_prefix}.mhd ${test_file_prefix}.raw.gz)
-    else(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files)
-    endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args
-      ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --verbose
-      --mrmlSceneFileName ${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_NoReg_med.mrml 
-      --resultVolumeFileName "${test_file_prefix}.nhdr"
-      )
-    add_test( ${test_name}
-      ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-      "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-      "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-      "-Drm_files:STRING=${test_rm_files}"
-      -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+    ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+      CMP_FILENAME "${test_file_prefix}.raw.gz"
+      STANDARD_DATA_FILENAME "${EMSegment_TUTORIAL2_DIR}/StandardData/Segmentation_NoReg_med.raw.gz"
+      ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+        --verbose
+        --mrmlSceneFileName "${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_NoReg_med.mrml"
+        --resultVolumeFileName "${test_file_prefix}.nhdr"
       )
 
     # Does the segmenter work and give the correct answer using the
     # Tutorial2 default parameters with only T2T registration?
-    set(test_name        "EMSegCL_RunRegT2T")
-    set(test_exe         "${Slicer3_EXE}")
+    set(test_name "EMSegCL_RunRegT2T")
     set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-    set(test_cmp_file    "${test_file_prefix}.raw.gz")
-    set(test_std_file    "${EMSegment_TUTORIAL2_DIR}/StandardData/Segmentation_T2TReg_med.raw.gz")
-    if(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files    ${test_file_prefix}.mhd ${test_file_prefix}.raw.gz)
-    else(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files)
-    endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args
-      ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --verbose
-      --mrmlSceneFileName ${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_T2TReg_med.mrml 
-      --resultVolumeFileName "${test_file_prefix}.nhdr"
-      )
-    add_test( ${test_name}
-      ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-      "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-      "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-      "-Drm_files:STRING=${test_rm_files}"
-      -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+    ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+      CMP_FILENAME "${test_file_prefix}.raw.gz"
+      STANDARD_DATA_FILENAME "${EMSegment_TUTORIAL2_DIR}/StandardData/Segmentation_T2TReg_med.raw.gz"
+      ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+        --verbose
+        --mrmlSceneFileName "${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_T2TReg_med.mrml"
+        --resultVolumeFileName "${test_file_prefix}.nhdr"
       )
 
     # Does the segmenter work and give the correct answer using the
     # Tutorial2 default parameters with only A2T registration?
-    set(test_name        "EMSegCL_RunRegA2T")
-    set(test_exe         "${Slicer3_EXE}")
+    set(test_name "EMSegCL_RunRegA2T")
     set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-    set(test_cmp_file    "${test_file_prefix}.raw.gz")
-    set(test_std_file    "${EMSegment_TUTORIAL2_DIR}/StandardData/Segmentation_A2TReg_med.raw.gz")
-    if(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files    ${test_file_prefix}.mhd ${test_file_prefix}.raw.gz)
-    else(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files)
-    endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args
-      ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --verbose
-      --mrmlSceneFileName ${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_A2TReg_med.mrml 
-      --resultVolumeFileName "${test_file_prefix}.nhdr"
+    ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+      CMP_FILENAME "${test_file_prefix}.raw.gz"
+      STANDARD_DATA_FILENAME "${EMSegment_TUTORIAL2_DIR}/StandardData/Segmentation_A2TReg_med.raw.gz"
+      ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+        --verbose
+        --mrmlSceneFileName "${EMSegment_TUTORIAL2_DIR}/EMSegmentTestSet2_A2TReg_med.mrml"
+        --resultVolumeFileName "${test_file_prefix}.nhdr"
       )
-    add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-      "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-      "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-      "-Drm_files:STRING=${test_rm_files}"
-      -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
-      )
+
   endif(EMSEG_RUN_REG_TESTS)
 
   # Does the segmenter work and give the correct answer using the
   # default parameters from the small template scene.
-  set(test_name        "EMSegCL_RunDefaultNodes")
-  set(test_exe         "${Slicer3_EXE}")
+  set(test_name "EMSegCL_RunDefaultNodes")
   set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-  set(test_cmp_file    "${test_file_prefix}.raw")
-  set(test_std_file    "${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult_small.raw")
-  if(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_rm_files    ${test_file_prefix}.mhd ${test_file_prefix}.raw)
-  else(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_rm_files)
-  endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-  set(test_args 
-    ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --verbose 
-    --mrmlSceneFileName ${EMSegment_TUTORIAL_DIR}/Template_small.mrml 
-    --resultVolumeFileName "${test_file_prefix}.mhd"
-    --disableCompression
-    )
-  add_test( ${test_name}
-    ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-    "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-    "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-    "-Drm_files:STRING=${test_rm_files}"
-    -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+  ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+    CMP_FILENAME "${test_file_prefix}.raw"
+    STANDARD_DATA_FILENAME "${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult_small.raw"
+    ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+      --verbose
+      --mrmlSceneFileName "${EMSegment_TUTORIAL_DIR}/Template_small.mrml"
+      --resultVolumeFileName "${test_file_prefix}.mhd"
+      --disableCompression
     )
 
   # Does the segmenter work and give the correct answer when
   # normalization is turned on?
-  set(test_name        "EMSegCL_RunNormalize")
-  set(test_exe         "${Slicer3_EXE}")
-  set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-  set(test_cmp_file    "${test_file_prefix}.raw")
-  set(test_std_file    "${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult_small_normalizationOn.raw")
-  if(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_rm_files    ${test_file_prefix}.mhd ${test_file_prefix}.raw)
-  else(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_rm_files)
-  endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-  set(test_args 
-    ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --verbose 
-    --mrmlSceneFileName ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml 
-    --resultVolumeFileName "${test_file_prefix}.mhd"
-    --disableCompression
-    )
-  #add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-  #  "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-  #  "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-  #  "-Drm_files:STRING=${test_rm_files}"
-  #  -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+  #set(test_name "EMSegCL_RunNormalize")
+  #set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
+  #ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+  #  CMP_FILENAME "${test_file_prefix}.raw"
+  #  STANDARD_DATA_FILENAME "${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult_small_normalizationOn.raw"
+  #  ARGS
+  #    --verbose
+  #    --mrmlSceneFileName "${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml"
+  #    --resultVolumeFileName "${test_file_prefix}.mhd"
+  #    --disableCompression
   #  )
 
   # Does the segmenter work and give the correct answer when
   # everything is specified on the command line?
-  set(test_name        "EMSegCL_RunSetEverything")
-  set(test_exe         "${Slicer3_EXE}")
+  set(test_name "EMSegCL_RunSetEverything")
   set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-  set(test_cmp_file    "${test_file_prefix}.raw")
-  set(test_std_file    "${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult_small.raw")
-  if(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_rm_files    ${test_file_prefix}.mhd ${test_file_prefix}.raw)
-  else(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_rm_files)
-  endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-  set(test_args 
-    ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    --verbose 
-    --mrmlSceneFileName ${EMSegment_TUTORIAL_DIR}/Template_small.mrml 
-    --targetVolumeFileNames
-    ${EMSegment_TUTORIAL_DIR}/VolumeData/targetT1Normed_small.mhd,${EMSegment_TUTORIAL_DIR}/VolumeData/targetT2Normed_small.mhd
-    --parametersMRMLNodeName EMSegment\ Tutorial\ Template
-    --resultVolumeFileName "${test_file_prefix}.mhd"
-    --disableCompression
-    )
-  add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-    "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-    "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-    "-Drm_files:STRING=${test_rm_files}"
-    -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+  ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+    CMP_FILENAME "${test_file_prefix}.raw"
+    STANDARD_DATA_FILENAME "${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult_small.raw"
+    ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+      --verbose
+      --mrmlSceneFileName "${EMSegment_TUTORIAL_DIR}/Template_small.mrml"
+      --targetVolumeFileNames ${EMSegment_TUTORIAL_DIR}/VolumeData/targetT1Normed_small.mhd,${EMSegment_TUTORIAL_DIR}/VolumeData/targetT2Normed_small.mhd
+      --parametersMRMLNodeName EMSegment\ Tutorial\ Template
+      --resultVolumeFileName "${test_file_prefix}.mhd"
+      --disableCompression
     )
 
   # Is multithreading disabled when the command line flag is given?
-  add_test( EMSegCL_DisableMultithreading
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
+  ADD_EMSEGMENT_TEST(EMSegCL_DisableMultithreading EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --disableMultithreading -1
@@ -472,9 +352,7 @@ if(NOT DISABLE_CXX_TESTING)
     )
 
   # Does it fail elegently when a bogus parameter node is specified?
-  add_test( EMSegCL_EFBogusParameterNode
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
+  ADD_EMSEGMENT_TEST(EMSegCL_EFBogusParameterNode EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --parametersMRMLNodeName BogusNodeName  
@@ -486,9 +364,7 @@ if(NOT DISABLE_CXX_TESTING)
     "ERROR: no EMSegment parameters found in scene with name ")
 
   # Does it fail elegently when a bogus mrml scene is specified?
-  add_test( EMSegCL_EFBogusMRMLScene
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
+  ADD_EMSEGMENT_TEST(EMSegCL_EFBogusMRMLScene EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName ${Slicer3_BINARY_DIR}/Testing/Temporary/bogus_file_scene.mrml
     )
   set_tests_properties(
@@ -498,9 +374,7 @@ if(NOT DISABLE_CXX_TESTING)
     "Error: MRML scene file does not exist.")
 
   # Does it fail elegently when a bogus target images are specified?
-  add_test( EMSegCL_EFBogusTargetImages
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
+  ADD_EMSEGMENT_TEST( EMSegCL_EFBogusTargetImages EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
@@ -513,9 +387,7 @@ if(NOT DISABLE_CXX_TESTING)
     "Error: target volume file ")
 
   # Does it fail elegently when too many target images are specified?
-  add_test( EMSegCL_EFTooManyImages
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
+  ADD_EMSEGMENT_TEST(EMSegCL_EFTooManyImages EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
@@ -528,9 +400,7 @@ if(NOT DISABLE_CXX_TESTING)
     "ERROR: Number of input channels")
 
   # Does it fail elegently when too few target images are specified?
-  add_test( EMSegCL_EFTooFewImages
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
+  ADD_EMSEGMENT_TEST(EMSegCL_EFTooFewImages EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName 
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
@@ -543,10 +413,9 @@ if(NOT DISABLE_CXX_TESTING)
     "ERROR: Number of input channels")
 
   # Does the option --intermediateResultsDirectory work?
-  add_test( EMSegCL_IntermediateResults
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
-    --verbose --mrmlSceneFileName
+  ADD_EMSEGMENT_TEST(EMSegCL_IntermediateResults EMSegmentCommandLine
+    --verbose
+    --mrmlSceneFileName
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --targetVolumeFileNames
     ${EMSegment_TUTORIAL_DIR}/VolumeData/targetT1Normed_small.mhd,${EMSegment_TUTORIAL_DIR}/VolumeData/targetT2Normed_small.mhd
@@ -564,9 +433,7 @@ if(NOT DISABLE_CXX_TESTING)
 
 
   # Does it fail elegently when a bogus result standard is specified?
-  add_test( EMSegCL_EFBogusResultStandardImage
-    ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
+  ADD_EMSEGMENT_TEST(EMSegCL_EFBogusResultStandardImage EMSegmentCommandLine
     --verbose --dontWriteResults --mrmlSceneFileName
     ${EMSegment_TUTORIAL_DIR}/Template_small.mrml
     --resultStandardVolumeFileName
@@ -579,30 +446,19 @@ if(NOT DISABLE_CXX_TESTING)
     "Error: result standard volume file does not exist")
 
 
-
   if(EMSEG_RUN_EXTRA_LONG_TESTS)
     # run tutorial data
-    set(test_name        "EMSegCL_RunTutorialData")
-    set(test_exe         "${Slicer3_EXE}")
+    set(test_name "EMSegCL_RunTutorialData")
     set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-    set(test_cmp_file    "${test_file_prefix}.raw")
-    set(test_std_file    "${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult.raw")
-    if(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files    ${test_file_prefix}.mhd ${test_file_prefix}.raw)
-    else(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files)
-    endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args
-      ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --verbose
-      --mrmlSceneFileName ${EMSegment_TUTORIAL_DIR}/Template_large.mrml
-      --resultVolumeFileName "${test_file_prefix}.mhd"
-      )
-    add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-      "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-      "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-      "-Drm_files:STRING=${test_rm_files}"
-      -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+    ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+      CMP_FILENAME "${test_file_prefix}.raw"
+      STANDARD_DATA_FILENAME "${EMSegment_TUTORIAL_DIR}/StandardData/StandardSegmentationResult.raw"
+      ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+        --verbose
+        --mrmlSceneFileName "${EMSegment_TUTORIAL_DIR}/Template_large.mrml"
+        --resultVolumeFileName "${test_file_prefix}.mhd"
+        --disableCompression
       )
   endif(EMSEG_RUN_EXTRA_LONG_TESTS)
 
@@ -620,54 +476,32 @@ if(NOT DISABLE_CXX_TESTING)
 
   if(EMSEG_RUN_EXTRA_SHORT_TESTS)
     # Make sure the default parameter set has not changed
-    set(test_name        "EMSegMRML_DiffDefaultNodes")
-    set(test_exe         "${Slicer3_EXE}")
+    set(test_name "EMSegMRML_DiffDefaultNodes")
     set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-    set(test_cmp_file    "${test_file_prefix}.mrml")
-    set(test_std_file    "${EMSegment_SOURCE_DIR}/Testing/TestData/DefaultMRMLNodes.mrml")
-    if(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files    ${test_file_prefix}.mrml)
-    else(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files)
-    endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args
-      ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      --verbose --generateEmptyMRMLSceneAndQuit ${test_cmp_file}
-      )
-    add_test( ${test_name} ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-      "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-      "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-      "-Drm_files:STRING=${test_rm_files}"
-      -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+    ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:EMSegmentCommandLine>
+      CMP_FILENAME "${test_file_prefix}.mrml"
+      STANDARD_DATA_FILENAME "${EMSegment_SOURCE_DIR}/Testing/TestData/DefaultMRMLNodes.mrml"
+      ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+        --verbose
+        --generateEmptyMRMLSceneAndQuit "${test_file_prefix}.mrml"
       )
 
     # Test that the mrml readers/writers work.
-    set(test_name        "EMSegMRML_DiffReadWriteNodes")
-    set(test_exe         "${Slicer3_EXE}")
+    set(test_name "EMSegMRML_DiffReadWriteNodes")
     set(test_file_prefix "${EMSegment_TEST_DIR}/${test_name}_tmp")
-    set(test_cmp_file    "${test_file_prefix}.mrml")
-
-if(EM_Slicer4_FOUND)
-    set(test_std_file    "${EMSegment_TUTORIAL_DIR}/Template_Slicer4_small_normalizationOn_noImages.mrml")
-else(EM_Slicer4_FOUND)
-    set(test_std_file    "${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn_noImages.mrml")
-endif(EM_Slicer4_FOUND)
-
-    if(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files    ${test_file_prefix}.mrml)
-    else(${EMSEG_REMOVE_TMP_TEST_DATA})
-      set(test_rm_files)
-    endif(${EMSEG_REMOVE_TMP_TEST_DATA})
-    set(test_args
-      ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentReadWriteMRMLTest
-      ${test_std_file} ${test_cmp_file}
-      )
-    add_test( ${test_name}
-      ${CMAKE_COMMAND} -V -VV "-Dtest_name:STRING=${test_name}"
-      "-Dtest_exe:STRING=${test_exe}"      "-Dtest_exe_args:STRING=${test_args}"
-      "-Dfile_cmp:STRING=${test_cmp_file}" "-Dfile_std:STRING=${test_std_file}"
-      "-Drm_files:STRING=${test_rm_files}"
-      -P "${EMSegment_SOURCE_DIR}/Testing/RunDiffRemoveTest.cmake"
+    if("${Slicer_MAJOR_VERSION}" EQUAL "4")
+      set(test_std_file "${EMSegment_TUTORIAL_DIR}/Template_Slicer4_small_normalizationOn_noImages.mrml")
+    else()
+      set(test_std_file "${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn_noImages.mrml")
+    endif()
+    set(test_cmp_file "${test_file_prefix}.mrml")
+    ADD_EMSEGMENT_DIFF_TEST(NAME "${test_name}" EXECUTABLE $<TARGET_FILE:vtkEMSegmentReadWriteMRMLTest>
+      CMP_FILENAME "${test_cmp_file}"
+      STANDARD_DATA_FILENAME "${test_std_file}"
+      ARGS
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+        ${test_std_file} ${test_cmp_file}
       )
   endif(EMSEG_RUN_EXTRA_SHORT_TESTS)
 
@@ -680,39 +514,39 @@ endif(EM_Slicer4_FOUND)
   ############################################################################
 
   if(EMSEG_RUN_VALGRIND_TESTS)
-    add_test( EMSegMRML_ValgrindTest
-      valgrind --leak-check=full
-      ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/EMSegmentCommandLine
-      --verbose
-      --mrmlSceneFileName
-      ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml
-      --dontWriteResults
+    add_test(NAME EMSegMRML_ValgrindTest
+      COMMAND valgrind --leak-check=full
+        $<TARGET_FILE:EMSegmentCommandLine>
+        --verbose
+        --mrmlSceneFileName
+        ${EMSegment_TUTORIAL_DIR}/Template_small_normalizationOn.mrml
+        --dontWriteResults
       )
-  endif(EMSEG_RUN_VALGRIND_TESTS)
+  endif()
 
 
-  if (EMSEG_RUN_LOCAL_TESTS)
-    set (registrationpackages CMTK BRAINS PLASTIMATCH DEMONS DRAMMS ANTS)
-    set (scalartypes float char double int short uchar uint ushort)
-    set (sizes small very_small)
-  else (EMSEG_RUN_LOCAL_TESTS)
-    set (registrationpackages BRAINS)
-    set (scalartypes float uint)
-    set (sizes small)
-  endif (EMSEG_RUN_LOCAL_TESTS)
+  if(EMSEG_RUN_LOCAL_TESTS)
+    set(registrationpackages CMTK BRAINS PLASTIMATCH DEMONS DRAMMS ANTS)
+    set(scalartypes float char double int short uchar uint ushort)
+    set(sizes small very_small)
+  else()
+    set(registrationpackages BRAINS)
+    set(scalartypes float uint)
+    set(sizes small)
+  endif()
 
 
 
   #==== Scalartype tests ============================
-  set (size very_small)
-  foreach (registrationpackage ${registrationpackages})
+  set(size very_small)
+  foreach(registrationpackage ${registrationpackages})
 
-    foreach (scalartype ${scalartypes})
+    foreach(scalartype ${scalartypes})
 
       # Task test - scalartypes - registrationpackages
-      midas_add_test( EMSegCL_Task_${registrationpackage}_MRIHumanBrain_scalartype_${scalartype}_${size}
-        ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-        ${EMS_SLICER_LAUNCH_ARGUMENTS}
+      midas_add_test(NAME EMSegCL_Task_${registrationpackage}_MRIHumanBrain_scalartype_${scalartype}_${size}
+        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
         --verbose --mrmlSceneFileName
         ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
         --targetVolumeFileNames
@@ -737,21 +571,21 @@ endif(EM_Slicer4_FOUND)
         "ERROR"
         )
 
-    endforeach (scalartype ${scalartypes})
+    endforeach(scalartype ${scalartypes})
 
-  endforeach (registrationpackage ${registrationpackages})
+  endforeach(registrationpackage ${registrationpackages})
 
 
 
-  foreach (size ${sizes})
+  foreach(size ${sizes})
 
-    foreach (registrationpackage ${registrationpackages})
+    foreach(registrationpackage ${registrationpackages})
 
     # Task MRI-Human-Brain
     add_test(
-      EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+      NAME EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
       --targetVolumeFileNames
@@ -777,8 +611,9 @@ endif(EM_Slicer4_FOUND)
       )
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
-        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
+        NAME EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
+        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentCompareTest>
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
         )
@@ -787,9 +622,9 @@ endif(EM_Slicer4_FOUND)
 
     # Task Human-Eye
     add_test(
-      EMSegCL_Task_HumanEye_${registrationpackage}_${size}
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+      NAME EMSegCL_Task_HumanEye_${registrationpackage}_${size}
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/Human-Eye.mrml
       --targetVolumeFileNames
@@ -813,8 +648,9 @@ endif(EM_Slicer4_FOUND)
       )
 #    if(EMSEG_RUN_COMPARE_TESTS)
 #      midas_add_test(
-#        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
-#        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
+#        NAME EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
+#        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentCompareTest>
+#        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
 #        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
 #                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
 #        )
@@ -827,9 +663,9 @@ endif(EM_Slicer4_FOUND)
     # deactivate this test, the test should fail
     if (EMSEG_RUN_LOCAL_TESTS)
     add_test(
-      EMSegCL_Task_HumanEye_LogMean_${registrationpackage}_${size}
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+      NAME EMSegCL_Task_HumanEye_LogMean_${registrationpackage}_${size}
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Testing/TestData/Human-Eye_LogMeanError.mrml
       --targetVolumeFileNames
@@ -855,8 +691,9 @@ endif(EM_Slicer4_FOUND)
 
 #    if(EMSEG_RUN_COMPARE_TESTS)
 #      midas_add_test(
-#        EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
-#        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
+#        NAME EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_CompareTest
+#        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentCompareTest>
+#        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
 #        ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd
 #                          MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrain_T1_aligned.nrrd.md5}
 #        )
@@ -866,9 +703,9 @@ endif(EM_Slicer4_FOUND)
 
     # Task MRI-Human-Brain-Exp
     add_test(
-      EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+      NAME EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Exp.mrml
       --targetVolumeFileNames
@@ -890,8 +727,9 @@ endif(EM_Slicer4_FOUND)
       )
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
-        EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}_CompareTest
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
+        NAME EMSegCL_Task_MRIHumanBrainExp_${registrationpackage}_${size}_CompareTest
+        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentCompareTest>
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainExp_T1_aligned.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainExp_T1_aligned.nrrd.md5}
         )
@@ -900,9 +738,9 @@ endif(EM_Slicer4_FOUND)
 
 
     # Task MRI-Human-Brain-Parcellation
-    add_test( EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+    add_test(NAME EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Parcellation.mrml
       --targetVolumeFileNames
@@ -928,8 +766,9 @@ endif(EM_Slicer4_FOUND)
       )
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
-        EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}_CompareTest
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
+        NAME EMSegCL_Task_MRIHumanBrainParcellation_${registrationpackage}_${size}_CompareTest
+        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentCompareTest>
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainParcellation_T1.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainParcellation_T1.nrrd.md5}
       )
@@ -937,9 +776,9 @@ endif(EM_Slicer4_FOUND)
     
 
     # Task MRI-Human-Brain-Full-Parcellation 
-    add_test( EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+    add_test(NAME EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain-Full-Parcellation.mrml
       --targetVolumeFileNames
@@ -965,19 +804,20 @@ endif(EM_Slicer4_FOUND)
       )
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
-        EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}_CompareTest
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
+        NAME EMSegCL_Task_MRIHumanBrainFullParcellation_${registrationpackage}_${size}_CompareTest
+        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentCompareTest>
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_MRIHumanBrainFullParcellation_T1.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_MRIHumanBrainFullParcellation_T1.nrrd.md5}
         )
     endif(EMSEG_RUN_COMPARE_TESTS)
 
 
-    if(NOT EM_Slicer4_FOUND)
+    if("${Slicer3_VERSION_MAJOR}" EQUAL "3")
     # Task Test-Atlas-Cluster, only for Slicer3
-    add_test( EMSegCL_Task_TestAtlasCluster_${registrationpackage}_${size}
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+    add_test(NAME EMSegCL_Task_TestAtlasCluster_${registrationpackage}_${size}
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/Test-Atlas-Cluster.mrml
       --targetVolumeFileNames
@@ -995,13 +835,13 @@ endif(EM_Slicer4_FOUND)
       FAIL_REGULAR_EXPRESSION
       "ERROR"
       )
-    endif(NOT EM_Slicer4_FOUND)
+    endif()
 
-    if (EMSEG_RUN_LOCAL_TESTS)
+    if(EMSEG_RUN_LOCAL_TESTS)
       # Task cine MRI
-      add_test( EMSegCL_Task_ACcineMRI_${registrationpackage}_${size}
-        ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-        ${EMS_SLICER_LAUNCH_ARGUMENTS}
+      add_test(NAME EMSegCL_Task_ACcineMRI_${registrationpackage}_${size}
+        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
         --verbose --mrmlSceneFileName
         ${EMSegment_SOURCE_DIR}/../KilisSandbox/Tasks/AC-cineMR-Ventricles.mrml
         --targetVolumeFileNames
@@ -1020,14 +860,14 @@ endif(EM_Slicer4_FOUND)
         FAIL_REGULAR_EXPRESSION
         "ERROR"
         )
-    endif (EMSEG_RUN_LOCAL_TESTS)
+    endif(EMSEG_RUN_LOCAL_TESTS)
 
 
     # Task Non-Human-Primate
     add_test(
-      EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+      NAME EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/Non-Human-Primate.mrml
       --targetVolumeFileNames
@@ -1053,100 +893,99 @@ endif(EM_Slicer4_FOUND)
       )
     if(EMSEG_RUN_COMPARE_TESTS)
       midas_add_test(
-        NAME
-        EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}_CompareTest
-        COMMAND
-        ${Slicer3_EXE} --launch vtkEMSegmentCompareTest ${EMS_SLICER_LAUNCH_ARGUMENTS}
+        NAME EMSegCL_Task_NonHumanPrimate_${registrationpackage}_${size}_CompareTest
+        COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentCompareTest>
+        ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
         ${EMSegment_BINARY_DIR}/RESULT_${registrationpackage}_${size}_NonHumanPrimate_T1.nrrd
                           MIDAS{RESULT_${registrationpackage}_${size}_NonHumanPrimate_T1.nrrd.md5}
         )
     endif(EMSEG_RUN_COMPARE_TESTS)
 
 
-    endforeach (registrationpackage ${registrationpackages})
+    endforeach(registrationpackage ${registrationpackages})
 
-  endforeach (size ${sizes})
+  endforeach(size ${sizes})
 
 
-if( EMSEG_RUN_LOCAL_TESTS )
+  if(EMSEG_RUN_LOCAL_TESTS)
 
-  # Task test - CT Hand Bone
-  midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject1
-    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
-    --verbose --mrmlSceneFileName
-    ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
-    --targetVolumeFileNames
-    MIDAS{CT_Hand_Bone_Subject_1.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_1.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskCTHandBone_Subject1
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
+    # Task test - CT Hand Bone
+    midas_add_test(NAME EMSegCL_TaskCTHandBone_Subject1
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
+      --targetVolumeFileNames
+      MIDAS{CT_Hand_Bone_Subject_1.nrrd.md5}
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_1.nrrd
+      )
+    set_tests_properties(
+      EMSegCL_TaskCTHandBone_Subject1
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
 
-  # Task test - CT Hand Bone
-  midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject2
-    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
-    --verbose --mrmlSceneFileName
-    ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
-    --targetVolumeFileNames
-    MIDAS{CT_Hand_Bone_Subject_2.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_2.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskCTHandBone_Subject1
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
+    # Task test - CT Hand Bone
+    midas_add_test(NAME EMSegCL_TaskCTHandBone_Subject2
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
+      --targetVolumeFileNames
+      MIDAS{CT_Hand_Bone_Subject_2.nrrd.md5}
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_2.nrrd
+      )
+    set_tests_properties(
+      EMSegCL_TaskCTHandBone_Subject1
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
 
-  # Task test - CT Hand Bone
-  midas_add_test( NAME EMSegCL_TaskCTHandBone_Subject3
-    COMMAND ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-    ${EMS_SLICER_LAUNCH_ARGUMENTS}
-    --verbose --mrmlSceneFileName
-    ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
-    --targetVolumeFileNames
-    MIDAS{CT_Hand_Bone_Subject_3.nrrd.md5}
-    --resultVolumeFileName
-    ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_3.nrrd
-    )
-  set_tests_properties(
-    EMSegCL_TaskCTHandBone_Subject1
-    PROPERTIES
-    FAIL_REGULAR_EXPRESSION
-    "ERROR"
-    )
+    # Task test - CT Hand Bone
+    midas_add_test(NAME EMSegCL_TaskCTHandBone_Subject3
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+      --verbose --mrmlSceneFileName
+      ${EMSegment_SOURCE_DIR}/Tasks/CT-Hand-Bone.mrml
+      --targetVolumeFileNames
+      MIDAS{CT_Hand_Bone_Subject_3.nrrd.md5}
+      --resultVolumeFileName
+      ${EMSegment_BINARY_DIR}/RESULT_CT_Hand_Bone_Subject_3.nrrd
+      )
+    set_tests_properties(
+      EMSegCL_TaskCTHandBone_Subject1
+      PROPERTIES
+      FAIL_REGULAR_EXPRESSION
+      "ERROR"
+      )
 
-  add_test( RemoteIOTest2
-    ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentRemoteIOTest
-    http://slicer.org/EMSegmentUpdates/
-    ${EMSegment_TEST_DIR}/RemoteIOTest2sdfsd.hmtl
-    )
+    add_test(NAME RemoteIOTest2
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentRemoteIOTest>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+      http://slicer.org/EMSegmentUpdates/
+      ${EMSegment_TEST_DIR}/RemoteIOTest2sdfsd.hmtl
+      )
 
-  # Are we able to download our update file ?
-  add_test( RemoteIOTest
-    ${Slicer3_EXE} ${WRAPPED_TEST_EXE_PREFIX}/vtkEMSegmentRemoteIOTest
-    http://slicer.org/EMSegmentUpdates/
-    ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegmenterUpdates
-    )
-
+    # Are we able to download our update file ?
+    add_test(NAME RemoteIOTest
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentRemoteIOTest>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
+      http://slicer.org/EMSegmentUpdates/
+      ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegmenterUpdates
+      )
     
     # Compare results
     # Task MRI-Human-Brain_compare
-
-    set (registrationpackage BRAINS)
-    set (size small)
+    set(registrationpackage BRAINS)
+    set(size small)
     add_test(
-      EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_compare
-      ${Slicer3_EXE} ${WRAPPED_EXE_PREFIX}/EMSegmentCommandLine
-      ${EMS_SLICER_LAUNCH_ARGUMENTS}
+      NAME EMSegCL_Task_MRIHumanBrain_${registrationpackage}_${size}_compare
+      COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:EMSegmentCommandLine>
+      ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       --verbose --mrmlSceneFileName
       ${EMSegment_SOURCE_DIR}/Tasks/MRI-Human-Brain.mrml
       --targetVolumeFileNames
@@ -1169,9 +1008,6 @@ if( EMSEG_RUN_LOCAL_TESTS )
       "ERROR"
       )
 
-endif( EMSEG_RUN_LOCAL_TESTS )
-
-
+  endif(EMSEG_RUN_LOCAL_TESTS)
 
 endif(NOT DISABLE_CXX_TESTING)
-

@@ -1,8 +1,7 @@
 #
 # Create the EMSegment_BASE_SRCS CMake variable including files for
 #    MRML, Algorithms, ImageFilters, AMF, Registration
-# and the
-#    logic-class, MRMLManager, SlicerCommonInterface
+# and the logic-class, MRMLManager, SlicerCommonInterface
 #
 # Also, define the appropriate include_directories for these source files
 #
@@ -68,7 +67,7 @@ set(EMSegment_BASE_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentMRMLManager.cxx 
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkEMSegmentLogic.cxx 
   ${CMAKE_CURRENT_SOURCE_DIR}/vtkSlicerCommonInterface.cxx
-)
+  )
 
 include_directories(
   ${EMSegment_SOURCE_DIR}
