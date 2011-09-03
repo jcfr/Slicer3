@@ -1,14 +1,27 @@
-#include <vector>
-#include <string>
-#include "vtkMRMLScene.h"
-#include "vtkEMSegmentLogic.h"
+
+// Slicer/Logic includes
+#include <vtkSlicerApplicationLogic.h>
+
+// EMSegment includes
 #include "vtkEMSegmentTestUtilities.h"
+#include "vtkSlicerCommonInterface.h"
+
+// EMSegment/Logic includes
+#include "vtkEMSegmentLogic.h"
+
+// EMSegment/MRML includes
+#include "vtkEMSegmentMRMLManager.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
 #include "vtkMRMLEMSVolumeCollectionNode.h"
+
+// MRML includes
+#include <vtkMRMLScene.h>
+
+// STD includes
+#include <cstdlib>
 #include <stdexcept>
-#include <stdlib.h>
-#include "vtkSlicerCommonInterface.h"
-#include "vtkSlicerApplicationLogic.h"
+#include <string>
+#include <vector>
 
 int main(int vtkNotUsed(argc), char** argv)
 {

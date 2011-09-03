@@ -1,13 +1,24 @@
-#include <vector>
-#include <string>
-#include "vtkMRMLScene.h"
-#include "vtkEMSegmentLogic.h"
+
+// EMSegment includes
+#include "vtkEMSegmentMRMLManager.h"
 #include "vtkEMSegmentTestUtilities.h"
-#include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkMRMLEMSVolumeCollectionNode.h"
+
+// EMSegment/Logic includes
+#include "vtkEMSegmentLogic.h"
+
+// EMSegment/MRML includes
 #include "vtkMRMLEMSTreeNode.h"
+#include "vtkMRMLEMSVolumeCollectionNode.h"
+#include "vtkMRMLEMSWorkingDataNode.h"
+
+// MRML includes
+#include <vtkMRMLScene.h>
+
+// STD includes
+#include <cstdlib>
 #include <stdexcept>
-#include <stdlib.h>
+#include <string>
+#include <vector>
 
 #define vtkTestSetGetMacro(pass, obj, var, val)                       \
 {                                                                     \

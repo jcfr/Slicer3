@@ -1,8 +1,21 @@
+
+// EMSegment includes
+#include "vtkEMSegmentMRMLManager.h"
+#include "vtkEMSegmentTestUtilities.h"
+
+// EMSegment/Logic includes
+#include "vtkEMSegmentLogic.h"
+
+// MRML includes
+#include <vtkMRMLVolumeNode.h>
+#include <vtkMRMLScene.h>
+
+// VTK includes
+#include <vtkImageData.h>
+
+// STD includes
 #include <vector>
 #include <string>
-#include "vtkMRMLScene.h"
-#include "vtkEMSegmentLogic.h"
-#include "vtkEMSegmentTestUtilities.h"
 
 int main(int argc, char** argv)
 {
