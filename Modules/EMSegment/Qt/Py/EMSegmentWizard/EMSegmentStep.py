@@ -73,5 +73,3 @@ class EMSegmentStep( ctk.ctkWorkflowWidgetStep ) :
     if showMessageBox:
       messageBox = qt.QMessageBox.warning( self, messageTitle, messageText )
     super( EMSegmentStep, self ).validate( False, desiredBranchId )
-
-

@@ -46,28 +46,22 @@ public:
 
   qSlicerGetTitleMacro(QTMODULE_TITLE);
 
-  ///
   /// Help to use the module
   virtual QString helpText()const;
 
-  ///
   /// Return the icon of the EMSegment module.
   virtual QIcon icon()const;
 
-  ///
   /// Activate hidden mode for this module.
   virtual bool isHidden()const;
 
 protected:
-  ///
   /// Initialize the module. Register the volumes reader/writer
   virtual void setup();
 
-  ///
   /// Create and return the widget representation associated to this module
   virtual qSlicerAbstractModuleRepresentation * createWidgetRepresentation();
 
-  ///
   /// Create and return the logic associated to this module
   virtual vtkMRMLAbstractLogic* createLogic();
 
