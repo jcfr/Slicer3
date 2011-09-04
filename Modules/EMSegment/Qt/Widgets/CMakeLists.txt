@@ -16,10 +16,10 @@ SET(module_widgets_include_directories
 
 # Source files
 SET(module_widgets_SRCS
-  
-  qSlicerEMSegmentWidget.cxx  
+
+  qSlicerEMSegmentWidget.cxx
   qSlicerEMSegmentWidget.h
-  
+
   qSlicerEMSegmentInputChannelListWidget.h
   qSlicerEMSegmentInputChannelListWidget.cxx
   
