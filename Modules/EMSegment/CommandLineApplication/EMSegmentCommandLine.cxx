@@ -1,7 +1,22 @@
+
+
+// EMSegment includes
+#include "vtkSlicerCommonInterface.h"
+
+// EMSegment/Logic includes
+#include "vtkEMSegmentLogic.h"
+
+// EMSegment/MRML includes
+#include "vtkEMSegmentMRMLManager.h"
+#include "vtkMRMLEMSGlobalParametersNode.h"
+
+// EMSegment/CLI includes
 #include "EMSegmentCommandLineCLP.h"
 #include "EMSegmentAPIHelper.h"
 #include "EMSegmentCommandLineFct.h"
-#include "vtkSlicerCommonInterface.h"
+
+// Colors/Logic includes
+#include <vtkSlicerColorLogic.h>
 
 #ifdef Slicer3_USE_KWWIDGETS
 extern "C" int Atlascreatorcxxmodule_Init(Tcl_Interp *interp);

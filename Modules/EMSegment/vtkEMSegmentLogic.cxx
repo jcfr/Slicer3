@@ -1,39 +1,60 @@
-#include <algorithm>
-#include <sstream>
 
+// EMSegment/Logic includes
 #include "vtkEMSegmentLogic.h"
-#include "vtkObjectFactory.h"
-#include "vtkDirectory.h"
+
+// EMSegment/MRML includes
+#include "vtkEMSegmentMRMLManager.h"
 #include "vtkMRMLEMSWorkingDataNode.h"
-#include "vtkGridTransform.h"
-#include "vtkImageEMLocalSegmenter.h"
-#include "vtkImageEMLocalSuperClass.h"
-#include "vtkSlicerVolumesLogic.h"
-#include "vtkTransformToGrid.h"
-#include "vtkIdentityTransform.h"
 #include "vtkMRMLEMSAtlasNode.h"
 #include "vtkMRMLEMSGlobalParametersNode.h"
 #include "vtkMRMLLabelMapVolumeDisplayNode.h"
 #include "vtkMRMLEMSTemplateNode.h"
-#include "vtkImageIslandFilter.h"
-#include "vtkDataIOManagerLogic.h"
-#include "vtkMath.h"
-#include "vtkImageLevelSets.h"
-#include "vtkImageMultiLevelSets.h"
-#include "vtkImageLogOdds.h"
-#include "vtkMultiThreader.h"
-#include "vtkImageThreshold.h"
-#include "vtkImageMathematics.h"
-#include "vtkImageAppend.h"
-#include "vtkImageClip.h"
-#include "vtkImageTranslateExtent.h"
-#include "vtkITKImageWriter.h" 
-#include "vtkImageEllipsoidSource.h"
+
+// EMSegment/Algorithm includes
+#include <vtkImageEMLocalSegmenter.h>
+#include <vtkImageEMLocalSuperClass.h>
+
+// Slicer/Logic includes
+#include <vtkDataIOManagerLogic.h>
+
+// Volumes/Logic includes
+#include <vtkSlicerVolumesLogic.h>
+
+// MRML includes
+#include <vtkMRMLScalarVolumeNode.h>
+#include <vtkMRMLVolumeArchetypeStorageNode.h>
+
+// VTK includes
+#include <vtkDirectory.h>
+#include <vtkGridTransform.h>
+#include <vtkIdentityTransform.h>
+#include <vtkImageAppend.h>
+#include <vtkImageCast.h>
+#include <vtkImageClip.h>
+#include <vtkImageData.h>
+#include <vtkImageEllipsoidSource.h>
+#include <vtkImageIslandFilter.h>
+#include <vtkImageLevelSets.h>
+#include <vtkImageLogOdds.h>
+#include <vtkImageMathematics.h>
+#include <vtkImageMultiLevelSets.h>
+#include <vtkImageReslice.h>
+#include <vtkImageThreshold.h>
+#include <vtkImageTranslateExtent.h>
+#include <vtkITKImageWriter.h>
+#include <vtkMath.h>
+#include <vtkMatrix4x4.h>
+#include <vtkMultiThreader.h>
+#include <vtkObjectFactory.h>
+#include <vtkTransform.h>
+#include <vtkTransformToGrid.h>
+
+// VTKSYS includes
 #include <vtksys/SystemTools.hxx>
 
-#ifdef Slicer3_USE_KWWIDGETS
-#include <vtkMRMLAtlasCreatorNode.h>
-#endif
+// STD includes
+#include <algorithm>
+#include <sstream>
 
 #ifdef _WIN32
 //for _mktemp
@@ -77,19 +98,18 @@ vtkEMSegmentLogic::vtkEMSegmentLogic()
 
   //this->DebugOn();
 
-  this->MRMLManager = NULL; // NB: must be set before SetMRMLManager is called
+  this->MRMLManager = 0; // NB: must be set before SetMRMLManager is called
   vtkEMSegmentMRMLManager* manager = vtkEMSegmentMRMLManager::New();
-  this->SetMRMLManager(manager);
+  vtkSetObjectBodyMacro(MRMLManager,vtkEMSegmentMRMLManager,manager);
   manager->Delete();
 
   this->SlicerCommonInterface = NULL;
-
 }
 
 //----------------------------------------------------------------------------
 vtkEMSegmentLogic::~vtkEMSegmentLogic()
 {
-  this->SetMRMLManager(NULL);
+  vtkSetObjectBodyMacro(MRMLManager, vtkEMSegmentMRMLManager, 0);
   this->SetProgressCurrentAction(NULL);
   this->SetModuleName(NULL);
 
@@ -98,7 +118,6 @@ vtkEMSegmentLogic::~vtkEMSegmentLogic()
     this->SlicerCommonInterface->Delete();
     this->SlicerCommonInterface = NULL;
     }
-
 }
 
 //----------------------------------------------------------------------------
@@ -261,6 +280,59 @@ void vtkEMSegmentLogic::PrintImageInfo(vtkImageData* image)
       << std::endl;
   std::cout << "Extent: " << extent[0] << " " << extent[1] << " " << extent[2]
       << " " << extent[3] << " " << extent[4] << " " << extent[5] << std::endl;
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentLogic::RegisterMRMLNodesWithScene()
+{
+  this->MRMLManager->RegisterMRMLNodesWithScene();
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentLogic::RegisterNodes()
+{
+  // std::cout << "Registering Nodes.." << std::endl;
+  // make sure the scene is attached
+  this->MRMLManager->SetMRMLScene(this->GetMRMLScene());
+  this->RegisterMRMLNodesWithScene();
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentLogic::SetAndObserveMRMLScene(vtkMRMLScene* scene)
+{
+  Superclass::SetAndObserveMRMLScene(scene);
+  this->MRMLManager->SetMRMLScene(scene);
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentLogic::InitializeEventListeners()
+{
+  if(this->GetMRMLScene() == NULL)
+    {
+    vtkWarningMacro("InitializeEventListeners: no scene to listen to!");
+    return;
+    }
+
+  // a good time to add the observed events!
+  vtkSmartPointer<vtkIntArray> events = vtkSmartPointer<vtkIntArray>::New();
+  events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+  events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+
+#ifdef Slicer3_USE_KWWIDGETS
+  // Slicer3
+  this->SetAndObserveMRMLSceneEvents(this->GetMRMLScene(), events);
+#else
+  // Slicer4
+  this->SetAndObserveMRMLSceneEventsInternal(this->GetMRMLScene(), events);
+#endif
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentLogic::ProcessMRMLEvents(vtkObject *caller, 
+                                          unsigned long event, 
+                                          void *callData)
+{
+  this->MRMLManager->ProcessMRMLEvents(caller, event, callData);
 }
 
 //----------------------------------------------------------------------------
@@ -613,7 +685,7 @@ void vtkEMSegmentLogic::ComposeGridTransform(vtkGridTransform* inGrid, vtkMatrix
   double* outDataPtr =
       static_cast<double*> (outGrid->GetDisplacementGrid()->GetScalarPointer());
   vtkIdType numOutputVoxels =
-      outGrid->GetDisplacementGrid()-> GetNumberOfPoints();
+      outGrid->GetDisplacementGrid()->GetNumberOfPoints();
 
   for (vtkIdType i = 0; i < numOutputVoxels; ++i)
     {
@@ -846,8 +918,8 @@ void vtkEMSegmentLogic::CopyDataToSegmenter(vtkImageEMLocalSegmenter* segmenter)
 //-----------------------------------------------------------------------------
 void vtkEMSegmentLogic::CopyAtlasDataToSegmenter(vtkImageEMLocalSegmenter* segmenter)
 {
-  segmenter-> SetNumberOfTrainingSamples(
-      this->MRMLManager-> GetAtlasNumberOfTrainingSamples());
+  segmenter->SetNumberOfTrainingSamples(
+      this->MRMLManager->GetAtlasNumberOfTrainingSamples());
 }
 
 //-----------------------------------------------------------------------------
@@ -858,10 +930,10 @@ void vtkEMSegmentLogic::CopyTargetDataToSegmenter(vtkImageEMLocalSegmenter* segm
       this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNode();
 
   if (workingTarget == NULL)
-  {
+    {
     vtkErrorMacro("TargetNode is null");
     return;
-  }
+    }
 
   unsigned int numTargetImages = workingTarget->GetNumberOfVolumes();
   std::cout << "Setting number of target images: " << numTargetImages
@@ -891,11 +963,11 @@ void vtkEMSegmentLogic::CopyGlobalDataToSegmenter(vtkImageEMLocalSegmenter* segm
 {
   if (this->MRMLManager->GetEnableMultithreading())
     {
-    segmenter-> SetDisableMultiThreading(0);
+    segmenter->SetDisableMultiThreading(0);
     }
   else
     {
-    segmenter-> SetDisableMultiThreading(1);
+    segmenter->SetDisableMultiThreading(1);
     }
   segmenter->SetPrintDir(this->MRMLManager->GetSaveWorkingDirectory());
 
@@ -906,15 +978,15 @@ void vtkEMSegmentLogic::CopyGlobalDataToSegmenter(vtkImageEMLocalSegmenter* segm
   // node. !!!todo!!!
   //
   vtkIdType rootNodeID = this->MRMLManager->GetTreeRootNodeID();
-  segmenter-> SetSmoothingWidth(
-      this->MRMLManager-> GetTreeNodeSmoothingKernelWidth(rootNodeID));
+  segmenter->SetSmoothingWidth(
+      this->MRMLManager->GetTreeNodeSmoothingKernelWidth(rootNodeID));
 
   // type mismatch between logic and algorithm !!!todo!!!
   int intSigma = vtkMath::Round(
-      this->MRMLManager-> GetTreeNodeSmoothingKernelSigma(rootNodeID));
+      this->MRMLManager->GetTreeNodeSmoothingKernelSigma(rootNodeID));
   segmenter->SetSmoothingSigma(intSigma);
 
-  int biasType = this->MRMLManager-> GetBiasCorrectionType(rootNodeID);
+  int biasType = this->MRMLManager->GetBiasCorrectionType(rootNodeID);
   segmenter->SetBiasCorrectionType(biasType);
 
   //
@@ -952,7 +1024,7 @@ void vtkEMSegmentLogic::CopyTreeDataToSegmenter(vtkImageEMLocalSuperClass* node,
       // virtual functions and so failed initializations lead to
       // memory errors
       childNode->SetNumInputImages(
-          this->MRMLManager-> GetTargetNumberOfSelectedVolumes());
+          this->MRMLManager->GetTargetNumberOfSelectedVolumes());
       this->CopyTreeGenericDataToSegmenter(childNode, childID);
       this->CopyTreeLeafDataToSegmenter(childNode, childID);
       node->AddSubClass(childNode, i);
@@ -995,7 +1067,7 @@ void vtkEMSegmentLogic::DefineValidSegmentationBoundary()
 
   // get dimensions of target image
   int targetImageDimensions[3];
-  this->MRMLManager->GetTargetInputNode()->GetNthVolumeNode(0)-> GetImageData()->GetDimensions(
+  this->MRMLManager->GetTargetInputNode()->GetNthVolumeNode(0)->GetImageData()->GetDimensions(
       targetImageDimensions);
 
   this->MRMLManager->GetSegmentationBoundaryMin(boundMin);
@@ -1055,10 +1127,10 @@ void vtkEMSegmentLogic::CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericCla
   node->SetSegmentationBoundaryMin(boundMin[0], boundMin[1], boundMin[2]);
   node->SetSegmentationBoundaryMax(boundMax[0], boundMax[1], boundMax[2]);
 
-  node->SetProbDataWeight(this->MRMLManager-> GetTreeNodeSpatialPriorWeight(
+  node->SetProbDataWeight(this->MRMLManager->GetTreeNodeSpatialPriorWeight(
       nodeID));
 
-  node->SetTissueProbability(this->MRMLManager-> GetTreeNodeClassProbability(
+  node->SetTissueProbability(this->MRMLManager->GetTreeNodeClassProbability(
       nodeID));
 
   node->SetPrintWeights(this->MRMLManager->GetTreeNodePrintWeight(nodeID));
@@ -1067,7 +1139,7 @@ void vtkEMSegmentLogic::CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericCla
   for (unsigned int i = 0; i < numTargetImages; ++i)
     {
     node->SetInputChannelWeights(
-        this->MRMLManager-> GetTreeNodeInputChannelWeight(nodeID, i), i);
+        this->MRMLManager->GetTreeNodeInputChannelWeight(nodeID, i), i);
     }
 
   if (this->GetMRMLManager()->GetGlobalParametersNode()->GetAMFSmoothing()
@@ -1114,17 +1186,17 @@ void vtkEMSegmentLogic::CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericCla
 //-----------------------------------------------------------------------------
 void vtkEMSegmentLogic::CopyTreeParentDataToSegmenter(vtkImageEMLocalSuperClass* node, vtkIdType nodeID)
 {
-  node->SetPrintFrequency(this->MRMLManager-> GetTreeNodePrintFrequency(nodeID));
-  node->SetPrintBias(this->MRMLManager-> GetTreeNodePrintBias(nodeID));
-  node->SetPrintLabelMap(this->MRMLManager-> GetTreeNodePrintLabelMap(nodeID));
+  node->SetPrintFrequency(this->MRMLManager->GetTreeNodePrintFrequency(nodeID));
+  node->SetPrintBias(this->MRMLManager->GetTreeNodePrintBias(nodeID));
+  node->SetPrintLabelMap(this->MRMLManager->GetTreeNodePrintLabelMap(nodeID));
 
   node->SetPrintEMLabelMapConvergence(
       this->MRMLManager->GetTreeNodePrintEMLabelMapConvergence(nodeID));
   node->SetPrintEMWeightsConvergence(
       this->MRMLManager->GetTreeNodePrintEMWeightsConvergence(nodeID));
   node->SetStopEMType(this->ConvertGUIEnumToAlgorithmEnumStoppingConditionType(
-      this->MRMLManager-> GetTreeNodeStoppingConditionEMType(nodeID)));
-  node->SetStopEMValue(this->MRMLManager-> GetTreeNodeStoppingConditionEMValue(
+      this->MRMLManager->GetTreeNodeStoppingConditionEMType(nodeID)));
+  node->SetStopEMValue(this->MRMLManager->GetTreeNodeStoppingConditionEMValue(
       nodeID));
   node->SetStopEMMaxIter(
       this->MRMLManager->GetTreeNodeStoppingConditionEMIterations(nodeID));
@@ -1135,9 +1207,9 @@ void vtkEMSegmentLogic::CopyTreeParentDataToSegmenter(vtkImageEMLocalSuperClass*
       this->MRMLManager->GetTreeNodePrintMFAWeightsConvergence(nodeID));
   node->SetStopMFAType(
       this->ConvertGUIEnumToAlgorithmEnumStoppingConditionType(
-          this->MRMLManager-> GetTreeNodeStoppingConditionMFAType(nodeID)));
+          this->MRMLManager->GetTreeNodeStoppingConditionMFAType(nodeID)));
   node->SetStopMFAValue(
-      this->MRMLManager-> GetTreeNodeStoppingConditionMFAValue(nodeID));
+      this->MRMLManager->GetTreeNodeStoppingConditionMFAValue(nodeID));
   node->SetStopMFAMaxIter(
       this->MRMLManager->GetTreeNodeStoppingConditionMFAIterations(nodeID));
 
@@ -1211,13 +1283,13 @@ void vtkEMSegmentLogic::CopyTreeLeafDataToSegmenter(vtkImageEMLocalClass* node, 
   for (unsigned int r = 0; r < numTargetImages; ++r)
     {
     node->SetLogMu(
-        this->MRMLManager-> GetTreeNodeDistributionLogMeanWithCorrection(
+        this->MRMLManager->GetTreeNodeDistributionLogMeanWithCorrection(
             nodeID, r), r);
 
     for (unsigned int c = 0; c < numTargetImages; ++c)
       {
       node->SetLogCovariance(
-          this->MRMLManager-> GetTreeNodeDistributionLogCovarianceWithCorrection(
+          this->MRMLManager->GetTreeNodeDistributionLogCovarianceWithCorrection(
               nodeID, r, c), r, c);
       }
     }
@@ -1549,7 +1621,7 @@ void vtkEMSegmentLogic::CreatePackageFilenames(vtkMRMLScene* scene, const char* 
   //
   // change the storage file for the atlas
   int numAtlasVolumes =
-      newSceneManager->GetAtlasInputNode()-> GetNumberOfVolumes();
+      newSceneManager->GetAtlasInputNode()->GetNumberOfVolumes();
 
   // input atlas volumes
   if (newSceneManager->GetAtlasInputNode())
@@ -2795,7 +2867,7 @@ int vtkEMSegmentLogic::SourceTaskFiles()
 {
   vtkstd::string generalFile = this->DefineTclTaskFullPathName(
       vtkMRMLEMSGlobalParametersNode::GetDefaultTaskTclFileName());
-  vtkstd::string specificFile = std::string(this->DefineTclTaskFileFromMRML());
+  vtkstd::string specificFile = this->DefineTclTaskFileFromMRML();
   cout << "Sourcing general Task file : " << generalFile.c_str() << endl;
   // Have to first source the default file to set up the basic structure"
   if (this->SourceTclFile(generalFile.c_str()))
@@ -3019,17 +3091,10 @@ void vtkEMSegmentLogic::CreateDefaultTasksList(std::vector<std::string> & Defaul
       DefinePreprocessingTasksFile);
 }
 
-//-----------------------------------------------------------------------------
-void vtkEMSegmentLogic::RunAtlasCreator(vtkMRMLNode *mNode)
-{
 #ifdef Slicer3_USE_KWWIDGETS
-
-  vtkMRMLAtlasCreatorNode *node = vtkMRMLAtlasCreatorNode::SafeDownCast(mNode);
-
-  if (!node) {
-    std::cout << "RunAtlasCreator: Error - not a valid MRML node!" << std::endl;
-    return;
-  }
+//-----------------------------------------------------------------------------
+void vtkEMSegmentLogic::RunAtlasCreator(vtkMRMLAtlasCreatorNode *node)
+{
 
   std::string pythonCommand = "";
   vtksys_stl::string module_path = std::string(
@@ -3151,15 +3216,9 @@ void vtkEMSegmentLogic::RunAtlasCreator(vtkMRMLNode *mNode)
   pythonCommand += "logic = None\n";
 
   this->GetSlicerCommonInterface()->EvaluatePython(pythonCommand.c_str());
-#else
-
-  // not supported in Slicer4
-  std::cout << "The AtlasCreator is not supported in Slicer4." << std::endl;
-
-#endif
 
 }
-
+#endif
 
 //-----------------------------------------------------------------------------
 int vtkEMSegmentLogic::ActiveMeanField(vtkImageEMLocalSegmenter* segmenter, vtkImageData* result)

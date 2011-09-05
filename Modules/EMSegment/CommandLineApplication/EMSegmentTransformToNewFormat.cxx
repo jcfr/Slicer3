@@ -1,7 +1,16 @@
+
+// EMSegment/CLI includes
 #include "EMSegmentAPIHelper.h"
 #include "EMSegmentTransformToNewFormatCLP.h"
-#include "vtkSlicerColorLogic.h"
+
+// EMSegment/Logic includes
 #include "vtkEMSegmentLogic.h"
+
+// EMSegment/MRML includes
+#include "vtkEMSegmentMRMLManager.h"
+
+// Colors/Logic includes
+#include <vtkSlicerColorLogic.h>
 
 int main(int argc, char** argv)
 {

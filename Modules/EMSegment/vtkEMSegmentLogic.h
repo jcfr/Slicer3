@@ -1,51 +1,47 @@
 #ifndef __vtkEMSegmentLogic_h
 #define __vtkEMSegmentLogic_h
 
-// needed to get the CMake variables
-#include "vtkSlicerConfigure.h"
+// Slicer includes
+#include <vtkSlicerModuleLogic.h>
+#include <vtkSlicerConfigure.h> // For Slicer3_USE_KWWIDGETS
 
-#include "vtkSlicerModuleLogic.h"
+// EMSegment includes
 #include "vtkEMSegment.h"
-#include "vtkEMSegmentMRMLManager.h"
 #include "vtkSlicerCommonInterface.h"
 
-#include <vtkImageData.h>
-#include <vtkTransform.h>
-#include <vtkMatrix4x4.h>
-#include <vtkImageReslice.h>
-#include <vtkImageCast.h>
+#ifdef Slicer3_USE_KWWIDGETS
+# include <vtkMRMLAtlasCreatorNode.h>
+#endif
 
-#include <vtkMRMLVolumeArchetypeStorageNode.h>
-#include <vtkMRMLScalarVolumeNode.h>
-#include <vtkMRMLVolumeNode.h>
-
-
-class vtkImageEMLocalSegmenter;
-class vtkImageEMLocalGenericClass;
-class vtkImageEMLocalSuperClass;
-class vtkImageEMLocalClass;
-class vtkSlicerApplicationLogic;
+class vtkEMSegmentMRMLManager;
 class vtkGridTransform;
+class vtkImageData;
+class vtkImageEMLocalClass;
+class vtkImageEMLocalGenericClass;
+class vtkImageEMLocalSegmenter;
+class vtkImageEMLocalSuperClass;
 class vtkImageLevelSets;
+class vtkMatrix4x4;
+class vtkMRMLScalarVolumeNode;
+class vtkMRMLVolumeNode;
+class vtkSlicerApplicationLogic;
+class vtkTransform;
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentLogic: public vtkSlicerModuleLogic
 {
 public:
   static vtkEMSegmentLogic *New();
-  vtkTypeMacro(vtkEMSegmentLogic,vtkSlicerModuleLogic)
-  ;
+  
+  vtkTypeMacro(vtkEMSegmentLogic,vtkSlicerModuleLogic);
 
   // Description: The name of the Module---this is used to construct
   // the proc invocations
-  vtkGetStringMacro (ModuleName)
-  ;
-  vtkSetStringMacro (ModuleName)
-  ;
+  vtkGetStringMacro(ModuleName)
+  vtkSetStringMacro(ModuleName)
 
-  vtkGetStringMacro (CurrentTmpFileName)
-  ;
-  vtkSetStringMacro (CurrentTmpFileName)
-  ;
+  vtkGetStringMacro(CurrentTmpFileName)
+  vtkSetStringMacro(CurrentTmpFileName)
+  
   char* mktemp_file(const char* postfix);
   char* mktemp_dir();
 
@@ -66,72 +62,27 @@ public:
   // progress bar related functions: not currently used, likely to
   // change
   vtkGetStringMacro(ProgressCurrentAction)
-  ;
   vtkGetMacro(ProgressGlobalFractionCompleted, double)
-  ;
   vtkGetMacro(ProgressCurrentFractionCompleted, double)
-  ;
 
   //
   // MRML Related Methods.  The collection of MRML nodes for the
   // EMSegmenter is complicated.  Therefore, the management of these
   // nodes are delegated to the vtkEMSegmentMRMLManager class.
   vtkGetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager)
-  ;
 
-  //
   // Register all the nodes used by this module with the current MRML
   // scene.
-  virtual void RegisterMRMLNodesWithScene()
-  {
-    this->MRMLManager->RegisterMRMLNodesWithScene();
-  }
+  virtual void RegisterMRMLNodesWithScene();
 
   /// Register MRML Node classes to Scene. Gets called automatically when the MRMLScene is attached to this logic class.
-  virtual void RegisterNodes()
-  {
-    // std::cout << "Registering Nodes.." << std::endl;
-    // make sure the scene is attached
-    this->MRMLManager->SetMRMLScene(this->GetMRMLScene());
-    this->RegisterMRMLNodesWithScene();
-  }
-
-  virtual void SetAndObserveMRMLScene(vtkMRMLScene* scene)
-  {
-    Superclass::SetAndObserveMRMLScene(scene);
-    this->MRMLManager->SetMRMLScene(scene);
-  }
+  virtual void RegisterNodes();
+  virtual void SetAndObserveMRMLScene(vtkMRMLScene* scene);
 
   // this is needed in Slicer4 to properly listen to the nodeAdded and nodeRemoved events
-  void InitializeEventListeners()
-  {
+  void InitializeEventListeners();
 
-    if (this->GetMRMLScene() == NULL)
-      {
-      vtkWarningMacro("InitializeEventListeners: no scene to listen to!");
-      return;
-      }
-
-    // a good time to add the observed events!
-    vtkIntArray *events = vtkIntArray::New();
-    events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-    events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-
-#ifdef Slicer3_USE_KWWIDGETS
-    // Slicer3
-    this->SetAndObserveMRMLSceneEvents(this->GetMRMLScene(), events);
-#else
-    // Slicer4
-    this->SetAndObserveMRMLSceneEventsInternal(this->GetMRMLScene(), events);
-#endif
-
-    events->Delete();
-  }
-
-  virtual void ProcessMRMLEvents(vtkObject *caller, unsigned long event, void *callData)
-  {
-    this->MRMLManager->ProcessMRMLEvents(caller, event, callData);
-  }
+  virtual void ProcessMRMLEvents(vtkObject *caller, unsigned long event, void *callData);
 
   // events to observe
   virtual vtkIntArray* NewObservableEvents();
@@ -227,43 +178,40 @@ public:
 
   virtual int SourceTaskFiles();
   virtual int SourcePreprocessingTclFiles();
-
   int ComputeIntensityDistributionsFromSpatialPrior();
 
   const char* DefineTclTaskFileFromMRML();
 
   //BTX
   vtkstd::string GetTclTaskDirectory();
-
   std::string DefineTclTaskFullPathName(const char* TclFileName);
-  void
-      CreateDefaultTasksList(std::vector<std::string> & DefaultTasksName, std::vector<
-          std::string> & DefaultTasksFile, std::vector<std::string> & DefinePreprocessingTasksName, std::vector<
-          std::string> & DefinePreprocessingTasksFile);
+  void CreateDefaultTasksList(std::vector<std::string> & DefaultTasksName, 
+                              std::vector<std::string> & DefaultTasksFile, 
+                              std::vector<std::string> & DefinePreprocessingTasksName, 
+                              std::vector<std::string> & DefinePreprocessingTasksFile);
   //ETX
 
   void UpdateIntensityDistributionAuto(vtkIdType nodeID);
 
-  void RunAtlasCreator(vtkMRMLNode *mNode);
+#ifdef Slicer3_USE_KWWIDGETS  
+  void RunAtlasCreator(vtkMRMLAtlasCreatorNode *node);
+#endif
 
   void WriteImage(vtkImageData* file, const char* filename);
 
-// we do not want to wrap this function in Slicer3
-// it is only used in Slicer4
-
 #ifdef Slicer3_USE_KWWIDGETS
-//BTX
+  // we do not want to wrap this function in Slicer3
+  // it is only used in Slicer4
+
+  //BTX
 #endif
 std::string GetTasks();
 std::string GetPreprocessingTasks();
 #ifdef Slicer3_USE_KWWIDGETS
-//ETX
-#endif 
+  //ETX
+#endif
 
 protected:
-  // the mrml manager is created in the constructor
-  vtkSetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager)
-  ;
 
   //BTX
   template<class T>
