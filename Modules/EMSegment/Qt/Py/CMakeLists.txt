@@ -1,6 +1,6 @@
 
 SET(EMS_PYTHON_SCRIPTS
-  EMSegmentPy.py
+  qSlicerEMSegmentModuleWidget.py
   EMSegmentQuickPy.py
   EMSegmentWizard/__init__.py
   EMSegmentWizard/Helper.py

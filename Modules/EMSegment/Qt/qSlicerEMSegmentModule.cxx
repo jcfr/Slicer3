@@ -19,14 +19,16 @@
 ==============================================================================*/
 
 // Qt includes
+#include <QFileInfo>
+#include <QScopedPointer>
 #include <QtPlugin>
 
 // PythonQT includes
 #include <PythonQt.h>
 
-
 // SlicerQt includes
 #include <qSlicerCoreApplication.h>
+#include <qSlicerScriptedLoadableModuleWidget.h>
 
 // EMSegment Logic includes
 #include <vtkEMSegmentLogic.h>
@@ -71,25 +73,49 @@ void qSlicerEMSegmentModule::setup()
 QString qSlicerEMSegmentModule::helpText()const
 {
   QString help =
-    "EMSegment Module: Use this module to segment a set of images (target images) using the "
-    "tree-based EM segmentation algorithm of K. Pohl et al."
-    "<ul>"
-    "<li>Use the pull down menu to select a collection of parameters to edit"
-    " (or create a new collection).</li>"
-    "<li>Use the <b>Back</b> and <b>Next</b> to navigate through the "
-    "stages of filling in the algorithm parameters.</li>"
-    "<li>When the parameters are specified, use the button on the "
-    "last step to start the segmentation process.</li>"
-    "</ul>"
-    "See <a href=%1/Modules:EMSegmentTemplateBuilder3.6>Modules:EMSegmentTemplateBuilder3.6</a>";
+      "<b>EMSegment Module:</b>  Segment a set of set of images (target images) using"
+      " the tree-based EM segmentation algorithm<br>"
+      "<br>"
+      "Use the pull down menu to select from a collection of tasks or create a new one.<br>"
+      "Use the 'Back' and 'Next' to navigate through the stages of filling in the algorithm "
+      "parameters.\n\n"
+      "When all parameters are specified, use the 'segmentation' button. \n\n"
+      "For latest updates, new tasks, and detail help please visit "
+      "<a>%1/Modules:EMSegmenter-3.6</a> <br>"
+      "<br>"
+      " <b>The work was reported in:</b> <br>"
+      "K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. "
+      "IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007.";
   return help.arg(this->slicerWikiUrl());
+}
+
+//-----------------------------------------------------------------------------
+QString qSlicerEMSegmentModule::acknowledgementText()const
+{
+  return QLatin1String(
+        "<img src=':/Icons/UPenn_logo.png'><br>"
+        "<br>"
+        "This module is currently maintained by Daniel Haehn, Dominique Belhachemi,"
+        " and Kilian Pohl (SBIA,UPenn). The work is currently supported by an ARRA "
+        "supplement to NAC and the Slicer Community (see also <a>http://www.slicer.org</a>). <br>"
+        "<br>"
+        "The work was reported in  <br>"
+        "K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. "
+        "IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007.");
 }
 
 //-----------------------------------------------------------------------------
 qSlicerAbstractModuleRepresentation * qSlicerEMSegmentModule::createWidgetRepresentation()
 {
-  //return new qSlicerEMSegmentModuleWidget;
-  return 0;
+  QScopedPointer<qSlicerScriptedLoadableModuleWidget> widget(new qSlicerScriptedLoadableModuleWidget);
+  QString classNameToLoad = "qSlicerEMSegmentModuleWidget";
+  bool ret = widget->setPythonSource(
+        QFileInfo(this->path()).path() + "/Python/" + classNameToLoad + ".py", classNameToLoad);
+  if (!ret)
+    {
+    return 0;
+    }
+  return widget.take();
 }
 
 //-----------------------------------------------------------------------------
@@ -105,7 +131,7 @@ QIcon qSlicerEMSegmentModule::icon() const
 }
 
 //-----------------------------------------------------------------------------
-bool qSlicerEMSegmentModule::isHidden()const
+QString qSlicerEMSegmentModule::category()const
 {
-  return true;
+  return QLatin1String("Segmentation");
 }

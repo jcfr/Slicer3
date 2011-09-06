@@ -3,67 +3,45 @@ from __main__ import vtk, qt, ctk, slicer
 import EMSegmentWizard
 from EMSegmentWizard import Helper
 
-class EMSegmentPy:
-  def __init__( self, parent ):
-    parent.title = "EMSegment"
-    parent.category = "Segmentation"
-    parent.contributor = "Daniel Haehn"
-    parent.helpText = """<b>EMSegment Module:</b>  Segment a set of set of images (target images) using the tree-based EM segmentation algorithm<br><br>Use the pull down menu to select from a collection of tasks or create a new one.<br>Use the 'Back' and 'Next' to navigate through the stages of filling in the algorithm parameters.\n\nWhen all parameters are specified, use the 'segmentation' button. \n\nFor latest updates, new tasks, and detail help please visit <a>http://www.slicer.org/slicerWiki/index.php/Modules:EMSegmenter-3.6</a> <br><br> <b>The work was reported in:</b> <br>K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007.<br><br>Please restart 3D Slicer in order to choose a different task after a segmentation."""
-    parent.acknowledgementText = """<img src=':/Icons/UPenn_logo.png'><br><br>This module is currently maintained by Daniel Haehn and Kilian Pohl (SBIA,UPenn). The work is currently supported by an ARRA supplement to NAC and the Slicer Community (see also <a>http://www.slicer.org</a>). <br><br>The work was reported in  <br>K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007."""
-    parent.icon = qt.QIcon( ":/Icons/EMSegment.png" )
-    self.parent = parent
-
-class EMSegmentPyWidget:
+class qSlicerEMSegmentModuleWidget:
   def __init__( self, parent=None ):
     if not parent:
       self.parent = slicer.qMRMLWidget()
       self.parent.setLayout( qt.QVBoxLayout() )
-      self.parent.setMRMLScene( slicer.mrmlScene )
     else:
       self.parent = parent
+
     self.layout = self.parent.layout()
 
     # this flag is 1 if there is an update in progress
     self.__updating = 1
 
-    # the pointer to the logic and the mrmlManager
-    self.__mrmlManager = None
+    # Reference to the logic and the mrmlManager
     self.__logic = None
+    self.__mrmlManager = None
 
     if not parent:
+      self.__logic = slicer.modulelogic.vtkEMSegmentLogic()
       self.setup()
-
+      self.parent.setMRMLScene( slicer.mrmlScene )
       # after setup, be ready for events
       self.__updating = 0
 
       self.parent.show()
-
-    # register default slots
-    #self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)', self.onMRMLSceneChanged)      
-
-
-  def logic( self ):
-    if not self.__logic:
-        self.__logic = slicer.modulelogic.vtkEMSegmentLogic()
-        self.__logic.SetModuleName( "EMSegment" )
-        self.__logic.SetMRMLScene( slicer.mrmlScene )
-        self.__logic.RegisterNodes()
-        self.__logic.InitializeEventListeners()
-
-    return self.__logic
-
-  def mrmlManager( self ):
-    if not self.__mrmlManager:
-        self.__mrmlManager = self.logic().GetMRMLManager()
-        self.__mrmlManager.SetMRMLScene( slicer.mrmlScene )
-
-    return self.__mrmlManager
 
 
   def setup( self ):
     '''
     Create and start the EMSegment workflow.
     '''
+
+    # Use the logic associated with the module
+    if not self.__logic:
+      self.__logic = self.parent.module().logic()
+    self.__mrmlManager = self.__logic.GetMRMLManager()
+
+    self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)', self.onMRMLSceneChanged)
+
     self.workflow = ctk.ctkWorkflow()
 
     workflowWidget = ctk.ctkWorkflowStackedWidget()
@@ -118,11 +96,11 @@ class EMSegmentPyWidget:
 
     # Propagate the workflow, the logic and the MRML Manager to the steps
     for s in allSteps:
-        s.setWorkflow( self.workflow )
-        s.setLogic( self.logic() )
-        s.setMRMLManager( self.mrmlManager() )
+      s.setWorkflow( self.workflow )
+      s.setLogic( self.__logic )
+      s.setMRMLManager( self.__mrmlManager )
 
-    # disable the error text which showed up when jumping to the (invisible) segment step
+    # Disable the error text which showed up when jumping to the (invisible) segment step
     workflowWidget.workflowGroupBox().errorTextEnabled = False
     self.workflow.goBackToOriginStepUponSuccess = False
 
@@ -137,8 +115,14 @@ class EMSegmentPyWidget:
     slicer.modules.emsegmentPreprocessingStep = definePreprocessingStep
 
     # compress the layout
-    #self.layout.addStretch(1)        
+    #self.layout.addStretch(1)
 
+  def onMRMLSceneChanged(self, mrmlScene):
+    if mrmlScene != self.__logic.GetMRMLScene():
+      self.__logic.SetMRMLScene(mrmlScene)
+      self.__logic.RegisterNodes()
+      self.__logic.InitializeEventListeners()
+    self.__mrmlManager.SetMRMLScene(mrmlScene)
 
   def GetDynamicFrame( self ):
     '''
