@@ -218,9 +218,11 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
     for t in tasksList:
       if t:
         task = t.split( ':' )
-        if len( task ) == 2:
-          taskName = task[0]
-          taskFile = task[1]
+        if len(task) != 2:
+          #print "Failed to extract task description:%s"%t
+          continue
+        taskName = task[0]
+        taskFile = task[1]
 
       # add this entry to our tasksList
       self.__preprocessingTasksList[taskName] = taskFile
@@ -233,7 +235,9 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
     index = self.__taskComboBox.currentIndex
 
     taskName = self.__taskComboBox.currentText
-    taskFile = self.__tasksList[taskName]
+    taskFile = None
+    if taskName:
+      taskFile = self.__tasksList[taskName]
 
     if not taskName or not taskFile:
       # error!
