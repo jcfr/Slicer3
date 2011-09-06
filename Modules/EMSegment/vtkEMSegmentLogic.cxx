@@ -3083,6 +3083,8 @@ void vtkEMSegmentLogic::CreateDefaultTasksList(std::vector<std::string> & Defaul
   DefinePreprocessingTasksName.clear();
   DefinePreprocessingTasksFile.clear();
 
+  std::cout << "this->GetTclTaskDirectory() " << this->GetTclTaskDirectory() << std::endl;
+  std::cout << "this->GetTemporaryTaskDirectory() " << this->GetTemporaryTaskDirectory() << std::endl;
   this->AddDefaultTasksToList(this->GetTclTaskDirectory().c_str(),
       DefaultTasksName, DefaultTasksFile, DefinePreprocessingTasksName,
       DefinePreprocessingTasksFile);
