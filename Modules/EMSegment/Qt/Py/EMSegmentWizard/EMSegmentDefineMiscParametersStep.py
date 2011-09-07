@@ -133,7 +133,7 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     if file:
       self.__templateFile = file
       self.__saveButton.text = os.path.split( file )[-1]
-      self.propagateToMRML()
+      self.saveTemplate()
     else:
       self.__templateFile = None
 
@@ -153,9 +153,7 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
 
     self.__parent.validationSucceeded( desiredBranchId )
 
-
-
-  def propagateToMRML( self ):
+  def saveTemplate( self ):
     '''
     '''
     if not self.__updating:
@@ -164,8 +162,23 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
 
       if self.__templateFile:
         self.mrmlManager().SetSaveTemplateFilename( self.__templateFile )
+
+        ret = self.mrmlManager().CreateTemplateFile()
+        if ret != 0:
+          messageBox = qt.QMessageBox.warning( self, 'Create Template Error', 'Could not create template - the filename of the template was probably not in the same directory as the scene' )
+
       else:
         self.mrmlManager().SetSaveTemplateFilename( None )
+
+      self.__updating = 0
+
+
+  def propagateToMRML( self ):
+    '''
+    '''
+    if not self.__updating:
+
+      self.__updating = 1
 
       if self.__saveIntermediateResultsCheckBox:
         self.mrmlManager().SetSaveIntermediateResults( int( self.__saveIntermediateResultsCheckBox.checked ) )
