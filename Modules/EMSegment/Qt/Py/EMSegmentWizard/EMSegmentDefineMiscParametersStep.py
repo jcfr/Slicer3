@@ -11,7 +11,7 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
   def __init__( self, stepid ):
     self.initialize( stepid )
     self.setName( '9. Define Miscellaneous Parameters' )
-    self.setDescription( 'Define miscellaneous parameters for performing segmentation' )
+    self.setDescription( 'Define miscellaneous parameters before performing segmentation' )
 
     self.__parent = super( EMSegmentDefineMiscParametersStep, self )
 
@@ -45,6 +45,7 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     voiGroupBoxLayout = qt.QFormLayout( voiGroupBox )
 
     self.__roiWidget = PythonQt.qSlicerAnnotationsModuleWidgets.qMRMLAnnotationROIWidget()
+    self.__roiWidget.toolTip = 'Select a sub-volume for segmentation. Then, only the selected area will be segmented. By default, the complete volume will be segmented.'
     voiGroupBoxLayout.addWidget( self.__roiWidget )
     self.__roi = slicer.vtkMRMLAnnotationROINode()
     self.__roi.SetXYZ( [0, 0, 0] );
@@ -64,14 +65,17 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     saveGroupBoxLayout = qt.QFormLayout ( saveGroupBox )
 
     self.__saveButton = qt.QPushButton( 'Create' )
+    self.__saveButton.toolTip = 'Create a template file which can be shared and used to re-apply the configured task.'
     saveGroupBoxLayout.addRow( "Create Template File:", self.__saveButton )
     self.__saveButton.connect( 'clicked()', self.onSaveButtonClicked )
 
     self.__saveIntermediateResultsCheckBox = qt.QCheckBox()
+    self.__saveIntermediateResultsCheckBox.toolTip = 'Toggle to save intermediate results as well.'
     saveGroupBoxLayout.addRow( "Save Intermediate Results:", self.__saveIntermediateResultsCheckBox )
     self.__saveIntermediateResultsCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__selectDirectoryButton = qt.QPushButton( 'Select' )
+    self.__selectDirectoryButton.toolTip = 'Select a directory to save intermediate results, if selected.'
     saveGroupBoxLayout.addRow( "Select Intermediate Directory:", self.__selectDirectoryButton )
     self.__selectDirectoryButton.connect( 'clicked()', self.onSelectDirectoryButtonClicked )
 
@@ -85,10 +89,12 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     postProcessingGroupBoxLayout = qt.QFormLayout( postProcessingGroupBox )
 
     self.__subparcellationCheckBox = qt.QCheckBox()
+    self.__subparcellationCheckBox.toolTip = 'Enable subpacellation.'
     postProcessingGroupBoxLayout.addRow( "Subparcellation enabled:", self.__subparcellationCheckBox )
     self.__subparcellationCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__minimumIslandSizeSpinBox = qt.QSpinBox()
+    self.__minimumIslandSizeSpinBox.toolTip = 'Configure the minimum island size.'
     self.__minimumIslandSizeSpinBox.minimum = 0
     self.__minimumIslandSizeSpinBox.maximum = 200
     self.__minimumIslandSizeSpinBox.singleStep = 1
@@ -96,6 +102,7 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     self.__minimumIslandSizeSpinBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__twoDIslandNeighborhoodCheckBox = qt.QCheckBox()
+    self.__twoDIslandNeighborhoodCheckBox.toolTip = 'Enable 2D Island Neighborhood'
     postProcessingGroupBoxLayout.addRow( "2D Island Neighborhood:", self.__twoDIslandNeighborhoodCheckBox )
     self.__twoDIslandNeighborhoodCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
@@ -109,6 +116,7 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     miscGroupBoxLayout = qt.QFormLayout( miscGroupBox )
 
     self.__multithreadingCheckBox = qt.QCheckBox()
+    self.__multithreadingCheckBox.toolTip = 'Enhance speed by using multiple threads.'
     miscGroupBoxLayout.addRow( "Multi-threading enabled:", self.__multithreadingCheckBox )
     self.__multithreadingCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 

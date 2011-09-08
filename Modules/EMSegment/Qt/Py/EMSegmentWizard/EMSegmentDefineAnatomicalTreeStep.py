@@ -23,6 +23,10 @@ class EMSegmentDefineAnatomicalTreeStep( EMSegmentStep ) :
     # the colorpicker combobox
     self.__colorTableComboBox = slicer.qMRMLColorTableComboBox()
     self.__colorTableComboBox.setMRMLScene( slicer.mrmlScene )
+    self.__colorTableComboBox.toolTip = 'The label colors are defined using this look-up table.'
+
+    infoLabel = qt.QLabel( "Choose the look-up table for label colorization:" )
+    self.__layout.addWidget( infoLabel )
 
     # get current color node from the mrmlManager
     currentColorNodeID = self.mrmlManager().GetColorNodeID()
@@ -32,6 +36,13 @@ class EMSegmentDefineAnatomicalTreeStep( EMSegmentStep ) :
 
     self.__colorTableComboBox.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onColorNodeChanged )
     self.__layout.addWidget( self.__colorTableComboBox )
+
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
 
     # the anatomical tree
     anatomicalTreeGroupBox = qt.QGroupBox()
@@ -44,6 +55,7 @@ class EMSegmentDefineAnatomicalTreeStep( EMSegmentStep ) :
     self.__anatomicalTree.structureNameEditable = True
     self.__anatomicalTree.labelColumnVisible = True
     self.__anatomicalTree.addDeleteSubclassesEnabled = True
+    self.__anatomicalTree.toolTip = 'Please configure a hierarchy of structures for the input datasets.'
     self.__anatomicalTree.setSizePolicy( qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding )
     anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
 

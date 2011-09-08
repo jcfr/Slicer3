@@ -55,6 +55,8 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__anatomicalTree.displayAlphaCheckBoxVisible = False
     self.__anatomicalTree.connect( 'currentTreeNodeChanged(vtkMRMLNode*)', self.onTreeSelectionChanged )
     self.__anatomicalTree.setSizePolicy( qt.QSizePolicy.Expanding, qt.QSizePolicy.Expanding )
+    self.__anatomicalTree.toolTip = 'Select an anatomical structure to configure the probablity in relation to other structures on the same level.'
+    self.__anatomicalTree.setMinimumHeight( 200 )
     self.__anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
 
     #
@@ -62,10 +64,9 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     #
     self.__overviewBox = qt.QGroupBox()
     self.__overviewBox.title = 'Overview of Class Weights'
+    self.__overviewBox.toolTip = 'These are your guesses of probability relations between structures. Which structure takes how much percentage of the volume?'
     self.__overviewBoxLayout = qt.QVBoxLayout( self.__overviewBox )
     self.__topLayout.addWidget( self.__overviewBox )
-
-
 
     self.__layout.addWidget( self.__top )
 
@@ -93,6 +94,7 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__classWeightSpinBox.minimum = 0
     self.__classWeightSpinBox.maximum = 1
     self.__classWeightSpinBox.singleStep = 0.01
+    self.__classWeightSpinBox.toolTip = 'Configure the class weight for the selected structure.'
     self.__basicPageLayoutLeft.addRow( "Class Weight:", self.__classWeightSpinBox )
     self.__classWeightSpinBox.connect( 'valueChanged(double)', self.propagateToMRML )
 
@@ -100,6 +102,7 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__atlasWeightSpinBox.minimum = 0
     self.__atlasWeightSpinBox.maximum = 1
     self.__atlasWeightSpinBox.singleStep = 0.01
+    self.__atlasWeightSpinBox.toolTip = 'Configure the atlas weight for the selected structure.'
     self.__basicPageLayoutLeft.addRow( "Atlas Weight:", self.__atlasWeightSpinBox )
     self.__atlasWeightSpinBox.connect( 'valueChanged(double)', self.propagateToMRML )
 
@@ -107,6 +110,7 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__mfaWeightSpinBox.minimum = 0
     self.__mfaWeightSpinBox.maximum = 1
     self.__mfaWeightSpinBox.singleStep = 0.01
+    self.__mfaWeightSpinBox.toolTip = 'Configure the MFA weight for the selected class.'
     self.__basicPageLayoutLeft.addRow( "MFA Weight:", self.__mfaWeightSpinBox )
     self.__mfaWeightSpinBox.connect( 'valueChanged(double)', self.propagateToMRML )
 
@@ -117,7 +121,8 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__basicPageLayoutRight.addRow( "  ", self.__dummyLabel9 )
 
     self.__inputChannelWeightsBox = qt.QGroupBox()
-    self.__inputChannelWeightsBox.title = 'Input Channel Weights'
+    self.__inputChannelWeightsBox.title = 'Dataset Channel Weights'
+    self.__inputChannelWeightsBox.toolTip = 'Configure different weights for each input dataset.'
     self.__inputChannelWeightsBoxLayout = qt.QFormLayout( self.__inputChannelWeightsBox )
     self.__basicPageLayoutRight.addWidget( self.__inputChannelWeightsBox )
 
@@ -140,35 +145,37 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
 
     self.__emComboBox = qt.QComboBox()
     self.__emComboBox.addItems( Helper.GetStoppingConditionTypes() )
+    self.__emComboBox.toolTip = 'Configure the EM Stopping Condition for the selected class.'
     self.__stoppingConditionsPageLayoutLeft.addRow( 'EM:', self.__emComboBox )
     self.__emComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
     self.__mfaComboBox = qt.QComboBox()
     self.__mfaComboBox.addItems( Helper.GetStoppingConditionTypes() )
+    self.__mfaComboBox.toolTip = 'Configure the MFA Stopping Condition for the selected class.'
     self.__stoppingConditionsPageLayoutLeft.addRow( 'MFA:', self.__mfaComboBox )
     self.__mfaComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
     self.__dummyLabel = qt.QLabel( "  " )
     self.__stoppingConditionsPageLayoutRight.addRow( "  ", self.__dummyLabel )
 
-    self.__dummyLabel8 = qt.QLabel( "  " )
-    self.__stoppingConditionsPageLayoutRight.addRow( "  ", self.__dummyLabel8 )
-
     self.__emValueSpinBox = qt.QSpinBox()
     self.__emValueSpinBox.minimum = 0
     self.__emValueSpinBox.singleStep = 1
+    self.__emValueSpinBox.toolTip = 'Configure the value for the EM stopping condition.'
     self.__stoppingConditionsPageLayoutRight.addRow( 'Iterations:', self.__emValueSpinBox )
     self.__emValueSpinBox.connect( 'valueChanged(int)', self.propagateToMRML )
 
     self.__mfaValueSpinBox = qt.QSpinBox()
     self.__mfaValueSpinBox.minimum = 0
     self.__mfaValueSpinBox.singleStep = 1
+    self.__mfaValueSpinBox.toolTip = 'Configure the MFA stopping condition. More iterations result in more smoothing.'
     self.__stoppingConditionsPageLayoutRight.addRow( 'Iterations:', self.__mfaValueSpinBox )
     self.__mfaValueSpinBox.connect( 'valueChanged(int)', self.propagateToMRML )
 
     self.__biasSpinBox = qt.QSpinBox()
     self.__biasSpinBox.minimum = -1
     self.__biasSpinBox.singleStep = 1
+    self.__biasSpinBox.toolTip = 'Enable Bias Correction: -1, turn it off: 0.'
     self.__stoppingConditionsPageLayoutRight.addRow( 'Bias Iterations:', self.__biasSpinBox )
     self.__biasSpinBox.connect( 'valueChanged(int)', self.propagateToMRML )
 
@@ -192,23 +199,28 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
 
     self.__weightCheckBox = qt.QCheckBox()
     self.__printPageLayoutLeft.addRow( "Weight:", self.__weightCheckBox )
+    self.__weightCheckBox.toolTip = 'Toggle to print the weights.'
     self.__weightCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__qualityCheckBox = qt.QCheckBox()
     self.__printPageLayoutLeft.addRow( "Quality:", self.__qualityCheckBox )
+    self.__qualityCheckBox.toolTip = 'Toggle to print the quality.'
     self.__qualityCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__frequencySpinBox = qt.QSpinBox()
     self.__frequencySpinBox.minimum = 0
     self.__frequencySpinBox.maximum = 20
+    self.__frequencySpinBox.toolTip = 'Configure the print frequency.'
     self.__printPageLayoutLeft.addRow( "Frequency:", self.__frequencySpinBox )
     self.__frequencySpinBox.connect( 'valueChanged(int)', self.propagateToMRML )
 
     self.__biasCheckBox = qt.QCheckBox()
+    self.__biasCheckBox.toolTip = 'Toggle to print the bias.'
     self.__printPageLayoutLeft.addRow( "Bias:", self.__biasCheckBox )
     self.__biasCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__labelMapCheckBox = qt.QCheckBox()
+    self.__labelMapCheckBox.toolTip = 'Toggle to print the label map.'
     self.__printPageLayoutLeft.addRow( "Label Map:", self.__labelMapCheckBox )
     self.__labelMapCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
@@ -224,18 +236,22 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__printPageLayoutRight.addWidget( self.__convergenceBox )
 
     self.__convEMLabelMapCheckBox = qt.QCheckBox()
+    self.__convEMLabelMapCheckBox.toolTip = 'Toggle to print the EM Label Map convergence.'
     self.__convergenceBoxLayout.addRow( "EM Label Map:", self.__convEMLabelMapCheckBox )
     self.__convEMLabelMapCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__convEMWeightsCheckBox = qt.QCheckBox()
+    self.__convEMWeightsCheckBox.toolTip = 'Toggle to print the EM Weights convergence.'
     self.__convergenceBoxLayout.addRow( "EM Weights:", self.__convEMWeightsCheckBox )
     self.__convEMWeightsCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__convMFALabelMapCheckBox = qt.QCheckBox()
+    self.__convEMWeightsCheckBox.toolTip = 'Toggle to print the MFA Label Map convergence.'
     self.__convergenceBoxLayout.addRow( "MFA Label Map:", self.__convMFALabelMapCheckBox )
     self.__convMFALabelMapCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__convMFAWeightsCheckBox = qt.QCheckBox()
+    self.__convMFAWeightsCheckBox.toolTip = 'Toggle to print the MFA Weights convergence.'
     self.__convergenceBoxLayout.addRow( "MFA Weights:", self.__convMFAWeightsCheckBox )
     self.__convMFAWeightsCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
@@ -268,10 +284,12 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__advancedPageLayout.addWidget( self.__miscParametersBox )
 
     self.__excludeFromEStepCheckBox = qt.QCheckBox()
+    self.__excludeFromEStepCheckBox.toolTip = 'Toggle to exclude from Incomplete EStep.'
     self.__miscParametersBoxLayout.addRow( "Exclude From Incomplete EStep:", self.__excludeFromEStepCheckBox )
     self.__excludeFromEStepCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
     self.__genBackgroundProbCheckBox = qt.QCheckBox()
+    self.__genBackgroundProbCheckBox.toolTip = 'Toggle to detect the background value.'
     self.__miscParametersBoxLayout.addRow( "Generate Background Probability:", self.__genBackgroundProbCheckBox )
     self.__genBackgroundProbCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
@@ -281,6 +299,7 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
     self.__advancedPageLayout.addWidget( self.__meanFieldParametersBox )
 
     self.__twoDNeighborhoodCheckBox = qt.QCheckBox()
+    self.__twoDNeighborhoodCheckBox.toolTip = 'Toggle to use 2D Neighborhood.'
     self.__meanFieldParametersBoxLayout.addRow( "2D Neighborhood:", self.__twoDNeighborhoodCheckBox )
     self.__twoDNeighborhoodCheckBox.connect( 'stateChanged(int)', self.propagateToMRML )
 
@@ -672,6 +691,7 @@ class EMSegmentEditNodeBasedParametersStep( EMSegmentStep ) :
 
 
             checkBox = qt.QCheckBox( "  " )
+            checkBox.toolTip = 'Toggle for auto-update when changing other weights.'
 
             self.__classWeightLabels.append( label )
             self.__classWeightSpinBoxes.append( spinBox )

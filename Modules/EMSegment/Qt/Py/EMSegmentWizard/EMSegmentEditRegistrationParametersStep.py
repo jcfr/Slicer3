@@ -9,7 +9,7 @@ class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
   def __init__( self, stepid ):
     self.initialize( stepid )
     self.setName( '5. Edit Registration Parameters' )
-    self.setDescription( 'Specify atlas-to-input scans registration parameters.' )
+    self.setDescription( 'Specify atlas-to-dataset registration parameters.' )
 
     self.__parent = super( EMSegmentEditRegistrationParametersStep, self )
     self.__layout = None
@@ -25,9 +25,11 @@ class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
     '''
     self.__layout = self.__parent.createUserInterface()
 
+    infoLabel = qt.QLabel( 'If applicable, please select an atlas for each input dataset. Additionally, configure the registration speed and other parameters.' )
+
     # the registration parameters
     registrationParametersGroupBox = qt.QGroupBox()
-    registrationParametersGroupBox.setTitle( 'Atlas-to-Input Registration Parameters' )
+    registrationParametersGroupBox.setTitle( 'Atlas-to-Dataset Registration Parameters' )
     self.__layout.addWidget( registrationParametersGroupBox )
 
     registrationParametersGroupBoxLayout = qt.QFormLayout( registrationParametersGroupBox )
@@ -43,6 +45,7 @@ class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
       channelComboBox.noneEnabled = True
       channelComboBox.addEnabled = False
       channelComboBox.removeEnabled = False
+      channelComboBox.toolTip = 'Please select an atlas for this input dataset'
       registrationParametersGroupBoxLayout.addRow( globalParametersNode.GetNthTargetInputChannelName( i ), channelComboBox )
       channelComboBox.connect( 'currentNodeChanged(vtkMRMLNode*)', self.propagateToMRML )
       self.__channelComboBoxList.append( channelComboBox )
@@ -51,25 +54,29 @@ class EMSegmentEditRegistrationParametersStep( EMSegmentStep ) :
     # Affine Registration comboBox
     self.__affineRegistrationComboBox = qt.QComboBox()
     self.__affineRegistrationComboBox.addItems( Helper.GetRegistrationTypes() )
+    self.__affineRegistrationComboBox.toolTip = 'Please configure the speed of the affine registration.'
     registrationParametersGroupBoxLayout.addRow( 'Affine Registration:', self.__affineRegistrationComboBox )
     self.__affineRegistrationComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
     # Deformable Registration comboBox
     self.__deformableRegistrationComboBox = qt.QComboBox()
     self.__deformableRegistrationComboBox.addItems( Helper.GetRegistrationTypes() )
+    self.__deformableRegistrationComboBox.toolTip = 'Please configure the speed of the deformable registration.'
     registrationParametersGroupBoxLayout.addRow( 'Deformable Registration:', self.__deformableRegistrationComboBox )
     self.__deformableRegistrationComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
     # Interpolation
     self.__interpolationComboBox = qt.QComboBox()
     self.__interpolationComboBox.addItems( Helper.GetInterpolationTypes() )
+    self.__interpolationComboBox.toolTip = 'Please configure the interpolation type. Linear is faster than Cubic.'
     registrationParametersGroupBoxLayout.addRow( 'Interpolation:', self.__interpolationComboBox )
     self.__interpolationComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
     # Package
     self.__packageComboBox = qt.QComboBox()
     self.__packageComboBox.addItems( Helper.GetPackages() )
-    registrationParametersGroupBoxLayout.addRow( 'Package:', self.__packageComboBox )
+    self.__packageComboBox.toolTip = 'Please select the registration package which should be used. If the package is not available on your system, BRAINS will be used.'
+    registrationParametersGroupBoxLayout.addRow( 'Registration Package:', self.__packageComboBox )
     self.__packageComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
 

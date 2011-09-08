@@ -36,10 +36,23 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
 
     # fill the comboBox with the taskNames
     self.__taskComboBox.addItems( self.getTaskNames() )
-    # TODO select MRI Human Brain as default
+    self.__taskComboBox.setCurrentIndex( self.__taskComboBox.findText( 'MRI Human Brain' ) )
     self.__taskComboBox.connect( 'currentIndexChanged(int)', self.onTaskSelected )
     self.__layout.addRow( Helper.CreateSpace( 20 ), self.__taskComboBox )
 
+    infoLabel = qt.QLabel( 'For more information click here:' )
+    self.__layout.addRow( Helper.CreateSpace( 20 ), infoLabel )
+
+    urlLabel = qt.QLabel( '<a href=http://www.slicer.org/slicerWiki/index.php/EMSegmenter-Tasks>http://www.slicer.org/slicerWiki/index.php/EMSegmenter-Tasks</a>' )
+    urlLabel.setOpenExternalLinks( True )
+    self.__layout.addRow( Helper.CreateSpace( 20 ), urlLabel )
+
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
     # add empty row
     self.__layout.addRow( "", qt.QWidget() )
 

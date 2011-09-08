@@ -8,7 +8,7 @@ class EMSegmentDefineAtlasStep( EMSegmentStep ) :
   def __init__( self, stepid ):
     self.initialize( stepid )
     self.setName( '4. Define Atlas' )
-    self.setDescription( 'Assign structure specific atlases of corresponding anatomy in the tree.' )
+    self.setDescription( 'Assign structure-specific atlases to each anatomical structure listed in the tree.' )
 
     self.__parent = super( EMSegmentDefineAtlasStep, self )
     self.__layout = None
@@ -18,6 +18,12 @@ class EMSegmentDefineAtlasStep( EMSegmentStep ) :
     '''
     '''
     self.__layout = self.__parent.createUserInterface()
+
+
+    infoLabel = qt.QLabel( 'It is possible to assign an individual atlas to each structure in the tree below.' )
+    infoLabel2 = qt.QLabel( 'For more specific segmentation, it is also possible to assign an additional \nparcellation map to each structure.' )
+    self.__layout.addWidget( infoLabel )
+    self.__layout.addWidget( infoLabel2 )
 
     # the anatomical tree
     anatomicalTreeGroupBox = qt.QGroupBox()
@@ -31,6 +37,7 @@ class EMSegmentDefineAtlasStep( EMSegmentStep ) :
     self.__anatomicalTree.labelColumnVisible = False
     self.__anatomicalTree.probabilityMapColumnVisible = True
     self.__anatomicalTree.parcellationMapColumnVisible = True
+    self.__anatomicalTree.toolTip = 'If applicable, please assign structure-specific atlases to each anatomical structure.'
     self.__anatomicalTree.setSizePolicy( qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding )
     anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
 

@@ -9,7 +9,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
   def __init__( self, stepid ):
     self.initialize( stepid )
     self.setName( '7. Specify Intensity Distributions' )
-    self.setDescription( 'Define intensity distribution for each anatomical structure.' )
+    self.setDescription( 'Define the intensity distribution for each anatomical structure.' )
 
     self.__parent = super( EMSegmentSpecifyIntensityDistributionStep, self )
     self.__layout = None
@@ -51,7 +51,8 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__anatomicalTree.atlasWeightColumnVisible = False
     self.__anatomicalTree.alphaColumnVisible = False
     self.__anatomicalTree.displayAlphaCheckBoxVisible = False
-    self.__anatomicalTree.setMinimumHeight( 140 )
+    self.__anatomicalTree.setMinimumHeight( 200 )
+    self.__anatomicalTree.toolTip = 'Select a structure to configure the intensity distribution.'
     self.__anatomicalTree.setSizePolicy( qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding )
     self.__anatomicalTree.connect( 'currentTreeNodeChanged(vtkMRMLNode*)', self.onTreeSelectionChanged )
     anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
@@ -72,6 +73,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__specificationComboBox.addItems( Helper.GetSpecificationTypes() )
     #self.__specificationComboBox.model().item( 2 ).setSelectable( False )
     #self.__specificationComboBox.model().item( 2 ).setEnabled( False )
+    self.__specificationComboBox.toolTip = 'The intensity distribution can be specified manually or through manual sampling.'
     intensityDistributionPageLayout.addRow( "Specification:", self.__specificationComboBox )
     self.__specificationComboBox.connect( 'currentIndexChanged(int)', self.propagateToMRML )
 
@@ -81,6 +83,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__meanMatrixWidget.decimals = 4
     self.__meanMatrixWidget.minimum = 0
     self.__meanMatrixWidget.maximum = 1000000
+    self.__meanMatrixWidget.toolTip = 'The mean intensity value for this structure.'
     intensityDistributionPageLayout.addRow( "Mean:", self.__meanMatrixWidget )
     self.__meanMatrixWidget.connect( 'matrixChanged()', self.propagateToMRML )
 
@@ -90,11 +93,13 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     self.__logCovarianceMatrixWidget.decimals = 4
     self.__logCovarianceMatrixWidget.minimum = 0
     self.__logCovarianceMatrixWidget.maximum = 1000000
+    self.__logCovarianceMatrixWidget.toolTip = 'The log covariance for this structure.'
     intensityDistributionPageLayout.addRow( "Log Covariance:", self.__logCovarianceMatrixWidget )
     self.__logCovarianceMatrixWidget.connect( 'matrixChanged()', self.propagateToMRML )
 
     self.__resetDistributionButton = qt.QPushButton()
     self.__resetDistributionButton.text = "Reset Distribution"
+    self.__resetDistributionButton.toolTip = 'Reset the distribution to the old value.'
     intensityDistributionPageLayout.addRow( self.__resetDistributionButton )
     self.__resetDistributionButton.connect( 'clicked()', self.resetDistribution )
 
@@ -118,6 +123,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
 
     self.__plotDistributionButton = qt.QPushButton()
     self.__plotDistributionButton.text = "Plot Distribution"
+    self.__plotDistributionButton.toolTip = 'Click to plot the intensity distributions for all structures.'
     self.__layout.addRow( self.__plotDistributionButton )
     self.__plotDistributionButton.connect( 'clicked()', self.plotDistribution )
 
@@ -145,8 +151,10 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     '''
     '''
     self.__d = qt.QDialog()
-    self.__graphWidget = PythonQt.qSlicerEMSegmentModuleWidgets.qSlicerEMSegmentGraphWidget( self.__d )
+    self.__dLayout = qt.QHBoxLayout()
+    self.__graphWidget = PythonQt.qSlicerEMSegmentModuleWidgets.qSlicerEMSegmentGraphWidget()
     self.__graphWidget.setMRMLManager( self.mrmlManager() )
+    self.__dLayout.addWidget( self.__graphWidget )
     self.__d.setModal( True )
     self.__d.show()
 

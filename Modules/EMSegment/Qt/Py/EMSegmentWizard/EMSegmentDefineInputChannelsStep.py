@@ -9,8 +9,8 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
 
   def __init__( self, stepid ):
     self.initialize( stepid )
-    self.setName( '2. Define Input Channels' )
-    self.setDescription( 'Name the input channels and choose the set of scans for segmentation.' )
+    self.setName( '2. Define Input Datasets' )
+    self.setDescription( 'Name how many volumes should be segmented and select the set of scans for segmentation.' )
 
     self.__parent = super( EMSegmentDefineInputChannelsStep, self )
 
@@ -48,7 +48,8 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
 
     # the input channels
     inputChannelGroupBox = qt.QGroupBox()
-    inputChannelGroupBox.setTitle( 'Input Channels' )
+    inputChannelGroupBox.setTitle( 'Input Datasets' )
+    inputChannelGroupBox.toolTip = 'Please configure the datasets which should be segmented.'
     self.__layout.addWidget( inputChannelGroupBox )
 
     inputChannelGroupBoxLayout = qt.QFormLayout( inputChannelGroupBox )
@@ -68,7 +69,8 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
     input2inputChannelRegistrationLayout = qt.QFormLayout( input2inputChannelRegistration )
 
     self.__alignInputScansCheckBox = qt.QCheckBox()
-    input2inputChannelRegistrationLayout.addRow( 'Align input scans:', self.__alignInputScansCheckBox )
+    self.__alignInputScansCheckBox.toolTip = 'Toggle to align the input datasets.'
+    input2inputChannelRegistrationLayout.addRow( 'Align input datasets:', self.__alignInputScansCheckBox )
     self.__alignInputScansCheckBox.connect( "stateChanged(int)", self.propagateToMRML )
 
     # add empty row
@@ -80,6 +82,7 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
       #
       dynamicFrame = qt.QGroupBox()
       dynamicFrame.setTitle( 'Check List' )
+      dynamicFrame.toolTip = 'Please check anything applicable.'
       self.__layout.addWidget( dynamicFrame )
       dynamicFrameLayout = qt.QVBoxLayout( dynamicFrame )
 

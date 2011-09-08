@@ -340,6 +340,7 @@ QStandardItem* qSlicerEMSegmentAnatomicalTreeWidgetPrivate::insertTreeRow(
     labelComboBox->setMRMLColorNode(this->CurrentColorTableNode);
     logger.debug(QString("insertTreeRow - IntensityLabel: %1").
                  arg(q->mrmlManager()->GetTreeNodeIntensityLabel(treeNodeId)));
+    labelComboBox->setLabelValueVisible(true);
     labelComboBox->setCurrentColor(
         q->mrmlManager()->GetTreeNodeIntensityLabel(treeNodeId));
     this->TreeView->setIndexWidget(
@@ -391,7 +392,7 @@ QStandardItem* qSlicerEMSegmentAnatomicalTreeWidgetPrivate::insertTreeRow(
       }
     qMRMLNodeComboBox * parcellationMapComboBox = new qMRMLNodeComboBox;
     QStringList nodeTypes;
-    nodeTypes << "vtkMRMLVolumeNode";
+    nodeTypes << "vtkMRMLScalarVolumeNode";
     // Set treeNodeId property so that "onProbabilityMapChanged" can retrieve it
     parcellationMapComboBox->setProperty("treeNodeId", QVariant(treeNodeId));
     parcellationMapComboBox->setNodeTypes(nodeTypes);
@@ -400,6 +401,7 @@ QStandardItem* qSlicerEMSegmentAnatomicalTreeWidgetPrivate::insertTreeRow(
     parcellationMapComboBox->setRemoveEnabled(false);
     parcellationMapComboBox->setNoneEnabled(true);
     parcellationMapComboBox->setEditEnabled(false);
+    parcellationMapComboBox->addAttribute("vtkMRMLScalarVolumeNode", "LabelMap", QVariant(1));
     parcellationMapComboBox->setMRMLScene(q->mrmlScene());
     if (volumeNode)
       {

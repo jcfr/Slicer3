@@ -50,6 +50,7 @@ class EMSegmentDefinePreprocessingStep( EMSegmentStep ) :
     #
     dynamicFrame = qt.QGroupBox()
     dynamicFrame.setTitle( 'Check List' )
+    dynamicFrame.toolTip = 'Please check anything applicable.'
     self.__layout.addWidget( dynamicFrame )
     dynamicFrameLayout = qt.QVBoxLayout( dynamicFrame )
 
