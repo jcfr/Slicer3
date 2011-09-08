@@ -151,7 +151,7 @@ class EMSegmentSpecifyIntensityDistributionStep( EMSegmentStep ) :
     '''
     '''
     self.__d = qt.QDialog()
-    self.__dLayout = qt.QHBoxLayout()
+    self.__dLayout = qt.QHBoxLayout( self.__d )
     self.__graphWidget = PythonQt.qSlicerEMSegmentModuleWidgets.qSlicerEMSegmentGraphWidget()
     self.__graphWidget.setMRMLManager( self.mrmlManager() )
     self.__dLayout.addWidget( self.__graphWidget )

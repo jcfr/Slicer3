@@ -12,3 +12,5 @@ from EMSegmentSpecifyIntensityDistributionStep import *
 from EMSegmentEditNodeBasedParametersStep import *
 from EMSegmentDefineMiscParametersStep import *
 from EMSegmentStartSegmentationStep import *
+
+from EMSegmentQuickStep1 import *

@@ -14,6 +14,9 @@ SET(EMSegmentWizard_PYTHON_SCRIPTS
   EMSegmentDefineMiscParametersStep.py              # step 9
   EMSegmentStartSegmentationStep.py
   EMSegmentDummyStep.py  
+  
+  # quick mode
+  EMSegmentQuickStep1.py
   )
 
 SET(EMSegmentWizard_PYTHON_RESOURCES
