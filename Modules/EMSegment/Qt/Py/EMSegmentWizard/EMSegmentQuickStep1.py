@@ -17,15 +17,7 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
     self.__stepid = stepid
     self.__dynamicFrame = None
     self.__updating = 0
-
-  def isSimpleMode( self ):
-    '''
-    '''
-    if self.__stepid == ( str( Helper.GetNthStepId( 2 ) ) + str( 'Simple' ) ):
-      # we are in simple mode
-      return True
-    else:
-      return False
+    self.__initialized = False
 
   def dynamicFrame( self ):
     '''
@@ -39,10 +31,6 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
   def createUserInterface( self ):
     '''
     '''
-
-    # disable the next button in simple mode
-    if self.isSimpleMode():
-      self.buttonBoxHints = self.NextButtonHidden
 
     self.__layout = self.__parent.createUserInterface()
 
@@ -61,36 +49,20 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
     # add empty row
     self.__layout.addRow( "", qt.QWidget() )
 
-    # registration settings
-    input2inputChannelRegistration = qt.QGroupBox()
-    input2inputChannelRegistration.setTitle( 'Input-to-Input Channel Registration' )
-    self.__layout.addWidget( input2inputChannelRegistration )
+    #
+    # dynamic frame
+    #
+    dynamicFrame = qt.QGroupBox()
+    dynamicFrame.setTitle( 'Check List' )
+    dynamicFrame.toolTip = 'Please check anything applicable.'
+    self.__layout.addWidget( dynamicFrame )
+    dynamicFrameLayout = qt.QVBoxLayout( dynamicFrame )
 
-    input2inputChannelRegistrationLayout = qt.QFormLayout( input2inputChannelRegistration )
-
-    self.__alignInputScansCheckBox = qt.QCheckBox()
-    self.__alignInputScansCheckBox.toolTip = 'Toggle to align the input datasets.'
-    input2inputChannelRegistrationLayout.addRow( 'Align input datasets:', self.__alignInputScansCheckBox )
-    self.__alignInputScansCheckBox.connect( "stateChanged(int)", self.propagateToMRML )
-
-    # add empty row
-    self.__layout.addRow( "", qt.QWidget() )
-
-    if self.isSimpleMode():
-      #
-      # dynamic frame
-      #
-      dynamicFrame = qt.QGroupBox()
-      dynamicFrame.setTitle( 'Check List' )
-      dynamicFrame.toolTip = 'Please check anything applicable.'
-      self.__layout.addWidget( dynamicFrame )
-      dynamicFrameLayout = qt.QVBoxLayout( dynamicFrame )
-
-      # .. now pass the layout to the dynamicFrame
-      self.dynamicFrame().setLayout( dynamicFrameLayout )
-      #
-      # end of dynamic frame
-      #
+    # .. now pass the layout to the dynamicFrame
+    self.dynamicFrame().setLayout( dynamicFrameLayout )
+    #
+    # end of dynamic frame
+    #
 
 
   def propagateToMRML( self ):
@@ -102,11 +74,8 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
 
       self.__inputChannelList.updateMRMLFromWidget()
 
-      self.mrmlManager().SetEnableTargetToTargetRegistration( int( self.__alignInputScansCheckBox.isChecked() ) )
-
-      if self.isSimpleMode():
-        # propagate dynamic frame settings to MRML
-        self.dynamicFrame().SaveSettingsToMRML()
+      # propagate dynamic frame settings to MRML
+      self.dynamicFrame().SaveSettingsToMRML()
 
       self.__updating = 0
 
@@ -121,14 +90,10 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
 
       self.__inputChannelList.updateWidgetFromMRML()
 
-      if self.mrmlManager().GetEnableTargetToTargetRegistration() == 0:
-        self.__alignInputScansCheckBox.setChecked( False )
-      else:
-        self.__alignInputScansCheckBox.setChecked( True )
+      if self.__inputChannelList.inputChannelCount() == 0:
+        self.__inputChannelList.addInputChannel()
 
-      if self.isSimpleMode():
-        # update the dynamic frame from MRML
-        self.dynamicFrame().LoadSettingsFromMRML()
+      self.dynamicFrame().LoadSettingsFromMRML()
 
       self.__updating = 0
 
@@ -139,34 +104,43 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
     '''
     self.__parent.onEntry( comingFrom, transitionType )
 
-    # use default taskfile
-    taskFileShort = slicer.vtkMRMLEMSGlobalParametersNode.GetDefaultTaskTclFileName()
+    slicer.modules.emsegmentAdvancedDynamicFrame = self.dynamicFrame()
 
-    self.mrmlManager().CreateAndObserveNewParameterSet()
-    templateNodes = slicer.mrmlScene.GetNodesByClass( 'vtkMRMLEMSTemplateNode' )
+    if not self.__initialized:
 
-    self.mrmlManager().SetNthParameterName( templateNodes.GetNumberOfItems() - 1, 'EMQuick' )
-    self.mrmlManager().SetTclTaskFilename( taskFileShort )
+      # use default taskfile
+      taskFileShort = slicer.vtkMRMLEMSGlobalParametersNode.GetDefaultTaskTclFileName()
 
-    self.logic().SourceTaskFiles()
+      self.mrmlManager().CreateAndObserveNewParameterSet()
+      templateNodes = slicer.mrmlScene.GetNodesByClass( 'vtkMRMLEMSTemplateNode' )
 
-    loadResult = self.mrmlManager().SetLoadedParameterSetIndex( templateNodes.GetItemAsObject( templateNodes.GetNumberOfItems() - 1 ) )
+      self.mrmlManager().SetNthParameterName( templateNodes.GetNumberOfItems() - 1, 'EMQuick' )
+      self.mrmlManager().SetTclTaskFilename( taskFileShort )
 
-    if int( loadResult ) != 0:
-      Helper.Info( "EMS node is corrupted - the manager could not be updated with new task: EMQuick" )
-      #return False
-    else:
-      Helper.Info( "Loading completed." )
+      self.logic().SourceTaskFiles()
 
-    self.logic().DefineTclTaskFileFromMRML()
+      loadResult = self.mrmlManager().SetLoadedParameterSetIndex( templateNodes.GetItemAsObject( templateNodes.GetNumberOfItems() - 1 ) )
 
-    # clear the dynamic panel
-    self.dynamicFrame().setMRMLManager( self.mrmlManager() )
-    self.dynamicFrame().clearElements()
+      if int( loadResult ) != 0:
+        Helper.Info( "EMS node is corrupted - the manager could not be updated with new task: EMQuick" )
+        #return False
+      else:
+        Helper.Info( "Loading completed." )
 
-    logicTclName = self.logic().GetSlicerCommonInterface().GetTclNameFromPointer( self.logic() )
+      self.logic().DefineTclTaskFileFromMRML()
 
-    tcl( '::EMSegmenterPreProcessingTcl::ShowUserInterface ' + str( logicTclName ) )
+      # use anatomy label colors
+      self.mrmlManager().GetGlobalParametersNode().SetColormap( 'vtkMRMLColorTableNodeFileGenericAnatomyColors.txt' )
+
+      # clear the dynamic panel
+      self.dynamicFrame().setMRMLManager( self.mrmlManager() )
+      self.dynamicFrame().clearElements()
+
+      logicTclName = self.logic().GetSlicerCommonInterface().GetTclNameFromPointer( self.logic() )
+
+      tcl( '::EMSegmenterPreProcessingTcl::ShowUserInterface ' + str( logicTclName ) )
+
+      self.__initialized = True
 
     self.loadFromMRML()
 
@@ -177,30 +151,8 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
     '''
     self.propagateToMRML()
 
-    if self.isSimpleMode():
-
-      returnValue = tcl( "::EMSegmenterSimpleTcl::ValidateCheckList" )
-
-      if int( returnValue ) != 0:
-        # error
-        messageBox = qt.QMessageBox.warning( self, "Error", "Could not validate the Checklist. Please double check your settings!" )
-        return
-
-      self.mrmlManager().GetWorkingDataNode().SetAlignedTargetNodeIsValid( 0 )
-      self.mrmlManager().GetWorkingDataNode().SetAlignedAtlasNodeIsValid( 0 )
-
-      # disable questions at the pre-processing step
-      preProcessingStep = slicer.modules.emsegmentPreprocessingStep
-      if preProcessingStep:
-        preProcessingStep.disableQuestions()
-
-    else:
-
-      # disable questions at the pre-processing step
-      preProcessingStep = slicer.modules.emsegmentPreprocessingStep
-      if preProcessingStep:
-        preProcessingStep.enableQuestions()
-
+    #self.mrmlManager().GetWorkingDataNode().SetAlignedTargetNodeIsValid( 0 )
+    #self.mrmlManager().GetWorkingDataNode().SetAlignedAtlasNodeIsValid( 0 )
 
     self.__parent.onExit( goingTo, transitionType )
 
@@ -226,13 +178,6 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
     if self.__inputChannelList.identicalInputVolumes():
       self.__parent.validationFailed( desiredBranchId, 'Input Channel Error', 'Please assign different volumes to individual input channel!' )
       return
-
-    # number of input channels changed
-    if self.__inputChannelList.inputChannelCount() != self.mrmlManager().GetGlobalParametersNode().GetNumberOfTargetInputChannels():
-      answer = qt.QMessageBox.question( self, "Change the number of input channels?", "Are you sure you want to change the number of input images?", qt.QMessageBox.Yes | qt.QMessageBox.No )
-      if answer == qt.QMessageBox.No:
-        self.__parent.validationFailed( desiredBranchId, '', '', False )
-        return
 
     # check if all channels have different names
     if self.__inputChannelList.identicalInputChannelNames():

@@ -7,10 +7,10 @@ class EMSegmentQuickPy:
   def __init__( self, parent ):
     parent.title = "EMSegment Quick"
     parent.category = "Segmentation"
-    parent.contributor = "--"
+    parent.contributor = "Daniel Haehn"
     parent.helpText = """<b>EMSegment Quick:</b>"""
     parent.acknowledgementText = """<img src=':/Icons/UPenn_logo.png'><br><br>This module was developed by Daniel Haehn and Kilian Pohl (SBIA, UPenn). The work is currently supported by an ARRA supplement to NAC and the Slicer Community (see also <a>http://www.slicer.org</a>). <br><br>The work was reported in  <br>K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007."""
-    parent.icon = qt.QIcon( ":/Icons/EMSegment.png" )
+    parent.icon = qt.QIcon( ":/Icons/EMSegmentQuick.png" )
     self.parent = parent
 
 class EMSegmentQuickPyWidget:
@@ -44,6 +44,11 @@ class EMSegmentQuickPyWidget:
 
   def logic( self ):
     if not self.__logic:
+
+      try:
+        # try to grab the logic from the original emsegmenter first        
+        self.__logic = slicer.modules.emsegmentlogic
+      except AttributeError:
         self.__logic = slicer.modulelogic.vtkEMSegmentLogic()
         self.__logic.SetModuleName( "EMSegment Quick" )
         self.__logic.SetMRMLScene( slicer.mrmlScene )
@@ -74,18 +79,18 @@ class EMSegmentQuickPyWidget:
 
     # create all wizard steps
     step1 = EMSegmentWizard.EMSegmentQuickStep1( Helper.GetNthStepId( 2 ) )
-    defineAnatomicalTreeStep = EMSegmentWizard.EMSegmentDefineAnatomicalTreeStep( Helper.GetNthStepId( 3 ) )
-    specifyIntensityDistributionStep = EMSegmentWizard.EMSegmentSpecifyIntensityDistributionStep( Helper.GetNthStepId( 7 ) )
-    miscStep = EMSegmentWizard.EMSegmentDefineMiscParametersStep( Helper.GetNthStepId( 9 ) )
-    segmentStep = EMSegmentWizard.EMSegmentStartSegmentationStep( Helper.GetNthStepId( 10 ) )
+    step2 = EMSegmentWizard.EMSegmentQuickStep2( Helper.GetNthStepId( 3 ) )
+    step3 = EMSegmentWizard.EMSegmentQuickStep3( Helper.GetNthStepId( 7 ) )
+    step4 = EMSegmentWizard.EMSegmentQuickStep4( Helper.GetNthStepId( 9 ) )
+    segmentStep = EMSegmentWizard.EMSegmentQuickSegmentationStep( Helper.GetNthStepId( 10 ) )
 
     # add the wizard steps to an array for convenience
     allSteps = []
 
     allSteps.append( step1 )
-    allSteps.append( defineAnatomicalTreeStep )
-    allSteps.append( specifyIntensityDistributionStep )
-    allSteps.append( miscStep )
+    allSteps.append( step2 )
+    allSteps.append( step3 )
+    allSteps.append( step4 )
     allSteps.append( segmentStep )
 
     # .. add transitions for the rest of the advanced mode steps

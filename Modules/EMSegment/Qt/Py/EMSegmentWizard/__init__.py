@@ -14,3 +14,7 @@ from EMSegmentDefineMiscParametersStep import *
 from EMSegmentStartSegmentationStep import *
 
 from EMSegmentQuickStep1 import *
+from EMSegmentQuickStep2 import *
+from EMSegmentQuickStep3 import *
+from EMSegmentQuickStep4 import *
+from EMSegmentQuickSegmentationStep import *

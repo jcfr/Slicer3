@@ -1,30 +1,71 @@
-from __main__ import qt, ctk
+from __main__ import qt, ctk, tcl
 import PythonQt
 import os
 
 from EMSegmentStep import *
 from Helper import *
 
-class EMSegmentStartSegmentationStep( EMSegmentStep ) :
+class EMSegmentQuickSegmentationStep( EMSegmentStep ) :
 
   def __init__( self, stepid ):
     self.initialize( stepid )
     self.setName( '10. Segment' )
     self.setDescription( '' )
-    self.icon = qt.QIcon( ":/Icons/EMSegment.png" )
+    self.icon = qt.QIcon( ":/Icons/EMSegmentQuick.png" )
 
-    self.__parent = super( EMSegmentStartSegmentationStep, self )
+    self.__parent = super( EMSegmentQuickSegmentationStep, self )
 
   def createUserInterface( self ):
     '''
     '''
     self.__layout = self.__parent.createUserInterface()
 
+  def runPreProcessing( self ):
+    '''
+    '''
+    # notify user
+    message = qt.QMessageBox( qt.QMessageBox.NoIcon, "Please wait", "Please wait while pre-processing runs..", qt.QMessageBox.Ignore )
+    message.setModal( False )
+    message.show()
+
+    # run preprocessing
+    returnValue = tcl( "::EMSegmenterPreProcessingTcl::Run" )
+
+    message.hide()
+
+    if not returnValue or int( returnValue ) != 0:
+      # something went wrong!
+      # error message!
+      messageBox = qt.QMessageBox.warning( self, "Error", "Pre-processing did not execute correctly!" )
+      return
+
+    workingDataNode = self.mrmlManager().GetWorkingDataNode()
+
+    if workingDataNode:
+      # set flags in the mrml nodes
+      workingDataNode.SetAlignedTargetNodeIsValid( 1 )
+      workingDataNode.SetAlignedAtlasNodeIsValid( 1 )
+
+      # show preprocessing output in sliceViews
+      volumeCollection = workingDataNode.GetInputTargetNode()
+      if volumeCollection:
+        outputNode = volumeCollection.GetNthVolumeNode( 0 )
+        # propagate to sliceViews
+        selectionNode = slicer.app.mrmlApplicationLogic().GetSelectionNode()
+        selectionNode.SetReferenceActiveVolumeID( outputNode.GetID() )
+        #selectionNode.SetReferenceSecondaryVolumeID( outputNode.GetID() )
+        slicer.app.mrmlApplicationLogic().PropagateVolumeSelection()
+
+    Helper.Info( '=============================================' )
+    Helper.Info( 'Pre-processing completed successfully' )
+    Helper.Info( '=============================================' )
 
   def onEntry( self, comingFrom, transitionType ):
     '''
     '''
     self.__parent.onEntry( comingFrom, transitionType )
+
+    self.runPreProcessing()
 
     targetNode = self.mrmlManager().GetWorkingDataNode().GetInputTargetNode()
     alignedAtlasNode = self.mrmlManager().GetWorkingDataNode().GetAlignedAtlasNode()

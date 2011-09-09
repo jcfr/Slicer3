@@ -17,6 +17,10 @@ SET(EMSegmentWizard_PYTHON_SCRIPTS
   
   # quick mode
   EMSegmentQuickStep1.py
+  EMSegmentQuickStep2.py
+  EMSegmentQuickStep3.py
+  EMSegmentQuickStep4.py
+  EMSegmentQuickSegmentationStep.py
   )
 
 SET(EMSegmentWizard_PYTHON_RESOURCES

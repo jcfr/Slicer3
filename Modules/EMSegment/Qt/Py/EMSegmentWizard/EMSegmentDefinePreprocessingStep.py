@@ -91,6 +91,8 @@ class EMSegmentDefinePreprocessingStep( EMSegmentStep ) :
     '''
     self.__parent.onEntry( comingFrom, transitionType )
 
+    slicer.modules.emsegmentAdvancedDynamicFrame = self.dynamicFrame()
+
     # we are always in advanced mode, so let's fill the dynamic frame
     self.logic().SourceTaskFiles()
     self.logic().SourcePreprocessingTclFiles()

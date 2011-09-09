@@ -63,9 +63,8 @@ class EMSegmentDefineAnatomicalTreeStep( EMSegmentStep ) :
     '''
     '''
     # use the selected colorNodeID
-    print self.mrmlManager().GetColorNodeID()
     self.mrmlManager().SetColorNodeID( self.__colorTableComboBox.currentNodeId )
-    print self.mrmlManager().GetColorNodeID()
+
     # .. propagate to widget
     self.__anatomicalTree.updateWidgetFromMRML()
 
