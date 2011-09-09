@@ -1,6 +1,8 @@
 from __main__ import qt, ctk
 import PythonQt
 
+import math
+
 from EMSegmentStep import *
 from Helper import *
 
@@ -230,7 +232,15 @@ class EMSegmentQuickStep3( EMSegmentStep ) :
 
         self.setupManualSampleTable( mrmlNode )
 
+        for c in range( numberOfVolumes ):
 
+          value = self.mrmlManager().GetTreeNodeDistributionMeanWithCorrection( vtkId, c )
+          Helper.Info( 'Mean:' + str( value ) )
+
+        for r in range( numberOfVolumes ):
+          for c in range( numberOfVolumes ):
+            value = self.mrmlManager().GetTreeNodeDistributionLogCovarianceWithCorrection( vtkId, r, c )
+          Helper.Info( 'Cov:' + str( value ) )
 
         #
         # overview panel
@@ -295,6 +305,8 @@ class EMSegmentQuickStep3( EMSegmentStep ) :
     '''
     '''
     vtkId = self.mrmlManager().MapMRMLNodeIDToVTKNodeID( mrmlNode.GetID() )
+
+    self.mrmlManager().SetTreeNodeDistributionSpecificationMethod( vtkId, 1 )
 
     # number of volumes
     numberOfVolumes = self.mrmlManager().GetTargetNumberOfSelectedVolumes()
@@ -517,7 +529,6 @@ class EMSegmentQuickStep3( EMSegmentStep ) :
           value = self.mrmlManager().GetTreeNodeClassProbability( child )
           self.__classWeightSpinBoxes[i].value = value
 
-        self.__classWeightSpinBox.value = self.mrmlManager().GetTreeNodeClassProbability( vtkId )
 
         self.__updating = 0
 
