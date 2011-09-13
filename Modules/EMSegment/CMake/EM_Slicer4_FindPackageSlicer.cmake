@@ -24,6 +24,9 @@ if(NOT Slicer_SOURCE_DIR)
   set(EXTENSION_README_FILE ${Slicer_README_FILE})
 
   include(SlicerEnableExtensionTesting)
+else()
+  set(EMSegment_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+  set(EMSegment_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 SET(EM_SHARE_DIR ${Slicer_QTLOADABLEMODULES_SHARE_DIR})
