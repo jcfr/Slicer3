@@ -2,18 +2,26 @@
 #define __vtkEMSegmentTclConnector_h
 
 #include "vtkEMSegment.h"
+
+// RemoteIO includes
 #include "vtkHTTPHandler.h"
 
 // needed to get the CMake variables
 #include <vtkSlicerConfigure.h>
 
+//-----------------------------------------------------------------------------
+// Note: It's important to exclude the following section from wrapping.
+//       If not, the wrapper coming with older version of VTK (<= 77ed88d)
+//       will be confused.
+//-----------------------------------------------------------------------------
+//BTX
 #ifdef Slicer3_USE_KWWIDGETS
 
   #define Slicer_HOME_ENVVAR_NAME "Slicer3_HOME"
 
-// Slicer3 includes
-#include "vtkSlicerApplication.h"
-#include "KWWidgets/vtkEMSegmentKWDynamicFrame.h"
+  // Slicer3 includes
+  #include "vtkSlicerApplication.h"
+  #include "KWWidgets/vtkEMSegmentKWDynamicFrame.h"
 
   // Slicer3 python
   #ifdef Slicer3_USE_PYTHON
@@ -27,37 +35,46 @@
 
   #include "vtkTclUtil.h"
 
-  #endif // Check for Slicer3 Python
+  #endif // Slicer3_USE_PYTHON
 
+  //-----------------------------------------------------------------------------
 #else
+  #define Slicer_HOME_ENVVAR_NAME "Slicer_HOME"
 
-  // Slicer4 includes
-  #include "qSlicerApplication.h"
-  #include "qSlicerPythonManager.h"
+  // Qt includes
   #include <QString>
   #include <QVariant>
-  #include "vtkMRMLRemoteIOLogic.h"
+
+  // SlicerQt includes
+  #include <qSlicerApplication.h>
+  #include <qSlicerPythonManager.h>
+
+  // MRMLLogic includes
+  #include <vtkMRMLRemoteIOLogic.h>
 
   // these types do not natively exist in Slicer4,
   // so we define them as voids
   typedef void Tcl_Interp;
-  //BTX
   typedef void vtkEMSegmentKWDynamicFrame;
-  //ETX
 #endif
+//ETX
 
+// SlicerBaseLogic includes
 #include "vtkDataIOManagerLogic.h"
-#include "vtkHTTPHandler.h"
+
+// RemoteIO includes
+#include <vtkHTTPHandler.h>
 
 // the Tcl connector accesses Tcl in Slicer3 and Slicer4
 class VTK_EMSEGMENT_EXPORT vtkSlicerCommonInterface: public vtkObject
 {
 public:
+  /// Instantiate a new vtkSlicerCommonInterface
   static vtkSlicerCommonInterface *New();
   vtkTypeMacro(vtkSlicerCommonInterface, vtkObject);
 
 //BTX
-  Tcl_Interp* Startup(int argc, char *argv[], ostream *err = 0);
+  Tcl_Interp* Startup(int& argc, char *argv[], ostream *err = 0);
   int SourceTclFile(const char *tclFile);
   const char* EvaluateTcl(const char* command);
 
@@ -78,7 +95,6 @@ public:
 
   void AddDataIOToScene(vtkMRMLScene* mrmlScene, vtkSlicerApplicationLogic *appLogic, vtkDataIOManagerLogic *dataIOManagerLogic);
   void RemoveDataIOFromScene(vtkMRMLScene* mrmlScene, vtkDataIOManagerLogic *dataIOManagerLogic);
-
 //ETX
 
   const char* GetExtensionsDirectory();
@@ -120,21 +136,22 @@ private:
   vtkSlicerCommonInterface(const vtkSlicerCommonInterface&);
   void operator=(const vtkSlicerCommonInterface&);
 
-  //BTX
+//BTX
   std::string StringHolder;
-  //ETX
+//ETX
 
-  // BTX
+//BTX
   // returns the appropriate frame for Slicer3
   vtkEMSegmentKWDynamicFrame* GetSlicer3DynamicFrame();
-  // ETX
+//ETX
 
   bool simpleMode;
 
 #ifndef Slicer3_USE_KWWIDGETS
+//BTX
   vtkMRMLRemoteIOLogic *remoteIOLogic;
+//ETX
 #endif
-
 };
 
 #endif
