@@ -1,7 +1,5 @@
-#include "vtkObjectFactory.h"
-#include "vtkSlicerCommonInterface.h"
 
-#include <sstream>
+#include <vtkSlicerConfigure.h>
 
 #ifdef Slicer3_USE_KWWIDGETS
 
@@ -15,14 +13,25 @@
 
 #else
 
-// Slicer4
+// Qt includes
 #include <QDebug>
+
+// CTK includes
 #include <ctkErrorLogModel.h>
 
 // PythonQT includes
 #include <PythonQt.h>
 
 #endif
+
+// EMSegment includes
+#include "vtkSlicerCommonInterface.h"
+
+// VTK includes
+#include <vtkObjectFactory.h>
+
+// STD includes
+#include <sstream>
 
 //----------------------------------------------------------------------------
 vtkSlicerCommonInterface* vtkSlicerCommonInterface::New()
@@ -71,8 +80,22 @@ vtkSlicerCommonInterface::~vtkSlicerCommonInterface()
 
 }
 
+#ifndef Slicer3_USE_KWWIDGETS
+// PythonQt wrapper initialization methods
+void PythonQt_init_org_slicer_base_qSlicerBaseQTCore(PyObject*);
+void PythonQt_init_org_slicer_base_qSlicerBaseQTGUI(PyObject*);
+
+//---------------------------------------------------------------------------
+void PythonPreInitialization()
+{
+  // Initialize wrappers
+  PythonQt_init_org_slicer_base_qSlicerBaseQTCore(0);
+  PythonQt_init_org_slicer_base_qSlicerBaseQTGUI(0);
+}
+#endif
+
 //----------------------------------------------------------------------------
-Tcl_Interp* vtkSlicerCommonInterface::Startup(int argc, char *argv[], ostream *err)
+Tcl_Interp* vtkSlicerCommonInterface::Startup(int& argc, char *argv[], ostream *err)
 {
 #ifdef Slicer3_USE_KWWIDGETS
 
@@ -82,16 +105,25 @@ Tcl_Interp* vtkSlicerCommonInterface::Startup(int argc, char *argv[], ostream *e
 #else
 
   // Slicer4
-  qSlicerApplication* app = new qSlicerApplication(argc,argv);
-
-  bool exitWhenDone;
-  app->parseArguments(exitWhenDone);
-
+  qSlicerApplication* app = new qSlicerApplication(argc, argv);
+#ifdef Slicer_USE_PYTHONQT_WITH_TCL
+  bool disablePython = qSlicerApplication::testAttribute(qSlicerApplication::AA_DisablePython);
+  if(!disablePython)
+    {
+    // HACK - Copied from Slicer/Applications/SlicerQT/Main.cxx
+    //        Ideally, it should possible possible to initialize both python environment
+    //        and python manager without having to instantiate qSlicerApplication.
+    app->pythonManager()->setInitializationFunction(PythonPreInitialization);
+    app->corePythonManager()->mainContext(); // Initialize python
+#ifdef Q_WS_WIN
+    // HACK - Since on windows setting an environment variable using putenv doesn't propagate
+    // to the environment initialized in python, let's make sure 'os.environ' is updated.
+    app->updatePythonOsEnviron();
+#endif
+    }
+#endif
   // we don't need this here!
   app->errorLogModel()->setAllMsgHandlerEnabled(false);
-
-  //app->exec();
-
 #endif
 
   return 0;
@@ -642,9 +674,7 @@ void vtkSlicerCommonInterface::DestroySlicerApplication()
 
   if (app)
     {
-    app->exit();
     delete app;
-    app = 0;
     }
 
 #endif
