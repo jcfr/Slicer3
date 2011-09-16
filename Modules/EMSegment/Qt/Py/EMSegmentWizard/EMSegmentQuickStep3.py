@@ -235,12 +235,10 @@ class EMSegmentQuickStep3( EMSegmentStep ) :
         for c in range( numberOfVolumes ):
 
           value = self.mrmlManager().GetTreeNodeDistributionMeanWithCorrection( vtkId, c )
-          Helper.Info( 'Mean:' + str( value ) )
 
         for r in range( numberOfVolumes ):
           for c in range( numberOfVolumes ):
             value = self.mrmlManager().GetTreeNodeDistributionLogCovarianceWithCorrection( vtkId, r, c )
-          Helper.Info( 'Cov:' + str( value ) )
 
         #
         # overview panel

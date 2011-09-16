@@ -49,8 +49,9 @@ class EMSegmentDefineMiscParametersStep( EMSegmentStep ) :
     voiGroupBoxLayout.addWidget( self.__roiWidget )
     self.__roi = slicer.vtkMRMLAnnotationROINode()
     self.__roi.SetXYZ( [0, 0, 0] );
-    self.__roi.SetRadiusXYZ( 100, 100, 100 );
+    self.__roi.SetRadiusXYZ( 100, 100, 100 )
     self.__roi.Initialize( slicer.mrmlScene )
+    self.__roi.SetVisibility( 0 )
     self.__roi.AddObserver( vtk.vtkCommand.ModifiedEvent, self.updateMRMLFromROI )
     self.__roiWidget.setMRMLAnnotationROINode( self.__roi )
     self.__roiWidget.setDisplayClippingBox( 0 )

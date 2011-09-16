@@ -31,8 +31,13 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
   def createUserInterface( self ):
     '''
     '''
+    slicer.modules.emsegmentinitialdistance = 4
 
     self.__layout = self.__parent.createUserInterface()
+
+    infoLabel = qt.QLabel( 'This module provides EM segmentation without an atlas.\nIt is possible to segment different structures by manual sampling.\n\n' )
+    infoLabel.setFont( self.__parent.getBoldFont() )
+    self.__layout.addWidget( infoLabel )
 
     # the input channels
     inputChannelGroupBox = qt.QGroupBox()
@@ -63,6 +68,40 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
     #
     # end of dynamic frame
     #
+
+    # check if we have a valid EMEasy MRML Node
+    templateNodes = slicer.mrmlScene.GetNodesByClassByName( 'vtkMRMLEMSTemplateNode', 'EMEasy' )
+
+    if templateNodes.GetNumberOfItems() > 0:
+
+      # we load the last template node which fits the taskname
+      templateNode = templateNodes.GetItemAsObject( templateNodes.GetNumberOfItems() - 1 )
+
+      loadResult = self.mrmlManager().SetLoadedParameterSetIndex( templateNode )
+
+      if int( loadResult ) != 0:
+        Helper.Info( "EMS node is corrupted - the manager could not be updated with new task: " + taskName )
+        #return False
+      else:
+        Helper.Info( "Loading completed." )
+
+      self.logic().DefineTclTaskFileFromMRML()
+
+      # clear the dynamic panel
+      self.dynamicFrame().setMRMLManager( self.mrmlManager() )
+      self.dynamicFrame().clearElements()
+
+      self.logic().SourceTaskFiles()
+
+      slicer.modules.emsegmentAdvancedDynamicFrame = self.dynamicFrame()
+
+      logicTclName = self.logic().GetSlicerCommonInterface().GetTclNameFromPointer( self.logic() )
+
+      tcl( '::EMSegmenterPreProcessingTcl::ShowUserInterface ' + str( logicTclName ) )
+
+      slicer.modules.emsegmenteasystep2.disableNumberOfStructures()
+
+      self.__initialized = True
 
 
   def propagateToMRML( self ):
@@ -98,6 +137,11 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
       self.__updating = 0
 
 
+  def reset( self ):
+    '''
+    '''
+    self.__initialized = False
+
 
   def onEntry( self, comingFrom, transitionType ):
     '''
@@ -114,7 +158,7 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
       self.mrmlManager().CreateAndObserveNewParameterSet()
       templateNodes = slicer.mrmlScene.GetNodesByClass( 'vtkMRMLEMSTemplateNode' )
 
-      self.mrmlManager().SetNthParameterName( templateNodes.GetNumberOfItems() - 1, 'EMQuick' )
+      self.mrmlManager().SetNthParameterName( templateNodes.GetNumberOfItems() - 1, 'EMEasy' )
       self.mrmlManager().SetTclTaskFilename( taskFileShort )
 
       self.logic().SourceTaskFiles()

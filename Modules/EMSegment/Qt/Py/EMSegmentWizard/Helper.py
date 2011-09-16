@@ -75,7 +75,8 @@ class Helper( object ):
              'SpecifyIntensityDistribution', # 7
              'EditNodeBasedParameters', # 8
              'DefineMiscParameters', # 9
-             'Segment']                         # 10
+             'Segment', # 10
+             'Statistics'] # 11
 
     if n < 0 or n > len( steps ):
       n = 0

@@ -5,10 +5,10 @@ from EMSegmentWizard import Helper
 
 class EMSegmentQuickPy:
   def __init__( self, parent ):
-    parent.title = "EMSegment Quick"
+    parent.title = "EMSegment Easy"
     parent.category = "Segmentation"
     parent.contributor = "Daniel Haehn"
-    parent.helpText = """<b>EMSegment Quick:</b>"""
+    parent.helpText = """<b>EMSegment Quick:</b> This module provides EM segmentation without an atlas.\nIt is possible to segment different structures by manual sampling. """
     parent.acknowledgementText = """<img src=':/Icons/UPenn_logo.png'><br><br>This module was developed by Daniel Haehn and Kilian Pohl (SBIA, UPenn). The work is currently supported by an ARRA supplement to NAC and the Slicer Community (see also <a>http://www.slicer.org</a>). <br><br>The work was reported in  <br>K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007."""
     parent.icon = qt.QIcon( ":/Icons/EMSegmentQuick.png" )
     self.parent = parent
@@ -82,6 +82,7 @@ class EMSegmentQuickPyWidget:
     step2 = EMSegmentWizard.EMSegmentQuickStep2( Helper.GetNthStepId( 3 ) )
     step3 = EMSegmentWizard.EMSegmentQuickStep3( Helper.GetNthStepId( 7 ) )
     step4 = EMSegmentWizard.EMSegmentQuickStep4( Helper.GetNthStepId( 9 ) )
+    step5 = EMSegmentWizard.EMSegmentQuickStep5( Helper.GetNthStepId( 11 ) )
     segmentStep = EMSegmentWizard.EMSegmentQuickSegmentationStep( Helper.GetNthStepId( 10 ) )
 
     # add the wizard steps to an array for convenience
@@ -91,6 +92,7 @@ class EMSegmentQuickPyWidget:
     allSteps.append( step2 )
     allSteps.append( step3 )
     allSteps.append( step4 )
+    allSteps.append( step5 )
     allSteps.append( segmentStep )
 
     # .. add transitions for the rest of the advanced mode steps
@@ -105,11 +107,17 @@ class EMSegmentQuickPyWidget:
 
     # disable the error text which showed up when jumping to the (invisible) segment step
     workflowWidget.workflowGroupBox().errorTextEnabled = False
+    self.workflow.goBackToOriginStepUponSuccess = False
+
+    slicer.modules.emsegmenteasystep1 = step1
+    slicer.modules.emsegmenteasystep2 = step2
 
     # start the workflow and show the widget
     self.workflow.start()
     workflowWidget.visible = True
     self.layout.addWidget( workflowWidget )
+
+
 
     # compress the layout
     #self.layout.addStretch(1)        

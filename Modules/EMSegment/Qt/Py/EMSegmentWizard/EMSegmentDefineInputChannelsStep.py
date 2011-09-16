@@ -42,7 +42,13 @@ class EMSegmentDefineInputChannelsStep( EMSegmentStep ) :
 
     # disable the next button in simple mode
     if self.isSimpleMode():
+      self.workflow().goBackToOriginStepUponSuccess = False
       self.buttonBoxHints = self.NextButtonHidden
+      slicer.modules.emsegmentsimplemode = True
+      slicer.modules.emsegmentsimplestep2 = self
+    else:
+      slicer.modules.emsegmentsimplemode = False
+      slicer.modules.emsegmentsimplestep2 = None
 
     self.__layout = self.__parent.createUserInterface()
 

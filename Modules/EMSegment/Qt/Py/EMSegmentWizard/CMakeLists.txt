@@ -13,13 +13,15 @@ SET(EMSegmentWizard_PYTHON_SCRIPTS
   EMSegmentEditNodeBasedParametersStep.py           # step 8
   EMSegmentDefineMiscParametersStep.py              # step 9
   EMSegmentStartSegmentationStep.py
+  EMSegmentLabelStatisticsStep.py                   # step after segmentation, step 11  
   EMSegmentDummyStep.py  
   
-  # quick mode
+  # easy/quick mode
   EMSegmentQuickStep1.py
   EMSegmentQuickStep2.py
   EMSegmentQuickStep3.py
   EMSegmentQuickStep4.py
+  EMSegmentQuickStep5.py
   EMSegmentQuickSegmentationStep.py
   )
 

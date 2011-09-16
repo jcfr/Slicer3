@@ -77,7 +77,8 @@ class EMSegmentStartSegmentationStep( EMSegmentStep ) :
 
     selectionNode = slicer.app.mrmlApplicationLogic().GetSelectionNode()
     #selectionNode.SetReferenceActiveVolumeID(bgVolumeID)
-    selectionNode.SetReferenceSecondaryVolumeID( outputNode.GetID() )
+    #selectionNode.SetReferenceSecondaryVolumeID( outputNode.GetID() )
+    selectionNode.SetReferenceActiveLabelVolumeID( outputNode.GetID() )
     slicer.app.mrmlApplicationLogic().PropagateVolumeSelection()
 
     # show foreground volume
@@ -89,6 +90,17 @@ class EMSegmentStartSegmentationStep( EMSegmentStep ) :
         compositeNode.SetForegroundOpacity( 0.5 )
 
     Helper.Debug( "All Done!" )
+
+    workflow = self.workflow()
+    if not workflow:
+      Helper.Error( "No valid workflow found!" )
+      return False
+
+    # we go backward to display statistics
+
+    workflow.goBackward()
+
+
 
   def validate( self, desiredBranchId ):
     '''

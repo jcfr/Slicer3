@@ -19,6 +19,7 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
   def createUserInterface( self ):
     '''
     '''
+
     self.buttonBoxHints = self.ButtonBoxHidden
 
     self.__layout = self.__parent.createUserInterface()
@@ -26,6 +27,10 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
     # let's load all tasks
     self.loadTasks()
     self.loadPreprocessingTasks()
+
+    eminfoLabel = qt.QLabel( 'This module provides EM segmentation based on an atlas.\nBy defining an anatomical tree, different structures can be segmented.\n\n' )
+    eminfoLabel.setFont( self.__parent.getBoldFont() )
+    self.__layout.addRow( eminfoLabel )
 
     selectTaskLabel = qt.QLabel( 'Select Task' )
     selectTaskLabel.setFont( self.__parent.getBoldFont() )
@@ -40,7 +45,7 @@ class EMSegmentSelectTaskStep( EMSegmentStep ) :
     self.__taskComboBox.connect( 'currentIndexChanged(int)', self.onTaskSelected )
     self.__layout.addRow( Helper.CreateSpace( 20 ), self.__taskComboBox )
 
-    infoLabel = qt.QLabel( 'For more information click here:' )
+    infoLabel = qt.QLabel( 'For more information about the tasks click here:' )
     self.__layout.addRow( Helper.CreateSpace( 20 ), infoLabel )
 
     urlLabel = qt.QLabel( '<a href=http://www.slicer.org/slicerWiki/index.php/EMSegmenter-Tasks>http://www.slicer.org/slicerWiki/index.php/EMSegmenter-Tasks</a>' )

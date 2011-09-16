@@ -1,6 +1,7 @@
 from __main__ import qt, ctk, slicer
 import PythonQt
 
+from Helper import *
 from EMSegmentStep import *
 
 class EMSegmentQuickStep2( EMSegmentStep ) :
@@ -22,6 +23,30 @@ class EMSegmentQuickStep2( EMSegmentStep ) :
     '''
     self.__layout = self.__parent.createUserInterface()
 
+    # the colorpicker combobox
+    self.__colorTableComboBox = slicer.qMRMLColorTableComboBox()
+    self.__colorTableComboBox.setMRMLScene( slicer.mrmlScene )
+    self.__colorTableComboBox.toolTip = 'The label colors are defined using this look-up table.'
+
+    infoLabel = qt.QLabel( "Choose the look-up table for label colorization:" )
+    self.__layout.addWidget( infoLabel )
+
+    # get current color node from the mrmlManager
+    currentColorNodeID = self.mrmlManager().GetColorNodeID()
+    currentColorNode = slicer.mrmlScene.GetNodeByID( currentColorNodeID )
+    if currentColorNode:
+      self.__colorTableComboBox.setCurrentNode( currentColorNode )
+
+    self.__colorTableComboBox.connect( 'currentNodeChanged(vtkMRMLNode*)', self.onColorNodeChanged )
+    self.__layout.addWidget( self.__colorTableComboBox )
+
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
+    # add empty row
+    self.__layout.addRow( "", qt.QWidget() )
+
     # the anatomical tree
     anatomicalTreeGroupBox = qt.QGroupBox()
     anatomicalTreeGroupBox.setTitle( 'Anatomical Tree' )
@@ -37,10 +62,33 @@ class EMSegmentQuickStep2( EMSegmentStep ) :
     self.__anatomicalTree.setSizePolicy( qt.QSizePolicy.MinimumExpanding, qt.QSizePolicy.MinimumExpanding )
     anatomicalTreeGroupBoxLayout.addWidget( self.__anatomicalTree )
 
+  def onColorNodeChanged( self ):
+    '''
+    '''
+    # use the selected colorNodeID
+    self.mrmlManager().SetColorNodeID( self.__colorTableComboBox.currentNodeId )
+
+    # .. propagate to widget
+    self.__anatomicalTree.updateWidgetFromMRML()
+
+
+  def reset( self ):
+    '''
+    '''
+    self.__numberOfStructures = 0
+
+  def disableNumberOfStructures( self ):
+    '''
+    '''
+    self.__numberOfStructures = 1
+
   def onEntry( self, comingFrom, transitionType ):
     '''
     '''
     self.__parent.onEntry( comingFrom, transitionType )
+
+    if comingFrom.id() == Helper.GetNthStepId( 7 ):
+      return
 
     if self.__numberOfStructures == 0:
 

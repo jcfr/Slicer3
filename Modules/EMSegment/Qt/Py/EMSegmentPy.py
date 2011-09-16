@@ -8,8 +8,8 @@ class EMSegmentPy:
     parent.title = "EMSegment"
     parent.category = "Segmentation"
     parent.contributor = "Daniel Haehn"
-    parent.helpText = """<b>EMSegment Module:</b>  Segment a set of set of images (target images) using the tree-based EM segmentation algorithm<br><br>Use the pull down menu to select from a collection of tasks or create a new one.<br>Use the 'Back' and 'Next' to navigate through the stages of filling in the algorithm parameters.\n\nWhen all parameters are specified, use the 'segmentation' button. \n\nFor latest updates, new tasks, and detail help please visit <a>http://www.slicer.org/slicerWiki/index.php/Modules:EMSegmenter-3.6</a> <br><br> <b>The work was reported in:</b> <br>K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007."""
-    parent.acknowledgementText = """<img src=':/Icons/UPenn_logo.png'><br><br>This module is currently maintained by Daniel Haehn, Dominique Belhachemi, and Kilian Pohl (SBIA,UPenn). The work is currently supported by an ARRA supplement to NAC and the Slicer Community (see also <a>http://www.slicer.org</a>). <br><br>The work was reported in  <br>K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007."""
+    parent.helpText = """<b>EMSegment Module:</b>  Segment a set of set of images (target images) using the tree-based EM segmentation algorithm<br><br>Use the pull down menu to select from a collection of tasks or create a new one.<br>Use the 'Back' and 'Next' to navigate through the stages of filling in the algorithm parameters.\n\nWhen all parameters are specified, use the 'segmentation' button. \n\nFor latest updates, new tasks, and detail help please visit <a>http://www.slicer.org/slicerWiki/index.php/Modules:EMSegmenter-3.6</a> <br><br> <b>The work was reported in:</b> <br>K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007.<br><br>Please restart 3D Slicer in order to choose a different task after a segmentation."""
+    parent.acknowledgementText = """<img src=':/Icons/UPenn_logo.png'><br><br>This module is currently maintained by Daniel Haehn and Kilian Pohl (SBIA,UPenn). The work is currently supported by an ARRA supplement to NAC and the Slicer Community (see also <a>http://www.slicer.org</a>). <br><br>The work was reported in  <br>K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007."""
     parent.icon = qt.QIcon( ":/Icons/EMSegment.png" )
     self.parent = parent
 
@@ -83,6 +83,7 @@ class EMSegmentPyWidget:
     specifyIntensityDistributionStep = EMSegmentWizard.EMSegmentSpecifyIntensityDistributionStep( Helper.GetNthStepId( 7 ) )
     editNodeBasedParametersStep = EMSegmentWizard.EMSegmentEditNodeBasedParametersStep( Helper.GetNthStepId( 8 ) )
     miscStep = EMSegmentWizard.EMSegmentDefineMiscParametersStep( Helper.GetNthStepId( 9 ) )
+    statisticsStep = EMSegmentWizard.EMSegmentLabelStatisticsStep( Helper.GetNthStepId( 11 ) )
     segmentStep = EMSegmentWizard.EMSegmentStartSegmentationStep( Helper.GetNthStepId( 10 ) )
 
     # add the wizard steps to an array for convenience
@@ -98,6 +99,7 @@ class EMSegmentPyWidget:
     allSteps.append( specifyIntensityDistributionStep )
     allSteps.append( editNodeBasedParametersStep )
     allSteps.append( miscStep )
+    allSteps.append( statisticsStep )
     allSteps.append( segmentStep )
 
     # Add transition for the first step which let's the user choose between simple and advanced mode
@@ -122,6 +124,7 @@ class EMSegmentPyWidget:
 
     # disable the error text which showed up when jumping to the (invisible) segment step
     workflowWidget.workflowGroupBox().errorTextEnabled = False
+    self.workflow.goBackToOriginStepUponSuccess = False
 
     # start the workflow and show the widget
     self.workflow.start()

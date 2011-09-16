@@ -26,6 +26,7 @@ class EMSegmentQuickStep4( EMSegmentStep ) :
     self.__updating = 0;
     self.__directory = None
     self.__templateFile = None
+    self.__roiWidget = None
     self.__roi = None
 
 
