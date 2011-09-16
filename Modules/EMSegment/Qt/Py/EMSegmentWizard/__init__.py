@@ -14,9 +14,9 @@ from EMSegmentDefineMiscParametersStep import *
 from EMSegmentStartSegmentationStep import *
 from EMSegmentLabelStatisticsStep import *
 
+from EMSegmentQuickSegmentationStep import *
 from EMSegmentQuickStep1 import *
 from EMSegmentQuickStep2 import *
 from EMSegmentQuickStep3 import *
 from EMSegmentQuickStep4 import *
 from EMSegmentQuickStep5 import *
-from EMSegmentQuickSegmentationStep import *

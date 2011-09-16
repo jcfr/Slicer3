@@ -18,18 +18,18 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerEMSegmentModule_h
-#define __qSlicerEMSegmentModule_h
+#ifndef __qSlicerEMSegmentQuickModule_h
+#define __qSlicerEMSegmentQuickModule_h
 
 // SlicerQt includes
 #include "qSlicerLoadableModule.h"
 
-#include "qSlicerEMSegmentModuleExport.h"
+#include "qSlicerEMSegmentQuickModuleExport.h"
 
-class qSlicerEMSegmentModulePrivate;
+class qSlicerEMSegmentQuickModulePrivate;
 
 /// \ingroup Slicer_QtModules_EMSegment
-class Q_SLICER_QTMODULES_EMSEGMENT_EXPORT qSlicerEMSegmentModule :
+class Q_SLICER_QTMODULES_EMSEGMENTQUICK_EXPORT qSlicerEMSegmentQuickModule :
   public qSlicerLoadableModule
 {
   Q_OBJECT
@@ -38,10 +38,10 @@ class Q_SLICER_QTMODULES_EMSEGMENT_EXPORT qSlicerEMSegmentModule :
 public:
 
   typedef qSlicerLoadableModule Superclass;
-  qSlicerEMSegmentModule(QObject *parent=0);
-  virtual ~qSlicerEMSegmentModule();
+  qSlicerEMSegmentQuickModule(QObject *parent=0);
+  virtual ~qSlicerEMSegmentQuickModule();
 
-  qSlicerGetTitleMacro(QTMODULE_TITLE);
+  qSlicerGetTitleMacro("EMSegment Easy");
 
   /// Return help text
   virtual QString helpText()const;
@@ -67,11 +67,11 @@ protected:
   virtual vtkMRMLAbstractLogic* createLogic();
 
 protected:
-  QScopedPointer<qSlicerEMSegmentModulePrivate> d_ptr;
+  QScopedPointer<qSlicerEMSegmentQuickModulePrivate> d_ptr;
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerEMSegmentModule);
-  Q_DISABLE_COPY(qSlicerEMSegmentModule);
+  Q_DECLARE_PRIVATE(qSlicerEMSegmentQuickModule);
+  Q_DISABLE_COPY(qSlicerEMSegmentQuickModule);
 };
 
 #endif

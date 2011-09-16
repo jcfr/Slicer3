@@ -45,10 +45,18 @@ endif()
 
 # --------------------------------------------------------------------------
 include(CMake/EM_InstallTasks.cmake)
+
+# --------------------------------------------------------------------------
+add_custom_target(copytesting ALL
+  ${CMAKE_COMMAND}
+  -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/Testing/TestData
+  -DDST=${CMAKE_BINARY_DIR}/${EM_SHARE_DIR}/${PROJECT_NAME}/Testing
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/CMake/EM_InstallTasksSubScript.cmake
+  )
 install(DIRECTORY
   Testing/TestData
-  DESTINATION ${EM_SHARE_DIR}/${PROJECT_NAME}/Testing COMPONENT Development
-  PATTERN ".svn" EXCLUDE
+  DESTINATION ${EM_INSTALL_SHARE_DIR}/${PROJECT_NAME}/Testing
+  FILES_MATCHING PATTERN "*"
   )
 
 # --------------------------------------------------------------------------

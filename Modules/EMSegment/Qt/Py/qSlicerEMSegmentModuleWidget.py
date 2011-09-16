@@ -110,7 +110,7 @@ class qSlicerEMSegmentModuleWidget:
     self.layout.addWidget( workflowWidget )
 
     # enable global access to the dynamicFrames on step 2 and step 6
-    slicer.modules.emsegmentLogic = self.logic()
+    slicer.modules.emsegmentLogic = self.__logic
     slicer.modules.emsegmentSimpleDynamicFrame = defineInputChannelsSimpleStep.dynamicFrame()
     slicer.modules.emsegmentPreprocessingStep = definePreprocessingStep
 

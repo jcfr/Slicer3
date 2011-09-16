@@ -153,7 +153,7 @@ class EMSegmentQuickStep1( EMSegmentStep ) :
     if not self.__initialized:
 
       # use default taskfile
-      taskFileShort = slicer.vtkMRMLEMSGlobalParametersNode.GetDefaultTaskTclFileName()
+      taskFileShort = slicer.modulelogic.vtkMRMLEMSGlobalParametersNode.GetDefaultTaskTclFileName()
 
       self.mrmlManager().CreateAndObserveNewParameterSet()
       templateNodes = slicer.mrmlScene.GetNodesByClass( 'vtkMRMLEMSTemplateNode' )

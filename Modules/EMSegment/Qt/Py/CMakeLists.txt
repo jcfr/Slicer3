@@ -1,7 +1,6 @@
 
 SET(EMS_PYTHON_SCRIPTS
   qSlicerEMSegmentModuleWidget.py
-  EMSegmentQuickPy.py
   EMSegmentWizard/__init__.py
   EMSegmentWizard/Helper.py
   EMSegmentWizard/EMSegmentDynamicFrame.py
@@ -17,6 +16,15 @@ SET(EMS_PYTHON_SCRIPTS
   EMSegmentWizard/EMSegmentDefineMiscParametersStep.py              # step 9
   EMSegmentWizard/EMSegmentStartSegmentationStep.py
   EMSegmentWizard/EMSegmentDummyStep.py
+  EMSegmentWizard/EMSegmentLabelStatisticsStep.py
+
+  qSlicerEMSegmentQuickModuleWidget.py
+  EMSegmentWizard/EMSegmentQuickSegmentationStep.py
+  EMSegmentWizard/EMSegmentQuickStep1.py
+  EMSegmentWizard/EMSegmentQuickStep2.py
+  EMSegmentWizard/EMSegmentQuickStep3.py
+  EMSegmentWizard/EMSegmentQuickStep4.py
+  EMSegmentWizard/EMSegmentQuickStep5.py
   )
 
 SET(EMS_PYTHON_RESOURCES
@@ -31,11 +39,11 @@ ctkMacroCompilePythonScript(
   NO_INSTALL_SUBDIR
   )
 
-ctkMacroCompilePythonScript(
-  TARGET_NAME EMSegmentQuickPy
-  SCRIPTS "${EMS_PYTHON_SCRIPTS}"
-  RESOURCES "${EMS_PYTHON_RESOURCES}"
-  DESTINATION_DIR ${Slicer_BINARY_DIR}/${Slicer_QTSCRIPTEDMODULES_LIB_DIR}
-  INSTALL_DIR ${Slicer_INSTALL_QTLOADABLEMODULES_PYTHON_LIB_DIR}
-  NO_INSTALL_SUBDIR
-  )
+#ctkMacroCompilePythonScript(
+#  TARGET_NAME qSlicerEMSegmentQuickModuleWidget
+#  SCRIPTS "${EMS_PYTHON_SCRIPTS}"
+#  RESOURCES "${EMS_PYTHON_RESOURCES}"
+#  DESTINATION_DIR ${CMAKE_BINARY_DIR}/${Slicer_QTLOADABLEMODULES_PYTHON_LIB_DIR}
+#  INSTALL_DIR ${Slicer_INSTALL_QTLOADABLEMODULES_PYTHON_LIB_DIR}
+#  NO_INSTALL_SUBDIR
+#  )

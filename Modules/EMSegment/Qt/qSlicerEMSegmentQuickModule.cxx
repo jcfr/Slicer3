@@ -34,35 +34,35 @@
 #include <vtkEMSegmentLogic.h>
 
 // EMSegment QTModule includes
-#include "qSlicerEMSegmentModule.h"
+#include "qSlicerEMSegmentQuickModule.h"
 
 void PythonQt_init_org_slicer_module_qSlicerEMSegmentModuleWidgets(PyObject*);
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerEMSegmentModule, qSlicerEMSegmentModule);
+Q_EXPORT_PLUGIN2(qSlicerEMSegmentQuickModule, qSlicerEMSegmentQuickModule);
 
 //-----------------------------------------------------------------------------
-/// \ingroup Slicer_QtModules_EMSegment
-class qSlicerEMSegmentModulePrivate
+/// \ingroup Slicer_QtModules_EMSegmentQuick
+class qSlicerEMSegmentQuickModulePrivate
 {
 public:
 };
 
 //-----------------------------------------------------------------------------
-qSlicerEMSegmentModule::qSlicerEMSegmentModule(QObject* _parent)
+qSlicerEMSegmentQuickModule::qSlicerEMSegmentQuickModule(QObject* _parent)
   :Superclass(_parent)
-  , d_ptr(new qSlicerEMSegmentModulePrivate)
+  , d_ptr(new qSlicerEMSegmentQuickModulePrivate)
 {
 
 }
 
 //-----------------------------------------------------------------------------
-qSlicerEMSegmentModule::~qSlicerEMSegmentModule()
+qSlicerEMSegmentQuickModule::~qSlicerEMSegmentQuickModule()
 {
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerEMSegmentModule::setup()
+void qSlicerEMSegmentQuickModule::setup()
 {
   this->Superclass::setup();
 
@@ -70,27 +70,17 @@ void qSlicerEMSegmentModule::setup()
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerEMSegmentModule::helpText()const
+QString qSlicerEMSegmentQuickModule::helpText()const
 {
   QString help =
-      "<b>EMSegment Module:</b>  Segment a set of set of images (target images) using"
-      " the tree-based EM segmentation algorithm<br>"
+      "<b>EMSegment Easy Module:</b>  This module provides EM segmentation without an atlas.<br>"
       "<br>"
-      "Use the pull down menu to select from a collection of tasks or create a new one.<br>"
-      "Use the 'Back' and 'Next' to navigate through the stages of filling in the algorithm "
-      "parameters.\n\n"
-      "When all parameters are specified, use the 'segmentation' button. \n\n"
-      "For latest updates, new tasks, and detail help please visit "
-      "<a>%1/Modules:EMSegmenter-3.6</a> <br>"
-      "<br>"
-      " <b>The work was reported in:</b> <br>"
-      "K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. "
-      "IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007.";
-  return help.arg(this->slicerWikiUrl());
+      "It is possible to segment different structures by manual sampling.";
+  return help;
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerEMSegmentModule::acknowledgementText()const
+QString qSlicerEMSegmentQuickModule::acknowledgementText()const
 {
   return QLatin1String(
         "<img src=':/Icons/UPenn_logo.png'><br>"
@@ -101,15 +91,14 @@ QString qSlicerEMSegmentModule::acknowledgementText()const
         "<br>"
         "The work was reported in  <br>"
         "K.M. Pohl et. A hierarchical algorithm for MR brain image parcellation. "
-        "IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007.<br>"
-        "<br>Please restart 3D Slicer in order to choose a different task after a segmentation.");
+        "IEEE Transactions on Medical Imaging, 26(9),pp 1201-1212, 2007.");
 }
 
 //-----------------------------------------------------------------------------
-qSlicerAbstractModuleRepresentation * qSlicerEMSegmentModule::createWidgetRepresentation()
+qSlicerAbstractModuleRepresentation * qSlicerEMSegmentQuickModule::createWidgetRepresentation()
 {
   QScopedPointer<qSlicerScriptedLoadableModuleWidget> widget(new qSlicerScriptedLoadableModuleWidget);
-  QString classNameToLoad = "qSlicerEMSegmentModuleWidget";
+  QString classNameToLoad = "qSlicerEMSegmentQuickModuleWidget";
   bool ret = widget->setPythonSource(
         QFileInfo(this->path()).path() + "/Python/" + classNameToLoad + ".py", classNameToLoad);
   if (!ret)
@@ -120,25 +109,25 @@ qSlicerAbstractModuleRepresentation * qSlicerEMSegmentModule::createWidgetRepres
 }
 
 //-----------------------------------------------------------------------------
-vtkMRMLAbstractLogic* qSlicerEMSegmentModule::createLogic()
+vtkMRMLAbstractLogic* qSlicerEMSegmentQuickModule::createLogic()
 {
   return vtkEMSegmentLogic::New();
 }
 
 //-----------------------------------------------------------------------------
-QIcon qSlicerEMSegmentModule::icon() const
+QIcon qSlicerEMSegmentQuickModule::icon() const
 {
-  return QIcon(":/Icons/EMSegment.png");
+  return QIcon(":/Icons/EMSegmentQuick.png");
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerEMSegmentModule::category()const
+QString qSlicerEMSegmentQuickModule::category()const
 {
   return QLatin1String("Segmentation");
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerEMSegmentModule::contributor()const
+QString qSlicerEMSegmentQuickModule::contributor()const
 {
   return QLatin1String("Daniel Haehn");
 }
