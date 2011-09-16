@@ -89,8 +89,8 @@ int main(int argc, char** argv)
     {
       std::cout << "Warning: intermediate results directory does not exist. "
                 << "We will try to create it for you."
+                << " - intermediateResultsDirectory [" << intermediateResultsDirectory << "]"
                 << std::endl;
-      std::cout << intermediateResultsDirectory << std::endl;
     }
 
   if (!vtksys::SystemTools::FileExists(mrmlSceneFileName.c_str()))

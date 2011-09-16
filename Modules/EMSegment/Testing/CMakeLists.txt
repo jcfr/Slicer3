@@ -365,7 +365,7 @@ if(NOT DISABLE_CXX_TESTING)
 
   # Does it fail elegently when a bogus mrml scene is specified?
   ADD_EMSEGMENT_TEST(EMSegCL_EFBogusMRMLScene EMSegmentCommandLine
-    --verbose --dontWriteResults --mrmlSceneFileName ${Slicer3_BINARY_DIR}/Testing/Temporary/bogus_file_scene.mrml
+    --verbose --dontWriteResults --mrmlSceneFileName ${CMAKE_BINARY_DIR}/Testing/Temporary/bogus_file_scene.mrml
     )
   set_tests_properties(
     EMSegCL_EFBogusMRMLScene
@@ -420,9 +420,9 @@ if(NOT DISABLE_CXX_TESTING)
     --targetVolumeFileNames
     ${EMSegment_TUTORIAL_DIR}/VolumeData/targetT1Normed_small.mhd,${EMSegment_TUTORIAL_DIR}/VolumeData/targetT2Normed_small.mhd
     --resultVolumeFileName
-    ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegCL_IntermediateResults_FinalResult.nrrd
+    ${CMAKE_BINARY_DIR}/Testing/Temporary/EMSegCL_IntermediateResults_FinalResult.nrrd
     --intermediateResultsDirectory
-    ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegCL_IntermediateResults_FinalResultsFolder
+    ${CMAKE_BINARY_DIR}/Testing/Temporary/EMSegCL_IntermediateResults_FinalResultsFolder
     )
   set_tests_properties(
     EMSegCL_IntermediateResults
@@ -975,7 +975,7 @@ if(NOT DISABLE_CXX_TESTING)
       COMMAND ${Slicer_LAUNCH_COMMAND} $<TARGET_FILE:vtkEMSegmentRemoteIOTest>
       ${Slicer_LAUNCHER_ADDITIONAL_ARGS}
       http://slicer.org/EMSegmentUpdates/
-      ${Slicer3_BINARY_DIR}/Testing/Temporary/EMSegmenterUpdates
+      ${CMAKE_BINARY_DIR}/Testing/Temporary/EMSegmenterUpdates
       )
     
     # Compare results
