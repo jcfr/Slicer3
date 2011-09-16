@@ -21,9 +21,6 @@
 #ifndef __qSlicerEMSegmentModule_h
 #define __qSlicerEMSegmentModule_h
 
-// CTK includes
-#include <ctkPimpl.h>
-
 // SlicerQt includes
 #include "qSlicerLoadableModule.h"
 
