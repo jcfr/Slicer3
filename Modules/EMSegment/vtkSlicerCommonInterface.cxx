@@ -287,7 +287,7 @@ void vtkSlicerCommonInterface::InitializePythonViaTcl(Tcl_Interp* interp, int ar
 #define PathSep ":"
 #endif
   vtksys_stl::string slicerHome;
-  if (!vtksys::SystemTools::GetEnv("Slicer3_HOME", slicerHome))
+  if (!vtksys::SystemTools::GetEnv(Slicer_HOME_ENVVAR_NAME, slicerHome))
     {
     slicerHome = std::string(this->GetBinDirectory()) + "/..";
     slicerHome = vtksys::SystemTools::CollapseFullPath(slicerHome.c_str());

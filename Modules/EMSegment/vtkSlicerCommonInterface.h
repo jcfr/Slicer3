@@ -9,6 +9,8 @@
 
 #ifdef Slicer3_USE_KWWIDGETS
 
+  #define Slicer_HOME_ENVVAR_NAME "Slicer3_HOME"
+
 // Slicer3 includes
 #include "vtkSlicerApplication.h"
 #include "KWWidgets/vtkEMSegmentKWDynamicFrame.h"
